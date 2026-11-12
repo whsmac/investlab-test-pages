@@ -1,7 +1,7 @@
 // Pure offline comparison of exported opening review with current inputs.
 const FIELDS=['exportData','accounts','allocations','cash','costConfirmations'];
 function canonical(value){if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';return JSON.stringify(value)}
-const DEC=/^(0|[1-9]\d*)(?:\.\\d{1,8})?$/;
+const DEC=/^(0|[1-9]\d*)(?:\.\d{1,8})?$/;
 function units(value){const str=String(value);if(!DEC.test(str))return null;const [whole,part='']=str.split('.');return BigInt(whole)*100000000n+BigInt(part.padEnd(8,'0'))}
 function delta(before,after){const a=units(before),b=units(after);if(a===null||b===null)return null;const d=b-a,negative=d<0n,n=negative?-d:d;return (negative?'-':'+')+(n/100000000n).toString()+'.'+(n%100000000n).toString().padStart(8,'0')}
 function rows(inputs){
