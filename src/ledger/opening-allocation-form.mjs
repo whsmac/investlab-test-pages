@@ -1,5 +1,5 @@
 // Pure offline table form mapping; never guesses account ownership or cost.
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DEC=/^(0|[1-9]\d*)(?:\.\d{1,8})?$/;
 const SYMBOL=/^[A-Z0-9][A-Z0-9.^_-]{0,19}$/;
 export function buildAllocationFormInputs({accounts,holdings,positionRows,cashRows}={}){
