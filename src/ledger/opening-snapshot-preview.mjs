@@ -12,7 +12,7 @@ function amount(value,label,allowZero=true){
 }
 const fmt=n=>(n/100000000n).toString()+'.'+(n%100000000n).toString().padStart(8,'0');
 function account(value){if(typeof value!=='string'||!UUID.test(value))throw Error('accountId must be UUID');return value.toLowerCase();}
-function ticker(value){if(typeof value!=='string'||!SYMBOL.test(value)||value==='USD'||value==='KRW')throw Error('invalid ticker');return value;}
+function ticker(value){if(typeof value!=='string'||!SYMBOL.test(value)||value==='USD-CASH'||value==='KRW')throw Error('invalid ticker');return value;}
 export function buildOpeningSnapshot({positions=[],cash=[]}={}){
  if(!Array.isArray(positions)||!Array.isArray(cash))throw Error('positions and cash must be arrays');
  const seen=new Set(),rows=[],warnings=[];
