@@ -11,3 +11,5 @@ test('review page has five ordered user steps and scrollable result tables',()=>
 test('saved review comparison table renders both loop closures before updating DOM',()=>{assert.match(script,/for\(const d of comparison\.details\)[\s\S]*?tr\.style\.backgroundColor='#fff5e6'\}\}\$\('compareChanges'\)/)});
 
 test('multi-account holdings are never assigned to first account by default',()=>{assert.match(script,/accounts\.length===1\?source\.holdings\.map/);assert.match(script,/accounts\.length>1/);assert.match(script,/if\(!mapped\.allocations\.length\)throw Error/)});
+
+test('account readiness can filter unresolved rows and focus source controls',()=>{assert.match(html,/id="onlyPendingReadiness"/);assert.match(script,/onlyPendingReadiness'\)\.checked/);assert.match(script,/jump\.onclick=/);assert.match(script,/target\?\.focus\(\)/);assert.match(script,/ownerControls\.find/);assert.match(script,/costConfirmed/)});
