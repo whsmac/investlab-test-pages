@@ -7,3 +7,8 @@ test('resolved ownership and cost appear in comparison',()=>{const r=compare({sa
 test('new allocation shortfall appears',()=>{const r=compare({saved,currentInputs:{...inputs,positionRows:[{...inputs.positionRows[0],quantity:'1'}]}});assert.ok(r.newIssues.some(i=>i.type==='QUANTITY'))});
 test('unsafe nested authorization rejected',()=>assert.throws(()=>compare({saved:{...saved,review:{...saved.review,canMigrate:true}},currentInputs:inputs}),/unsafe nested/));
 test('unsupported format rejected',()=>assert.throws(()=>compare({saved:{...saved,format:'OTHER'},currentInputs:inputs}),/unsupported/));
+
+test('tampered completion status is rejected',()=>assert.throws(()=>compare({saved:{...saved,review:{...saved.review,status:'OFFLINE_REVIEW_READY'}},currentInputs:inputs}),/does not match/));
+test('deleted issues are rejected',()=>assert.throws(()=>compare({saved:{...saved,review:{...saved.review,issues:[]}},currentInputs:inputs}),/does not match/));
+test('changed saved input without updated review is rejected',()=>assert.throws(()=>compare({saved:{...saved,inputs:{...inputs,accounts:[{...inputs.accounts[0],ownerConfirmed:true}]}},currentInputs:inputs}),/does not match/));
+test('object key order does not affect validation',()=>{const reordered=JSON.parse(JSON.stringify(saved));reordered.review={authorization:reordered.review.authorization,...reordered.review};assert.equal(compare({saved:reordered,currentInputs:inputs}).newIssues.length,0)});
