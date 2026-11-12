@@ -1,0 +1,21 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST · 포트폴리오 연결 진단</title>
+<style>:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#0b1020;color:#edf2ff}body{margin:0}.wrap{max-width:950px;margin:auto;padding:24px 16px 64px}a{color:#92b6ff}h1{font-size:26px}p{color:#b0bed8;line-height:1.65}.panel{background:#141b2d;border:1px solid #2a3550;border-radius:14px;padding:20px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{background:#10182b;border:1px solid #34425c;border-radius:9px;padding:14px}.metric strong{display:block;font-size:25px}.muted{font-size:13px;color:#aab8d1}.warning{color:#f5d98b}button{border:1px solid #53688b;background:#263b62;color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer}table{border-collapse:collapse;width:100%}th,td{text-align:left;border-bottom:1px solid #34425c;padding:9px}th{color:#b0bed8;font-size:13px}.scroll{overflow-x:auto}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main class="wrap">
+<nav><a href="./index.html">← TEST 홈</a></nav><h1>포트폴리오 연결 진단</h1><p>이 페이지는 현재 사이트의 브라우저 저장소를 <strong>읽기만</strong> 합니다. 기존 다른 도메인의 포트폴리오 데이터에 직접 접근하지 않으며, Supabase로 전송하거나 변경하지 않습니다.</p>
+<section class="panel"><h2>현재 사이트 저장 데이터</h2><div class="grid"><div class="metric">보유종목<strong id="holdings">—</strong></div><div class="metric">관심종목<strong id="watchlist">—</strong></div><div class="metric">거래이력 종목<strong id="past">—</strong></div></div><p class="muted" id="state" role="status"></p><button id="refresh" type="button">다시 확인</button></section>
+<section class="panel"><h2>종목 목록 (민감한 수량·원가 제외)</h2><div id="symbols" class="scroll">조회 대기</div></section>
+<section class="panel"><h2>다음 동기화 단계</h2><p class="warning">이 TEST 사이트에서 0개로 표시되더라도 기존 대시보드의 데이터가 삭제되었다는 뜻이 아닙니다.</p><p>기존 포트폴리오의 저장 위치와 계정별 접근권한을 확인한 뒤, TEST Supabase에서 사용자별 데이터 격리(RLS)를 검증해야 합니다. 그 전에는 업로드·쓰기 기능을 활성화하지 않습니다.</p></section>
+</main><script type="module">
+import {readManagedSymbols} from './src/simulator/managed-symbols.mjs';
+const el=id=>document.getElementById(id);
+function readArray(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:null}catch{return null}}
+function refresh(){
+ const names=[['holdings','investlab_holdings'],['watchlist','investlab_watchlist'],['past','investlab_past_symbols']];
+ let invalid=0;
+ for(const [id,key] of names){const rows=readArray(key);el(id).textContent=rows===null?'형식 오류':rows.length.toLocaleString('ko-KR');if(rows===null)invalid++}
+ const symbols=readManagedSymbols(localStorage);
+ const target=el('symbols');target.replaceChildren();
+ if(symbols.length){const table=document.createElement('table'),head=table.createTHead().insertRow();for(const name of ['종목','분류']){const th=document.createElement('th');th.textContent=name;head.append(th)}const body=table.createTBody();for(const s of symbols){const row=body.insertRow();for(const value of [s.ticker,s.categories.join(' · ')]){const td=row.insertCell();td.textContent=value}}target.append(table)}else target.textContent='이 사이트에 저장된 종목 목록이 없습니다.';
+ el('state').textContent=invalid?'일부 저장값의 JSON 배열 형식이 올바르지 않습니다. 기존 데이터를 수정하지 않았습니다.':'읽기 전용 확인 완료 · 현재 출처: '+location.origin+' · 다른 사이트의 데이터는 자동으로 보이지 않습니다.';
+}
+el('refresh').addEventListener('click',refresh);refresh();
+</script></body></html>
