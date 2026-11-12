@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {simulateLedgerEvents} from '../src/ledger/offline-event-ledger.mjs';
+const opening={id:'o',accountId:'a',requestId:'r0',type:'opening',legs:[{assetType:'cash',assetCode:'USD',delta:'1000'},{assetType:'security',assetCode:'USD',delta:'2'}]};
+const buy={id:'b',accountId:'a',requestId:'r1',type:'buy',legs:[{assetType:'cash',assetCode:'USD',delta:'-200'},{assetType:'security',assetCode:'TSLA',delta:'1'}]};
+test('opening distinguishes USD ETF from USD cash, then buys TSLA',()=>{const r=simulateLedgerEvents([opening,buy]);assert.equal(r.balances.find(x=>x.accountAsset==='a / cash:USD').balance,'800.00000000');assert.equal(r.balances.find(x=>x.accountAsset==='a / security:USD').balance,'2.00000000');assert.equal(r.canPost,false)});
+test('insufficient cash blocks buy',()=>assert.throws(()=>simulateLedgerEvents([opening,{...buy,legs:[{...buy.legs[0],delta:'-1001'},buy.legs[1]]}]),/insufficient/));
+test('insufficient shares blocks sell',()=>assert.throws(()=>simulateLedgerEvents([opening,{...buy,id:'s',type:'sell',legs:[{assetType:'cash',assetCode:'USD',delta:'100'},{assetType:'security',assetCode:'TSLA',delta:'-1'}]}]),/insufficient/));
+test('identical request replay is idempotent',()=>{const r=simulateLedgerEvents([opening,buy,buy]);assert.equal(r.history[2].status,'IDEMPOTENT_RETRY')});
+test('conflicting request ID rejected',()=>assert.throws(()=>simulateLedgerEvents([opening,buy,{...buy,id:'b2'}]),/conflicting/));
+test('second opening rejected',()=>assert.throws(()=>simulateLedgerEvents([opening,{...opening,id:'o2',requestId:'r2'}]),/duplicate opening/));
+test('valid reversal restores balances',()=>{const reverse={id:'x',accountId:'a',requestId:'r3',type:'reversal',reversesEventId:'b',legs:[{assetType:'cash',assetCode:'USD',delta:'200'},{assetType:'security',assetCode:'TSLA',delta:'-1'}]};const r=simulateLedgerEvents([opening,buy,reverse]);assert.equal(r.balances.find(x=>x.accountAsset==='a / cash:USD').balance,'1000.00000000')});
+test('wrong reversal legs rejected',()=>assert.throws(()=>simulateLedgerEvents([opening,buy,{id:'x',accountId:'a',requestId:'r3',type:'reversal',reversesEventId:'b',legs:[{assetType:'cash',assetCode:'USD',delta:'199'},{assetType:'security',assetCode:'TSLA',delta:'-1'}]}]),/exactly negate/));
+test('invalid trade direction rejected',()=>assert.throws(()=>simulateLedgerEvents([opening,{...buy,legs:[{assetType:'cash',assetCode:'USD',delta:'200'},{assetType:'security',assetCode:'TSLA',delta:'1'}]}]),/invalid trade direction/));
