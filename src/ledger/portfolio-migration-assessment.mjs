@@ -2,7 +2,12 @@
 const SYMBOL=/^[A-Z0-9][A-Z0-9.^_-]{0,19}$/;
 const DEC=/^(?:0|[1-9]\d*)(?:\.\d{1,8})?$/;
 const normalize=(value)=>{
- if(typeof value==='number')return Number.isSafeInteger(value)&&value>=0?String(value):null;
+ if(typeof value==='number'){
+  if(!Number.isFinite(value)||value<0)return null;
+  const s=String(value);
+  // Legacy dashboard stores JS numbers. Accept only plain decimals that round-trip.
+  return DEC.test(s)?s:null;
+ }
  if(typeof value!=='string')return null;
  const cleaned=value.trim().replace(/,/g,'');
  return DEC.test(cleaned)?cleaned:null;
