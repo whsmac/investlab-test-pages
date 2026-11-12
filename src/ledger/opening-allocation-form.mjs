@@ -10,7 +10,7 @@ export function buildAllocationFormInputs({accounts,holdings,positionRows,cashRo
  const seen=new Set();
  const allocations=[],costConfirmations=[];
  for(const row of positionRows){
-  if(!row||!ids.has(row.accountId?.toLowerCase())||!tickers.has(row.ticker)||!SYMBOL.test(row.ticker)||!DEC.test(row.quantity)||/^0(?:\\.0{1,8})?$/.test(row.quantity)||!DEC.test(row.averageCostUsd))throw Error('invalid position form row');
+  if(!row||!ids.has(row.accountId?.toLowerCase())||!tickers.has(row.ticker)||!SYMBOL.test(row.ticker)||!DEC.test(row.quantity)||/^0(?:\.0{1,8})?$/.test(row.quantity)||!DEC.test(row.averageCostUsd))throw Error('invalid position form row');
   const id=row.accountId.toLowerCase(),key=id+'|'+row.ticker;if(seen.has(key))throw Error('duplicate position row');seen.add(key);
   allocations.push({accountId:id,ticker:row.ticker,quantity:row.quantity});
   if(row.costConfirmed===true)costConfirmations.push({accountId:id,ticker:row.ticker,confirmedAverageCostUsd:row.averageCostUsd,ownerVerified:true});
