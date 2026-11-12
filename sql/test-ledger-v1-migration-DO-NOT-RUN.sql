@@ -16,7 +16,7 @@ create table public.investlab_ledger_events (
  account_id uuid not null,
  occurred_at timestamptz not null,
  event_type text not null check(event_type in ('buy','sell')),
- ticker text not null check(ticker ~ '^[A-Z0-9][A-Z0-9.^_-]{0,19}$' and ticker not in ('USD','KRW')),
+ ticker text not null check(ticker ~ '^[A-Z0-9][A-Z0-9.^_-]{0,19}$' and ticker not in ('USD-CASH','KRW')),
  quantity numeric(26,8) not null check(quantity>0),
  unit_price_usd numeric(26,8) not null check(unit_price_usd>0),
  request_id text not null check(length(request_id) between 1 and 120),
@@ -34,7 +34,7 @@ create table public.investlab_ledger_legs (
  quantity_delta numeric(26,8) not null check(quantity_delta<>0),
  foreign key(event_id,user_id) references public.investlab_ledger_events(id,user_id),
  unique(event_id,asset_type),
- check((asset_type='cash' and asset_code='USD') or (asset_type='security' and asset_code not in ('USD','KRW')))
+ check((asset_type='cash' and asset_code='USD') or (asset_type='security' and asset_code not in ('USD-CASH','KRW')))
 );
 create index investlab_ledger_events_account_idx on public.investlab_ledger_events(user_id,account_id,occurred_at);
 create index investlab_ledger_legs_event_idx on public.investlab_ledger_legs(event_id);
@@ -69,7 +69,7 @@ begin
  if p_request_id is null or length(p_request_id) not between 1 and 120
     or p_side is null or p_side not in ('buy','sell')
     or p_ticker is null or p_ticker !~ '^[A-Z0-9][A-Z0-9.^_-]{0,19}$'
-    or p_ticker in ('USD','KRW')
+    or p_ticker in ('USD-CASH','KRW')
     or p_quantity is null or p_quantity<=0 or p_quantity>100000000000
     or p_unit_price_usd is null or p_unit_price_usd<=0 or p_unit_price_usd>100000000000
     or p_occurred_at is null then
