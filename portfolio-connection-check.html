@@ -3,7 +3,7 @@
 <nav><a href="./index.html">← TEST 홈</a></nav><h1>포트폴리오 연결 진단</h1><p>이 페이지는 현재 사이트의 브라우저 저장소를 <strong>읽기만</strong> 합니다. 기존 다른 도메인의 포트폴리오 데이터에 직접 접근하지 않으며, Supabase로 전송하거나 변경하지 않습니다.</p>
 <section class="panel"><h2>현재 사이트 저장 데이터</h2><div class="grid"><div class="metric">보유종목<strong id="holdings">—</strong></div><div class="metric">관심종목<strong id="watchlist">—</strong></div><div class="metric">거래이력 종목<strong id="past">—</strong></div></div><p class="muted" id="state" role="status"></p><button id="refresh" type="button">다시 확인</button></section>
 <section class="panel"><h2>종목 목록 (민감한 수량·원가 제외)</h2><div id="symbols" class="scroll">조회 대기</div></section>
-<section class="panel"><h2>다음 동기화 단계</h2><p class="warning">이 TEST 사이트에서 0개로 표시되더라도 기존 대시보드의 데이터가 삭제되었다는 뜻이 아닙니다.</p><p>기존 포트폴리오의 저장 위치와 계정별 접근권한을 확인한 뒤, TEST Supabase에서 사용자별 데이터 격리(RLS)를 검증해야 합니다. 그 전에는 업로드·쓰기 기능을 활성화하지 않습니다.</p></section>
+<section class="panel"><h2>이관 사전점검</h2><p><a href="./portfolio-migration-check.html">보유종목 데이터 구조 점검 열기 →</a></p></section><section class="panel"><h2>다음 동기화 단계</h2><p class="warning">이 TEST 사이트에서 0개로 표시되더라도 기존 대시보드의 데이터가 삭제되었다는 뜻이 아닙니다.</p><p>기존 포트폴리오의 저장 위치와 계정별 접근권한을 확인한 뒤, TEST Supabase에서 사용자별 데이터 격리(RLS)를 검증해야 합니다. 그 전에는 업로드·쓰기 기능을 활성화하지 않습니다.</p></section>
 </main><script type="module">
 import {readManagedSymbols} from './src/simulator/managed-symbols.mjs';
 const el=id=>document.getElementById(id);
