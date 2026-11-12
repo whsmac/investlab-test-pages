@@ -18,7 +18,7 @@ export function validateTradeDraft(input){
  if(typeof requestId!=='string'||requestId.length<1||requestId.length>120)fail('invalid requestId');
  if(typeof accountId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(accountId))fail('invalid accountId');
  if(side!=='buy'&&side!=='sell')fail('invalid side');
- if(typeof ticker!=='string'||!TICKER.test(ticker)||ticker==='USD'||ticker==='KRW')fail('invalid ticker');
+ if(typeof ticker!=='string'||!TICKER.test(ticker)||ticker==='USD-CASH'||ticker==='KRW')fail('invalid ticker');
  const qty=units(quantity,'quantity'),price=units(unitPriceUsd,'unitPriceUsd');
  if(qty===0n||price===0n)fail('quantity and price must be positive');
  // Price * quantity, expressed in USD with 8 fractional digits. Reject non-exact rounding.
@@ -44,7 +44,7 @@ export function previewLedgerBalances(events){
   if(!Array.isArray(e.legs)||e.legs.length===0)fail('missing legs');
   for(const leg of e.legs){
    if(!leg||!['cash','security'].includes(leg.assetType)||typeof leg.assetCode!=='string'||!TICKER.test(leg.assetCode))fail('invalid leg');
-   if(leg.assetType==='cash'&&!['USD','KRW'].includes(leg.assetCode))fail('invalid cash currency');
+   if(leg.assetType==='cash'&&!['USD-CASH','KRW'].includes(leg.assetCode))fail('invalid cash currency');
    if(leg.assetType==='security'&&['USD','KRW'].includes(leg.assetCode))fail('invalid security ticker');
    if(typeof leg.delta!=='string'||!/^-(?:0|[1-9]\d*)(?:\.\d{1,8})?$|^(?:0|[1-9]\d*)(?:\.\d{1,8})?$/.test(leg.delta))fail('invalid delta');
    const negative=leg.delta.startsWith('-');
