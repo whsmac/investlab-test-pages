@@ -44,8 +44,8 @@ export function previewLedgerBalances(events){
   if(!Array.isArray(e.legs)||e.legs.length===0)fail('missing legs');
   for(const leg of e.legs){
    if(!leg||!['cash','security'].includes(leg.assetType)||typeof leg.assetCode!=='string'||!TICKER.test(leg.assetCode))fail('invalid leg');
-   if(leg.assetType==='cash'&&!['USD-CASH','KRW'].includes(leg.assetCode))fail('invalid cash currency');
-   if(leg.assetType==='security'&&['USD','KRW'].includes(leg.assetCode))fail('invalid security ticker');
+   if(leg.assetType==='cash'&&!['USD','KRW'].includes(leg.assetCode))fail('invalid cash currency');
+   if(leg.assetType==='security'&&['USD-CASH','KRW'].includes(leg.assetCode))fail('invalid security ticker');
    if(typeof leg.delta!=='string'||!/^-(?:0|[1-9]\d*)(?:\.\d{1,8})?$|^(?:0|[1-9]\d*)(?:\.\d{1,8})?$/.test(leg.delta))fail('invalid delta');
    const negative=leg.delta.startsWith('-');
    const n=units(negative?leg.delta.slice(1):leg.delta,'delta')*(negative?-1n:1n);
