@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {summarizeOpeningReview as summarize} from '../src/ledger/opening-review-summary.mjs';
+const a='11111111-1111-4111-8111-111111111111';
+test('matching review is explicitly offline only',()=>{const r=summarize({accounts:[{id:a,name:'ISA'}],review:{status:'OFFLINE_OPENING_RECONCILED_NOT_SERVER_VERIFIED',issues:[],positions:[{accountId:a,ticker:'TSLA',quantity:'2.00000000',averageCostUsd:'100.00000000'}],cash:[{accountId:a,currency:'USD',balance:'10.00000000'}],comparison:{differences:[]}}});assert.equal(r.rows.length,2);assert.equal(r.rows[0].account,'ISA');assert.equal(r.status,'오프라인 원장 수량 대조 일치');assert.equal(r.canMigrate,false)});
+test('warnings never appear as verified',()=>{const r=summarize({review:{status:'OPENING_REVIEW_REQUIRED',issues:['missing cost'],positions:[]}});assert.equal(r.status,'검토 필요');assert.deepEqual(r.issues,['missing cost'])});
+test('allocation-only review never masquerades as reconciled',()=>{const r=summarize({review:{status:'READY',warnings:[],allocatedPositions:[{accountId:a,ticker:'TSLA',quantity:'1'}]}});assert.equal(r.rows[0].status,'확인 필요')});
