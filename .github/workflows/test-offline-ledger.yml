@@ -6,6 +6,7 @@ on:
       - 'tests/offline-ledger-check.test.mjs'
       - 'tests/trade-rpc-preview.test.mjs'
       - 'tests/portfolio-migration-assessment.test.mjs'
+      - 'tests/opening-snapshot-preview.test.mjs'
       - '.github/workflows/test-offline-ledger.yml'
   workflow_dispatch:
 jobs:
@@ -19,4 +20,4 @@ jobs:
         with:
           node-version: '22'
       - name: Check offline ledger invariants and RPC preview
-        run: node --test tests/offline-ledger-check.test.mjs tests/trade-rpc-preview.test.mjs tests/portfolio-migration-assessment.test.mjs
+        run: node --test tests/offline-ledger-check.test.mjs tests/trade-rpc-preview.test.mjs tests/portfolio-migration-assessment.test.mjs tests/opening-snapshot-preview.test.mjs
