@@ -16,7 +16,7 @@ export function assessPortfolioMigration(input){
   if(!SYMBOL.test(ticker)){warnings.push('row '+(index+1)+': invalid ticker');continue;}
   if(seen.has(ticker)){warnings.push(ticker+': duplicate ticker; account allocation unknown');continue;}
   seen.add(ticker);
-  if(ticker==='USD-CASH'||ticker==='USD'||ticker==='KRW'){
+  if(ticker==='USD-CASH'||ticker==='KRW'){
    warnings.push(ticker+': cash requires separate account/currency confirmation');
    continue;
   }
