@@ -14,7 +14,7 @@ test('buy preview',()=>{
  assert.equal(v.cashDelta,'-50.00000000');
 });
 test('reject invalid/ambiguous inputs',()=>{
- for(const bad of [{ticker:'USD'},{quantity:'-1'},{unitPriceUsd:'NaN'},{quantity:1},{quantity:'0'},{requestId:''},{quantity:'0.00000001',unitPriceUsd:'0.00000001'}]){
+ for(const bad of [{ticker:'USD-CASH'},{quantity:'-1'},{unitPriceUsd:'NaN'},{quantity:1},{quantity:'0'},{requestId:''},{quantity:'0.00000001',unitPriceUsd:'0.00000001'}]){
   assert.throws(()=>validateTradeDraft({...base,...bad}));
  }
 });
