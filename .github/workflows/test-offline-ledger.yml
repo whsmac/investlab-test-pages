@@ -29,6 +29,7 @@ on:
       - 'tests/isolation-import-unified.test.mjs'
       - 'tests/readiness-report-validator.test.mjs'
       - 'tests/sql-contract-review.test.mjs'
+      - 'tests/sql-contract-files.test.mjs'
       - '.github/workflows/test-offline-ledger.yml'
   workflow_dispatch:
 jobs:
@@ -42,4 +43,4 @@ jobs:
         with:
           node-version: '22'
       - name: Check offline ledger invariants and RPC preview
-        run: node --test tests/offline-ledger-check.test.mjs tests/trade-rpc-preview.test.mjs tests/portfolio-migration-assessment.test.mjs tests/opening-snapshot-preview.test.mjs tests/legacy-holdings-map.test.mjs tests/legacy-file-import.test.mjs tests/legacy-holdings-export.test.mjs tests/original-dashboard-schema.test.mjs tests/usd-equity-vs-cash.test.mjs tests/holdings-reconciliation.test.mjs tests/opening-snapshot-compare.test.mjs tests/opening-draft-transfer.test.mjs tests/opening-migration-gate.test.mjs tests/opening-review-report.test.mjs tests/test-migration-preflight.test.mjs tests/ledger-security-audit-review.test.mjs tests/standard-security-audit.test.mjs tests/preflight-catalog-integration.test.mjs tests/isolation-evidence-review.test.mjs tests/combined-migration-review.test.mjs tests/isolation-review-import.test.mjs tests/isolation-evidence-template.test.mjs tests/isolation-evidence-assessment.test.mjs tests/isolation-import-unified.test.mjs tests/readiness-report-validator.test.mjs tests/sql-contract-review.test.mjs
+        run: node --test tests/offline-ledger-check.test.mjs tests/trade-rpc-preview.test.mjs tests/portfolio-migration-assessment.test.mjs tests/opening-snapshot-preview.test.mjs tests/legacy-holdings-map.test.mjs tests/legacy-file-import.test.mjs tests/legacy-holdings-export.test.mjs tests/original-dashboard-schema.test.mjs tests/usd-equity-vs-cash.test.mjs tests/holdings-reconciliation.test.mjs tests/opening-snapshot-compare.test.mjs tests/opening-draft-transfer.test.mjs tests/opening-migration-gate.test.mjs tests/opening-review-report.test.mjs tests/test-migration-preflight.test.mjs tests/ledger-security-audit-review.test.mjs tests/standard-security-audit.test.mjs tests/preflight-catalog-integration.test.mjs tests/isolation-evidence-review.test.mjs tests/combined-migration-review.test.mjs tests/isolation-review-import.test.mjs tests/isolation-evidence-template.test.mjs tests/isolation-evidence-assessment.test.mjs tests/isolation-import-unified.test.mjs tests/readiness-report-validator.test.mjs tests/sql-contract-review.test.mjs tests/sql-contract-files.test.mjs
