@@ -5,6 +5,7 @@ const sample=()=>({environment:'TEST',projectRef:'abcdefghijklmnopqrst',sqlVersi
 test('unexecuted TEST A/B/anon evidence never authorizes deployment',()=>{
  const result=assess(sample());
  assert.equal(result.caseCount,16);
+ assert.equal(result.status,'INCOMPLETE');
  assert.equal(result.canDeploy,false);
  assert.equal(result.serverVerified,false);
 });
