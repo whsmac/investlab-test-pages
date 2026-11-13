@@ -17,3 +17,5 @@ test('account readiness can filter unresolved rows and focus source controls',()
 test('one-click review applies table then reconciles and checks final readiness without server writes',()=>{assert.match(html,/id="reviewAll"/);assert.match(script,/reviewAll'\)\.onclick/);assert.match(script,/applyTable'\)\.click\(\)/);assert.match(script,/handoff'\)\.click\(\)/);assert.match(script,/finalReview'\)\.click\(\)/);assert.match(script,/OFFLINE_OPENING_RECONCILED_NOT_SERVER_VERIFIED/);assert.match(script,/if\(formState&&dirty\)throw Error\('미반영 표 변경사항이 있습니다/);});
 
 test('browser smoke test guide is linked and steps are numbered in order',()=>{assert.match(html,/docs\/offline-browser-smoke-test\.md/);for(const n of [1,2,3,4,5])assert.match(html,new RegExp('<h2>'+n+'\\. '));});
+
+test('browser smoke sample requires confirmation and refuses unsaved edits',()=>{assert.match(html,/id="loadSmokeSample"/);assert.match(script,/loadSmokeSample'\)\.onclick/);assert.match(script,/window\.confirm\(/);assert.match(script,/if\(formState&&dirty\)/);assert.match(script,/\$\('sample'\)\.click\(\)/);assert.match(script,/\$\('makeTable'\)\.click\(\)/)});
