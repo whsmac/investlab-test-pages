@@ -21,6 +21,6 @@ export async function buildOpeningRpcHashPreview(input){
   canonicalPayload:canonical,
   status:'OFFLINE_PREVIEW_ONLY_SERVER_HASH_NOT_VERIFIED',
   canExecute:false,serverVerified:false,
-  blockingIssues:Object.freeze(['SQL function signature lacks p_payload_hash','server must independently recompute canonical SHA-256','database schema amendment and A/B/anon tests not approved'])
+  blockingIssues:Object.freeze(['SQL v2 candidate and pgcrypto availability require PostgreSQL verification','database schema amendment, function owner/RLS permissions and A/B/anon tests not approved'])
  });
 }
