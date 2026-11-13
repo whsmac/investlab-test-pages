@@ -115,12 +115,18 @@ function calculate(){
    const comparisonTable=byId('allStrategySummary').querySelector('table');
    if(comparisonTable){
     comparisonTable.classList.add('strategy-overview-table');
-    const valueRows=[...comparisonTable.querySelectorAll('tr')];
-    for(const rowIndex of [8,9]){
-     const row=valueRows[rowIndex];
-     if(!row)continue;
-     [...row.querySelectorAll('td')].slice(2).forEach((cell,i)=>{
-      const value=rowIndex===8?result.scenarios[i]?.deltaVsHold:result.baseline.terminalValue>0?result.scenarios[i]?.deltaVsHold/result.baseline.terminalValue:NaN;
+    // Identify rows by their labels, not fixed positions: adding comparison metrics must not shift highlights.
+    const highlightedRows=new Map([
+     ['보유 대비 차이 USD',sc=>sc.deltaVsHold],
+     ['보유 대비 차이 (%)',sc=>result.baseline.terminalValue>0?sc.deltaVsHold/result.baseline.terminalValue:NaN],
+     ['TSLA 최초 대비 수량 증감 (주)',sc=>(sc.final.positions.TSLA?.quantity??0)-startingTsla],
+     ['시작 대비 현금 증감 USD',sc=>sc.final.cash-result.baseline.final.cash]
+    ]);
+    for(const row of comparisonTable.querySelectorAll('tbody tr')){
+     const getValue=highlightedRows.get(row.cells[0]?.textContent);
+     if(!getValue)continue;
+     [...row.cells].slice(2).forEach((cell,i)=>{
+      const value=getValue(result.scenarios[i]);
       if(Number.isFinite(value)&&value!==0)cell.classList.add(value>0?'positive':'negative');
      });
     }
