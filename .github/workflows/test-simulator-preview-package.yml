@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'virtual-trade-simulator.html'
+      - 'tests/simulator-comparison-ui-contract.test.mjs'
       - 'src/simulator/**'
       - 'src/ledger/scenario-backup.mjs'
       - '.github/workflows/test-simulator-preview-package.yml'
@@ -19,7 +20,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run simulator regression tests
-        run: node --test tests/scenario-backup.test.mjs tests/portfolio-snapshot.test.mjs tests/portfolio-positions.test.mjs tests/account-scenario-comparison.test.mjs
+        run: node --test tests/scenario-backup.test.mjs tests/portfolio-snapshot.test.mjs tests/portfolio-positions.test.mjs tests/account-scenario-comparison.test.mjs tests/simulator-comparison-ui-contract.test.mjs
       - name: Assemble browser preview files
         run: |
           mkdir -p preview/src
