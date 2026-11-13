@@ -15,3 +15,5 @@ test('multi-account holdings are never assigned to first account by default',()=
 test('account readiness can filter unresolved rows and focus source controls',()=>{assert.match(html,/id="onlyPendingReadiness"/);assert.match(script,/onlyPendingReadiness'\)\.checked/);assert.match(script,/jump\.onclick=/);assert.match(script,/target\?\.focus\(\)/);assert.match(script,/ownerControls\.find/);assert.match(script,/costConfirmed/)});
 
 test('one-click review applies table then reconciles and checks final readiness without server writes',()=>{assert.match(html,/id="reviewAll"/);assert.match(script,/reviewAll'\)\.onclick/);assert.match(script,/applyTable'\)\.click\(\)/);assert.match(script,/handoff'\)\.click\(\)/);assert.match(script,/finalReview'\)\.click\(\)/);assert.match(script,/OFFLINE_OPENING_RECONCILED_NOT_SERVER_VERIFIED/);assert.match(script,/if\(formState&&dirty\)throw Error\('미반영 표 변경사항이 있습니다/);});
+
+test('browser smoke test guide is linked and steps are numbered in order',()=>{assert.match(html,/docs\/offline-browser-smoke-test\.md/);for(const n of [1,2,3,4,5])assert.match(html,new RegExp('<h2>'+n+'\\. '));});
