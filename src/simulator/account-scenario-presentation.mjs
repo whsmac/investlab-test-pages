@@ -9,6 +9,7 @@ export function summarizeAccountScenarioResults(comparison){
   reason:result.status==='CALCULATED'?'':result.reason,
   diagnostic:result.status==='CALCULATED'?null:result.diagnostic??null,
   adjustment:result.status==='CALCULATED'?null:result.adjustment??null,
+  adjustmentPreview:result.status==='CALCULATED'?null:result.adjustmentPreview??null,
   finalCash:result.status==='CALCULATED'?result.finalCash:null,
   cashChange:result.status==='CALCULATED'?result.cashChange:null,
   quantityChanges:result.status==='CALCULATED'?result.quantityChanges:[],
