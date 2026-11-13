@@ -88,6 +88,12 @@ function calculate(){
    ranking.textContent='세전 평가총액 1위 ('+(winners.length>1?'공동 '+winners.length+'개':'단독')+'): '+winners.join(', ')+' · '+fmt(bestValue)+' USD | 추가 예상세액 반영 1위 ('+(netWinners.length>1?'공동 '+netWinners.length+'개':'단독')+'): '+netWinners.join(', ')+' · '+fmt(bestNetValue)+' USD · '+(sameWinners?'두 기준의 1위가 같습니다.':'두 기준의 1위가 다릅니다.')+' 세금 반영 금액은 비교용 추정치이며 위험 미반영';
    byId('allStrategySummary').append(table(['비교 항목','계속 보유',...result.scenarios.map(s=>s.name)],[
     ['최종 현금 USD',fmt(result.baseline.final.cash),...result.scenarios.map(s=>fmt(s.final.cash))],
+    ['시작 대비 현금 증감 USD','0',...result.scenarios.map(s=>(s.final.cash-result.baseline.final.cash>0?'+':'')+fmt(s.final.cash-result.baseline.final.cash))],
+    ...['TSLA','SOXL','TQQQ'].map(ticker=>[
+     ticker+' 최종 보유수량 (주)',
+     fmt(result.baseline.final.positions[ticker]?.quantity??0),
+     ...result.scenarios.map(sc=>fmt(sc.final.positions[ticker]?.quantity??0))
+    ]),
     ['최종 평가총액 USD',fmt(result.baseline.terminalValue),...result.scenarios.map(s=>fmt(s.terminalValue))],
     ['보유 대비 차이 USD','—',...result.scenarios.map(s=>(s.deltaVsHold>0?'+':'')+fmt(s.deltaVsHold))],
     ['보유 대비 차이 (%)','—',...result.scenarios.map(s=>result.baseline.terminalValue>0?(s.deltaVsHold>0?'+':'')+(s.deltaVsHold/result.baseline.terminalValue*100).toFixed(2)+'%':'산출 불가')],
