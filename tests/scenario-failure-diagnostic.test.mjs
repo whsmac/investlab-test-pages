@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {diagnoseScenarioFailure as diagnose} from '../src/simulator/scenario-failure-diagnostic.mjs';
+const portfolio={cash:100,positions:{TSLA:{quantity:2,averageCost:50}}};
+test('reports cash shortfall after prior sell',()=>{const r=diagnose({portfolio,trades:[{side:'sell',ticker:'TSLA',quantity:1,price:100},{side:'buy',ticker:'SOXL',quantity:3,price:80}],tradeIndex:1,reason:'insufficient cash'});assert.equal(r.available,200);assert.equal(r.required,240);assert.equal(r.shortfall,40);assert.equal(r.tradeNumber,2)});
+test('reports share shortfall after prior sale',()=>{const r=diagnose({portfolio,trades:[{side:'sell',ticker:'TSLA',quantity:1,price:100},{side:'sell',ticker:'TSLA',quantity:2,price:100}],tradeIndex:1,reason:'insufficient shares'});assert.equal(r.available,1);assert.equal(r.shortfall,1)});
+test('ignores unrelated failures',()=>assert.equal(diagnose({portfolio,trades:[],tradeIndex:0,reason:'other'}),null));
