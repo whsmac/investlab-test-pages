@@ -27,7 +27,7 @@ jobs:
           mkdir -p preview/src
           cp virtual-trade-simulator.html preview/
           cp -R src/simulator src/ledger preview/src/
-          printf '%s\n' 'INVESTLAB TEST preview — run locally using: python3 -m http.server 8765 --directory preview' > preview/README.txt
+          printf '%s\n' 'INVESTLAB TEST preview — unzip, cd into the extracted folder, then run: python3 -m http.server 8765' > preview/README.txt
           test -f preview/src/simulator/virtual-trade-engine.mjs
           test -f preview/src/ledger/scenario-backup.mjs
       - uses: actions/upload-artifact@v4
