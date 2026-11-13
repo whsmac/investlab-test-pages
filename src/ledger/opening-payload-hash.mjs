@@ -31,7 +31,7 @@ export function canonicalOpeningPayload({accountId,requestId,rows}){
    return {assetType,assetCode,delta};
   }
   return {assetType,assetCode,delta,openingCostBasisUsd:normalized(row.openingCostBasisUsd,'cost basis')};
- }).sort((a,b)=>(a.assetType+':'+a.assetCode).localeCompare(b.assetType+':'+b.assetCode,'en'));
+ }).sort((a,b)=>{const x=a.assetType+':'+a.assetCode,y=b.assetType+':'+b.assetCode;return x<y?-1:x>y?1:0;});
  return JSON.stringify({version:1,eventType:'opening',accountId:accountId.toLowerCase(),requestId,rows:normalizedRows});
 }
 export async function openingPayloadSha256(request){
