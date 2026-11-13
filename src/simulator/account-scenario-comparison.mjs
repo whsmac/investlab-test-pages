@@ -14,7 +14,7 @@ export function compareAccountScenarios({saved,accountGroups,scenarios,terminalP
     const result=compareScenarios({cash:opening.usdCash,positions},[scenario],terminalPrices);
     row.baselineValue=result.baseline.terminalValue;
     const item=result.scenarios[0];
-    row.results.push({name:scenario.name,status:'CALCULATED',terminalValue:item.terminalValue,deltaVsHold:item.deltaVsHold,finalCash:item.final.cash,realizedPnL:item.final.realizedPnL??null});
+    const tickers=[...new Set([...Object.keys(positions),...Object.keys(item.final.positions)])].sort();const quantityChanges=tickers.map(ticker=>({ticker,before:positions[ticker]?.quantity??0,after:item.final.positions[ticker]?.quantity??0,change:(item.final.positions[ticker]?.quantity??0)-(positions[ticker]?.quantity??0)})).filter(p=>p.change!==0);row.results.push({name:scenario.name,status:'CALCULATED',terminalValue:item.terminalValue,deltaVsHold:item.deltaVsHold,finalCash:item.final.cash,cashChange:item.final.cash-opening.usdCash,quantityChanges,realizedPnL:item.final.realizedPnL??null});
    }catch(error){row.results.push({name:scenario?.name??'',status:'UNAVAILABLE',reason:String(error.message),tradeIndex:error.tradeIndex??null,ticker:error.ticker??null})}
   }
   return row;
