@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createBrowserSmokeReport} from '../src/ledger/browser-smoke-report.mjs';import {buildTestEvidenceFile} from '../src/ledger/test-evidence-file.mjs';import {compareCombinedTestEvidence as compare} from '../src/ledger/test-evidence-compare.mjs';
+const cases=['NORMAL','QUANTITY','OWNERSHIP_COST','FILE_INTEGRITY'];
+const file=(statuses,ciStatus)=>buildTestEvidenceFile({manualReport:createBrowserSmokeReport({results:cases.map((caseId,i)=>({caseId,status:statuses[i],note:''})),createdAt:'2026-11-13T00:00:00Z'}),ci:{status:ciStatus,reference:'run'},createdAt:'2026-11-13T01:00:00Z'});
+const pass=['PASS','PASS','PASS','PASS'];
+test('manual failure to pass improves',()=>{const r=compare({saved:file(['FAIL','PASS','PASS','PASS'],'success'),current:file(pass,'success')});assert.equal(r.manual.improved,1);assert.equal(r.manual.regressed,0)});
+test('manual pass to fail regresses',()=>assert.equal(compare({saved:file(pass,'success'),current:file(['FAIL','PASS','PASS','PASS'],'success')}).manual.regressed,1));
+test('CI failure to success is marked as manually reported improvement',()=>{const r=compare({saved:file(pass,'failure'),current:file(pass,'success')});assert.equal(r.ci.improved,true);assert.match(r.ci.source,/MANUALLY/);assert.equal(r.canMigrate,false)});
+test('CI success to failure is marked as regression',()=>assert.equal(compare({saved:file(pass,'success'),current:file(pass,'failure')}).ci.regressed,true));
+test('unchanged reports have no changes',()=>{const a=file(pass,'success'),r=compare({saved:a,current:a});assert.equal(r.statusChanged,false);assert.equal(r.manual.changed,0);assert.equal(r.ci.changed,false)});
+test('tampered saved evidence rejected',()=>assert.throws(()=>compare({saved:{...file(pass,'success'),canPost:true},current:file(pass,'success')}),/unsafe/));
