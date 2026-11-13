@@ -22,3 +22,5 @@ test('browser smoke sample requires confirmation and refuses unsaved edits',()=>
 
 test('review pair UI hashes both uploaded files and never claims server authorization',()=>{assert.match(script,/crypto\.subtle\.digest\('SHA-256',bytes\)/);assert.match(script,/createReviewTargetLink\(/);assert.match(script,/validateReviewTargetLink\(/);assert.match(script,/confirmReviewPair/);assert.match(html,/id="previousReviewPair"/);assert.match(html,/id="saveReviewPair"/)});
 test('review pair rejects invalid source evidence and requires explicit confirmation',()=>{assert.match(script,/result\.checks\[0\]\.status==='INVALID'/);assert.match(script,/if\(!\$\('confirmReviewPair'\)\.checked\)throw Error/)});
+
+test('review link UI uses browser SHA-256 and never uploads',()=>{assert.match(script,/crypto\.subtle\.digest\('SHA-256'/);assert.match(script,/createReviewTargetLink\(/);assert.match(script,/validateReviewTargetLink\(/);assert.match(html,/id="reviewLinkConfirmed"/)});
