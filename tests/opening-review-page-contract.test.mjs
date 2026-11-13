@@ -19,3 +19,6 @@ test('one-click review applies table then reconciles and checks final readiness 
 test('browser smoke test guide is linked and steps are numbered in order',()=>{assert.match(html,/docs\/offline-browser-smoke-test\.md/);for(const n of [1,2,3,4,5])assert.match(html,new RegExp('<h2>'+n+'\\. '));});
 
 test('browser smoke sample requires confirmation and refuses unsaved edits',()=>{assert.match(html,/id="loadSmokeSample"/);assert.match(script,/loadSmokeSample'\)\.onclick/);assert.match(script,/window\.confirm\(/);assert.match(script,/if\(formState&&dirty\)/);assert.match(script,/\$\('sample'\)\.click\(\)/);assert.match(script,/\$\('makeTable'\)\.click\(\)/)});
+
+test('review pair UI hashes both uploaded files and never claims server authorization',()=>{assert.match(script,/crypto\.subtle\.digest\('SHA-256',bytes\)/);assert.match(script,/createReviewTargetLink\(/);assert.match(script,/validateReviewTargetLink\(/);assert.match(script,/confirmReviewPair/);assert.match(html,/id="previousReviewPair"/);assert.match(html,/id="saveReviewPair"/)});
+test('review pair rejects invalid source evidence and requires explicit confirmation',()=>{assert.match(script,/result\.checks\[0\]\.status==='INVALID'/);assert.match(script,/if\(!\$\('confirmReviewPair'\)\.checked\)throw Error/)});
