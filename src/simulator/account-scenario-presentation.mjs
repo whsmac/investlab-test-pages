@@ -7,6 +7,7 @@ export function summarizeAccountScenarioResults(comparison){
   terminalValue:result.status==='CALCULATED'?result.terminalValue:null,
   deltaVsHold:result.status==='CALCULATED'?result.deltaVsHold:null,
   reason:result.status==='CALCULATED'?'':result.reason,
+  diagnostic:result.status==='CALCULATED'?null:result.diagnostic??null,
   finalCash:result.status==='CALCULATED'?result.finalCash:null,
   cashChange:result.status==='CALCULATED'?result.cashChange:null,
   quantityChanges:result.status==='CALCULATED'?result.quantityChanges:[],
