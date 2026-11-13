@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {auditOpeningRpcContract} from '../src/ledger/opening-rpc-contract-audit.mjs';
+import {buildOpeningRpcHashPreview} from '../src/ledger/opening-rpc-hash-preview.mjs';
+const sql=readFileSync(new URL('../sql/test-ledger-post-opening-v2-REVIEW-DO-NOT-RUN.sql',import.meta.url),'utf8');
+test('candidate has matching signature, owner lock, server hash and atomic event+legs',async()=>{
+ const id='33333333-3333-4333-8333-333333333333';
+ const preview=await buildOpeningRpcHashPreview({requestId:'open-1',accounts:[{id,name:'TEST',ownerConfirmed:true}],positions:[],cash:[{accountId:id,currency:'USD',balance:'500'}]});
+ const result=auditOpeningRpcContract({sql,preview});
+ assert.deepEqual(result.declared.sort(),result.supplied.sort());
+ assert.match(sql,/extensions\.digest\(convert_to\(v_canonical,'UTF8'\),'sha256'\)/);
+ assert.match(sql,/v_server_hash<>p_payload_hash/);
+ assert.match(sql,/v_existing\.payload_hash<>v_server_hash/);
+ assert.match(sql,/insert into public\.investlab_ledger_events/);
+ assert.match(sql,/insert into public\.investlab_ledger_legs/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/REVIEW ONLY \/ DO NOT EXECUTE/);
+ assert.equal(result.canExecute,false);
+});
