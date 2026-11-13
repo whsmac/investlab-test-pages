@@ -646,4 +646,47 @@ async function refreshFxAndCalculate(){
 }
 byId('calculate').addEventListener('click',refreshFxAndCalculate);
 byId('status').textContent='기준 보유정보와 시작 현금을 확인한 뒤 시나리오 계산을 누르세요.';
+const DRAFT_KEY='investlab_simulator_working_draft_v1';
+let draftTimer=null;
+function saveWorkingDraft(){
+ try{
+  const draft={version:1,savedAt:Date.now(),cash:byId('cash').value,
+   positions:clone(portfolioState.positions),prices:clone(portfolioState.prices),
+   strategies:clone(strategyState),priorTax:byId('priorTax').value,
+   deduction:byId('deduction').value,taxRate:byId('taxRate').value};
+  localStorage.setItem(DRAFT_KEY,JSON.stringify(draft));
+ }catch(error){console.warn('시뮬레이터 임시저장 실패',error);}
+}
+function scheduleWorkingDraft(){
+ clearTimeout(draftTimer);
+ draftTimer=setTimeout(saveWorkingDraft,400);
+}
+function restoreWorkingDraft(){
+ try{
+  const raw=localStorage.getItem(DRAFT_KEY);
+  if(!raw)return;
+  const draft=JSON.parse(raw);
+  if(draft.version!==1||!Array.isArray(draft.positions)||!Array.isArray(draft.prices)||!Array.isArray(draft.strategies))return;
+  if(draft.strategies.length>30||draft.positions.length>300||draft.prices.length>300)return;
+  portfolioState.positions=clone(draft.positions);
+  portfolioState.prices=clone(draft.prices);
+  strategyState=clone(draft.strategies);
+  byId('cash').value=String(draft.cash??'');
+  byId('priorTax').value=String(draft.priorTax??'0');
+  byId('deduction').value=String(draft.deduction??'2,500,000');
+  byId('taxRate').value=String(draft.taxRate??'0.22');
+  renderPortfolio();renderEditor();
+  byId('status').textContent='이 브라우저의 이전 임시 입력을 복원했습니다. 계산 버튼을 눌러 결과를 갱신하세요.';
+ }catch(error){console.warn('시뮬레이터 임시복원 실패',error);}
+}
+restoreWorkingDraft();
+document.addEventListener('input',scheduleWorkingDraft);
+document.addEventListener('change',scheduleWorkingDraft);
+document.addEventListener('click',event=>{
+ const button=event.target instanceof Element?event.target.closest('button'):null;
+ if(button&&['addPrice','addPosition','addTrade','addStrategy','presetRise','presetDip','loadAccountOpening','loadPortfolioPositions','applyPortfolioJson','loadScenario','appendScenario'].includes(button.id))scheduleWorkingDraft();
+ if(button&&button.closest('#strategyEditor'))scheduleWorkingDraft();
+});
+window.addEventListener('pagehide',saveWorkingDraft);
+
 </script></body></html>
