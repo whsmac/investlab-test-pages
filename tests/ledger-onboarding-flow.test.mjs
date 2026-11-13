@@ -16,3 +16,14 @@ test('posting after committed opening preserves cash and shares',()=>{
 test('cannot post before committed opening',()=>assert.throws(()=>preview({...base,proposedEvents:[buy]}),/committed opening/));
 test('client cannot assert ownership',()=>assert.throws(()=>preview({...base,account:{...account,ownerId:uid}}),/owner must come/));
 test('unconfirmed account cannot be onboarded',()=>assert.throws(()=>preview({...base,account:{...account,ownerConfirmed:false}}),/confirmation/));
+
+test('rejects malformed or missing request ID before generating RPC previews',()=>{
+ for(const requestId of [undefined,'','../bad path'])assert.throws(()=>preview({...base,requestId}),/request ID/);
+});
+test('cannot treat arbitrary committed trade as an opening',()=>{
+ assert.throws(()=>preview({...base,committedEvents:[buy],proposedEvents:[buy]}),/committed opening/);
+});
+test('cannot treat another account opening as this account opening',()=>{
+ const other='44444444-4444-4444-8444-444444444444';
+ assert.throws(()=>preview({...base,committedEvents:[{...opening,accountId:other}],proposedEvents:[buy]}),/committed opening/);
+});
