@@ -9,7 +9,8 @@ export function summarizeAccountScenarioResults(comparison){
   reason:result.status==='CALCULATED'?'':result.reason,
   finalCash:result.status==='CALCULATED'?result.finalCash:null,
   cashChange:result.status==='CALCULATED'?result.cashChange:null,
-  quantityChanges:result.status==='CALCULATED'?result.quantityChanges:[]
+  quantityChanges:result.status==='CALCULATED'?result.quantityChanges:[],
+  steps:result.status==='CALCULATED'?result.steps:[]
  })));
  const available=rows.filter(r=>r.status==='CALCULATED');
  const unavailable=rows.length-available.length;
