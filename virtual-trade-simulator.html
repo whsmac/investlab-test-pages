@@ -739,7 +739,7 @@ function validWorkingDraft(d){
  const validSymbol=v=>typeof v==='string'&&v.length<=40;
  if(!d.positions.every(p=>p&&validSymbol(p.ticker)&&Number.isFinite(Number(p.quantity))&&Number(p.quantity)>=0&&Number.isFinite(Number(p.averageCost))&&Number(p.averageCost)>=0))return false;
  if(!d.prices.every(p=>p&&validSymbol(p.ticker)&&Number.isFinite(Number(p.price))&&Number(p.price)>=0))return false;
- if(!d.strategies.every(x=>x&&typeof x.name==='string'&&x.name.length<=200&&Array.isArray(x.trades)&&x.trades.length<=300&&x.trades.every(t=>t&&['buy','sell'].includes(t.side)&&validSymbol(t.ticker)&&Number.isFinite(Number(t.quantity))&&Number(t.quantity)>=0&&Number.isFinite(Number(t.price))&&Number(t.price)>=0)))return false;
+ if(!d.strategies.every(x=>x&&typeof x.name==='string'&&x.name.length<=200&&(x.targetCash===undefined||(x.targetCash!==''&&Number.isFinite(Number(x.targetCash))&&Number(x.targetCash)>=0))&&Array.isArray(x.trades)&&x.trades.length<=300&&x.trades.every(t=>t&&['buy','sell'].includes(t.side)&&validSymbol(t.ticker)&&Number.isFinite(Number(t.quantity))&&Number(t.quantity)>=0&&Number.isFinite(Number(t.price))&&Number(t.price)>=0)))return false;
  return true;
 }
 function applyWorkingDraft(draft){
@@ -767,8 +767,11 @@ function restoreWorkingDraft(){
   const raw=localStorage.getItem(DRAFT_KEY);
   if(!raw)return;
   const draft=JSON.parse(raw);
-  if(draft.version!==1||!Array.isArray(draft.positions)||!Array.isArray(draft.prices)||!Array.isArray(draft.strategies))return;
-  if(draft.strategies.length>30||draft.positions.length>300||draft.prices.length>300)return;
+  // Apply the same validation as manual JSON restore; do not load malformed local data.
+  if(!validWorkingDraft(draft)){
+   byId('draftTransferStatus').textContent='기존 임시저장 데이터 형식에 오류가 있습니다. 자동 복원을 건너뛰었으며 원본 데이터는 삭제하지 않았습니다.';
+   return;
+  }
   portfolioState.positions=clone(draft.positions);
   portfolioState.prices=clone(draft.prices);
   strategyState=clone(draft.strategies);
