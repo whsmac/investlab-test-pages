@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createBrowserSmokeReport} from '../src/ledger/browser-smoke-report.mjs';import {summarizeTestEvidence as summary} from '../src/ledger/test-evidence-summary.mjs';
+const make=(statuses)=>createBrowserSmokeReport({results:['NORMAL','QUANTITY','OWNERSHIP_COST','FILE_INTEGRITY'].map((caseId,i)=>({caseId,status:statuses[i],note:''})),createdAt:'2026-11-13T00:00:00Z'});
+test('CI success with manual not-run remains incomplete',()=>assert.equal(summary({manualReport:make(['NOT_RUN','PASS','PASS','PASS']),ci:{status:'success'}}).status,'TEST_EVIDENCE_INCOMPLETE'));
+test('manual all pass with CI unverified remains incomplete',()=>assert.equal(summary({manualReport:make(['PASS','PASS','PASS','PASS'])}).status,'TEST_EVIDENCE_INCOMPLETE'));
+test('both complete remain offline only',()=>{const r=summary({manualReport:make(['PASS','PASS','PASS','PASS']),ci:{status:'success',reference:'run 203'}});assert.equal(r.status,'OFFLINE_TEST_EVIDENCE_REVIEWED');assert.equal(r.serverVerified,false);assert.equal(r.canMigrate,false);assert.equal(r.ci.source,'MANUALLY_ENTERED_NOT_API_VERIFIED')});
+test('failed manual case blocks completion',()=>assert.equal(summary({manualReport:make(['PASS','FAIL','PASS','PASS']),ci:{status:'success'}}).status,'TEST_EVIDENCE_INCOMPLETE'));
+test('unsafe manual report rejected',()=>assert.throws(()=>summary({manualReport:{...make(['PASS','PASS','PASS','PASS']),canPost:true}}),/unsafe/));
