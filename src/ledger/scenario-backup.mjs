@@ -22,7 +22,7 @@ export function makeScenarioBackup(scenarios,createdAt){
 }
 export function mergeScenarioBackup(current,incoming,{overwrite=false}={}){
  const result=Object.create(null);
- for(const [name,value] of Object.entries(current))Object.defineProperty(result,name,{value,enumerable:true});
+ for(const [name,value] of Object.entries(current))Object.defineProperty(result,name,{value,enumerable:true,configurable:true,writable:true});
  for(const [name,value] of Object.entries(incoming)){
   if(Object.hasOwn(result,name)&&!overwrite)throw Error('같은 이름의 저장 전략이 있습니다: '+name);
   Object.defineProperty(result,name,{value,enumerable:true,configurable:true,writable:true});
