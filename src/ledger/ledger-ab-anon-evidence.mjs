@@ -16,6 +16,8 @@ export function assessLedgerIsolationEvidence(report){
   if(seen.has(c.id))issues.push('duplicate case '+c.id);
   seen.add(c.id);
   if(!RESULT.has(c.result))issues.push('invalid result '+c.id);
+  if(c.result==='NOT_RUN')issues.push('not run '+c.id);
+  if(c.result==='FAIL')issues.push('failed '+c.id);
   if(c.result==='PASS'&&(!c.observed||typeof c.observed!=='string'||!c.observed.trim()))issues.push('missing observed evidence '+c.id);
   if(c.result==='PASS'&&(!c.timestamp||!Number.isFinite(Date.parse(c.timestamp))))issues.push('missing timestamp '+c.id);
   if(c.result==='PASS'&&(!Number.isInteger(c.eventsBefore)||!Number.isInteger(c.eventsAfter)||!Number.isInteger(c.legsBefore)||!Number.isInteger(c.legsAfter)))issues.push('missing before/after counts '+c.id);
