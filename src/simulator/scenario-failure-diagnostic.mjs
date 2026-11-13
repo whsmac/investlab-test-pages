@@ -14,5 +14,5 @@ export function diagnoseScenarioFailure({portfolio,trades,tradeIndex,reason}={})
   const required=trade.quantity*trade.price+(trade.fee??0);
   return {tradeNumber:tradeIndex+1,ticker:trade.ticker,kind:'CASH',required,available:cashAvailable,shortfall:Math.max(0,required-cashAvailable),completedSteps:prior.steps.length,cashBefore:cashAvailable,positionsBefore,completedHistory};
  }
- return {tradeNumber:tradeIndex+1,ticker:trade.ticker,kind:'SHARES',required:trade.quantity,available:sharesAvailable,shortfall:Math.max(0,trade.quantity-sharesAvailable),completedSteps:prior.steps.length,cashBefore:cashAvailable};
+ return {tradeNumber:tradeIndex+1,ticker:trade.ticker,kind:'SHARES',required:trade.quantity,available:sharesAvailable,shortfall:Math.max(0,trade.quantity-sharesAvailable),completedSteps:prior.steps.length,cashBefore:cashAvailable,positionsBefore,completedHistory};
 }
