@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {compareTestFinalReports} from '../src/ledger/test-final-report-compare.mjs';
+const hex='a'.repeat(64);
+const base={format:'INVESTLAB_TEST_FINAL_OFFLINE_REPORT',version:1,createdAt:'2026-11-13T00:00:00Z',readiness:{status:'TEST_REVIEW_INCOMPLETE',checks:[{id:'OPENING',status:'MISSING'},{id:'EVIDENCE',status:'MISSING'},{id:'SERVER',status:'NOT_VERIFIED'},{id:'MIGRATION',status:'NOT_AUTHORIZED'}],serverVerified:false,canMigrate:false,canPost:false,authorization:'NONE'},link:{matched:false,reviewerConfirmed:false,openingDigest:hex,evidenceDigest:hex},status:'FINAL_REVIEW_INCOMPLETE',serverVerified:false,canMigrate:false,canPost:false,authorization:'NONE'};
+test('unchanged report has no improvement',()=>{const r=compareTestFinalReports({previous:base,current:base});assert.equal(r.changed,false);assert.equal(r.canMigrate,false)});
+test('changed offline checks are reported',()=>{const current=structuredClone(base);current.readiness.checks[0].status='INVALID';const r=compareTestFinalReports({previous:base,current});assert.equal(r.rows[0].changed,true)});
+test('unsafe report is rejected before comparison',()=>assert.throws(()=>compareTestFinalReports({previous:{...base,serverVerified:true},current:base}),/unsafe/));
+test('missing report is rejected',()=>assert.throws(()=>compareTestFinalReports({previous:base}),/unsafe/));
