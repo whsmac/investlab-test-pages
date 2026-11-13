@@ -71,9 +71,10 @@ begin
    '{"assetType":'||to_json(x->>'assetType')::text||',"assetCode":'||to_json(x->>'assetCode')::text||
    ',"delta":'||to_json(x->>'delta')::text||
    case when x->>'assetType'='security' then ',"openingCostBasisUsd":'||to_json(x->>'openingCostBasisUsd')::text else '' end||'}',
-   ',' order by (x->>'assetType')||':'||(x->>'assetCode')
+   ',' order by ((x->>'assetType')||':'||(x->>'assetCode')) collate "C"
   )||']}' into v_canonical from jsonb_array_elements(v_rows) x;
  -- pgcrypto digest resolution is deployment-specific; schema qualification must be verified in TEST.
+ -- IMPORTANT: server JSON to_json() escaping, collation and numeric rendering need real PostgreSQL parity tests.
  v_server_hash := encode(extensions.digest(convert_to(v_canonical,'UTF8'),'sha256'),'hex');
  if v_server_hash<>p_payload_hash then raise exception 'Opening payload hash mismatch' using errcode='22023'; end if;
  select * into v_existing from public.investlab_ledger_events e
