@@ -6,7 +6,10 @@ export function summarizeAccountScenarioResults(comparison){
   status:result.status,
   terminalValue:result.status==='CALCULATED'?result.terminalValue:null,
   deltaVsHold:result.status==='CALCULATED'?result.deltaVsHold:null,
-  reason:result.status==='CALCULATED'?'':result.reason
+  reason:result.status==='CALCULATED'?'':result.reason,
+  finalCash:result.status==='CALCULATED'?result.finalCash:null,
+  cashChange:result.status==='CALCULATED'?result.cashChange:null,
+  quantityChanges:result.status==='CALCULATED'?result.quantityChanges:[]
  })));
  const available=rows.filter(r=>r.status==='CALCULATED');
  const unavailable=rows.length-available.length;
