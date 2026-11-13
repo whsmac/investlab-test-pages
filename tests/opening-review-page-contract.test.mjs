@@ -7,7 +7,7 @@ test('unapplied table changes block both review actions',()=>{assert.match(scrip
 test('unsaved table edits block rebuild',()=>assert.match(script,/if\(formState&&dirty\)throw Error/));
 test('no Supabase write, fetch, or database client in review page',()=>{assert.doesNotMatch(script,/\bfetch\s*\(|\.from\s*\(|\.rpc\s*\(/)});
 
-test('review page has five ordered user steps and scrollable result tables',()=>{for(const label of ['1. 보유종목 파일과 계좌 등록','2. 계좌별 수량·원가·현금 입력','3. 검증 및 결과 저장','4. 계좌별 검증 결과','5. 이전 검토 결과 비교'])assert.ok(html.includes(label));assert.match(html,/id="compareChanges" style="overflow-x:auto"/)});
+test('review page has five ordered user steps and scrollable result tables',()=>{for(const label of ['1. 보유종목 파일과 계좌 등록','2. 계좌별 수량·원가·현금 입력','3. 검증 및 결과 저장','4. 이전 검토 결과 비교','5. 계좌별 검증 결과'])assert.ok(html.includes(label));assert.match(html,/id="compareChanges" style="overflow-x:auto"/)});
 test('saved review comparison table renders both loop closures before updating DOM',()=>{assert.match(script,/for\(const d of comparison\.details\)[\s\S]*?tr\.style\.backgroundColor='#fff5e6'\}\}\$\('compareChanges'\)/)});
 
 test('multi-account holdings are never assigned to first account by default',()=>{assert.match(script,/accounts\.length===1\?source\.holdings\.map/);assert.match(script,/accounts\.length>1/);assert.match(script,/if\(!mapped\.allocations\.length\)throw Error/)});
