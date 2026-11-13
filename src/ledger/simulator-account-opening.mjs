@@ -1,6 +1,6 @@
 // Offline review-file bridge for a single account's simulator starting positions.
 import {prepareOpeningLedgerHandoff} from './opening-ledger-handoff.mjs';
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function extractSimulatorAccountOpening({saved,accountId}={}){
  if(!saved||saved.format!=='INVESTLAB_TEST_OPENING_REVIEW'||saved.version!==1||saved.reviewKind!=='ledger-reconciliation'||saved.serverVerified!==false||saved.canPost!==false||saved.canMigrate!==false||saved.authorization!=='NONE')throw Error('지원하지 않는 초기잔고 검토 파일');
  if(!UUID.test(accountId??''))throw Error('계좌를 선택하세요');
