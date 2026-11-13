@@ -17,3 +17,22 @@ export function extractSimulatorAccountOpening({saved,accountId}={}){
  if(!Number.isFinite(usdCash)||!positions.every(p=>Number.isFinite(p.quantity)&&Number.isFinite(p.averageCost)))throw Error('유효하지 않은 금액');
  return {accountId:id,accountName:account.name,positions,usdCash,source:'USER_SUPPLIED_OFFLINE_LEDGER_REVIEW',serverVerified:false,canPost:false,canMigrate:false};
 }
+
+export function extractSimulatorCombinedOpening({saved,accountIds}={}){
+ if(!Array.isArray(accountIds)||!accountIds.length||new Set(accountIds.map(x=>String(x).toLowerCase())).size!==accountIds.length)throw Error('중복 없는 계좌를 하나 이상 선택하세요');
+ const selected=accountIds.map(accountId=>extractSimulatorAccountOpening({saved,accountId}));
+ const combined=new Map();
+ let usdCash=0;
+ for(const account of selected){
+  usdCash+=account.usdCash;
+  for(const p of account.positions){
+   const previous=combined.get(p.ticker)??{ticker:p.ticker,quantity:0,totalCost:0};
+   previous.quantity+=p.quantity;
+   previous.totalCost+=p.quantity*p.averageCost;
+   combined.set(p.ticker,previous);
+  }
+ }
+ const positions=[...combined.values()].sort((a,b)=>a.ticker.localeCompare(b.ticker)).map(p=>({ticker:p.ticker,quantity:p.quantity,averageCost:p.totalCost/p.quantity}));
+ if(!Number.isFinite(usdCash)||positions.some(p=>!Number.isFinite(p.averageCost)||!Number.isFinite(p.quantity)))throw Error('합산 금액이 유효하지 않습니다');
+ return {accountIds:selected.map(a=>a.accountId),accountNames:selected.map(a=>a.accountName),positions,usdCash,source:'USER_SUPPLIED_OFFLINE_LEDGER_REVIEW',serverVerified:false,canPost:false,canMigrate:false};
+}
