@@ -19,11 +19,11 @@ import {simulateTrades} from './src/simulator/virtual-trade-engine.mjs';
 import {estimateOverseasStockTax} from './src/simulator/overseas-stock-tax.mjs';
 import {readManagedSymbols} from './src/simulator/managed-symbols.mjs';
 import {readSavedPortfolioQuotes} from './src/simulator/shared-market-snapshot.mjs';
-import {readPortfolioPositions,readPortfolioUsdCash} from './src/simulator/portfolio-positions.mjs';
+import {readPortfolioSimulatorSnapshot} from './src/simulator/portfolio-snapshot.mjs';
 const byId=id=>document.getElementById(id);
 let managedSymbols=[];
 function refreshManagedSymbols(){
-  managedSymbols=readManagedSymbols(window.localStorage);
+  managedSymbols=readPortfolioSimulatorSnapshot(window.localStorage).symbols;
   const saved=readSavedPortfolioQuotes(window.localStorage);
   byId('savedQuoteStatus').textContent=saved.length
     ? '기존 포트폴리오 저장 주가 '+saved.length+'개 확인 (실시간 여부 미확인 · 최종 가정주가에 자동 적용하지 않음): '+saved.map(q=>q.ticker+' '+Number(q.price).toLocaleString('ko-KR')).join(' · ')
@@ -265,8 +265,9 @@ byId('applyPortfolioJson').addEventListener('click',()=>{
 });
 renderPortfolio();
 function loadPortfolioPositions(){
- const positions=readPortfolioPositions(window.localStorage);
- const sourceCash=readPortfolioUsdCash(window.localStorage);
+ const snapshot=readPortfolioSimulatorSnapshot(window.localStorage);
+ const positions=snapshot.positions;
+ const sourceCash=snapshot.usdCash;
  if(sourceCash!==null){byId('cash').value=String(sourceCash);}
  if(!positions.length){
   updateInitialValuation();
