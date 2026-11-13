@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {preparePortfolioAccountBridge as bridge} from '../src/ledger/portfolio-account-bridge.mjs';
+const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
+const holdings=[{symbol:'TSLA',shares:3,avg_cost:100},{symbol:'USD',shares:2,avg_cost:40},{symbol:'USD-CASH',shares:500,avg_cost:1}];
+const storage=rows=>({getItem:key=>key==='investlab_holdings'?JSON.stringify(rows):null});
+const accounts=[{id:a,name:'ISA',ownerConfirmed:true},{id:b,name:'연금',ownerConfirmed:true}];
+const allocations=[{accountId:a,ticker:'TSLA',quantity:'1'},{accountId:b,ticker:'TSLA',quantity:'2'},{accountId:a,ticker:'USD',quantity:'2'}];
+const costConfirmations=[{accountId:a,ticker:'TSLA',confirmedAverageCostUsd:'100',ownerVerified:true},{accountId:b,ticker:'TSLA',confirmedAverageCostUsd:'100',ownerVerified:true},{accountId:a,ticker:'USD',confirmedAverageCostUsd:'40',ownerVerified:true}];
+test('explicit allocation and costs produce offline reconciled ledger opening',()=>{const r=bridge({storage:storage(holdings),accounts,allocations,cash:[{accountId:a,currency:'USD',balance:'500'}],costConfirmations});assert.equal(r.handoff.status,'OFFLINE_OPENING_RECONCILED_NOT_SERVER_VERIFIED');assert.equal(r.sourceUsdCash,500);assert.equal(r.handoff.comparison.differences.length,0);assert.equal(r.canPost,false)});
+test('no allocation never guesses account',()=>{const r=bridge({storage:storage(holdings),accounts});assert.equal(r.handoff.status,'OPENING_REVIEW_REQUIRED');assert.equal(r.handoff.events.length,0)});
+test('cash never silently assigned to an account',()=>{const r=bridge({storage:storage(holdings),accounts,allocations,costConfirmations});assert.equal(r.handoff.cash.length,0);assert.equal(r.sourceUsdCash,500)});
+test('invalid holding must not be silently omitted',()=>assert.throws(()=>bridge({storage:storage([...holdings,{symbol:'SOXL',shares:'bad',avg_cost:20}]),accounts}),/manual review/));
+test('USD security retained separately from USD-CASH',()=>{const r=bridge({storage:storage(holdings),accounts});assert.equal(r.exportData.holdings.some(x=>x.symbol==='USD'),true);assert.equal(r.exportData.holdings.some(x=>x.symbol==='USD-CASH'),false)});
