@@ -110,11 +110,11 @@ function calculate(){
    if(comparisonTable){
     comparisonTable.classList.add('strategy-overview-table');
     const valueRows=[...comparisonTable.querySelectorAll('tr')];
-    for(const rowIndex of [3,4]){
+    for(const rowIndex of [7,8]){
      const row=valueRows[rowIndex];
      if(!row)continue;
      [...row.querySelectorAll('td')].slice(2).forEach((cell,i)=>{
-      const value=rowIndex===3?result.scenarios[i]?.deltaVsHold:result.baseline.terminalValue>0?result.scenarios[i]?.deltaVsHold/result.baseline.terminalValue:NaN;
+      const value=rowIndex===7?result.scenarios[i]?.deltaVsHold:result.baseline.terminalValue>0?result.scenarios[i]?.deltaVsHold/result.baseline.terminalValue:NaN;
       if(Number.isFinite(value)&&value!==0)cell.classList.add(value>0?'positive':'negative');
      });
     }
