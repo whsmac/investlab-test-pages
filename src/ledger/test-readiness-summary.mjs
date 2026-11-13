@@ -4,7 +4,7 @@ function checkFile(id,file,validate,readyStatus){
  if(file===null||file===undefined)return {id,status:'MISSING',detail:id==='OPENING'?'초기잔고 최종 점검 JSON 파일을 선택하세요':'종합 시험 증빙 JSON 파일을 선택하세요'};
  try{
   const value=validate(file);
-  return {id,status:value.review?.status===readyStatus||value.summary?.status===readyStatus?'READY':'BLOCKED',detail:value.review?.status??value.summary?.status??'검토 상태 확인 필요',createdAt:value.createdAt??null};
+  return {id,status:value.status===readyStatus||value.review?.status===readyStatus||value.summary?.status===readyStatus?'READY':'BLOCKED',detail:value.status??value.review?.status??value.summary?.status??'검토 상태 확인 필요',createdAt:value.createdAt??null};
  }catch(e){return {id,status:'INVALID',detail:'파일 형식 또는 내부 일관성 검증 실패: '+String(e.message??e).slice(0,250)}}
 }
 export function summarizeTestReadiness({openingFile,evidenceFile}={}){
