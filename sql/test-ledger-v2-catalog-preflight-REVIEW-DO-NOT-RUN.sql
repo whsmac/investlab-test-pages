@@ -50,9 +50,11 @@ begin
    if v_role='anon' and v_has_exec then v_missing:=array_append(v_missing,'anon can execute opening RPC'); end if;
    if v_role='authenticated' and not v_has_exec then v_missing:=array_append(v_missing,'authenticated cannot execute opening RPC'); end if;
   end loop;
-  if pg_catalog.has_function_privilege('public',v_function_oid,'EXECUTE') then
-   v_missing:=array_append(v_missing,'PUBLIC can execute opening RPC');
-  end if;
+  if exists(
+   select 1 from pg_catalog.pg_proc p,
+    lateral pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f',p.proowner))) acl
+   where p.oid=v_function_oid and acl.grantee=0 and acl.privilege_type='EXECUTE'
+  ) then v_missing:=array_append(v_missing,'PUBLIC can execute opening RPC'); end if;
  end if;
  if array_length(v_missing,1)>0 then
   raise notice 'TEST preflight NOT READY: %',array_to_string(v_missing,'; ');
