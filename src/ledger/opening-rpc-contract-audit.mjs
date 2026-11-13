@@ -12,7 +12,7 @@ export function auditOpeningRpcContract({sql,preview}){
  const unexpected=declared.filter(k=>!supplied.includes(k));
  const blockers=[];
  if(!/\bpayload_hash\b/i.test(sql))blockers.push('missing stored payload hash');
- if(!/pg_catalog\.digest\s*\(/i.test(sql))blockers.push('missing independent server-side SHA-256');
+ if(!/(?:pg_catalog|extensions)\.digest\s*\(/i.test(sql))blockers.push('missing independent server-side SHA-256');
  if(!/\bfor\s+update\b/i.test(sql))blockers.push('missing account row lock');
  if(!/\bauth\.uid\s*\(/i.test(sql))blockers.push('missing authenticated owner');
  if(/raise\s+exception\s+'BLOCKED:/i.test(sql))blockers.push('explicit fail-closed SQL blocker');
