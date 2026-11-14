@@ -1,6 +1,6 @@
 // Read-only bridge: legacy holdings export -> opening REVIEW, never committed ledger.
 import {mapLegacyHoldingsToOpening} from './legacy-holdings-map.mjs';
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function previewLegacyHoldingsForAccount({exportData,accountId}={}){
  if(!exportData||typeof exportData!=='object'||Array.isArray(exportData))throw Error('invalid export');
  if(exportData.format!=='INVESTLAB_LEGACY_HOLDINGS_JSON'||exportData.version!==1)throw Error('unsupported legacy export');
