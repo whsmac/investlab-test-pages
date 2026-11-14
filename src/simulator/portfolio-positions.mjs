@@ -1,5 +1,5 @@
 // Snapshot the original INVESTLAB portfolio for simulation; never write to storage.
-const validTicker=t=>/^[A-Z0-9][A-Z0-9.-]{0,14}$/.test(t)&&t!=='USD'&&t!=='USD-CASH';
+const validTicker=t=>/^[A-Z0-9][A-Z0-9.-]{0,14}$/.test(t)&&t!=='USD-CASH';
 export function extractPortfolioPositions(holdings){
  if(!Array.isArray(holdings))return [];
  const positions=new Map();

@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {reviewSplitLedgerDiscrepancies as review} from '../src/ledger/split-ledger-discrepancy-review.mjs';
+const u='11111111-1111-4111-8111-111111111111',a='33333333-3333-4333-8333-333333333333';
+const base={sessionUserId:u,accounts:[{id:a,ownerId:u,name:'ISA'}],exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'3',avg_cost:'200'}]},allocations:[{ticker:'TSLA',accountId:a,quantity:'3'}]};
+test('unreviewed discrepancy stays incomplete',()=>{const r=review(base);assert.equal(r.pendingCount,1);assert.equal(r.canImport,false);});
+test('valid note documents discrepancy but never approves',()=>{const r=review({...base,decisions:[{ticker:'TSLA',accountId:a,reason:'CHECK_TRADE_HISTORY',note:'거래내역 대조 필요'}]});assert.equal(r.reviewedCount,1);assert.equal(r.canApprove,false);});
+test('invalid note and unknown account blocked',()=>{assert.throws(()=>review({...base,decisions:[{ticker:'TSLA',accountId:a,reason:'CHECK_ACCOUNT',note:'x'}]}),/invalid reason/);assert.throws(()=>review({...base,decisions:[{ticker:'TSLA',accountId:'44444444-4444-4444-8444-444444444444',reason:'CHECK_ACCOUNT',note:'계좌 확인 필요'}]}),/unknown/);});
+test('duplicate decision blocked',()=>{const d={ticker:'TSLA',accountId:a,reason:'CHECK_ACCOUNT',note:'계좌 확인 필요'};assert.throws(()=>review({...base,decisions:[d,d]}),/duplicate/);});

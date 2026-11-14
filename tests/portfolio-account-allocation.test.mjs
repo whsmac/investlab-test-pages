@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {allocatePortfolioOpening as allocate} from '../src/ledger/portfolio-account-allocation.mjs';
+const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
+const exportData={format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'3',avg_cost:'100'},{symbol:'USD',shares:'2',avg_cost:'40'}]};
+const accounts=[{id:a,name:'연금',ownerConfirmed:true},{id:b,name:'ISA',ownerConfirmed:true}];
+const allocations=[{ticker:'TSLA',accountId:a,quantity:'1'},{ticker:'TSLA',accountId:b,quantity:'2'},{ticker:'USD',accountId:b,quantity:'2'}];
+test('split holdings across accounts with explicit USD and KRW cash',()=>{const r=allocate({exportData,accounts,allocations,cash:[{accountId:a,currency:'KRW',balance:'10000'},{accountId:b,currency:'USD',balance:'50'}]});assert.equal(r.status,'OFFLINE_PLAN_VALIDATED_NOT_SERVER_VERIFIED');assert.equal(r.openingRows.length,5);assert.equal(r.canMigrate,false)});
+test('missing allocation blocks readiness',()=>{const r=allocate({exportData,accounts,allocations:allocations.slice(0,2)});assert.equal(r.status,'ALLOCATION_MISMATCH_REVIEW_REQUIRED')});
+test('over-allocation blocks readiness',()=>{const r=allocate({exportData,accounts,allocations:[{...allocations[0],quantity:'9'},...allocations.slice(1)]});assert.equal(r.status,'ALLOCATION_MISMATCH_REVIEW_REQUIRED')});
+test('duplicate account ticker blocked',()=>assert.throws(()=>allocate({exportData,accounts,allocations:[...allocations,allocations[0]]}),/duplicate/));
+test('unknown account blocked',()=>assert.throws(()=>allocate({exportData,accounts,allocations:[{...allocations[0],accountId:'33333333-3333-4333-8333-333333333333'},...allocations.slice(1)]}),/unknown/));
+test('unconfirmed ownership requires review',()=>{const r=allocate({exportData,accounts:[{...accounts[0],ownerConfirmed:false},accounts[1]],allocations});assert.equal(r.status,'REVIEW_REQUIRED')});

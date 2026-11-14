@@ -1,0 +1,28 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST 계좌별 잔고 대조</title><style>body{font:16px system-ui,sans-serif;max-width:1050px;margin:32px auto;padding:0 16px;line-height:1.5}textarea{width:100%;min-height:180px;box-sizing:border-box;font:13px monospace}button{padding:12px 18px;margin:10px 8px 10px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #bbb;padding:8px;text-align:left;overflow-wrap:anywhere}.warn{color:#b42318}.ok{color:#067647}small{color:#555}</style></head><body>
+<h1>계좌별 잔고 대조 <small>TEST · 오프라인 전용</small></h1>
+<p>기존 포트폴리오의 계좌별 보유종목·현금잔고와 거래 원장 이벤트를 비교합니다. 모든 처리는 브라우저 내부에서 이루어지며 업로드·DB 저장은 없습니다.</p>
+<section><h2>기존 포트폴리오 가져오기</h2><p>동일 사이트의 보유종목 저장소를 읽거나, 다른 주소의 대시보드에서 내보낸 JSON 파일을 선택할 수 있습니다. 계좌 ID는 직접 지정해야 하며 현금·거래 이벤트는 자동으로 생성하지 않습니다.</p><label for="account">대상 계좌 UUID</label> <input id="account" type="text" size="38" placeholder="계좌 UUID"><div><button id="local" type="button">현재 사이트 보유종목 읽기</button> <input id="exportFile" type="file" accept=".json,application/json" aria-label="기존 보유종목 JSON 파일"></div></section><label for="payload">비교 입력 JSON (현금 및 원장 이벤트 별도 입력)</label><textarea id="payload" spellcheck="false" placeholder='{"positions":[],"cash":[],"events":[]}'></textarea>
+<div><button id="sample" type="button">예시 입력</button><button id="run" type="button">대조 실행</button><button id="download" type="button" disabled>결과 JSON 저장</button></div>
+<p id="status" role="status"></p><div id="results"></div>
+<p><small>이 화면은 실제 서버의 계좌 소유권, RLS, 원장 완전성 또는 마이그레이션 가능 여부를 검증하지 않습니다. 실제 자료에 비밀번호나 인증 토큰을 포함하지 마세요.</small></p>
+<script type="module">
+import {reconcilePortfolioLedger} from './src/ledger/portfolio-ledger-reconcile.mjs';
+import {serializeLegacyHoldingsExport} from './src/ledger/legacy-holdings-export.mjs';
+import {importPortfolioExportForReconciliation} from './src/ledger/portfolio-reconcile-import.mjs';
+const $=id=>document.getElementById(id);let last=null;
+function applyExport(text){const incoming=importPortfolioExportForReconciliation(text,$('account').value.trim());let current={};try{current=JSON.parse($('payload').value||'{}')}catch{throw Error('현재 비교 JSON이 올바르지 않습니다')};if(!current||typeof current!=='object'||Array.isArray(current))throw Error('비교 JSON 객체 필요');$('payload').value=JSON.stringify({positions:incoming.positions,cash:Array.isArray(current.cash)?current.cash:[],events:Array.isArray(current.events)?current.events:[]},null,2);last=null;$('download').disabled=true;$('results').replaceChildren();$('status').textContent='보유종목 '+incoming.positions.length+'개 불러옴 · 현금 및 원장 이벤트는 별도 확인 필요';$('status').className='';}
+$('local').onclick=()=>{try{const raw=JSON.parse(localStorage.getItem('investlab_holdings')||'[]');applyExport(serializeLegacyHoldingsExport(raw))}catch(e){$('status').textContent='불러오기 중단: '+e.message;$('status').className='warn'}};
+$('exportFile').onchange=async()=>{try{const file=$('exportFile').files?.[0];if(!file)return;if(file.size>1048576)throw Error('파일 크기는 1MiB 이하여야 합니다');applyExport(await file.text())}catch(e){$('status').textContent='파일 불러오기 중단: '+e.message;$('status').className='warn'}finally{$('exportFile').value=''}};
+const example={positions:[{accountId:'11111111-1111-4111-8111-111111111111',ticker:'TSLA',quantity:'3',averageCostUsd:'100'}],cash:[{accountId:'11111111-1111-4111-8111-111111111111',currency:'USD',balance:'500'}],events:[{id:'opening-example',accountId:'11111111-1111-4111-8111-111111111111',requestId:'opening-1',type:'opening',legs:[{assetType:'security',assetCode:'TSLA',delta:'3'},{assetType:'cash',assetCode:'USD',delta:'500'}]}]};
+$('sample').onclick=()=>{$('payload').value=JSON.stringify(example,null,2)};
+$('run').onclick=()=>{last=null;$('download').disabled=true;$('results').replaceChildren();try{
+const text=$('payload').value;if(new TextEncoder().encode(text).length>1048576)throw Error('JSON 입력은 최대 1MiB입니다');
+const input=JSON.parse(text);last=reconcilePortfolioLedger(input);
+$('status').textContent=last.status==='MISMATCH_REVIEW_REQUIRED'?'잔고 불일치: '+last.differences.length+'건':'수량·현금잔고 일치 (오프라인 계산 기준)';
+$('status').className=last.differences.length?'warn':'ok';
+const p=document.createElement('p');p.textContent='비교 자산 '+last.comparedAssets+'개 · 불일치 '+last.differences.length+'개';$('results').append(p);
+if(last.differences.length){const table=document.createElement('table');const head=document.createElement('tr');for(const name of ['계좌 / 자산','포트폴리오','원장','차이 (원장−포트폴리오)']){const th=document.createElement('th');th.textContent=name;head.append(th)}table.append(head);for(const row of last.differences){const tr=document.createElement('tr');for(const key of ['accountAsset','portfolio','ledger','delta']){const td=document.createElement('td');td.textContent=row[key];tr.append(td)}table.append(tr)}$('results').append(table)}
+$('download').disabled=false;
+}catch(e){$('status').textContent='입력 검증 실패: '+e.message;$('status').className='warn';}};
+$('download').onclick=()=>{if(!last)return;const blob=new Blob([JSON.stringify({format:'INVESTLAB_TEST_PORTFOLIO_LEDGER_RECONCILIATION_V1',version:1,...last},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='investlab-test-ledger-reconciliation.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+</script></body></html>

@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {assessSqlContract} from '../src/ledger/sql-contract-review.mjs';
+const migrationSql=readFileSync(new URL('../sql/test-ledger-v1-five-table-CONTRACT-DO-NOT-RUN.sql',import.meta.url),'utf8');
+const auditSql=readFileSync(new URL('../sql/test-ledger-v1-five-table-audit-READONLY.sql',import.meta.url),'utf8');
+test('actual candidate migration and audit agree on five tables and v1 RPC',()=>{const r=assessSqlContract({migrationSql,auditSql});assert.equal(r.status,'STATIC_CONTRACT_ALIGNED_NOT_DEPLOYABLE');assert.equal(r.issues.length,0);assert.equal(r.canExecuteSql,false)});
+test('candidate has forced RLS on every personal table',()=>{for(const table of ['investlab_accounts','investlab_ledger_events','investlab_ledger_legs','investlab_personal_symbols','investlab_personal_scenarios_v2'])assert.match(migrationSql,new RegExp('alter table public\\.'+table+' force row level security;'))});
+test('candidate retains read-only grants for new personal data tables',()=>{assert.match(migrationSql,/grant select on public\.investlab_personal_symbols,public\.investlab_personal_scenarios_v2 to authenticated;/);assert.doesNotMatch(migrationSql,/grant (?:all|insert|update|delete) on public\.investlab_personal_symbols/i)});
+test('audit remains a SELECT-only catalog query',()=>{assert.match(auditSql,/select jsonb_build_object/);assert.doesNotMatch(auditSql,/\b(?:create|alter|drop|insert|update|delete|truncate)\s+(?:table|function|into|public\.)/i)});

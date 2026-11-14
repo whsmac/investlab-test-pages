@@ -1,1 +1,30 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST</title><style>body{font-family:system-ui,sans-serif;max-width:680px;margin:4rem auto;padding:0 1rem;line-height:1.8}</style></head><body><h1>INVESTLAB TEST</h1><p>GitHub Pages TEST 전용. 운영 사이트와 분리되어 있습니다.</p><p><a href="./shared-data.html">공유 데이터 조회 (TEST Supabase)</a></p><p><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터 (TEST · 로컬 데이터)</a></p><p>기업 6개 · 주가 4,938건 · 분기 재무 0건은 사전 확인 수치로, 실제 값은 달라질 수 있습니다.</p><p>공개용 Supabase 키만 사용하고 비밀키나 비밀번호를 소스에 저장하지 마세요.</p></body></html>
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INVESTLAB TEST | 홈</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#0b1020;color:#edf2ff}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1040px;margin:auto;padding:30px 18px 70px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #2a3550;padding-bottom:20px}
+.brand{font-size:24px;font-weight:800}.brand span{color:#7ca7ff}.tag{color:#f5d98b;font-size:13px}
+h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:1.65}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px}
+.card{display:block;background:#141b2d;border:1px solid #2a3550;border-radius:15px;padding:23px;color:inherit;text-decoration:none}
+.card[href]:hover,.card[href]:focus-visible{border-color:#7ca7ff;outline:2px solid #7ca7ff;outline-offset:2px}
+.card h2{font-size:19px;margin:0 0 10px}.card p{margin:0 0 15px;font-size:14px}
+.state{font-size:12px;color:#42d3a5}.pending{color:#f5d98b}
+.notice{margin-top:24px;border:1px solid #67582a;background:#292516;color:#f5d98b;border-radius:12px;padding:16px;font-size:13px;line-height:1.7}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.wrap{padding:20px 14px 50px}}
+</style></head>
+<body><main class="wrap">
+<header><div class="brand">INVEST<span>LAB</span></div><div class="tag">TEST ONLY · GitHub Pages</div></header>
+<h1>투자 분석 대시보드</h1>
+<p>기능별 테스트 화면으로 이동합니다. 공유 데이터는 TEST Supabase를 사용하며, 가상매매 시뮬레이터는 현재 로컬 테스트 기능입니다.</p>
+<section class="grid" aria-label="기능 메뉴">
+<a class="card" href="./shared-data.html"><h2>기업 투자 분석</h2><p>6개 기업의 주가·분기 재무 관측값 조회 및 Supabase 로그인</p><span class="state">● TEST 조회 검증 완료</span></a>
+<a class="card" href="./virtual-trade-simulator.html"><h2>가상 매매 시뮬레이터</h2><p>매수·매도 시나리오 및 가상 포트폴리오 결과 확인</p><span class="state pending">● 로컬 데이터 기반 · 공유 동기화 미검증</span></a>
+<a class="card" href="./test-my-portfolio-ledger.html"><h2>My Portfolio · 통합 원장 미리보기</h2><p>계좌별 보유종목과 현금잔고를 하나의 거래 원장에서 계산하는 TEST 화면</p><span class="state pending">● 예시 JSON 기반 · 오프라인 전용</span></a>\n<a class="card" href="./portfolio-connection-check.html"><h2>내 투자 포트폴리오</h2><p>현재 사이트의 보유·관심·거래이력 종목 저장 상태를 읽기 전용으로 확인</p><span class="state pending">● 저장소 진단 기능 · 통합 연결 전</span></a>
+<a class="card" href="./test-portfolio-account-allocation.html"><h2>계좌별 초기잔고 배정</h2><p>기존 보유종목을 계좌별로 배정하고 USD·KRW 현금잔고를 검토</p><span class="state pending">● 오프라인 검증 전용</span></a>
+<a class="card" href="./test-portfolio-ledger-reconcile.html"><h2>통합 거래 원장 · 잔고 대조</h2><p>계좌별 포트폴리오와 원장 계산 결과를 오프라인으로 비교하고 JSON 보고서 저장</p><span class="state pending">● 오프라인 검증 전용 · 서버 연동 전</span></a>
+</section>
+<div class="notice">안전 안내: 이 사이트는 TEST 전용입니다. 운영 데이터 변경이나 실제 주문 기능은 제공하지 않습니다. Supabase service_role 키 또는 비밀번호를 소스코드에 저장하지 마세요. 공유 데이터 CSV 가져오기 화면은 아직 배포되지 않았습니다.</div>
+</main></body></html>

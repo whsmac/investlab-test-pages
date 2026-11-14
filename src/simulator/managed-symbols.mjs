@@ -16,7 +16,7 @@ export function collectManagedSymbols({holdings=[],watchlist=[],past=[]}={}) {
     if(!Array.isArray(items))continue;
     for(const item of items){
       const code=symbol(item);
-      if(!valid(code)||code==='USD'||code==='USD-CASH')continue;
+      if(!valid(code)||code==='USD-CASH')continue;
       if(!found.has(code))found.set(code,new Set());
       found.get(code).add(category);
     }

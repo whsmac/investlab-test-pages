@@ -1,0 +1,37 @@
+name: TEST simulator preview package (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'virtual-trade-simulator.html'
+      - 'tests/simulator-comparison-ui-contract.test.mjs'
+      - 'tests/simulator-pilot-gates.test.mjs'
+      - 'src/simulator/**'
+      - 'src/ledger/scenario-backup.mjs'
+      - '.github/workflows/test-simulator-preview-package.yml'
+  workflow_dispatch:
+jobs:
+  package:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run simulator regression tests
+        run: node --test tests/scenario-backup.test.mjs tests/portfolio-snapshot.test.mjs tests/portfolio-positions.test.mjs tests/account-scenario-comparison.test.mjs tests/simulator-comparison-ui-contract.test.mjs tests/simulator-pilot-gates.test.mjs
+      - name: Assemble browser preview files
+        run: |
+          mkdir -p preview/src
+          cp virtual-trade-simulator.html preview/
+          cp -R src/simulator src/ledger preview/src/
+          printf '%s\n' 'INVESTLAB TEST preview — unzip, cd into the extracted folder, then run: python3 -m http.server 8765' > preview/README.txt
+          test -f preview/src/simulator/virtual-trade-engine.mjs
+          test -f preview/src/ledger/scenario-backup.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-simulator-preview
+          path: preview/
+          retention-days: 7

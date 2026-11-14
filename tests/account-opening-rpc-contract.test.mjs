@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {validateAccountOnboardingRequest,validateOpeningRpcPreview} from '../src/ledger/account-opening-rpc-contract.mjs';
+const id='11111111-1111-4111-8111-111111111111';
+const value={requestId:'open-1',accounts:[{id,name:'TEST',ownerConfirmed:true}],positions:[{accountId:id,ticker:'TSLA',quantity:'2',averageCostUsd:'100'}],cash:[{accountId:id,currency:'USD',balance:'500'}]};
+test('account onboarding normalizes name but cannot execute',()=>{const r=validateAccountOnboardingRequest({requestId:'abc-1',name:' TEST '});assert.equal(r.name,'TEST');assert.equal(r.canExecute,false)});
+test('client-provided owner rejected',()=>assert.throws(()=>validateAccountOnboardingRequest({requestId:'abc',name:'test',userId:id}),/owner/));
+test('opening preview is offline only',()=>{const r=validateOpeningRpcPreview(value);assert.equal(r.rows.length,2);assert.equal(r.canExecute,false)});
+test('opening request cannot span accounts',()=>assert.throws(()=>validateOpeningRpcPreview({...value,accounts:[...value.accounts,{id:'22222222-2222-4222-8222-222222222222',name:'other',ownerConfirmed:true}]}),/exactly one/));
+test('opening owner not confirmed rejected',()=>assert.throws(()=>validateOpeningRpcPreview({...value,accounts:[{id,name:'TEST',ownerConfirmed:false}]}),/manual review/));
+test('malformed request id rejected',()=>assert.throws(()=>validateOpeningRpcPreview({...value,requestId:'../bad path'}),/request ID/));

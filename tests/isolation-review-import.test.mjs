@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {parseIsolationReviewFile} from '../src/ledger/isolation-review-import.mjs';
+import {ISOLATION_CASES} from '../src/ledger/isolation-evidence-review.mjs';
+const make=()=>({format:'INVESTLAB_TEST_ISOLATION_REVIEW_V1',status:'MANUAL_EVIDENCE_RECORDED',serverVerified:true,cases:ISOLATION_CASES.map(c=>({...c,actual:c.expected,status:'PASS'}))});
+test('valid manual file does not establish server verification',()=>{const r=parseIsolationReviewFile(JSON.stringify(make()));assert.equal(r.assessment.status,'MANUAL_EVIDENCE_RECORDED');assert.equal(r.serverVerified,false);assert.equal(r.canMigrate,false)});
+test('duplicate cases rejected',()=>{const x=make();x.cases[1]={...x.cases[0]};assert.throws(()=>parseIsolationReviewFile(x),/duplicate/)});
+test('altered expected result rejected',()=>{const x=make();x.cases[0].expected='DENY';assert.throws(()=>parseIsolationReviewFile(x),/expected/)});
+test('unknown case rejected',()=>{const x=make();x.cases[0].id='fake';assert.throws(()=>parseIsolationReviewFile(x),/unknown/)});
+test('invalid observation rejected',()=>{const x=make();x.cases[0].actual='PASS';assert.throws(()=>parseIsolationReviewFile(x),/invalid actual/)});
+test('missing case rejected',()=>{const x=make();x.cases.pop();assert.throws(()=>parseIsolationReviewFile(x),/count/)});
