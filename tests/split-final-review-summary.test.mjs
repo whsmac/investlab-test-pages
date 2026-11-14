@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {buildSplitFinalReviewSummary as build} from '../src/ledger/split-final-review-summary.mjs';
+const u='11111111-1111-4111-8111-111111111111',a='33333333-3333-4333-8333-333333333333';
+const base={sessionUserId:u,accounts:[{id:a,ownerId:u,name:'ISA'}],exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'3',avg_cost:'200'}]},allocations:[{ticker:'TSLA',accountId:a,quantity:'3'}]};
+test('complete allocation still flags ledger mismatch',()=>{const r=build(base);assert.equal(r.items[0].status,'COMPLETE');assert.equal(r.items[1].status,'DIFFERENCES_FOUND');assert.equal(r.canApprove,false);});
+test('notes completion never approves ledger mismatch',()=>{const r=build({...base,decisions:[{ticker:'TSLA',accountId:a,reason:'CHECK_TRADE_HISTORY',note:'거래내역 확인 필요'}]});assert.equal(r.items[2].status,'NOTED');assert.equal(r.status,'LEDGER_DIFFERENCES_REQUIRE_REVIEW');});
+test('partial allocation remains incomplete',()=>{const r=build({...base,allocations:[{ticker:'TSLA',accountId:a,quantity:'2'}]});assert.equal(r.status,'ALLOCATION_INCOMPLETE');});
+test('exact match is still not server verified',()=>{const r=build({...base,committedEvents:[{id:'opening',accountId:a,requestId:'opening',type:'opening',legs:[{assetType:'security',assetCode:'TSLA',delta:'3'}]}]});assert.equal(r.items[1].status,'MATCHED');assert.equal(r.serverVerified,false);});
