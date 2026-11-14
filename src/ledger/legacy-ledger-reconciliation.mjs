@@ -8,6 +8,17 @@ function num(value){if(typeof value!=='string'||!DEC.test(value))throw Error('in
 function fmt(n){const neg=n<0n,m=neg?-n:n;return (neg?'-':'')+(m/SCALE).toString()+'.'+(m%SCALE).toString().padStart(8,'0');}
 export function reconcileLegacyExportWithLedger({exportData,accountId,sessionUserId,accounts,committedEvents=[]}={}){
  const portfolio=buildPortfolioLedgerView({sessionUserId,accounts,committedEvents,selectedAccountId:accountId});
+ // Reject duplicate source symbols before assessment can downgrade them to warnings.
+ if(Array.isArray(exportData?.holdings)){
+  const seen=new Set();
+  for(const item of exportData.holdings){
+   if(!item||typeof item!=='object'||Array.isArray(item))continue;
+   const ticker=String(item.symbol??item.ticker??'').trim().toUpperCase();
+   if(!ticker)continue;
+   if(seen.has(ticker))throw Error('duplicate ticker in legacy export: '+ticker);
+   seen.add(ticker);
+  }
+ }
  const legacy=previewLegacyHoldingsForAccount({exportData,accountId});
  if(legacy.status!=='PREVIEW_ONLY_NOT_UPLOADED')return Object.freeze({status:'SOURCE_REVIEW_REQUIRED',rows:[],warnings:legacy.warnings,canImport:false,canPersist:false,serverVerified:false});
  const source=new Map();
