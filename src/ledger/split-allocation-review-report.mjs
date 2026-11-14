@@ -1,5 +1,6 @@
 // Read-only, portable split-allocation review report and change comparison.
 import {previewSplitAccountAllocation} from './legacy-split-account-allocation.mjs';
+import {buildPortfolioLedgerView} from './portfolio-ledger-view-model.mjs';
 const FORMAT='INVESTLAB_SPLIT_ALLOCATION_REVIEW';
 const SAFE={canImport:false,canPersist:false,serverVerified:false,approvalStatus:'NOT_APPROVED'};
 export function buildSplitAllocationReport(input={}){
@@ -41,4 +42,19 @@ export function compareSplitAllocationReport({savedReport,...currentInput}={}){
   }
  }
  return {status:changes.length?'CHANGES_REQUIRE_REVIEW':'NO_CHANGES_NOT_VERIFIED',changedCount:changes.length,changes,canImport:false,canPersist:false,serverVerified:false};
+}
+
+export function restoreSplitAllocationReport({savedReport,...currentInput}={}){
+ const saved=validate(savedReport);
+ const current=previewSplitAccountAllocation({...currentInput,allocations:[]});
+ const source=new Map(current.rows.map(row=>[row.ticker,row.sourceQuantity]));
+ if(saved.size!==source.size||[...saved].some(([ticker,row])=>source.get(ticker)!==row.sourceQuantity))throw Error('source holdings changed; restore blocked');
+ const validAccounts=new Set(buildPortfolioLedgerView({sessionUserId:currentInput.sessionUserId,accounts:currentInput.accounts,committedEvents:currentInput.committedEvents??[]}).accounts.map(a=>a.accountId));
+ const allocations=[];
+ for(const [ticker,row] of saved)for(const [accountId,entry] of row.accounts){
+  if(!validAccounts.has(accountId))throw Error('saved account is not owned by current user');
+  allocations.push({ticker,accountId,quantity:entry.assignedQuantity});
+ }
+ const reviewed=previewSplitAccountAllocation({...currentInput,allocations});
+ return {status:'RESTORED_FOR_REVIEW_NOT_APPROVED',allocations,rows:reviewed.rows,canImport:false,canPersist:false,serverVerified:false};
 }
