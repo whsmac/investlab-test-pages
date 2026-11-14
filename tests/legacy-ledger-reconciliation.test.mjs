@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {reconcileLegacyExportWithLedger as reconcile} from '../src/ledger/legacy-ledger-reconciliation.mjs';
+const user='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
+const accountId='33333333-3333-4333-8333-333333333333',otherAccount='44444444-4444-4444-8444-444444444444';
+const accounts=[{id:accountId,ownerId:user,name:'ISA'},{id:otherAccount,ownerId:other,name:'Private'}];
+const committedEvents=[{id:'opening',requestId:'opening',accountId,type:'opening',legs:[{assetType:'security',assetCode:'TSLA',delta:'3'},{assetType:'security',assetCode:'SOXL',delta:'2'}]}];
+const exp=holdings=>({format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings});
+const row=(symbol,shares)=>({symbol,shares,avg_cost:'100'});
+const base={accountId,sessionUserId:user,accounts,committedEvents};
+test('identical holdings are already present, never re-imported',()=>{const r=reconcile({...base,exportData:exp([row('TSLA','3'),row('SOXL','2')])});assert.equal(r.status,'ALREADY_RECONCILED');assert.equal(r.matchedCount,2);assert.equal(r.canImport,false);});
+test('missing, different and ledger-only symbols are explicitly reported',()=>{const r=reconcile({...base,exportData:exp([row('TSLA','4'),row('TQQQ','1')])});assert.equal(r.status,'REVIEW_REQUIRED');assert.deepEqual(r.rows.map(x=>[x.ticker,x.status]),[['SOXL','ONLY_IN_LEDGER'],['TQQQ','MISSING_IN_LEDGER'],['TSLA','QUANTITY_MISMATCH']]);assert.equal(r.rows.find(x=>x.ticker==='TSLA').difference,'1.00000000');});
+test('reject cross-owner selection and duplicate legacy symbols',()=>{assert.throws(()=>reconcile({...base,accountId:otherAccount,exportData:exp([row('TSLA','3')])}),/not owned/);assert.throws(()=>reconcile({...base,exportData:exp([row('TSLA','3'),row('TSLA','3')])}),/duplicate ticker/);});
