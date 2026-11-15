@@ -878,7 +878,7 @@ function initializePortfolioBulkHandoff(){
     const sourceInput=row.querySelector('input[type=number]');
     const costCell=line.cells[2];costCell.textContent='';
     const costInput=document.createElement('input');costInput.type='number';costInput.min='0';costInput.step='any';costInput.value=sourceInput.value;costInput.setAttribute('aria-label',ticker+' 평균취득단가 USD 검토표 입력');
-    costInput.addEventListener('input',()=>{sourceInput.value=costInput.value;refreshBulkReview();const updated=[...byId('portfolioBulkReview').querySelectorAll('input')].find(input=>input.getAttribute('aria-label')===ticker+' 평균취득단가 USD 검토표 입력');if(updated){updated.focus();updated.setSelectionRange?.(updated.value.length,updated.value.length);}});
+    costInput.addEventListener('input',()=>{sourceInput.value=costInput.value;const apply=byId('portfolioBulkApply');const selected=[...root.children].filter(item=>item.querySelector('input[type=checkbox]').checked);apply.disabled=!selected.length||selected.some(item=>{const value=item.querySelector('input[type=number]').value.trim();return value===''||!Number.isFinite(Number(value))||Number(value)<0;});});costInput.addEventListener('change',refreshBulkReview);
     costCell.append(costInput);body.append(line);
    }
    table.append(body);review.append(table);
