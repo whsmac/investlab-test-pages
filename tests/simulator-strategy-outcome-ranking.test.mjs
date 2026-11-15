@@ -46,3 +46,12 @@ test('first-strategy valuation summary is displayed once, not duplicated in resu
  assert.doesNotMatch(html,/const hero=byId\('resultHero'\);hero\.replaceChildren\(\)/);
  assert.match(html,/quick\.hidden=false/);
 });
+
+test('detailed strategy comparison retains metric names while horizontally scrolling on mobile',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/strategy-full-comparison \.strategy-overview-table th:first-child/);
+ assert.match(html,/position:sticky;left:0/);
+ assert.match(html,/표가 넓으면 좌우로 스크롤하세요/);
+ assert.match(html,/fullComparison\.append\(scrollHint\)/);
+ assert.match(html,/fullComparison\.append\(fullTable\)/);
+});
