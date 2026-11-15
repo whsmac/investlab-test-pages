@@ -26,7 +26,7 @@ test('ranked strategy cards keep leader deltas visible and move secondary metric
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  assert.match(html,/secondary\.className='strategy-outcome-more'/);
  assert.match(html,/moreTitle\.textContent='세부 성과 펼치기'/);
- assert.match(html,/if\(label\.startsWith\('1위 전략 대비'\)\)card\.append\(metric\);else secondary\.append\(metric\)/);
+ assert.match(html,/label==='세금 반영 추정 평가총액 USD'\)card\.append\(metric\)/);
  assert.match(html,/card\.append\(secondary\)/);
  assert.match(html,/strategy-outcome-card details>summary/);
 });
@@ -91,4 +91,12 @@ test('ranked cards show absolute terminal valuation and tax-adjusted estimate',(
  assert.match(html,/\['최종 평가총액 USD',fmt\(sc\.terminalValue\)\]/);
  assert.match(html,/\['세금 반영 추정 평가총액 USD',taxAdjustedValue===null\?'산출 불가':fmt\(taxAdjustedValue\)\]/);
  assert.match(html,/label==='세금 반영 추정 평가총액 USD'\)card\.append\(metric\)/);
+});
+
+test('tax impact is disclosed in the expanded strategy detail without changing cash',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/taxImpactUsd=Number\.isFinite\(estimatedTaxKrw\)/);
+ assert.match(html,/\['추가 예상세액 환산 USD',taxImpactUsd===null\?'산출 불가':signed\(taxImpactUsd\)\]/);
+ assert.match(html,/else secondary\.append\(metric\)/);
+ assert.match(html,/세액은 가상 현금에서 실제 차감하지 않으며/);
 });
