@@ -8,8 +8,11 @@ export function validateScenarioBackup(saved){
   if(!name.trim()||name.length>80||unsafe.has(name))throw Error('안전하지 않은 전략 이름');
   const strategies=saved.scenarios[name];
   if(!Array.isArray(strategies)||!strategies.length||strategies.length>30)throw Error('전략 목록 형식 오류');
+  const strategyNames=new Set();
   for(const strategy of strategies){
-   if(!strategy||typeof strategy.name!=='string'||!strategy.name.trim()||strategy.name.length>80||(strategy.targetCash!==undefined&&(!Number.isFinite(strategy.targetCash)||strategy.targetCash<0))||!Array.isArray(strategy.trades)||strategy.trades.length>100)throw Error('전략 내용 오류');
+   if(!strategy||typeof strategy.name!=='string'||!strategy.name.trim()||strategy.name.length>80||unsafe.has(strategy.name)||(strategy.targetCash!==undefined&&(!Number.isFinite(strategy.targetCash)||strategy.targetCash<0))||!Array.isArray(strategy.trades)||strategy.trades.length>100)throw Error('전략 내용 오류');
+   if(strategyNames.has(strategy.name))throw Error('백업에 중복된 전략 이름이 있습니다: '+strategy.name);
+   strategyNames.add(strategy.name);
    for(const t of strategy.trades)if(!t||!['buy','sell'].includes(t.side)||typeof t.ticker!=='string'||!/^[A-Z0-9.^_-]{1,20}$/.test(t.ticker)||!Number.isFinite(t.quantity)||t.quantity<=0||!Number.isFinite(t.price)||t.price<=0||!Number.isFinite(t.fee??0)||(t.fee??0)<0)throw Error('거래 내용 오류');
   }
  }
