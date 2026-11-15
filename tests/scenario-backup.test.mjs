@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';import assert from 'node:assert/strict';import {makeScenarioBackup,validateScenarioBackup,mergeScenarioBackup} from '../src/ledger/scenario-backup.mjs';
 const sample={TSLA:[{name:'매도',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:300,fee:0}]}]};
 test('scenario backup round trips',()=>assert.deepEqual(validateScenarioBackup(makeScenarioBackup(sample,'2026-11-13T00:00:00Z')),sample));
