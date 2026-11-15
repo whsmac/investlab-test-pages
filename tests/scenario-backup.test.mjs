@@ -63,5 +63,5 @@ test('backup import reports invalid JSON clearly and skips no-op storage writes'
  assert.match(section,/const added=Object\.keys\(incoming\)\.filter\(name=>!Object\.hasOwn\(current,name\)\)/);
  assert.match(section,/if\(!collisions\.length&&!added\.length\)/);
  assert.match(section,/변경 없이 유지했습니다/);
- assert.ok(section.indexOf('if(!collisions.length&&!added.length)')<section.indexOf('localStorage.setItem(SCENARIO_STORAGE_KEY')));
+ assert.ok(section.indexOf('if(!collisions.length&&!added.length)')<section.indexOf('localStorage.setItem(SCENARIO_STORAGE_KEY'));
 });
