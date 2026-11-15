@@ -24,6 +24,9 @@ export function makeScenarioBackup(scenarios,createdAt){
  return result;
 }
 export function mergeScenarioBackup(current,incoming,{overwrite=false}={}){
+ // Validate both sources before merging so overwritten invalid data cannot be silently hidden.
+ validateScenarioBackup({format:FORMAT,version:1,scenarios:current});
+ validateScenarioBackup({format:FORMAT,version:1,scenarios:incoming});
  const result=Object.create(null);
  for(const [name,value] of Object.entries(current))Object.defineProperty(result,name,{value,enumerable:true,configurable:true,writable:true});
  for(const [name,value] of Object.entries(incoming)){
