@@ -63,7 +63,7 @@ test('strategy search filters ranked cards without changing leader baseline or f
  assert.match(html,/ranked\.map\(\(sc,rankIndex\)=>\(\{sc,rankIndex\}\)\)\.filter/);
  assert.match(html,/const leaderDeltas=compareRankedOutcomes\(ranked\)/);
  assert.match(html,/for\(const \{sc,rankIndex\} of visible\)/);
- assert.match(html,/검색 결과가 없습니다/);
+ assert.match(html,/이름 검색에 일치하는 전략이 없습니다/);
  assert.match(html,/fullComparison\.append\(fullTable\)/);
 });
 
@@ -159,4 +159,13 @@ test('rank mover filter composes with search, persists across recalculation and 
  assert.match(html,/String\(sc\.name\?\?''\)\.toLocaleLowerCase\(\)\.includes\(keyword\)&&\(!showRankMoversOnly/);
  assert.match(html,/moversCheckbox\.addEventListener\('change'/);
  assert.match(html,/strategy-rank-movers-filter input\{width:18px/);
+});
+
+test('empty filter state distinguishes name misses from unchanged ranks and offers reset',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/nameMatches=ranked\.filter/);
+ assert.match(html,/이름 검색에 일치하는 전략이 없습니다/);
+ assert.match(html,/조건에 맞는 순위 변경 전략이 없습니다/);
+ assert.match(html,/검색·필터 모두 초기화/);
+ assert.match(html,/moversCheckbox\.checked=false;showRankMoversOnly=false;renderRankedCards\(\)/);
 });
