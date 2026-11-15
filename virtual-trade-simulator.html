@@ -77,6 +77,7 @@ refreshManagedSymbols();
 const fmt=v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:8});
 const table=(headers,rows)=>{const t=document.createElement('table'),thead=t.createTHead(),tr=thead.insertRow();for(const h of headers){const th=document.createElement('th');th.textContent=h;tr.append(th);}const body=t.createTBody();for(const row of rows){const r=body.insertRow();for(const value of row){const cell=r.insertCell();cell.textContent=String(value);}}return t;};
 let strategyRankCriterion='value';
+let strategyNameQuery='';
 function calculate(){
  byId('recalcNotice').hidden=true;
  byId('quickResults').hidden=true;byId('quickMetrics').replaceChildren();
@@ -170,14 +171,15 @@ function calculate(){
    criterionSelect.value=strategyRankCriterion;
    criterionPicker.append(criterionSelect);byId('allStrategySummary').append(criterionPicker);
    const filterRow=document.createElement('label');filterRow.className='strategy-name-filter';filterRow.textContent='전략 이름 검색 ';
-   const nameFilter=document.createElement('input');nameFilter.type='search';nameFilter.placeholder='전략 이름 입력';nameFilter.setAttribute('aria-label','전략 이름 검색');filterRow.append(nameFilter);
+   const nameFilter=document.createElement('input');nameFilter.type='search';nameFilter.placeholder='전략 이름 입력';nameFilter.setAttribute('aria-label','전략 이름 검색');nameFilter.value=strategyNameQuery;filterRow.append(nameFilter);
    const clearFilter=document.createElement('button');clearFilter.type='button';clearFilter.textContent='검색 초기화';clearFilter.disabled=true;filterRow.append(clearFilter);
    const filterStatus=document.createElement('span');filterStatus.className='strategy-filter-status';filterStatus.setAttribute('role','status');filterRow.append(filterStatus);byId('allStrategySummary').append(filterRow);
    const renderRankedCards=()=>{
     compact.replaceChildren();
     const ranked=rankStrategyOutcomes(result.scenarios,strategyRankCriterion);
     const leaderDeltas=compareRankedOutcomes(ranked);
-    const keyword=nameFilter.value.trim().toLocaleLowerCase();
+    strategyNameQuery=nameFilter.value;
+    const keyword=strategyNameQuery.trim().toLocaleLowerCase();
     clearFilter.disabled=!nameFilter.value.length;
     const visible=ranked.map((sc,rankIndex)=>({sc,rankIndex})).filter(({sc})=>String(sc.name??'').toLocaleLowerCase().includes(keyword));
     filterStatus.textContent=visible.length+' / '+ranked.length+'개 전략 표시';
@@ -202,6 +204,7 @@ function calculate(){
    criterionSelect.addEventListener('change',()=>{strategyRankCriterion=criterionSelect.value;renderRankedCards();});
    nameFilter.addEventListener('input',renderRankedCards);
    clearFilter.addEventListener('click',()=>{nameFilter.value='';renderRankedCards();nameFilter.focus();});
+   nameFilter.addEventListener('keydown',event=>{if(event.key==='Escape'&&nameFilter.value){nameFilter.value='';renderRankedCards();event.preventDefault();}});
    renderRankedCards();
    byId('allStrategySummary').append(compact);
    const comparisonNote=document.createElement('p');comparisonNote.className='hint';comparisonNote.textContent='카드는 선택한 기준에 따라 정렬됩니다. 전체 상세 비교표는 입력한 전략 순서를 유지합니다. 계속 보유 대비 차이는 동일한 최종 가정주가로 계산한 세전 평가총액 차이입니다. 실현손익과 별개이며 미래 수익을 보장하지 않습니다.';byId('allStrategySummary').append(comparisonNote);
