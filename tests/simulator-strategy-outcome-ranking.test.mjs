@@ -87,10 +87,10 @@ test('strategy search is retained after recalculation and can be cleared with Es
 test('ranked cards show absolute terminal valuation and tax-adjusted estimate',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  assert.match(html,/scenarioTaxByRef=new Map\(result\.scenarios\.map\(\(sc,i\)=>\[sc\.name,taxResults\[i\]\]\)\)/);
- assert.match(html,/sc\.terminalValue-tax\/fx/);
+ assert.match(html,/sc\.terminalValue-taxResults\[i\]\.incrementalTaxKrw\/fx/);
  assert.match(html,/\['최종 평가총액 USD',fmt\(sc\.terminalValue\)\]/);
  assert.match(html,/\['세금 반영 추정 평가총액 USD',taxAdjustedValue===null\?'산출 불가':fmt\(taxAdjustedValue\)\]/);
- assert.match(html,/label==='세금 반영 추정 평가총액 USD'\)card\.append\(metric\)/);
+ assert.match(html,/label==='세금 반영 추정 평가총액 USD'\|\|label==='1위 대비 세금 반영 평가총액 차이 USD'\)card\.append\(metric\)/);
 });
 
 test('tax impact is disclosed in the expanded strategy detail without changing cash',()=>{
