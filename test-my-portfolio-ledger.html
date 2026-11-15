@@ -234,7 +234,8 @@ el('cost-review-transfer').addEventListener('click',()=>{try{
  if(!rows.length||rows.length>100)throw Error('전달할 종목은 1~100개여야 합니다');
  const scopedAccounts=new Set(el('account').value?[el('account').value]:view.accounts.map(a=>a.accountId));
  const scopedReport={...report,rows:report.rows.filter(r=>scopedAccounts.has(r.accountId))};
- sessionStorage.setItem('investlab_portfolio_bulk_handoff_v1',JSON.stringify({version:1,rows,accountCostReport:scopedReport}));
+ const assumedPrices=Object.fromEntries(rows.filter(h=>getAssumedPrice(h.ticker)!==''&&Number.isFinite(Number(getAssumedPrice(h.ticker)))&&Number(getAssumedPrice(h.ticker))>=0).map(h=>[h.ticker,Number(getAssumedPrice(h.ticker))]));
+ sessionStorage.setItem('investlab_portfolio_bulk_handoff_v1',JSON.stringify({version:1,rows,accountCostReport:scopedReport,assumedPrices}));
  location.href='./virtual-trade-simulator.html?source=portfolio-bulk-review';
  }catch(e){el('cost-review-status').textContent='전달 실패: '+e.message;}});
 const ACCOUNT_COST_BROWSER_KEY='investlab_test_account_cost_review_v1';
