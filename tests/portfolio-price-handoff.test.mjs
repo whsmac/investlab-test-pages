@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const portfolio=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+const simulator=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+test('handoff only sends numeric user-entered assumptions',()=>{assert.match(portfolio,/assumedPrices=Object\.fromEntries/);assert.match(portfolio,/Number\.isFinite\(Number\(getAssumedPrice/);assert.match(portfolio,/accountCostReport:scopedReport,assumedPrices/);});
+test('simulator requires opt-in and protects existing prices',()=>{assert.match(simulator,/id="portfolioBulkPricesApply" type="checkbox"/);assert.match(simulator,/if\(byId\('portfolioBulkPricesApply'\)\.checked\)/);assert.match(simulator,/priceConflicts\.length&&!confirm/);assert.match(simulator,/실시간 시세 아님/);});
+test('both browser modules parse',()=>{for(const html of [portfolio,simulator]){const scripts=[...html.matchAll(/<script[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/g)];assert.ok(scripts.length);for(const m of scripts){if(m[1].trim()==='')continue;const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(r.status,0,r.stderr);}}});
