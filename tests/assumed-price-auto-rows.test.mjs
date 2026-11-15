@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+test('automatic price input rows have no redundant preparation button',()=>{assert.doesNotMatch(html,/id="portfolio-price-build"/);assert.match(html,/function rebuildAssumedPriceRows\(\)/);assert.match(html,/show\(\);rebuildAssumedPriceRows\(\)/);});
+test('account switching rebuilds while draft prices are retained',()=>{assert.match(html,/addEventListener\('change',\(\)=>\{show\(\);rebuildAssumedPriceRows\(\);\}\)/);assert.match(html,/assumedPriceDraft\.set\(row\.dataset\.ticker,row\.querySelector\('input'\)\.value\)/);assert.match(html,/input\.value=getAssumedPrice\(h\.ticker\)/);});
+test('inline module syntax remains valid',()=>{const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);});
