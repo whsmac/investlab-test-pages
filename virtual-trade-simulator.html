@@ -692,9 +692,9 @@ document.addEventListener('click',event=>{
  if(button&&(button.closest('#strategyEditor')||['addStrategy','presetRise','presetDip','undoTradeDelete','appendScenario','deleteScenario','importScenarios','loadScenario','saveScenario'].includes(button.id)))setTimeout(updateStrategySaveState,0);
 });
 byId('saveScenario').addEventListener('click',()=>storageAction(()=>{
- const name=String(strategyState[0]?.name??'').trim();
- if(!name||name.length>80||name==='__proto__'||name==='constructor'||name==='prototype')throw Error('위쪽 첫 번째 전략 이름을 1~80자로 입력하세요.');
  const strategies=validateSavedStrategy(readStrategies());
+ const name=String(strategies[0]?.name??'').trim();
+ if(!name||name.length>80||name==='__proto__'||name==='constructor'||name==='prototype')throw Error('위쪽 첫 번째 전략 이름을 1~80자로 입력하세요.');
  const saved=getSavedScenarios();
  if(!Object.hasOwn(saved,name)&&Object.keys(saved).length>=30)throw Error('최대 30개까지 저장할 수 있습니다.');
  if(Object.hasOwn(saved,name)){
