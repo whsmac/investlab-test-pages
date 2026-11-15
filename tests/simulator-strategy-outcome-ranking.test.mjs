@@ -213,3 +213,17 @@ test('appended strategy names remain unique and within the 80-character limit',(
  assert.ok(names.every(name=>name.length<=80));
  assert.ok(names.every(name=>name!==long));
 });
+
+test('saved strategy validation rejects overlong names without silent truncation',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf('function validateSavedStrategy(value)');
+ const end=html.indexOf('function storageAction(action)',start);
+ const validation=html.slice(start,end);
+ assert.match(validation,/if\(item\.name\.length>80\)throw Error/);
+ assert.match(validation,/return \{name:item\.name,targetCash:/);
+ assert.doesNotMatch(validation,/name:item\.name\.slice\(0,80\)/);
+ const state=html.slice(html.indexOf('function updateStrategySaveState()'),html.indexOf('// Update after UI edits'));
+ assert.match(state,/const current=validateSavedStrategy\(readStrategies\(\)\)/);
+ assert.match(state,/const name=String\(current\[0\]\?\.name\?\?''\)\.trim\(\)/);
+ assert.doesNotMatch(state,/strategyState\[0\]/);
+});
