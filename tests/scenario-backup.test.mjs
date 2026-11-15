@@ -66,3 +66,15 @@ test('backup import reports invalid JSON clearly and skips no-op storage writes'
  assert.match(section,/변경 없이 유지했습니다/);
  assert.ok(section.indexOf('if(!collisions.length&&!added.length)')<section.indexOf('localStorage.setItem(SCENARIO_STORAGE_KEY'));
 });
+
+test('backup import distinguishes storage quota failures and retains file for retry',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("byId('importScenarios').addEventListener");
+ const end=html.indexOf('function updateStrategySaveState()',start);
+ const section=html.slice(start,end);
+ assert.match(section,/QuotaExceededError/);
+ assert.match(section,/NS_ERROR_DOM_QUOTA_REACHED/);
+ assert.match(section,/기존 저장 전략은 유지됩니다/);
+ assert.match(section,/같은 파일로 다시 시도하세요/);
+ assert.doesNotMatch(section,/scenarioBackupFile'\)\.value\s*=/);
+});
