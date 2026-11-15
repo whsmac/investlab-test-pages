@@ -132,7 +132,7 @@ el('portfolio-price-calc').addEventListener('click',()=>{try{
  const result=previewPortfolioValuation({holdings:view.holdings,accounts:selectedValuationAccounts(view),prices});
  lastPortfolioValuation=result;show();
  el('portfolio-valuation-summary').textContent='가정 평가금액 '+(result.totalMarketValueUsd===null?'미표시':'$'+result.totalMarketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2}))+' / 가정 평가손익 '+(result.totalUnrealizedPnlUsd===null?'미표시 (주가·단가 누락)':'$'+result.totalUnrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2}))+' / 가정 수익률 '+(result.totalUnrealizedPnlRatePct===null?'미계산':result.totalUnrealizedPnlRatePct.toLocaleString('en-US',{maximumFractionDigits:2})+'%')+' · 실시간 시세 아님';
- const root=el('portfolio-price-results');"root.replaceChildren();
+ const root=el('portfolio-price-results');root.replaceChildren();
  for(const row of result.rows){const p=document.createElement('p');p.textContent=row.ticker+' · '+(row.marketValueUsd===null?'주가 미입력':'가정 평가금액 $'+row.marketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2}))+' · '+(row.unrealizedPnlUsd===null?'손익 미계산':'가정 손익 $'+row.unrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2}));root.append(p);}
  const total=document.createElement('p');total.textContent='전체 가정 평가금액 '+(result.totalMarketValueUsd===null?'미표시':'$'+result.totalMarketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2}))+' · 전체 가정손익 '+(result.totalUnrealizedPnlUsd===null?'미표시 (주가·단가 누락)':'$'+result.totalUnrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2}));root.append(total);
  }catch(e){el('portfolio-price-results').textContent='계산 실패: '+e.message;}
