@@ -18,6 +18,7 @@
 import {compareScenarios} from './src/simulator/scenario-comparison.mjs';
 import {previewBulkImportValuation} from './src/simulator/bulk-import-valuation.mjs';
 import {compareBulkAssumedPrices} from './src/simulator/bulk-price-difference.mjs';
+import {previewBulkPriceImpact} from './src/simulator/bulk-price-impact.mjs';
 import {matchLegacyCosts} from './src/simulator/legacy-cost-suggestions.mjs';
 import {matchAccountCosts} from './src/simulator/account-cost-suggestions.mjs';
 import {makeScenarioBackup,validateScenarioBackup,mergeScenarioBackup} from './src/ledger/scenario-backup.mjs';
@@ -874,6 +875,17 @@ function initializePortfolioBulkHandoff(){
    const body=document.createElement('tbody');
    for(const item of comparisons){const line=document.createElement('tr');const format=value=>value===null?'—':'$'+value.toLocaleString('en-US',{maximumFractionDigits:2});const labels={CHANGED:'변경',NEW:'신규',UNCHANGED:'동일',NOT_PROVIDED:'미입력'};for(const value of [item.ticker,format(item.previous),format(item.incoming),item.difference===null?'—':(item.difference>0?'+':'')+format(item.difference),labels[item.status]]){const td=document.createElement('td');td.textContent=value;line.append(td);}body.append(line);}
    table.append(body);target.append(table);
+   const selectedRows=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked).map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value}));
+   const impact=previewBulkPriceImpact({rows:selectedRows,assumedPrices,existingPrices:portfolioState.prices});
+   const money=value=>value===null?'미확정':(value>0?'+':'')+'$'+value.toLocaleString('en-US',{maximumFractionDigits:2});
+   const impactSummary=document.createElement('p');impactSummary.className='bulk-price-impact-summary';
+   impactSummary.textContent='기존 가격 대비 가정 평가 변화 · 비교 가능 '+impact.comparableCount+'/'+impact.totalCount+'종목 · 비교 가능 종목 평가금액 변화 '+money(impact.comparableMarketValueChangeUsd)+' · 손익 변화 '+money(impact.comparablePnlChangeUsd)+(impact.fullyComparable?' · 전체 비교 완료':' · 전체 합계 미확정 (기존 가격·새 가격·단가 누락 포함)');
+   target.append(impactSummary);
+   const impactTable=document.createElement('table');const impactHead=document.createElement('thead');const impactTr=document.createElement('tr');
+   for(const label of ['종목','기존 평가금액','변경 평가금액','기존 평가손익','변경 평가손익','손익 차이']){const th=document.createElement('th');th.textContent=label;impactTr.append(th);}impactHead.append(impactTr);impactTable.append(impactHead);
+   const impactBody=document.createElement('tbody');
+   for(const item of impact.rows){const line=document.createElement('tr');for(const value of [item.ticker,money(item.oldMarketValueUsd),money(item.newMarketValueUsd),money(item.oldPnlUsd),money(item.newPnlUsd),money(item.pnlChangeUsd)]){const td=document.createElement('td');td.textContent=value;line.append(td);}impactBody.append(line);}
+   impactTable.append(impactBody);target.append(impactTable);
   }
   function refreshBulkReview(){
    const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked);
