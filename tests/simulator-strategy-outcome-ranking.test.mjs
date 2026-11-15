@@ -21,3 +21,12 @@ test('UI displays active rank leader differences',()=>{
  assert.match(html,/1위 전략 대비 TSLA 수량/);
  assert.match(html,/1위 전략 대비 현금/);
 });
+
+test('ranked strategy cards keep leader deltas visible and move secondary metrics into details',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/secondary\.className='strategy-outcome-more'/);
+ assert.match(html,/moreTitle\.textContent='세부 성과 펼치기'/);
+ assert.match(html,/if\(label\.startsWith\('1위 전략 대비'\)\)card\.append\(metric\);else secondary\.append\(metric\)/);
+ assert.match(html,/card\.append\(secondary\)/);
+ assert.match(html,/strategy-outcome-card details>summary/);
+});
