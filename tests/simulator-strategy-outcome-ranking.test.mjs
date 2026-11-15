@@ -129,3 +129,14 @@ test('strategy cards show pre-tax and tax-adjusted ranking movement independent 
  assert.match(html,/단계 하락/);
  assert.match(html,/for\(const \{sc,rankIndex\} of visible\)/);
 });
+
+test('rank movement uses readable mobile chips with direction and neutral states',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/strategy-rank-movement\{display:flex;align-items:center;gap:8px;flex-wrap:wrap/);
+ assert.match(html,/rank-change\.is-up/);
+ assert.match(html,/rank-change\.is-down/);
+ assert.match(html,/rank-change\.is-same/);
+ assert.match(html,/rankChange\.className='rank-change '/);
+ assert.match(html,/if\(preTaxRank!==null&&afterTaxRank!==null\)/);
+ assert.match(html,/rankNote\.append\(rankChange\)/);
+});
