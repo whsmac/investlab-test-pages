@@ -730,8 +730,12 @@ byId('appendScenario').addEventListener('click',()=>storageAction(()=>{
  if(current.length+incoming.length>30)throw Error('비교 전략은 최대 30개까지 추가할 수 있습니다.');
  const used=new Set(current.map(item=>item.name));
  const appended=incoming.map(item=>{
-  let nextName=item.name,index=2;
-  while(used.has(nextName))nextName=item.name+' ('+index+++')';
+  const baseName=item.name.trim().slice(0,80);
+  let nextName=baseName,index=2;
+  while(used.has(nextName)){
+   const suffix=' ('+index+++')';
+   nextName=baseName.slice(0,80-suffix.length).trimEnd()+suffix;
+  }
   used.add(nextName);
   return {...item,name:nextName};
  });
