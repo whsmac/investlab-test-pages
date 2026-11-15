@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+test('holding detail provides direct recalculation',()=>{assert.equal((html.match(/id="holding-recalculate-all"/g)||[]).length,1);assert.match(html,/el\('holding-recalculate-all'\)\.addEventListener\('click'/);assert.match(html,/el\('portfolio-price-calc'\)\.click\(\)/);});
+test('cost changes invalidate old totals before recalculation',()=>{assert.match(html,/row\.querySelector\('input'\)\.value=input\.value;markValuationStale\(\)/);assert.match(html,/el\('valuation-completion-status'\)\.scrollIntoView/);});
+test('browser script parses',()=>{const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);});
