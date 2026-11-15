@@ -6,3 +6,5 @@ test('mobile review has collapsed secondary tools',()=>{assert.match(html,/<summ
 
 test('holdings are presented before optional review tools',()=>{const holdings=html.indexOf('id="portfolio-holdings"');const tools=html.indexOf('id="portfolio-tools"');assert.ok(holdings>0&&tools>holdings);assert.match(html,/<details class="portfolio-tools" id="portfolio-tools"><summary>데이터 연결·검토 도구 펼치기<\/summary>/);assert.match(html,/href="#portfolio-holdings"/);assert.match(html,/href="#portfolio-tools"/);});
 test('existing functional controls survive reordering',()=>{for(const id of ['ledger-load','legacy-review','allocation-check','split-check','split-save','split-notes-restore','account','holdings','cash'])assert.ok(html.includes('id="'+id+'"'),id);});
+
+test('portfolio summary exposes holdings and currency counts',()=>{for(const id of ['portfolio-counts','holding-count','currency-count','source-note'])assert.ok(html.includes('id="'+id+'"'),id);assert.match(html,/selectedOptions\[0\]/);assert.match(html,/font-variant-numeric:tabular-nums/);});
