@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+test('mobile impact puts P&L change before market value',()=>{const a=html.indexOf("addMetric('평가손익 변화");const b=html.indexOf("addMetric('평가금액 변화");assert.ok(a>=0&&b>a);assert.match(html,/bulk-impact-cards/);assert.match(html,/비교 가능 '/);});
+test('detailed valuation is collapsible and mobile readable',()=>{assert.match(html,/document\.createElement\('details'\)/);assert.match(html,/종목별 평가금액·평가손익 상세 비교 보기/);assert.match(html,/@media\(max-width:600px\)\{\.bulk-impact-cards/);assert.match(html,/details\.append\(impactTable\)/);});
+test('simulator browser module parses',()=>{const scripts=[...html.matchAll(/<script[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/g)];assert.ok(scripts.length);for(const m of scripts){if(!m[1].trim())continue;const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});
