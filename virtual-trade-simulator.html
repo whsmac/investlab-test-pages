@@ -45,7 +45,7 @@ import {matchAccountCosts} from './src/simulator/account-cost-suggestions.mjs';
 import {makeScenarioBackup,validateScenarioBackup,mergeScenarioBackup} from './src/ledger/scenario-backup.mjs';
 import {simulateTrades} from './src/simulator/virtual-trade-engine.mjs';
 import {summarizeTradeOutcome} from './src/simulator/trade-outcome-summary.mjs';
-import {rankStrategyOutcomes} from './src/simulator/strategy-outcome-ranking.mjs';
+import {rankStrategyOutcomes,compareRankedOutcomes} from './src/simulator/strategy-outcome-ranking.mjs';
 import {estimateOverseasStockTax} from './src/simulator/overseas-stock-tax.mjs';
 import {readManagedSymbols} from './src/simulator/managed-symbols.mjs';
 import {readSavedPortfolioQuotes} from './src/simulator/shared-market-snapshot.mjs';
@@ -172,12 +172,15 @@ function calculate(){
    const renderRankedCards=()=>{
     compact.replaceChildren();
     const ranked=rankStrategyOutcomes(result.scenarios,strategyRankCriterion);
+    const leaderDeltas=compareRankedOutcomes(ranked);
     for(const [rankIndex,sc] of ranked.entries()){
     const outcome=summarizeTradeOutcome(result.baseline.final,sc.final,sc.steps);
     const card=document.createElement('article');card.className='strategy-outcome-card';
     const heading=document.createElement('strong');heading.textContent=(rankIndex+1)+' · '+sc.name;card.append(heading);
     const signed=value=>(value>0?'+':'')+fmt(value);
-    for(const [label,value] of [['최종 현금 USD',fmt(outcome.finalCash)],['현금 증감 USD',signed(outcome.cashChange)],['TSLA 최종 수량',fmt(outcome.finalTsla)+'주'],['TSLA 수량 증감',signed(outcome.tslaChange)+'주'],['누적 실현손익 USD',signed(outcome.realizedPnL)],['계속 보유 대비 평가총액 USD',signed(sc.deltaVsHold)],['계속 보유 대비 수익률',result.baseline.terminalValue>0?signed(sc.deltaVsHold/result.baseline.terminalValue*100)+'%':'산출 불가']]){
+    const leaderDelta=leaderDeltas[rankIndex];
+    const deltaLabel=value=>value===null?'산출 불가':rankIndex===0?'기준 (0)':signed(value);
+    for(const [label,value] of [['1위 전략 대비 평가총액 USD',deltaLabel(leaderDelta.valueDelta)],['1위 전략 대비 TSLA 수량 (주)',deltaLabel(leaderDelta.tslaDelta)],['1위 전략 대비 현금 USD',deltaLabel(leaderDelta.cashDelta)],['최종 현금 USD',fmt(outcome.finalCash)],['현금 증감 USD',signed(outcome.cashChange)],['TSLA 최종 수량',fmt(outcome.finalTsla)+'주'],['TSLA 수량 증감',signed(outcome.tslaChange)+'주'],['누적 실현손익 USD',signed(outcome.realizedPnL)],['계속 보유 대비 평가총액 USD',signed(sc.deltaVsHold)],['계속 보유 대비 수익률',result.baseline.terminalValue>0?signed(sc.deltaVsHold/result.baseline.terminalValue*100)+'%':'산출 불가']]){
      const metric=document.createElement('div');const name=document.createElement('small');name.textContent=label;const amount=document.createElement('b');amount.textContent=value;metric.append(name,amount);card.append(metric);
     }
     compact.append(card);
