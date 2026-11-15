@@ -903,6 +903,8 @@ function initializePortfolioBulkHandoff(){
    for(const item of updates){const index=next.findIndex(p=>String(p.ticker).trim().toUpperCase()===item.ticker);if(index>=0)next[index]=item;else next.push(item);}
    if(byId('portfolioBulkPricesApply').checked){
     const chosen=new Set(updates.map(u=>u.ticker));
+    const priceConflicts=portfolioState.prices.filter(p=>chosen.has(String(p.ticker).trim().toUpperCase())&&Object.prototype.hasOwnProperty.call(assumedPrices,String(p.ticker).trim().toUpperCase()));
+    if(priceConflicts.length&&!confirm('기존 최종 가정주가 '+priceConflicts.map(p=>p.ticker).join(', ')+'를 My Portfolio 가정주가로 교체하시겠습니까?'))return;
     const newPrices=portfolioState.prices.map(p=>({...p}));
     for(const [ticker,price] of Object.entries(assumedPrices)){
      if(!chosen.has(ticker))continue;
