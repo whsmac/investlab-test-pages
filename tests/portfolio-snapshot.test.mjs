@@ -5,3 +5,23 @@ test('single source merges holdings, watchlist and trade history',()=>{const r=r
 test('USD security is retained while cash is separate',()=>{const r=readPortfolioSimulatorSnapshot(storage(data));assert.equal(r.positions.find(x=>x.ticker==='USD').quantity,4);assert.equal(r.usdCash,100)});
 test('snapshot is read-only and not server verified',()=>{let writes=0;const source={...storage(data),setItem:()=>writes++};const r=readPortfolioSimulatorSnapshot(source);assert.equal(writes,0);assert.equal(r.crossDeviceSynced,false);assert.equal(r.canPost,false)});
 test('change detector identifies position and symbol changes',()=>{const before=readPortfolioSimulatorSnapshot(storage(data));const after=readPortfolioSimulatorSnapshot(storage({...data,investlab_holdings:[{symbol:'TSLA',shares:3,avg_cost:200}],investlab_watchlist:['TQQQ']}));const r=comparePortfolioSimulatorSnapshot({before,after});assert.ok(r.changedPositions.includes('TSLA'));assert.ok(r.changedSymbols.includes('SOXL'));assert.equal(r.cashChanged,true)});
+
+import {compareScenarios} from '../src/simulator/scenario-comparison.mjs';
+test('portfolio snapshot flows into simulator without changing source holdings or cash',()=>{
+ const values={investlab_holdings:[{symbol:'TSLA',shares:2,avg_cost:200},{symbol:'USD-CASH',shares:100,avg_cost:1}],investlab_watchlist:['SOXL'],investlab_past_symbols:['TQQQ']};
+ const before=JSON.stringify(values);
+ let writes=0;
+ const source={getItem:key=>JSON.stringify(values[key]??[]),setItem:()=>{writes++;throw Error('unexpected write');}};
+ const snapshot=readPortfolioSimulatorSnapshot(source);
+ const positions=Object.fromEntries(snapshot.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const result=compareScenarios({cash:snapshot.usdCash,positions},[{name:'TSLA partial sale',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:300,fee:0}]}],{TSLA:300});
+ assert.equal(result.baseline.terminalValue,700);
+ assert.equal(result.scenarios[0].final.cash,400);
+ assert.equal(result.scenarios[0].final.positions.TSLA.quantity,1);
+ assert.equal(result.scenarios[0].terminalValue,700);
+ assert.equal(result.scenarios[0].deltaVsHold,0);
+ assert.equal(JSON.stringify(values),before);
+ assert.equal(writes,0);
+ assert.equal(snapshot.serverVerified,false);
+ assert.equal(snapshot.canPost,false);
+});
