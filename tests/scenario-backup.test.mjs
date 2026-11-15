@@ -78,3 +78,12 @@ test('backup import distinguishes storage quota failures and retains file for re
  assert.match(section,/같은 파일로 다시 시도하세요/);
  assert.doesNotMatch(section,/scenarioBackupFile'\)\.value\s*=/);
 });
+
+test('backup import refreshes current editor save status on success and no-op',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("byId('importScenarios').addEventListener");
+ const end=html.indexOf('function updateStrategySaveState()',start);
+ const section=html.slice(start,end);
+ assert.match(section,/변경 없이 유지했습니다.*updateStrategySaveState\(\);return;/);
+ assert.match(section,/localStorage\.setItem\(SCENARIO_STORAGE_KEY,JSON\.stringify\(merged\)\);refreshSavedScenarioList\(\);updateStrategySaveState\(\)/);
+});
