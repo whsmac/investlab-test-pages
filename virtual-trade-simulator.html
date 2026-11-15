@@ -191,7 +191,7 @@ function calculate(){
     clearFilter.disabled=!nameFilter.value.length;
     const visible=ranked.map((sc,rankIndex)=>({sc,rankIndex})).filter(({sc})=>String(sc.name??'').toLocaleLowerCase().includes(keyword)&&(!showRankMoversOnly||(Number.isFinite(sc.terminalValue)&&Number.isFinite(sc.taxAdjustedValue)&&preTaxRanks.get(sc)!==afterTaxRanks.get(sc))));
     filterStatus.textContent=visible.length+' / '+ranked.length+'개 전략 표시'+(showRankMoversOnly?' · 순위 변경만':'');
-    if(!visible.length){const empty=document.createElement('p');empty.className='hint';empty.textContent='검색 결과가 없습니다. 전략 이름을 확인하세요.';compact.append(empty);}
+    if(!visible.length){const empty=document.createElement('p');empty.className='hint';const nameMatches=ranked.filter(sc=>String(sc.name??'').toLocaleLowerCase().includes(keyword));empty.textContent=!nameMatches.length?'이름 검색에 일치하는 전략이 없습니다.':showRankMoversOnly?'조건에 맞는 순위 변경 전략이 없습니다. 필터를 해제하면 전체 전략을 볼 수 있습니다.':'표시할 전략이 없습니다.';compact.append(empty);if(keyword||showRankMoversOnly){const resetAll=document.createElement('button');resetAll.type='button';resetAll.textContent='검색·필터 모두 초기화';resetAll.addEventListener('click',()=>{nameFilter.value='';moversCheckbox.checked=false;showRankMoversOnly=false;renderRankedCards();nameFilter.focus();});compact.append(resetAll);}}
     for(const {sc,rankIndex} of visible){
     const outcome=summarizeTradeOutcome(result.baseline.final,sc.final,sc.steps);
     const card=document.createElement('article');card.className='strategy-outcome-card';
