@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+test('holdings table includes assumed USD price with search and sorting',()=>{assert.match(html,/<th>종목<\/th><th>수량<\/th><th>가정주가 USD<\/th>/);assert.match(html,/priceCell=document\.createElement\('td'\)/);assert.match(html,/priceInput\.value=getAssumedPrice\(ticker\)/);assert.match(html,/filterAndSortHoldings\(v\.holdings/);});
+test('inline price syncs shared draft and recalculation warning',()=>{assert.match(html,/setAssumedPrice\(ticker,priceInput\.value\);markValuationStale\(\)/);assert.match(html,/id="portfolio-price-rows" hidden/);assert.match(html,/show\(\);markValuationStale\(\)/);});
+test('browser module syntax',()=>{const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);});
