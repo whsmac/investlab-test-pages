@@ -86,7 +86,7 @@ test('strategy search is retained after recalculation and can be cleared with Es
 
 test('ranked cards show absolute terminal valuation and tax-adjusted estimate',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
- assert.match(html,/scenarioTaxByRef=new Map\(result\.scenarios\.map\(\(sc,i\)=>\[sc\.name,taxResults\[i\]\]\)\)/);
+ assert.match(html,/estimatedTaxKrw:taxResults\[i\]\?\.incrementalTaxKrw/);
  assert.match(html,/sc\.terminalValue-taxResults\[i\]\.incrementalTaxKrw\/fx/);
  assert.match(html,/\['최종 평가총액 USD',fmt\(sc\.terminalValue\)\]/);
  assert.match(html,/\['세금 반영 추정 평가총액 USD',taxAdjustedValue===null\?'산출 불가':fmt\(taxAdjustedValue\)\]/);
@@ -103,7 +103,7 @@ test('tax impact is disclosed in the expanded strategy detail without changing c
 
 test('tax-adjusted comparison uses the actual ranked leader, not filtered search leader',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
- assert.match(html,/leaderTaxAdjusted=taxAdjustedByRef\.get\(ranked\[0\]\?\.name\)/);
+ assert.match(html,/leaderTaxAdjusted=ranked\[0\]\?\.taxAdjustedValue\?\?null/);
  assert.match(html,/signed\(taxAdjustedValue-leaderTaxAdjusted\)/);
  assert.match(html,/taxAdjustedValue===null\|\|leaderTaxAdjusted===null\?'산출 불가'/);
  assert.match(html,/1위 대비 세금 반영 평가총액 차이 USD/);
@@ -168,4 +168,13 @@ test('empty filter state distinguishes name misses from unchanged ranks and offe
  assert.match(html,/조건에 맞는 순위 변경 전략이 없습니다/);
  assert.match(html,/검색·필터 모두 초기화/);
  assert.match(html,/moversCheckbox\.checked=false;showRankMoversOnly=false;renderRankedCards\(\)/);
+});
+
+test('tax outcomes stay attached to individual scenarios even when names repeat',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/estimatedTaxKrw:taxResults\[i\]\?\.incrementalTaxKrw/);
+ assert.match(html,/const estimatedTaxKrw=sc\.estimatedTaxKrw/);
+ assert.match(html,/const taxAdjustedValue=sc\.taxAdjustedValue/);
+ assert.doesNotMatch(html,/scenarioTaxByRef=new Map/);
+ assert.doesNotMatch(html,/taxAdjustedByRef=new Map/);
 });
