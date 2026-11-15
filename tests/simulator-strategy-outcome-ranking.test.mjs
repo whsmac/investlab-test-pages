@@ -87,7 +87,7 @@ test('strategy search is retained after recalculation and can be cleared with Es
 test('ranked cards show absolute terminal valuation and tax-adjusted estimate',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  assert.match(html,/scenarioTaxByRef=new Map\(result\.scenarios\.map\(\(sc,i\)=>\[sc,taxResults\[i\]\]\)\)/);
- assert.match(html,/sc\.terminalValue-estimatedTaxKrw\/fx/);
+ assert.match(html,/sc\.terminalValue-tax\/fx/);
  assert.match(html,/\['최종 평가총액 USD',fmt\(sc\.terminalValue\)\]/);
  assert.match(html,/\['세금 반영 추정 평가총액 USD',taxAdjustedValue===null\?'산출 불가':fmt\(taxAdjustedValue\)\]/);
  assert.match(html,/label==='세금 반영 추정 평가총액 USD'\)card\.append\(metric\)/);
@@ -99,4 +99,12 @@ test('tax impact is disclosed in the expanded strategy detail without changing c
  assert.match(html,/\['추가 예상세액 환산 USD',taxImpactUsd===null\?'산출 불가':signed\(taxImpactUsd\)\]/);
  assert.match(html,/else secondary\.append\(metric\)/);
  assert.match(html,/세액은 가상 현금에서 실제 차감하지 않으며/);
+});
+
+test('tax-adjusted comparison uses the actual ranked leader, not filtered search leader',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/leaderTaxAdjusted=taxAdjustedByRef\.get\(ranked\[0\]\)/);
+ assert.match(html,/signed\(taxAdjustedValue-leaderTaxAdjusted\)/);
+ assert.match(html,/taxAdjustedValue===null\|\|leaderTaxAdjusted===null\?'산출 불가'/);
+ assert.match(html,/1위 대비 세금 반영 평가총액 차이 USD/);
 });
