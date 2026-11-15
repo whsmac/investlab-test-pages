@@ -66,3 +66,11 @@ test('strategy search filters ranked cards without changing leader baseline or f
  assert.match(html,/검색 결과가 없습니다/);
  assert.match(html,/fullComparison\.append\(fullTable\)/);
 });
+
+test('strategy search can be reset without changing ranking criterion',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/clearFilter\.textContent='검색 초기화'/);
+ assert.match(html,/clearFilter\.disabled=!nameFilter\.value\.length/);
+ assert.match(html,/clearFilter\.addEventListener\('click',\(\)=>\{nameFilter\.value='';renderRankedCards\(\);nameFilter\.focus\(\);\}\)/);
+ assert.match(html,/strategyRankCriterion=criterionSelect\.value;renderRankedCards\(\)/);
+});
