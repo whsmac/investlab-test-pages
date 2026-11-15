@@ -187,3 +187,14 @@ test('duplicate scenario names never highlight an unrelated failed trade',()=>{
  assert.match(html,/const card=matches\[0\]/);
  assert.doesNotMatch(html,/const card=cards\.find\(c=>c\.querySelector\('\.strategy-name'\)/);
 });
+
+test('saved scenario key comes from the same validated editor snapshot as saved trades',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("byId('saveScenario').addEventListener");
+ const end=html.indexOf("byId('loadScenario').addEventListener",start);
+ const save=html.slice(start,end);
+ assert.match(save,/const strategies=validateSavedStrategy\(readStrategies\(\)\)/);
+ assert.match(save,/const name=String\(strategies\[0\]\?\.name\?\?''\)\.trim\(\)/);
+ assert.doesNotMatch(save,/strategyState\[0\]/);
+ assert.match(save,/Object\.defineProperty\(saved,name,\{value:strategies/);
+});
