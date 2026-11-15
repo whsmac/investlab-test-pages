@@ -709,6 +709,7 @@ byId('saveScenario').addEventListener('click',()=>storageAction(()=>{
  localStorage.setItem(SCENARIO_STORAGE_KEY,JSON.stringify(saved));
  refreshSavedScenarioList();byId('savedScenarioList').value=name;
  byId('scenarioStorageStatus').textContent='전략을 이 브라우저에 저장했습니다: '+name;
+ updateStrategySaveState();
 }));
 byId('loadScenario').addEventListener('click',()=>storageAction(()=>{
  const name=byId('savedScenarioList').value,saved=getSavedScenarios();
@@ -722,6 +723,7 @@ byId('loadScenario').addEventListener('click',()=>storageAction(()=>{
  strategyState=clone(strategies);renderEditor();ensureTradePrices();
  simulatorInputRevision++;invalidateCalculatedResults();
  byId('scenarioStorageStatus').textContent='저장된 전략을 불러왔습니다: '+name+' · 다시 계산하세요.';
+ updateStrategySaveState();
 }));
 byId('appendScenario').addEventListener('click',()=>storageAction(()=>{
  const name=byId('savedScenarioList').value,saved=getSavedScenarios();
@@ -750,6 +752,7 @@ byId('deleteScenario').addEventListener('click',()=>storageAction(()=>{
  if(!confirm('저장된 전략을 삭제하시겠습니까? 현재 편집 중인 전략은 유지됩니다.'))return;
  delete saved[name];localStorage.setItem(SCENARIO_STORAGE_KEY,JSON.stringify(saved));
  refreshSavedScenarioList();byId('scenarioStorageStatus').textContent='저장된 전략을 삭제했습니다: '+name;
+ updateStrategySaveState();
 }));
 storageAction(refreshSavedScenarioList);
 let fxRateSnapshot=null;
