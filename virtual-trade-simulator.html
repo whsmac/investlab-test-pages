@@ -167,12 +167,13 @@ function calculate(){
     const card=document.createElement('article');card.className='strategy-outcome-card';
     const heading=document.createElement('strong');heading.textContent=sc.name;card.append(heading);
     const signed=value=>(value>0?'+':'')+fmt(value);
-    for(const [label,value] of [['최종 현금 USD',fmt(outcome.finalCash)],['현금 증감 USD',signed(outcome.cashChange)],['TSLA 최종 수량',fmt(outcome.finalTsla)+'주'],['TSLA 수량 증감',signed(outcome.tslaChange)+'주'],['누적 실현손익 USD',signed(outcome.realizedPnL)]]){
+    for(const [label,value] of [['최종 현금 USD',fmt(outcome.finalCash)],['현금 증감 USD',signed(outcome.cashChange)],['TSLA 최종 수량',fmt(outcome.finalTsla)+'주'],['TSLA 수량 증감',signed(outcome.tslaChange)+'주'],['누적 실현손익 USD',signed(outcome.realizedPnL)],['계속 보유 대비 평가총액 USD',signed(sc.deltaVsHold)],['계속 보유 대비 수익률',result.baseline.terminalValue>0?signed(sc.deltaVsHold/result.baseline.terminalValue*100)+'%':'산출 불가']]){
      const metric=document.createElement('div');const name=document.createElement('small');name.textContent=label;const amount=document.createElement('b');amount.textContent=value;metric.append(name,amount);card.append(metric);
     }
     compact.append(card);
    }
    byId('allStrategySummary').append(compact);
+   const comparisonNote=document.createElement('p');comparisonNote.className='hint';comparisonNote.textContent='계속 보유 대비 차이는 동일한 최종 가정주가로 계산한 세전 평가총액 차이입니다. 실현손익과 별개이며 미래 수익을 보장하지 않습니다.';byId('allStrategySummary').append(comparisonNote);
    byId('allStrategySummary').append(table(['비교 항목','계속 보유',...result.scenarios.map(s=>s.name)],[
     ['최종 현금 USD',fmt(result.baseline.final.cash),...result.scenarios.map(s=>fmt(s.final.cash))],
     ['시작 대비 현금 증감 USD','0',...result.scenarios.map(s=>(s.final.cash-result.baseline.final.cash>0?'+':'')+fmt(s.final.cash-result.baseline.final.cash))],
