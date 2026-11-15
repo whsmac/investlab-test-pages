@@ -118,14 +118,23 @@ function calculate(){
   if(scenario.steps.length){
    overview.hidden=false;
    const list=document.createElement('div');list.className='trade-step-cards';
-   for(const step of scenario.steps){
+   const initialCash=result.baseline.final.cash;
+   const initialTsla=result.baseline.final.positions.TSLA?.quantity??0;
+   for(const [stepIndex,step] of scenario.steps.entries()){
+    const previousCash=stepIndex===0?initialCash:scenario.steps[stepIndex-1].cash;
+    const cashChange=step.cash-previousCash;
+    const tslaQuantity=step.positions.TSLA?.quantity??0;
+    const tslaChange=tslaQuantity-initialTsla;
+    const signedValue=value=>(value>0?'+':'')+fmt(value);
     const card=document.createElement('article');card.className='trade-step-card';
     const heading=document.createElement('strong');heading.textContent=(step.index+1)+'단계 · '+(step.side==='buy'?'매수':'매도')+' '+step.ticker+' '+fmt(step.quantity)+'주';
     const values=document.createElement('div');values.className='trade-step-metrics';
     const add=(label,value)=>{const item=document.createElement('div');const name=document.createElement('small');name.textContent=label;const amount=document.createElement('b');amount.textContent=value;item.append(name,amount);values.append(item);};
     add('거래 후 현금 USD',fmt(step.cash));
+    add('직전 단계 대비 현금 USD',signedValue(cashChange));
     add(step.ticker+' 잔여 수량',fmt(step.positions[step.ticker]?.quantity??0)+'주');
     add('누적 실현손익 USD',(step.cumulativeRealizedPnL>0?'+':'')+fmt(step.cumulativeRealizedPnL));
+    add('TSLA 보유 / 시작 대비',fmt(tslaQuantity)+'주 / '+signedValue(tslaChange)+'주');
     card.append(heading,values);list.append(card);
    }
    overviewBody.append(list);
