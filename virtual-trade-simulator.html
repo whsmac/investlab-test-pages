@@ -178,6 +178,8 @@ function calculate(){
     compact.replaceChildren();
     const ranked=rankStrategyOutcomes(result.scenarios.map((sc,i)=>({...sc,taxAdjustedValue:Number.isFinite(taxResults[i]?.incrementalTaxKrw)&&Number.isFinite(fx)&&fx>0?sc.terminalValue-taxResults[i].incrementalTaxKrw/fx:null})),strategyRankCriterion);
     const leaderDeltas=compareRankedOutcomes(ranked);
+    const preTaxRanks=new Map(rankStrategyOutcomes(ranked,'value').map((sc,i)=>[sc,i+1]));
+    const afterTaxRanks=new Map(rankStrategyOutcomes(ranked,'taxAdjusted').map((sc,i)=>[sc,Number.isFinite(sc.taxAdjustedValue)?i+1:null]));
     const scenarioTaxByRef=new Map(result.scenarios.map((sc,i)=>[sc.name,taxResults[i]]));
     const taxAdjustedByRef=new Map(ranked.map(sc=>[sc.name,sc.taxAdjustedValue]));
     const leaderTaxAdjusted=taxAdjustedByRef.get(ranked[0]?.name);
@@ -191,6 +193,9 @@ function calculate(){
     const outcome=summarizeTradeOutcome(result.baseline.final,sc.final,sc.steps);
     const card=document.createElement('article');card.className='strategy-outcome-card';
     const heading=document.createElement('strong');heading.textContent=(rankIndex+1)+' · '+sc.name;card.append(heading);
+    const preTaxRank=Number.isFinite(sc.terminalValue)?preTaxRanks.get(sc):null;
+    const afterTaxRank=afterTaxRanks.get(sc);
+    const rankNote=document.createElement('p');rankNote.className='strategy-rank-context';rankNote.textContent='세전 '+(preTaxRank===null?'산출 불가':preTaxRank+'위')+' / 세금 반영 '+(afterTaxRank===null?'산출 불가':afterTaxRank+'위')+(preTaxRank!==null&&afterTaxRank!==null?' · '+(preTaxRank===afterTaxRank?'순위 동일':afterTaxRank<preTaxRank?'순위 '+(preTaxRank-afterTaxRank)+'단계 상승':'순위 '+(afterTaxRank-preTaxRank)+'단계 하락'):'');card.append(rankNote);
     if(rankIndex===0){card.classList.add('is-rank-leader');const note=document.createElement('p');note.className='strategy-rank-context';note.textContent='현재 정렬 기준 1위 · '+criterionSelect.selectedOptions[0].textContent;card.append(note);}
     const signed=value=>(value>0?'+':'')+fmt(value);
     const leaderDelta=leaderDeltas[rankIndex];
