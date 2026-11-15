@@ -55,3 +55,14 @@ test('detailed strategy comparison retains metric names while horizontally scrol
  assert.match(html,/fullComparison\.append\(scrollHint\)/);
  assert.match(html,/fullComparison\.append\(fullTable\)/);
 });
+
+test('strategy search filters ranked cards without changing leader baseline or full comparison',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/nameFilter\.type='search'/);
+ assert.match(html,/nameFilter\.addEventListener\('input',renderRankedCards\)/);
+ assert.match(html,/ranked\.map\(\(sc,rankIndex\)=>\(\{sc,rankIndex\}\)\)\.filter/);
+ assert.match(html,/const leaderDeltas=compareRankedOutcomes\(ranked\)/);
+ assert.match(html,/for\(const \{sc,rankIndex\} of visible\)/);
+ assert.match(html,/검색 결과가 없습니다/);
+ assert.match(html,/fullComparison\.append\(fullTable\)/);
+});
