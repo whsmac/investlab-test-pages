@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+test('three accessible portfolio summary metrics',()=>{for(const id of ['summary-market-value','summary-pnl','summary-rate','summary-note'])assert.match(html,new RegExp('id="'+id+'"'));assert.match(html,/function renderValuationSummary\(result\)/);assert.match(html,/function resetValuationSummary\(/);});
+test('mobile layout adapts to narrow screens',()=>{assert.match(html,/\.valuation-summary\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);assert.match(html,/@media\(max-width:640px\)\{\.valuation-summary\{grid-template-columns:1fr 1fr\}/);assert.match(html,/@media\(max-width:360px\)\{\.valuation-summary\{grid-template-columns:1fr\}/);});
+test('script syntax remains valid',()=>{const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);});
