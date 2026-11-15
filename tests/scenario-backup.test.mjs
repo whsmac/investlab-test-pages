@@ -42,3 +42,14 @@ test('merge rejects corrupted current data even if overwritten by valid backup',
  assert.throws(()=>mergeScenarioBackup(invalid,sample,{overwrite:true}),/중복된 전략 이름/);
  assert.deepEqual(sample.TSLA[0].name,'매도');
 });
+
+test('identical backup collisions preserve values and different collisions replace only matching keys',()=>{
+ const original={TSLA:[{name:'매도',trades:[]}],SOXL:[{name:'매수',trades:[]}]};
+ const incoming={TSLA:[{name:'매도',trades:[]}],SOXL:[{name:'변경',trades:[]}]};
+ const before=JSON.stringify(original);
+ const merged=mergeScenarioBackup(original,incoming,{overwrite:true});
+ assert.equal(JSON.stringify(original),before);
+ assert.deepEqual(merged.TSLA,original.TSLA);
+ assert.equal(merged.SOXL[0].name,'변경');
+ assert.equal(original.SOXL[0].name,'매수');
+});
