@@ -74,3 +74,12 @@ test('strategy search can be reset without changing ranking criterion',()=>{
  assert.match(html,/clearFilter\.addEventListener\('click',\(\)=>\{nameFilter\.value='';renderRankedCards\(\);nameFilter\.focus\(\);\}\)/);
  assert.match(html,/strategyRankCriterion=criterionSelect\.value;renderRankedCards\(\)/);
 });
+
+test('strategy search is retained after recalculation and can be cleared with Escape',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/let strategyNameQuery=''/);
+ assert.match(html,/nameFilter\.value=strategyNameQuery/);
+ assert.match(html,/strategyNameQuery=nameFilter\.value/);
+ assert.match(html,/event\.key==='Escape'&&nameFilter\.value/);
+ assert.match(html,/event\.preventDefault\(\)/);
+});
