@@ -149,3 +149,14 @@ test('strategy card keeps only two valuation totals visible and moves comparison
  assert.match(html,/\['1위 대비 세금 반영 평가총액 차이 USD'/);
  assert.match(html,/\['최종 현금 USD'/);
 });
+
+test('rank mover filter composes with search, persists across recalculation and ignores missing tax data',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/let showRankMoversOnly=false/);
+ assert.match(html,/moversCheckbox\.checked=showRankMoversOnly/);
+ assert.match(html,/preTaxRanks\.get\(sc\)!==afterTaxRanks\.get\(sc\)/);
+ assert.match(html,/Number\.isFinite\(sc\.taxAdjustedValue\)/);
+ assert.match(html,/String\(sc\.name\?\?''\)\.toLocaleLowerCase\(\)\.includes\(keyword\)&&\(!showRankMoversOnly/);
+ assert.match(html,/moversCheckbox\.addEventListener\('change'/);
+ assert.match(html,/strategy-rank-movers-filter input\{width:18px/);
+});
