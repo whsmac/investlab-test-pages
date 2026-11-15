@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const pages=['test-my-portfolio-ledger.html','virtual-trade-simulator.html'].map(p=>readFileSync(new URL('../'+p,import.meta.url),'utf8'));
+test('both browser modules parse',()=>{for(const html of pages){const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});
+test('handoff uses same-origin session storage and selected account scope',()=>{assert.match(pages[0],/selectedAccountId:el\('account'\)\.value\|\|null/);assert.match(pages[0],/sessionStorage\.setItem\('investlab_portfolio_bulk_handoff_v1'/);assert.match(pages[1],/sessionStorage\.removeItem\('investlab_portfolio_bulk_handoff_v1'/);});
+test('bulk apply requires per-symbol cost and confirms overwrites',()=>{assert.match(pages[1],/if\(!rawCost\|\|!Number\.isFinite\(cost\)/);assert.match(pages[1],/conflicts\.length&&!confirm/);assert.match(pages[1],/portfolioState\.positions=next/);});
