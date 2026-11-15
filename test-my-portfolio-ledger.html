@@ -107,7 +107,7 @@ function renderValuationSummary(result){
 let lastPortfolioValuation=null;
 function markValuationStale(){
  lastPortfolioValuation=null;
- for(const row of el('holdings').rows){for(const cell of [...row.cells].slice(4))cell.textContent='미계산';}
+ for(const row of el('holdings').rows){if(row.cells[0])row.cells[0].textContent='—';for(const cell of [...row.cells].slice(4))cell.textContent='미계산';}
  resetValuationSummary('입력 변경 · 전체 가정 평가를 다시 계산하세요.');
  el('portfolio-price-results').textContent='입력 변경 · 재계산 필요';
  el('holding-valuation-results').textContent='입력 변경 · 종목 가정손익을 다시 계산하세요.';
