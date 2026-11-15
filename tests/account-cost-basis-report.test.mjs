@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {buildAccountCostReport,restoreAccountCostReport} from '../src/ledger/account-cost-basis-report.mjs';
+const accounts=[{accountId:'a',name:'ISA'},{accountId:'b',name:'Pension'}];
+const entries=[{accountId:'a',ticker:'TSLA',quantity:'3',averageCostUsd:'180'},{accountId:'b',ticker:'TSLA',quantity:'2',averageCostUsd:null}];
+test('round trip retains separate account costs',()=>{const saved=buildAccountCostReport({accounts,entries});const restored=restoreAccountCostReport({savedReport:saved,accounts,entries:entries.map(x=>({...x,averageCostUsd:null}))});assert.equal(restored.rows[0].averageCostUsd,'180');assert.equal(restored.rows[1].averageCostUsd,null);assert.equal(restored.canPersist,false);});
+test('quantity drift blocks restoration',()=>{const saved=buildAccountCostReport({accounts,entries});assert.throws(()=>restoreAccountCostReport({savedReport:saved,accounts,entries:[{...entries[0],quantity:'4'},entries[1]]}));});
+test('unknown account and modified flags block restoration',()=>{const saved=buildAccountCostReport({accounts,entries});assert.throws(()=>restoreAccountCostReport({savedReport:{...saved,canPersist:true},accounts,entries}));assert.throws(()=>restoreAccountCostReport({savedReport:{...saved,rows:[{...saved.rows[0],accountId:'x'},saved.rows[1]]},accounts,entries}));});
