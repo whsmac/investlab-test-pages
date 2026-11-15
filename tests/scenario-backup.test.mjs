@@ -31,3 +31,14 @@ test('backup rejects unsafe nested strategy names',()=>{
   assert.throws(()=>makeScenarioBackup({plan:[{name,trades:[]}]},'x'),/전략 내용 오류/);
  }
 });
+
+test('merge rejects invalid incoming data even when a saved name already exists',()=>{
+ const invalid={TSLA:[{name:'same',trades:[]},{name:'same',trades:[]}]};
+ assert.throws(()=>mergeScenarioBackup(sample,invalid,{overwrite:true}),/중복된 전략 이름/);
+ assert.deepEqual(sample.TSLA[0].name,'매도');
+});
+test('merge rejects corrupted current data even if overwritten by valid backup',()=>{
+ const invalid={TSLA:[{name:'same',trades:[]},{name:'same',trades:[]}]};
+ assert.throws(()=>mergeScenarioBackup(invalid,sample,{overwrite:true}),/중복된 전략 이름/);
+ assert.deepEqual(sample.TSLA[0].name,'매도');
+});
