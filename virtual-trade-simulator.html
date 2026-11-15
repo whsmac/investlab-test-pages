@@ -179,6 +179,8 @@ function calculate(){
     const ranked=rankStrategyOutcomes(result.scenarios,strategyRankCriterion);
     const leaderDeltas=compareRankedOutcomes(ranked);
     const scenarioTaxByRef=new Map(result.scenarios.map((sc,i)=>[sc,taxResults[i]]));
+    const taxAdjustedByRef=new Map(result.scenarios.map((sc,i)=>{const tax=taxResults[i]?.incrementalTaxKrw;return [sc,Number.isFinite(tax)&&Number.isFinite(fx)&&fx>0?sc.terminalValue-tax/fx:null];}));
+    const leaderTaxAdjusted=taxAdjustedByRef.get(ranked[0]);
     strategyNameQuery=nameFilter.value;
     const keyword=strategyNameQuery.trim().toLocaleLowerCase();
     clearFilter.disabled=!nameFilter.value.length;
@@ -193,13 +195,13 @@ function calculate(){
     const signed=value=>(value>0?'+':'')+fmt(value);
     const leaderDelta=leaderDeltas[rankIndex];
     const estimatedTaxKrw=scenarioTaxByRef.get(sc)?.incrementalTaxKrw;
-    const taxAdjustedValue=Number.isFinite(estimatedTaxKrw)&&Number.isFinite(fx)&&fx>0?sc.terminalValue-estimatedTaxKrw/fx:null;
+    const taxAdjustedValue=taxAdjustedByRef.get(sc);
     const taxImpactUsd=Number.isFinite(estimatedTaxKrw)&&Number.isFinite(fx)&&fx>0?estimatedTaxKrw/fx:null;
     const deltaLabel=value=>value===null?'산출 불가':rankIndex===0?'기준 (0)':signed(value);
     const secondary=document.createElement('details');secondary.className='strategy-outcome-more';const moreTitle=document.createElement('summary');moreTitle.textContent='세부 성과 펼치기';secondary.append(moreTitle);
-    for(const [label,value] of [['최종 평가총액 USD',fmt(sc.terminalValue)],['세금 반영 추정 평가총액 USD',taxAdjustedValue===null?'산출 불가':fmt(taxAdjustedValue)],['추가 예상세액 환산 USD',taxImpactUsd===null?'산출 불가':signed(taxImpactUsd)],['1위 전략 대비 평가총액 USD',deltaLabel(leaderDelta.valueDelta)],['1위 전략 대비 TSLA 수량 (주)',deltaLabel(leaderDelta.tslaDelta)],['1위 전략 대비 현금 USD',deltaLabel(leaderDelta.cashDelta)],['최종 현금 USD',fmt(outcome.finalCash)],['현금 증감 USD',signed(outcome.cashChange)],['TSLA 최종 수량',fmt(outcome.finalTsla)+'주'],['TSLA 수량 증감',signed(outcome.tslaChange)+'주'],['누적 실현손익 USD',signed(outcome.realizedPnL)],['계속 보유 대비 평가총액 USD',signed(sc.deltaVsHold)],['계속 보유 대비 수익률',result.baseline.terminalValue>0?signed(sc.deltaVsHold/result.baseline.terminalValue*100)+'%':'산출 불가']]){
+    for(const [label,value] of [['최종 평가총액 USD',fmt(sc.terminalValue)],['세금 반영 추정 평가총액 USD',taxAdjustedValue===null?'산출 불가':fmt(taxAdjustedValue)],['1위 대비 세금 반영 평가총액 차이 USD',taxAdjustedValue===null||leaderTaxAdjusted===null?'산출 불가':rankIndex===0?'기준 (0)':signed(taxAdjustedValue-leaderTaxAdjusted)],['추가 예상세액 환산 USD',taxImpactUsd===null?'산출 불가':signed(taxImpactUsd)],['1위 전략 대비 평가총액 USD',deltaLabel(leaderDelta.valueDelta)],['1위 전략 대비 TSLA 수량 (주)',deltaLabel(leaderDelta.tslaDelta)],['1위 전략 대비 현금 USD',deltaLabel(leaderDelta.cashDelta)],['최종 현금 USD',fmt(outcome.finalCash)],['현금 증감 USD',signed(outcome.cashChange)],['TSLA 최종 수량',fmt(outcome.finalTsla)+'주'],['TSLA 수량 증감',signed(outcome.tslaChange)+'주'],['누적 실현손익 USD',signed(outcome.realizedPnL)],['계속 보유 대비 평가총액 USD',signed(sc.deltaVsHold)],['계속 보유 대비 수익률',result.baseline.terminalValue>0?signed(sc.deltaVsHold/result.baseline.terminalValue*100)+'%':'산출 불가']]){
      const metric=document.createElement('div');const name=document.createElement('small');name.textContent=label;const amount=document.createElement('b');amount.textContent=value;metric.append(name,amount);
-     if(label.startsWith('1위 전략 대비')||label==='최종 평가총액 USD'||label==='세금 반영 추정 평가총액 USD')card.append(metric);else secondary.append(metric);
+     if(label.startsWith('1위 전략 대비')||label==='최종 평가총액 USD'||label==='세금 반영 추정 평가총액 USD'||label==='1위 대비 세금 반영 평가총액 차이 USD')card.append(metric);else secondary.append(metric);
     }
     card.append(secondary);
     compact.append(card);
