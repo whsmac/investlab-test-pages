@@ -852,7 +852,7 @@ function initializePortfolioBulkHandoff(){
     if(allowedTickers.has(ticker)&&typeof value==='number'&&Number.isFinite(value)&&value>=0)assumedPrices[ticker]=value;
    }
   }
-  byId('portfolioBulkPricesStatus').textContent='My Portfolio 사용자 가정주가 '+Object.keys(assumedPrices).length+'개 전달 · 실시간 시세 아님 · 체크해야 반영';
+  byId('portfolioBulkPricesStatus').textContent='사용자 가정주가 '+Object.keys(assumedPrices).length+'개 전달 · 검토표에서 수정 가능 · 실시간 시세 아님 · 체크해야 반영';
   const root=byId('portfolioBulkRows');root.replaceChildren();
   for(const item of clean){
    const row=document.createElement('div');row.className='simple-row';row.dataset.ticker=item.ticker;
@@ -880,7 +880,17 @@ function initializePortfolioBulkHandoff(){
     const costCell=line.cells[2];costCell.textContent='';
     const costInput=document.createElement('input');costInput.type='number';costInput.min='0';costInput.step='any';costInput.value=sourceInput.value;costInput.setAttribute('aria-label',ticker+' 평균취득단가 USD 검토표 입력');
     costInput.addEventListener('input',()=>{sourceInput.value=costInput.value;updateBulkReviewNumbers();});
-    costCell.append(costInput);body.append(line);
+    costCell.append(costInput);
+    const priceCell=line.cells[3];priceCell.textContent='';
+    const priceInput=document.createElement('input');priceInput.type='number';priceInput.min='0';priceInput.step='any';priceInput.placeholder='가정주가 USD';priceInput.value=price===undefined?'':String(price);
+    priceInput.setAttribute('aria-label',ticker+' 가정주가 USD 검토표 입력');
+    priceInput.addEventListener('input',()=>{
+     const raw=priceInput.value.trim();
+     if(raw!==''&&Number.isFinite(Number(raw))&&Number(raw)>=0)assumedPrices[ticker]=Number(raw);
+     else delete assumedPrices[ticker];
+     updateBulkReviewNumbers();
+    });
+    priceCell.append(priceInput);body.append(line);
    }
    table.append(body);review.append(table);
    const missing=selected.filter(row=>{const value=row.querySelector('input[type=number]').value.trim();return value===''||!Number.isFinite(Number(value))||Number(value)<0;});
