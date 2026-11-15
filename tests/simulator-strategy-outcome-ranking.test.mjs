@@ -117,3 +117,15 @@ test('tax-adjusted criterion ranks computed values and puts unavailable values l
  assert.match(html,/세금 반영 평가총액 높은 순/);
  assert.match(html,/taxAdjustedValue:Number\.isFinite\(taxResults\[i\]/);
 });
+
+test('strategy cards show pre-tax and tax-adjusted ranking movement independent of active sorting',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/preTaxRanks=new Map\(rankStrategyOutcomes\(ranked,'value'\)/);
+ assert.match(html,/afterTaxRanks=new Map\(rankStrategyOutcomes\(ranked,'taxAdjusted'\)/);
+ assert.match(html,/Number\.isFinite\(sc\.taxAdjustedValue\)\?i\+1:null/);
+ assert.match(html,/세전 /);
+ assert.match(html,/세금 반영 /);
+ assert.match(html,/단계 상승/);
+ assert.match(html,/단계 하락/);
+ assert.match(html,/for\(const \{sc,rankIndex\} of visible\)/);
+});
