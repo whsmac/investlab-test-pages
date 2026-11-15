@@ -179,13 +179,11 @@ function calculate(){
    const moversCheckbox=document.createElement('input');moversCheckbox.type='checkbox';moversCheckbox.checked=showRankMoversOnly;moversCheckbox.setAttribute('aria-label','세금 반영 후 순위 변경 전략만 보기');moversFilter.append(moversCheckbox,document.createTextNode(' 세금 반영 후 순위 변경 전략만 보기'));byId('allStrategySummary').append(moversFilter);
    const renderRankedCards=()=>{
     compact.replaceChildren();
-    const ranked=rankStrategyOutcomes(result.scenarios.map((sc,i)=>({...sc,taxAdjustedValue:Number.isFinite(taxResults[i]?.incrementalTaxKrw)&&Number.isFinite(fx)&&fx>0?sc.terminalValue-taxResults[i].incrementalTaxKrw/fx:null})),strategyRankCriterion);
+    const ranked=rankStrategyOutcomes(result.scenarios.map((sc,i)=>({...sc,estimatedTaxKrw:taxResults[i]?.incrementalTaxKrw,taxAdjustedValue:Number.isFinite(taxResults[i]?.incrementalTaxKrw)&&Number.isFinite(fx)&&fx>0?sc.terminalValue-taxResults[i].incrementalTaxKrw/fx:null})),strategyRankCriterion);
     const leaderDeltas=compareRankedOutcomes(ranked);
     const preTaxRanks=new Map(rankStrategyOutcomes(ranked,'value').map((sc,i)=>[sc,i+1]));
     const afterTaxRanks=new Map(rankStrategyOutcomes(ranked,'taxAdjusted').map((sc,i)=>[sc,Number.isFinite(sc.taxAdjustedValue)?i+1:null]));
-    const scenarioTaxByRef=new Map(result.scenarios.map((sc,i)=>[sc.name,taxResults[i]]));
-    const taxAdjustedByRef=new Map(ranked.map(sc=>[sc.name,sc.taxAdjustedValue]));
-    const leaderTaxAdjusted=taxAdjustedByRef.get(ranked[0]?.name);
+    const leaderTaxAdjusted=ranked[0]?.taxAdjustedValue??null;
     strategyNameQuery=nameFilter.value;
     const keyword=strategyNameQuery.trim().toLocaleLowerCase();
     clearFilter.disabled=!nameFilter.value.length;
@@ -204,8 +202,8 @@ function calculate(){
     if(rankIndex===0){card.classList.add('is-rank-leader');const note=document.createElement('p');note.className='strategy-rank-context';note.textContent='현재 정렬 기준 1위 · '+criterionSelect.selectedOptions[0].textContent;card.append(note);}
     const signed=value=>(value>0?'+':'')+fmt(value);
     const leaderDelta=leaderDeltas[rankIndex];
-    const estimatedTaxKrw=scenarioTaxByRef.get(sc.name)?.incrementalTaxKrw;
-    const taxAdjustedValue=taxAdjustedByRef.get(sc.name);
+    const estimatedTaxKrw=sc.estimatedTaxKrw;
+    const taxAdjustedValue=sc.taxAdjustedValue;
     const taxImpactUsd=Number.isFinite(estimatedTaxKrw)&&Number.isFinite(fx)&&fx>0?estimatedTaxKrw/fx:null;
     const deltaLabel=value=>value===null?'산출 불가':rankIndex===0?'기준 (0)':signed(value);
     const secondary=document.createElement('details');secondary.className='strategy-outcome-more';const moreTitle=document.createElement('summary');moreTitle.textContent='1위 대비 차이·세부 성과 펼치기';secondary.append(moreTitle);
