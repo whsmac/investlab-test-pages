@@ -656,8 +656,9 @@ function validateSavedStrategy(value){
  if(!Array.isArray(value)||!value.length||value.length>30)throw Error('전략은 1~30개여야 합니다.');
  return value.map(item=>{
   if(!item||typeof item.name!=='string'||!item.name.trim()||!Array.isArray(item.trades)||item.trades.length>100)throw Error('전략 데이터가 유효하지 않습니다.');
+  if(item.name.length>80)throw Error('전략 이름은 80자를 초과할 수 없습니다. 이름을 줄인 뒤 다시 시도하세요.');
   if(item.targetCash!==undefined&&(!Number.isFinite(Number(item.targetCash))||Number(item.targetCash)<0))throw Error('목표 잔여 현금은 0 이상의 숫자여야 합니다.');
-  return {name:item.name.slice(0,80),targetCash:Number(item.targetCash??0),trades:item.trades.map(t=>{
+  return {name:item.name,targetCash:Number(item.targetCash??0),trades:item.trades.map(t=>{
    if(!t||!['buy','sell'].includes(t.side)||typeof t.ticker!=='string'||!/^[A-Z0-9.^_-]{1,20}$/.test(t.ticker)||!Number.isFinite(t.quantity)||t.quantity<=0||!Number.isFinite(t.price)||t.price<=0||!Number.isFinite(t.fee??0)||(t.fee??0)<0)throw Error('거래 데이터가 유효하지 않습니다.');
    return {side:t.side,ticker:t.ticker,quantity:t.quantity,price:t.price,fee:t.fee??0};
   })};
@@ -676,11 +677,11 @@ byId('importScenarios').addEventListener('click',async()=>{try{const file=byId('
 function updateStrategySaveState(){
  const label=byId('strategySaveState');
  try{
-  const name=String(strategyState[0]?.name??'').trim();
+  const current=validateSavedStrategy(readStrategies());
+  const name=String(current[0]?.name??'').trim();
   const saved=getSavedScenarios();
   if(!name){label.textContent='전략 이름을 입력한 뒤 저장할 수 있습니다.';return;}
   if(!Object.hasOwn(saved,name)){label.textContent='미저장 전략 · 현재 브라우저에 자동 임시저장 중';return;}
-  const current=validateSavedStrategy(readStrategies());
   label.textContent=JSON.stringify(current)===JSON.stringify(saved[name])?'저장됨 · '+name:'저장 후 변경됨 · 다시 저장하면 최신 거래가 반영됩니다.';
  }catch(error){label.textContent='저장 상태 확인 불가 · 입력값을 확인하세요.';}
 }
