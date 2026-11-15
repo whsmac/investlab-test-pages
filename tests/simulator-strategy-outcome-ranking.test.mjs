@@ -38,3 +38,11 @@ test('ranked leader is labelled, and detailed table clarifies original strategy 
  assert.match(html,/전체 전략 상세 비교표 보기 \(평가총액·세금 포함\) · 입력 순서/);
  assert.match(html,/전체 상세 비교표는 입력한 전략 순서를 유지합니다/);
 });
+
+test('first-strategy valuation summary is displayed once, not duplicated in result section',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/id="quickResults"/);
+ assert.match(html,/id="resultHero" class="result-hero" hidden aria-hidden="true"/);
+ assert.doesNotMatch(html,/const hero=byId\('resultHero'\);hero\.replaceChildren\(\)/);
+ assert.match(html,/quick\.hidden=false/);
+});
