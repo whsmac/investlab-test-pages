@@ -866,9 +866,11 @@ function initializePortfolioBulkHandoff(){
    row.append(check,label,cost);root.append(row);
   }
   let bulkImpactSortMode='pnl-desc';
+  let selectedBulkImpactTicker=null;
+  let bulkImpactDetailsOpen=false;
   function refreshBulkPriceDifferences(){
    const target=byId('portfolioBulkPriceDifferences');target.replaceChildren();
-   if(!byId('portfolioBulkPricesApply').checked){target.textContent='가정주가 반영을 선택하지 않았습니다. 기존 시뮬레이터 가격은 유지됩니다.';return;}
+   if(!byId('portfolioBulkPricesApply').checked){selectedBulkImpactTicker=null;bulkImpactDetailsOpen=false;target.textContent='가정주가 반영을 선택하지 않았습니다. 기존 시뮬레이터 가격은 유지됩니다.';return;}
    const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked).map(row=>row.dataset.ticker);
    const comparisons=compareBulkAssumedPrices({tickers:selected,assumedPrices,existingPrices:portfolioState.prices});
    const changed=comparisons.filter(item=>item.status==='CHANGED');
@@ -887,6 +889,7 @@ function initializePortfolioBulkHandoff(){
    addMetric('평가금액 변화 (비교 가능 종목)',impact.comparableMarketValueChangeUsd);
    const coverage=document.createElement('p');coverage.className='bulk-impact-coverage';coverage.textContent='비교 가능 '+impact.comparableCount+'/'+impact.totalCount+'종목 · '+(impact.fullyComparable?'전체 비교 완료':'전체 합계 미확정 · 누락 종목 제외한 부분 합계');impactSummary.append(coverage);
    target.append(impactSummary);
+   if(selectedBulkImpactTicker&&!impact.rows.some(item=>item.ticker===selectedBulkImpactTicker)){selectedBulkImpactTicker=null;}
    const movers=topBulkImpactMovers(impact.rows,3);
    const moversSection=document.createElement('section');moversSection.className='bulk-impact-top-movers';moversSection.setAttribute('aria-label','손익 변화 상위 3종목');
    const moversHeading=document.createElement('h4');moversHeading.textContent='손익 변화 상위 종목 (절댓값 기준)';moversSection.append(moversHeading);
@@ -896,26 +899,26 @@ function initializePortfolioBulkHandoff(){
     const name=document.createElement('strong');name.textContent=item.ticker;const value=document.createElement('span');value.textContent=money(item.pnlChangeUsd);value.className=item.pnlChangeUsd>0?'positive':item.pnlChangeUsd<0?'negative':'neutral';card.append(name,value);
     card.addEventListener('click',()=>{
      const detail=target.querySelector('.bulk-impact-details');if(!detail)return;
-     detail.open=true;
+     selectedBulkImpactTicker=item.ticker;bulkImpactDetailsOpen=true;detail.open=true;
      const rows=[...detail.querySelectorAll('tbody tr')];
-     const match=rows.find(row=>row.dataset.ticker===item.ticker);
+     const match=rows.find(row=>row.dataset.ticker===selectedBulkImpactTicker);
      for(const row of rows)row.classList.toggle('bulk-impact-selected',row===match);
      if(match){match.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});}
     });
     moversSection.append(card);
    }
    target.append(moversSection);
-   const details=document.createElement('details');details.className='bulk-impact-details';const detailsLabel=document.createElement('summary');detailsLabel.textContent='종목별 평가금액·평가손익 상세 비교 보기';details.append(detailsLabel);
+   const details=document.createElement('details');details.className='bulk-impact-details';details.open=bulkImpactDetailsOpen;details.addEventListener('toggle',()=>{if(details.isConnected)bulkImpactDetailsOpen=details.open;});const detailsLabel=document.createElement('summary');detailsLabel.textContent='종목별 평가금액·평가손익 상세 비교 보기';details.append(detailsLabel);
    const sortLabel=document.createElement('label');sortLabel.textContent='종목별 손익 변화 정렬';sortLabel.setAttribute('for','bulkImpactSort');
    const sortSelect=document.createElement('select');sortSelect.id='bulkImpactSort';
    for(const [value,label] of [['pnl-desc','손익 변화 큰 순'],['pnl-asc','손익 변화 작은 순'],['ticker-asc','종목코드 순']]){const option=document.createElement('option');option.value=value;option.textContent=label;sortSelect.append(option);}
    sortSelect.value=bulkImpactSortMode;
-   sortSelect.addEventListener('change',()=>{bulkImpactSortMode=sortSelect.value;const wasOpen=details.open;refreshBulkPriceDifferences();const next=byId('portfolioBulkPriceDifferences').querySelector('.bulk-impact-details');if(next)next.open=wasOpen;});
+   sortSelect.addEventListener('change',()=>{bulkImpactSortMode=sortSelect.value;bulkImpactDetailsOpen=details.open;refreshBulkPriceDifferences();const next=byId('portfolioBulkPriceDifferences').querySelector('.bulk-impact-selected');if(next)next.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});});
    details.append(sortLabel,sortSelect);
    const impactTable=document.createElement('table');const impactHead=document.createElement('thead');const impactTr=document.createElement('tr');
    for(const label of ['종목','기존 평가금액','변경 평가금액','기존 평가손익','변경 평가손익','손익 차이']){const th=document.createElement('th');th.textContent=label;impactTr.append(th);}impactHead.append(impactTr);impactTable.append(impactHead);
    const impactBody=document.createElement('tbody');
-   for(const item of sortBulkImpactRows(impact.rows,bulkImpactSortMode)){const line=document.createElement('tr');line.dataset.ticker=item.ticker;for(const value of [item.ticker,money(item.oldMarketValueUsd),money(item.newMarketValueUsd),money(item.oldPnlUsd),money(item.newPnlUsd),money(item.pnlChangeUsd)]){const td=document.createElement('td');td.textContent=value;line.append(td);}impactBody.append(line);}
+   for(const item of sortBulkImpactRows(impact.rows,bulkImpactSortMode)){const line=document.createElement('tr');line.dataset.ticker=item.ticker;line.classList.toggle('bulk-impact-selected',item.ticker===selectedBulkImpactTicker);for(const value of [item.ticker,money(item.oldMarketValueUsd),money(item.newMarketValueUsd),money(item.oldPnlUsd),money(item.newPnlUsd),money(item.pnlChangeUsd)]){const td=document.createElement('td');td.textContent=value;line.append(td);}impactBody.append(line);}
    impactTable.append(impactBody);details.append(impactTable);target.append(details);
   }
   function refreshBulkReview(){
