@@ -156,7 +156,7 @@ function renderMissingInputActions(completion){
      if(inline){inline.scrollIntoView({behavior:'smooth',block:'center'});inline.focus();return;}
     }
     showHoldingDetail(ticker);
-    const target=kind==='price'?el('holding-assumed-price'):el('holding-detail-costs').querySelector('input');
+    const costInputs=[...el('holding-detail-costs').querySelectorAll('input')];const target=kind==='price'?el('holding-assumed-price'):(costInputs.find(input=>input.value.trim()==='')||costInputs[0]);
     if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.focus();}
    });
    group.append(button);
