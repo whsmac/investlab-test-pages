@@ -53,3 +53,15 @@ test('identical backup collisions preserve values and different collisions repla
  assert.equal(merged.SOXL[0].name,'변경');
  assert.equal(original.SOXL[0].name,'매수');
 });
+
+test('backup import reports invalid JSON clearly and skips no-op storage writes',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("byId('importScenarios').addEventListener");
+ const end=html.indexOf('function updateStrategySaveState()',start);
+ const section=html.slice(start,end);
+ assert.match(section,/try\{parsed=JSON\.parse\(await file\.text\(\)\);\}catch\{throw Error\('JSON 형식이 올바르지 않습니다/);
+ assert.match(section,/const added=Object\.keys\(incoming\)\.filter\(name=>!Object\.hasOwn\(current,name\)\)/);
+ assert.match(section,/if\(!collisions\.length&&!added\.length\)/);
+ assert.match(section,/변경 없이 유지했습니다/);
+ assert.ok(section.indexOf('if(!collisions.length&&!added.length)')<section.indexOf('localStorage.setItem(SCENARIO_STORAGE_KEY')));
+});
