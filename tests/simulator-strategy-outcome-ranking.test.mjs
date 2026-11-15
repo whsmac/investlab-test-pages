@@ -178,3 +178,12 @@ test('tax outcomes stay attached to individual scenarios even when names repeat'
  assert.doesNotMatch(html,/scenarioTaxByRef=new Map/);
  assert.doesNotMatch(html,/taxAdjustedByRef=new Map/);
 });
+
+test('duplicate scenario names never highlight an unrelated failed trade',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/const matches=cards\.filter\(c=>c\.querySelector\('\.strategy-name'\)/);
+ assert.match(html,/if\(matches\.length!==1\)/);
+ assert.match(html,/동일한 전략 이름이 여러 개입니다/);
+ assert.match(html,/const card=matches\[0\]/);
+ assert.doesNotMatch(html,/const card=cards\.find\(c=>c\.querySelector\('\.strategy-name'\)/);
+});
