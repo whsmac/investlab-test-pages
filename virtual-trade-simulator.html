@@ -756,7 +756,9 @@ function clearTradeErrorHighlight(){
 function focusFailedTrade(error){
  if(error.message!=='scenario trade unavailable'||!Number.isInteger(error.tradeIndex))return;
  const cards=[...editor.querySelectorAll('.strategy-card')];
- const card=cards.find(c=>c.querySelector('.strategy-name')?.value.trim()===error.scenarioName);
+ const matches=cards.filter(c=>c.querySelector('.strategy-name')?.value.trim()===error.scenarioName);
+ if(matches.length!==1){if(matches.length>1)byId('status').textContent+=' · 동일한 전략 이름이 여러 개입니다. 오류 거래를 정확히 찾으려면 전략 이름을 구분해 주세요.';return;}
+ const card=matches[0];
  const row=card?.querySelectorAll('.trade-grid')[error.tradeIndex];
  if(!row)return;
  row.classList.add('trade-error');
