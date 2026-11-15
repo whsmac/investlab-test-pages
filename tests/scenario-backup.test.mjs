@@ -20,3 +20,14 @@ test('invalid target cash is rejected without affecting legacy backups',()=>{
  }
  assert.deepEqual(validateScenarioBackup(makeScenarioBackup(sample,'x')),sample);
 });
+
+test('backup import rejects duplicate strategy names inside one saved group',()=>{
+ const duplicate={plan:[{name:'same',trades:[]},{name:'same',trades:[]}]};
+ assert.throws(()=>makeScenarioBackup(duplicate,'x'),/중복된 전략 이름/);
+ assert.throws(()=>validateScenarioBackup({format:'INVESTLAB_SIMULATOR_SCENARIO_BACKUP',version:1,scenarios:duplicate}),/중복된 전략 이름/);
+});
+test('backup rejects unsafe nested strategy names',()=>{
+ for(const name of ['__proto__','constructor','prototype']){
+  assert.throws(()=>makeScenarioBackup({plan:[{name,trades:[]}]},'x'),/전략 내용 오류/);
+ }
+});
