@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+test('missing input status offers per-ticker actions',()=>{assert.match(html,/function renderMissingInputActions\(completion\)/);assert.match(html,/renderMissingInputActions\(completion\)/);assert.match(html,/missing-input-jump/);assert.match(html,/completion\.missingPrice/);assert.match(html,/completion\.missingCost/);});
+test('jumps to inline price or account cost editor',()=>{assert.match(html,/inline\.scrollIntoView/);assert.match(html,/showHoldingDetail\(ticker\)/);assert.match(html,/costInputs\.find\(input=>input\.value\.trim\(\)===''\)/);assert.match(html,/target\.focus\(\)/);});
+test('browser module parses',()=>{const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);});
