@@ -852,6 +852,13 @@ function initializePortfolioBulkHandoff(){
    const cost=document.createElement('input');cost.type='number';cost.min='0';cost.step='any';cost.placeholder='평균단가 USD';cost.setAttribute('aria-label',item.ticker+' 평균취득단가 USD');
    row.append(check,label,cost);root.append(row);
   }
+  if(payload.accountCostReport){
+   try{
+    const matches=matchAccountCosts(clean,payload.accountCostReport);let count=0;
+    for(const match of matches){if(match.suggestedCost===null)continue;const row=[...root.children].find(r=>r.dataset.ticker===match.ticker);row.querySelector('input[type=number]').value=String(Number(match.suggestedCost.toFixed(8)));count++;}
+    byId('portfolioBulkAccountStatus').textContent='My Portfolio에서 전달한 계좌별 단가: 수량 일치 '+count+'/'+clean.length+'종목 · 검토 후 적용하세요 · 서버 검증 전';
+   }catch(e){byId('portfolioBulkAccountStatus').textContent='전달 단가 검증 실패: '+e.message;}
+  }
   byId('portfolioBulkAccountSuggest').addEventListener('click',async()=>{
    try{
     const file=byId('portfolioBulkAccountFile').files?.[0];
