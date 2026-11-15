@@ -20,7 +20,7 @@
  #portfolioBulkReview input[type=number]{width:100%;min-width:0;min-height:44px;font-size:16px;box-sizing:border-box}
  #portfolioBulkReview .bulk-validation-message{line-height:1.6}
 }
-.bulk-review-select{display:inline-flex;align-items:center;gap:8px;cursor:pointer;min-height:40px}.bulk-review-select input{width:20px;height:20px;accent-color:#81b9ff}.bulk-review-excluded{opacity:.72}@media(max-width:600px){#portfolioBulkReview tbody td:nth-child(5){grid-column:1/-1}#portfolioBulkReview .bulk-review-select{width:100%;min-height:44px;font-weight:700}}</style></head>
+.bulk-review-select{display:inline-flex;align-items:center;gap:8px;cursor:pointer;min-height:40px}.bulk-review-select input{width:20px;height:20px;accent-color:#81b9ff}.bulk-review-excluded{opacity:.72}@media(max-width:600px){#portfolioBulkReview tbody td:nth-child(5){grid-column:1/-1}#portfolioBulkReview .bulk-review-select{width:100%;min-height:44px;font-weight:700}}.bulk-card-status{display:inline-block;margin-left:10px;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#30435d;color:#e2edff}.bulk-card-status[data-state=ready]{background:#164b3d;color:#a3f0cd}.bulk-card-status[data-state=missing]{background:#654326;color:#ffe0ac}.bulk-card-status[data-state=excluded]{background:#354052;color:#c6cfde}.bulk-review-invalid{outline:2px solid #d49b53;outline-offset:-2px}#portfolioBulkReview input[aria-invalid=true]{border-color:#e5a457;outline:1px solid #e5a457}@media(max-width:600px){.bulk-card-status{margin-left:0;margin-top:6px;width:max-content}}</style></head>
 <body><nav style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px"><a style="color:#8dc0ff" href="./index.html">대시보드</a><a style="color:#8dc0ff" href="./shared-data.html">공유 데이터 조회</a></nav><h1>INVESTLAB · 가상 매매 시뮬레이터</h1><p>하락장 재매수·종목 전환과 상승장 단계별 매도를 시험합니다. 기존 포트폴리오 보유정보를 읽기 전용으로 불러와 가상 거래에 사용합니다. 실제 포트폴리오와 매매원장은 변경하지 않습니다.</p>
 <details class="panel secondary-settings" style="margin-bottom:16px"><summary>기존 포트폴리오 종목 선택 · 연결 상태</summary><p class="hint" id="managedSymbolStatus">종목 목록 확인 중…</p><p id="savedQuoteStatus" class="hint" role="status"></p><button type="button" id="refreshManagedSymbols" style="max-width:240px">종목 목록 새로고침</button><datalist id="managedSymbolOptions"></datalist><p class="hint">이 화면은 기존 종목관리 정보를 읽기만 합니다. 종목 등록·수정은 기존 종목관리에서 수행하세요. 다른 도메인이나 기기의 목록은 자동 연결되지 않습니다.</p></details>
 <div class="layout">
@@ -942,6 +942,23 @@ function initializePortfolioBulkHandoff(){
    for(const item of sortBulkImpactRows(impact.rows,bulkImpactSortMode)){const line=document.createElement('tr');line.dataset.ticker=item.ticker;line.classList.toggle('bulk-impact-selected',item.ticker===selectedBulkImpactTicker);for(const value of [item.ticker,money(item.oldMarketValueUsd),money(item.newMarketValueUsd),money(item.oldPnlUsd),money(item.newPnlUsd),money(item.pnlChangeUsd)]){const td=document.createElement('td');td.textContent=value;line.append(td);}impactBody.append(line);}
    impactTable.append(impactBody);details.append(impactTable);target.append(details);
   }
+  function updateBulkCardStatuses(){
+   const review=byId('portfolioBulkReview');
+   for(const line of review.querySelectorAll('tbody tr[data-ticker]')){
+    const source=[...root.children].find(row=>row.dataset.ticker===line.dataset.ticker);
+    if(!source)continue;
+    const selected=source.querySelector('input[type=checkbox]').checked;
+    const raw=source.querySelector('input[type=number]').value.trim();
+    const valid=raw!==''&&Number.isFinite(Number(raw))&&Number(raw)>=0;
+    const status=!selected?'제외':valid?'반영 가능':'평균단가 입력 필요';
+    const label=line.querySelector('.bulk-card-status');
+    if(label){label.textContent=status;label.dataset.state=!selected?'excluded':valid?'ready':'missing';}
+    line.classList.toggle('bulk-review-excluded',!selected);
+    line.classList.toggle('bulk-review-invalid',selected&&!valid);
+    const costInput=line.cells[2].querySelector('input');
+    if(costInput){costInput.setAttribute('aria-invalid',String(selected&&!valid));}
+   }
+  }
   function refreshBulkReview(){
    const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked);
    const valid=selected.filter(row=>{const value=row.querySelector('input[type=number]').value.trim();return value!==''&&Number.isFinite(Number(value))&&Number(value)>=0;});
@@ -956,12 +973,13 @@ function initializePortfolioBulkHandoff(){
     const price=assumedPrices[ticker];
     const cost=row.querySelector('input[type=number]').value.trim();
     const values=[ticker,clean.find(x=>x.ticker===ticker).quantity.toLocaleString('ko-KR'),cost===''?'미입력':cost,price===undefined?'미전달':price.toLocaleString('en-US'),selectedRow?'선택':'제외'];
-    const line=document.createElement('tr');for(const value of values){const td=document.createElement('td');td.textContent=value;line.append(td);}
+    const line=document.createElement('tr');line.dataset.ticker=ticker;for(const value of values){const td=document.createElement('td');td.textContent=value;line.append(td);}
     const sourceInput=row.querySelector('input[type=number]');
     const costCell=line.cells[2];costCell.textContent='';
     const costInput=document.createElement('input');costInput.type='number';costInput.min='0';costInput.step='any';costInput.value=sourceInput.value;costInput.setAttribute('aria-label',ticker+' 평균취득단가 USD 검토표 입력');
     costInput.addEventListener('input',()=>{sourceInput.value=costInput.value;updateBulkReviewNumbers();});
     costCell.append(costInput);
+    const status=document.createElement('span');status.className='bulk-card-status';status.setAttribute('role','status');line.cells[0].append(status);
     const priceCell=line.cells[3];priceCell.textContent='';
     const priceInput=document.createElement('input');priceInput.type='number';priceInput.min='0';priceInput.step='any';priceInput.placeholder='가정주가 USD';priceInput.value=price===undefined?'':String(price);
     priceInput.setAttribute('aria-label',ticker+' 가정주가 USD 검토표 입력');
@@ -981,7 +999,7 @@ function initializePortfolioBulkHandoff(){
     line.classList.toggle('bulk-review-excluded',!selectedRow);
     body.append(line);
    }
-   table.append(body);review.append(table);
+   table.append(body);review.append(table);updateBulkCardStatuses();
    const missing=selected.filter(row=>{const value=row.querySelector('input[type=number]').value.trim();return value===''||!Number.isFinite(Number(value))||Number(value)<0;});
    const apply=byId('portfolioBulkApply');apply.disabled=!selected.length||missing.length>0;
    byId('portfolioBulkReady').textContent=!selected.length?'반영 대기 · 종목을 선택하세요.':missing.length?'입력 확인 필요 · '+missing.length+'종목의 평균취득단가가 누락되었습니다.':'반영 가능 · '+selected.length+'종목의 필수 입력값 확인 완료';
@@ -1008,6 +1026,7 @@ function initializePortfolioBulkHandoff(){
    const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked);
    const missing=selected.filter(row=>{const raw=row.querySelector('input[type=number]').value.trim();return raw===''||!Number.isFinite(Number(raw))||Number(raw)<0;});
    byId('portfolioBulkApply').disabled=!selected.length||missing.length>0;
+   updateBulkCardStatuses();
    byId('portfolioBulkReady').textContent=!selected.length?'반영 대기 · 종목을 선택하세요.':missing.length?'입력 확인 필요 · '+missing.length+'종목의 평균취득단가가 누락되었습니다.':'반영 가능 · '+selected.length+'종목의 필수 입력값 확인 완료';
    const review=byId('portfolioBulkReview');
    const summary=review.querySelector('.bulk-review-summary');
