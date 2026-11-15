@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';import {rankStrategyOutcomes,compareRankedOutcomes} from '../src/simulator/strategy-outcome-ranking.mjs';
 const scenarios=[{name:'A',terminalValue:120,final:{cash:10,positions:{TSLA:{quantity:4}}}},{name:'B',terminalValue:100,final:{cash:80,positions:{TSLA:{quantity:9}}}},{name:'C',terminalValue:120,final:{cash:5,positions:{TSLA:{quantity:2}}}}];
 test('rank strategies by value TSLA or cash without changing original array',()=>{assert.deepEqual(rankStrategyOutcomes(scenarios,'value').map(s=>s.name),['A','C','B']);assert.deepEqual(rankStrategyOutcomes(scenarios,'tsla').map(s=>s.name),['B','A','C']);assert.deepEqual(rankStrategyOutcomes(scenarios,'cash').map(s=>s.name),['B','A','C']);assert.equal(scenarios[0].name,'A');});
-test('invalid criterion is rejected',()=>assert.throws(()=>rankStrategyOutcomes(scenarios,'tax'),/invalid/));
-test('UI allows criterion switch and parses',()=>{const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');assert.match(html,/rankStrategyOutcomes\(result\.scenarios,strategyRankCriterion\)/);assert.match(html,/strategyRankCriterion=criterionSelect\.value;renderRankedCards\(\)/);assert.match(html,/TSLA 보유수량 많은 순/);const scripts=[...html.matchAll(/<script[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/g)];assert.ok(scripts.length);for(const m of scripts){if(!m[1].trim())continue;const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});
+test('invalid criterion is rejected',()=>assert.throws(()=>rankStrategyOutcomes(scenarios,'unknown'),/invalid/));
+test('UI allows criterion switch and parses',()=>{const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');assert.match(html,/rankStrategyOutcomes\(result\.scenarios\.map/);assert.match(html,/strategyRankCriterion=criterionSelect\.value;renderRankedCards\(\)/);assert.match(html,/TSLA 보유수량 많은 순/);const scripts=[...html.matchAll(/<script[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/g)];assert.ok(scripts.length);for(const m of scripts){if(!m[1].trim())continue;const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});
 
 test('rank leader deltas respect active sorting, ties, and missing data',()=>{
  const value=compareRankedOutcomes(rankStrategyOutcomes(scenarios,'value'));
@@ -26,7 +26,7 @@ test('ranked strategy cards keep leader deltas visible and move secondary metric
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  assert.match(html,/secondary\.className='strategy-outcome-more'/);
  assert.match(html,/moreTitle\.textContent='세부 성과 펼치기'/);
- assert.match(html,/label==='세금 반영 추정 평가총액 USD'\)card\.append\(metric\)/);
+ assert.match(html,/label==='세금 반영 추정 평가총액 USD'\|\|label==='1위 대비 세금 반영 평가총액 차이 USD'\)card\.append\(metric\)/);
  assert.match(html,/card\.append\(secondary\)/);
  assert.match(html,/strategy-outcome-card details>summary/);
 });
@@ -86,7 +86,7 @@ test('strategy search is retained after recalculation and can be cleared with Es
 
 test('ranked cards show absolute terminal valuation and tax-adjusted estimate',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
- assert.match(html,/scenarioTaxByRef=new Map\(result\.scenarios\.map\(\(sc,i\)=>\[sc,taxResults\[i\]\]\)\)/);
+ assert.match(html,/scenarioTaxByRef=new Map\(result\.scenarios\.map\(\(sc,i\)=>\[sc\.name,taxResults\[i\]\]\)\)/);
  assert.match(html,/sc\.terminalValue-tax\/fx/);
  assert.match(html,/\['최종 평가총액 USD',fmt\(sc\.terminalValue\)\]/);
  assert.match(html,/\['세금 반영 추정 평가총액 USD',taxAdjustedValue===null\?'산출 불가':fmt\(taxAdjustedValue\)\]/);
@@ -103,8 +103,17 @@ test('tax impact is disclosed in the expanded strategy detail without changing c
 
 test('tax-adjusted comparison uses the actual ranked leader, not filtered search leader',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
- assert.match(html,/leaderTaxAdjusted=taxAdjustedByRef\.get\(ranked\[0\]\)/);
+ assert.match(html,/leaderTaxAdjusted=taxAdjustedByRef\.get\(ranked\[0\]\?\.name\)/);
  assert.match(html,/signed\(taxAdjustedValue-leaderTaxAdjusted\)/);
  assert.match(html,/taxAdjustedValue===null\|\|leaderTaxAdjusted===null\?'산출 불가'/);
  assert.match(html,/1위 대비 세금 반영 평가총액 차이 USD/);
+});
+
+test('tax-adjusted criterion ranks computed values and puts unavailable values last',()=>{
+ const input=[{name:'A',taxAdjustedValue:90},{name:'B',taxAdjustedValue:110},{name:'C',taxAdjustedValue:null}];
+ assert.deepEqual(rankStrategyOutcomes(input,'taxAdjusted').map(s=>s.name),['B','A','C']);
+ assert.equal(input[0].name,'A');
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/세금 반영 평가총액 높은 순/);
+ assert.match(html,/taxAdjustedValue:Number\.isFinite\(taxResults\[i\]/);
 });
