@@ -1,6 +1,6 @@
 // Deterministic display order only; does not select, execute or persist a strategy.
 export function rankStrategyOutcomes(scenarios,criterion='value'){
- const metric={value:s=>s.terminalValue,tsla:s=>s.final?.positions?.TSLA?.quantity??0,cash:s=>s.final?.cash};
+ const metric={value:s=>s.terminalValue,tsla:s=>s.final?.positions?.TSLA?.quantity??0,cash:s=>s.final?.cash,taxAdjusted:s=>s.taxAdjustedValue};
  if(!Object.hasOwn(metric,criterion))throw Error('invalid comparison criterion');
  if(!Array.isArray(scenarios))throw Error('scenarios must be array');
  return scenarios.map((scenario,index)=>({scenario,index,score:metric[criterion](scenario)}))
