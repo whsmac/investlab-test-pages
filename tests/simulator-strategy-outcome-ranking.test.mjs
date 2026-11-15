@@ -198,3 +198,18 @@ test('saved scenario key comes from the same validated editor snapshot as saved 
  assert.doesNotMatch(save,/strategyState\[0\]/);
  assert.match(save,/Object\.defineProperty\(saved,name,\{value:strategies/);
 });
+
+test('appended strategy names remain unique and within the 80-character limit',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("byId('appendScenario').addEventListener");
+ const end=html.indexOf("byId('deleteScenario').addEventListener",start);
+ const append=html.slice(start,end);
+ assert.match(append,/const baseName=item\.name\.trim\(\)\.slice\(0,80\)/);
+ assert.match(append,/while\(used\.has\(nextName\)\)/);
+ assert.match(append,/baseName\.slice\(0,80-suffix\.length\)\.trimEnd\(\)\+suffix/);
+ const unique=(items,existing)=>{const used=new Set(existing);return items.map(item=>{const baseName=item.trim().slice(0,80);let nextName=baseName,index=2;while(used.has(nextName)){const suffix=' ('+index+++')';nextName=baseName.slice(0,80-suffix.length).trimEnd()+suffix;}used.add(nextName);return nextName;});};
+ const long='A'.repeat(80);const names=unique([long,long,long],[long,long.slice(0,76)+' (2)']);
+ assert.equal(new Set(names).size,3);
+ assert.ok(names.every(name=>name.length<=80));
+ assert.ok(names.every(name=>name!==long));
+});
