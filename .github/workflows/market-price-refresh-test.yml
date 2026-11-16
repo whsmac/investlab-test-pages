@@ -1,6 +1,22 @@
 name: INVESTLAB TEST price source dry-run
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/test-navigation-20261112
+    paths:
+      - 'scripts/market_price_refresh_test.py'
+      - 'scripts/audit_price_source_test.py'
+      - 'scripts/reconcile_price_probe_test.py'
+      - 'scripts/summarize_price_probe_test.py'
+      - 'src/market/read-test-price-snapshot.mjs'
+      - 'tests/test_price*.py'
+      - 'tests/test-price-snapshot.mjs'
+      - '.github/workflows/market-price-refresh-test.yml'
+
+concurrency:
+  group: investlab-test-price-probe-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
