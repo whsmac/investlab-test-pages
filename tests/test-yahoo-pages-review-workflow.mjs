@@ -9,8 +9,8 @@ test("manual TEST Pages review never deploys or requests write permissions",()=>
  assert.doesNotMatch(workflow,/pages: write|id-token: write|actions\/deploy-pages@|actions\/upload-pages-artifact@|actions\/configure-pages@/);
 });
 test("review bundle preserves existing TEST site and adds JSON",()=>{
- assert.match(workflow,/tar --exclude=\.git/);
- assert.match(workflow,/site\/data\/yahoo-public-review\.json/);
- assert.match(workflow,/test -f site\/index\.html/);
+ assert.match(workflow,/scripts\.assemble_yahoo_test_site_preview/);
+ assert.match(workflow,/scripts\.validate_yahoo_test_site_preview/);
+ assert.doesNotMatch(workflow,/tar --exclude|cp yahoo-staged/);
  assert.match(workflow,/actions\/upload-artifact@v4/);
 });
