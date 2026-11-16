@@ -18,6 +18,14 @@ class YahooSitePreviewTests(unittest.TestCase):
             file.write_text("TEST", encoding="utf-8")
         (repo / ".github").mkdir()
         (repo / ".github/secrets.txt").write_text("not-for-preview")
+        (repo / ".env").write_text("SECRET_KEY=hidden")
+        (repo / "private.json").write_text('{"token":"hidden"}')
+        (repo / "scripts").mkdir()
+        (repo / "scripts/internal.py").write_text("PRIVATE")
+        (repo / "src/market/private.py").write_text("PRIVATE")
+        (repo / "src/market/visible.mjs").write_text("export const ok=true")
+        (repo / "assets").mkdir()
+        (repo / "assets/logo.svg").write_text("<svg/>")
         (staging / "data").mkdir(parents=True)
         (staging / "data/yahoo-public-review.json").write_text(json.dumps({
             "mode": "REVIEW_ONLY", "database_insert_authorized": False,
@@ -38,6 +46,10 @@ class YahooSitePreviewTests(unittest.TestCase):
             self.assertTrue((root / "preview/index.html").exists())
             self.assertTrue((root / "preview/data/yahoo-public-review.json").exists())
             self.assertFalse((root / "preview/.github").exists())
+            for private in (".env", "private.json", "scripts/internal.py", "src/market/private.py"):
+                self.assertFalse((root / "preview" / private).exists(), private)
+            self.assertTrue((root / "preview/src/market/visible.mjs").exists())
+            self.assertTrue((root / "preview/assets/logo.svg").exists())
 
     def test_invalid_manifest_blocks_output(self):
         with tempfile.TemporaryDirectory() as temp:
