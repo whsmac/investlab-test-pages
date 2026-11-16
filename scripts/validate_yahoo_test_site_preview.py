@@ -9,6 +9,7 @@ REQUIRED = (
     "index.html",
     "test-yahoo-price-review.html",
     "src/market/load-published-yahoo-review.mjs",
+    "src/market/yahoo-review-chart-series.mjs",
     "src/market/read-yahoo-test-company-map.mjs",
     "src/market/read-test-price-snapshot.mjs",
     "src/market/review-yahoo-test-browser.mjs",
@@ -46,6 +47,8 @@ def validate_preview(site: Path):
     html = (site / "test-yahoo-price-review.html").read_text(encoding="utf-8")
     if "loadPublishedYahooReview({origin:location.href})" not in html:
         raise ValueError("Browser published JSON loader is not wired")
+    if 'id="preview"' not in html or "void autoLoadYahooReview()" not in html or "renderReviewCharts(" not in html:
+        raise ValueError("Yahoo chart preview or startup auto-loading is not wired")
     if "reviewYahooCandidate(candidate,snapshot,companyMap)" not in html:
         raise ValueError("Browser read-only review is not wired")
     for import_path in re.findall(r'from\s+["\'](\./[^"\']+)["\']', html):
