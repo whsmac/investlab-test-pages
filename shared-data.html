@@ -71,6 +71,7 @@ import {readMyLedgerPage} from "./src/sync/online-ledger-page.mjs";
     $("logout").disabled = !session;
     $("verifiedPortfolioPreview").disabled = !verifiedUserId;
     $("onlineLedgerRead").disabled = !verifiedUserId;
+    if (!verifiedUserId) { $("onlineLedgerRows").replaceChildren(); $("onlineLedgerNext").disabled=true; ledgerPageIndex=0; }
     $("reload").disabled = !session;
   }
   async function verifyServerUser() {
