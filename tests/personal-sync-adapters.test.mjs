@@ -50,3 +50,12 @@ test('ledger preview uses validated offline envelope without enabling server wri
  assert.match(html,/TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단/);
  assert.match(html,/if\(!current\)throw Error\('먼저 원장 데이터를 불러오세요'\)/);
 });
+
+test('shared data requires server-verified user before any authenticated reads',()=>{
+ const html=readFileSync(new URL('../shared-data.html',import.meta.url),'utf8');
+ assert.match(html,/currentClient\.auth\.getUser\(\)/);
+ assert.match(html,/verifiedUserId !== session\.user\?\.id/);
+ assert.match(html,/verifiedUserId !== requestedUser/);
+ assert.match(html,/서버 인증 미확인/);
+ assert.match(html,/서버 인증 확인 실패/);
+});
