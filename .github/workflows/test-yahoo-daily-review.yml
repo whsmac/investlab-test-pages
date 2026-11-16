@@ -37,15 +37,28 @@ jobs:
           python -m scripts.build_yahoo_review_candidate --input yahoo-price-probe.json --output yahoo-price-review-candidate.json
           python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
           python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
-      - name: Checkout current TEST Pages branch into read-only comparison directory
+      - name: Confirm actual TEST Pages source before branch-specific review
         if: steps.candidate.outcome == 'success'
+        id: pages_source
+        env:
+          CONFIRMED_PAGES_SOURCE: ${{ vars.INVESTLAB_TEST_PAGES_SOURCE }}
+        run: |
+          if [ "$CONFIRMED_PAGES_SOURCE" = "gh-pages" ]; then
+            echo "confirmed=true" >> "$GITHUB_OUTPUT"
+            echo "TEST Pages source explicitly confirmed: gh-pages"
+          else
+            echo "confirmed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pages source unconfirmed. Collection artifact remains available; branch-specific comparison and publication planning are blocked."
+          fi
+      - name: Checkout current TEST Pages branch into read-only comparison directory
+        if: steps.pages_source.outputs.confirmed == 'true'
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: test-pages-current
           persist-credentials: false
       - name: Compare proposed JSON against current TEST Pages (NO DEPLOY)
-        if: steps.candidate.outcome == 'success'
+        if: steps.pages_source.outputs.confirmed == 'true'
         id: comparison
         continue-on-error: true
         run: |
@@ -101,8 +114,17 @@ jobs:
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
           PREWRITE_OUTCOME: ${{ steps.prewrite.outcome }}
           BACKUP_OUTCOME: ${{ steps.backup.outcome }}
+          PAGES_SOURCE_CONFIRMED: ${{ steps.pages_source.outputs.confirmed }}
         run: |
-          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then
+            echo "::error::Yahoo collection or validation failed; no data was published."
+            exit 1
+          fi
+          if [ "$PAGES_SOURCE_CONFIRMED" != true ]; then
+            echo "::notice::Review-only Yahoo collection succeeded; Pages comparison intentionally skipped pending source confirmation."
+            exit 0
+          fi
+          if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then
             echo "::error::Yahoo review failed; no data was published or written."
             exit 1
           fi
