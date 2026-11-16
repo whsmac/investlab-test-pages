@@ -11,6 +11,7 @@ class TestYahooPreviewValidation(unittest.TestCase):
             "index.html", "test-yahoo-price-review.html",
             "src/market/load-published-yahoo-review.mjs",
             "src/market/yahoo-review-chart-series.mjs",
+            "src/market/yahoo-chart-freshness.mjs",
             "src/market/read-yahoo-test-company-map.mjs",
             "src/market/read-test-price-snapshot.mjs",
             "src/market/review-yahoo-test-browser.mjs",
