@@ -251,7 +251,7 @@ jobs:
         continue-on-error: true
         run: |
           if [ -f yahoo-price-review-candidate.json ]; then
-            python scripts/export_yahoo_public_review.py --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+            python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
           fi
       - name: Upload browser-ready Yahoo JSON (not published)
         if: always()
