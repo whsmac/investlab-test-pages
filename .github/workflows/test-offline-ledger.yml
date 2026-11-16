@@ -221,6 +221,8 @@ jobs:
         run: node --test tests/test-yahoo-browser-page-contract.mjs
       - name: Validate read-only TEST Supabase schema diagnostics
         run: node --test tests/test-yahoo-schema-diagnostic.mjs
+      - name: Validate safe TEST schema diagnostic export
+        run: node --test tests/test-yahoo-schema-report.mjs
       - name: Probe Yahoo Finance first (read-only, non-blocking)
         continue-on-error: true
         timeout-minutes: 2
