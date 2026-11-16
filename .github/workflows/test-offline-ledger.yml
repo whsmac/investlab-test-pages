@@ -229,6 +229,21 @@ jobs:
           path: yahoo-price-review-candidate.json
           if-no-files-found: ignore
           retention-days: 7
+      - name: Build public-safe Yahoo browser snapshot (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-price-review-candidate.json ]; then
+            python scripts/export_yahoo_public_review.py --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+          fi
+      - name: Upload browser-ready Yahoo JSON (not published)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-browser-json
+          path: yahoo-public-review.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload Yahoo trial diagnostics
         if: always()
         uses: actions/upload-artifact@v4
