@@ -37,3 +37,12 @@ test('comparison is suppressed if an individual account failed or was omitted',(
  assert.deepEqual(compareAccountRealizedGains({rows}),[]);
  assert.deepEqual(compareAccountRealizedGains({rows:[rows[0],rows[2]]}),[]);
 });
+
+import {readFileSync} from 'node:fs';
+test('simulator account comparison labels virtual USD gains and warns against automatic tax-basis use',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/실현손익 USD \(계좌 기준\)/);
+ assert.match(html,/세금 신고용 원화 손익으로 자동 적용하지 않습니다/);
+ assert.match(html,/실제 과세 대상 거래의 원화 기준 취득·양도금액/);
+ assert.match(html,/compareAccountRealizedGains\(compared\)/);
+});
