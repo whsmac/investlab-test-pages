@@ -9,7 +9,10 @@ import urllib.error
 import urllib.request
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
-from scripts.audit_price_source_test import audit_source_report
+try:
+    from scripts.audit_price_source_test import audit_source_report
+except ModuleNotFoundError:
+    from audit_price_source_test import audit_source_report
 
 # Stooq's unofficial public CSV endpoint is used only as a trial source.
 # SPCX is deliberately excluded until an independently verified market symbol exists.
