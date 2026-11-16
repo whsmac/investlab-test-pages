@@ -1,12 +1,8 @@
-name: TEST Yahoo Pages publication (manual approval only)
-# This workflow never runs on push or PR. No Supabase credentials or DB operations.
+name: TEST Yahoo Pages bundle review (manual, NO DEPLOY)
+# Safety: does not deploy Pages, alter branch contents, or access Supabase.
 on:
   workflow_dispatch:
     inputs:
-      approval:
-        description: 'Type PUBLISH_TEST_YAHOO_ONLY to authorize TEST Pages publication'
-        required: true
-        type: string
       source_run_id:
         description: 'Successful TEST offline ledger workflow run ID'
         required: true
@@ -15,34 +11,24 @@ on:
 permissions:
   contents: read
   actions: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: test-yahoo-pages-manual
-  cancel-in-progress: false
 
 jobs:
-  publish-test-yahoo:
-    if: ${{ inputs.approval == 'PUBLISH_TEST_YAHOO_ONLY' }}
+  review-test-yahoo:
     runs-on: ubuntu-latest
-    environment:
-      name: test-yahoo-pages-manual-approval
     steps:
       - name: Checkout TEST feature branch
         uses: actions/checkout@v4
         with:
           ref: feature/test-navigation-20261112
           persist-credentials: false
-      - name: Retrieve staged TEST Yahoo artifact
+      - name: Retrieve staged Yahoo review artifact
         uses: actions/download-artifact@v4
         with:
           name: investlab-test-yahoo-pages-staging
           run-id: ${{ inputs.source_run_id }}
           github-token: ${{ github.token }}
           path: ./yahoo-staged
-      - name: Validate staged data and source
-        shell: bash
+      - name: Validate TEST data package
         run: |
           python - <<'PY'
           import json
@@ -52,24 +38,23 @@ jobs:
           assert manifest['mode']=='TEST_PAGES_STAGING_ONLY'
           assert manifest['published'] is False and manifest['database_writes']==0
           assert manifest['target_path']=='data/yahoo-public-review.json'
-          assert data['mode']=='REVIEW_ONLY' and data['database_insert_authorized'] is False
-          assert data['writes_performed']==0 and data['row_count']==len(data['observations'])
-          assert data['row_count']>0
-          print('Validated TEST Yahoo rows:',data['row_count'])
+          assert data['mode']=='REVIEW_ONLY' and data['source']=='Yahoo Finance'
+          assert data['database_insert_authorized'] is False and data['writes_performed']==0
+          assert data['row_count']==len(data['observations']) and data['row_count']>0
+          print('TEST review rows:',data['row_count'])
           PY
-      - name: Prepare static TEST Pages bundle
+      - name: Prepare full TEST site bundle (NO DEPLOY)
         run: |
+          mkdir -p site
+          tar --exclude=.git --exclude=.github --exclude=site --exclude=yahoo-staged -cf - . | tar -xf - -C site
           mkdir -p site/data
           cp yahoo-staged/data/yahoo-public-review.json site/data/yahoo-public-review.json
-          cp test-yahoo-price-review.html site/test-yahoo-price-review.html
-          cp -R src site/src
-          printf '%s\n' '<!doctype html><meta charset="utf-8"><title>TEST Yahoo review</title><a href="./test-yahoo-price-review.html">TEST Yahoo price review</a>' > site/index.html
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload TEST Pages bundle
-        uses: actions/upload-pages-artifact@v3
+          test -f site/index.html
+          test -f site/test-yahoo-price-review.html
+          test -f site/src/market/load-published-yahoo-review.mjs
+      - name: Upload offline TEST site preview only
+        uses: actions/upload-artifact@v4
         with:
-          path: ./site
-      - name: Deploy TEST Pages (explicit manual authorization only)
-        id: deployment
-        uses: actions/deploy-pages@v4
+          name: investlab-test-yahoo-pages-bundle-review
+          path: site/
+          retention-days: 7
