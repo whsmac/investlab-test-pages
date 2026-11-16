@@ -12,6 +12,7 @@ class YahooSitePreviewTests(unittest.TestCase):
         staging = root / "staging"
         for path in ("index.html", "test-yahoo-price-review.html",
                      "src/market/load-published-yahoo-review.mjs",
+                     "src/market/yahoo-review-chart-series.mjs",
                      "src/market/review-yahoo-test-browser.mjs"):
             file = repo / path
             file.parent.mkdir(parents=True, exist_ok=True)
