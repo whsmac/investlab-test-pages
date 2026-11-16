@@ -23,6 +23,15 @@ def validate_preview(site: Path):
         raise ValueError("Missing preview files: " + ", ".join(missing))
     if (site / ".git").exists() or (site / ".github").exists():
         raise ValueError("Git metadata or workflows must not be in the preview")
+    from scripts.assemble_yahoo_test_site_preview import public_asset
+    for candidate in site.rglob("*"):
+        if not candidate.is_file():
+            continue
+        relative = candidate.relative_to(site)
+        if relative.as_posix() == "data/yahoo-public-review.json":
+            continue
+        if not public_asset(relative):
+            raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
     data = json.loads((site / "data/yahoo-public-review.json").read_text(encoding="utf-8"))
     if (data.get("mode") != "REVIEW_ONLY" or data.get("source") != "Yahoo Finance"
             or data.get("database_insert_authorized") is not False
