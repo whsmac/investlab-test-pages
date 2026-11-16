@@ -27,10 +27,16 @@ def fetch_csv(symbol, start, end):
     with urllib.request.urlopen(request, timeout=25) as response:
         if response.status != 200:
             raise ValueError(f"HTTP {response.status}")
+        content_type = response.headers.get("Content-Type", "").lower()
+        if "html" in content_type:
+            raise ValueError("Source returned HTML rather than CSV")
         raw = response.read(1_000_001)
         if len(raw) > 1_000_000:
             raise ValueError("CSV exceeds 1 MB safety limit")
-        return raw.decode("utf-8-sig")
+        decoded = raw.decode("utf-8-sig")
+        if decoded.lstrip().lower().startswith(("<!doctype html", "<html")):
+            raise ValueError("Source returned an HTML error page")
+        return decoded
 
 def parse_csv(content, start, end):
     rows = list(csv.DictReader(io.StringIO(content)))
@@ -75,7 +81,16 @@ def main(argv=None):
             report["symbols"][ticker] = {"status": "ok" if data else "empty", "source_symbol": source_symbol,
                                          "count": len(data), "observations": data}
         except (OSError, urllib.error.URLError, TimeoutError, UnicodeError, ValueError, InvalidOperation, KeyError) as exc:
+            if isinstance(exc, urllib.error.HTTPError):
+                failure_kind = "HTTP_ERROR"
+            elif isinstance(exc, (urllib.error.URLError, TimeoutError)):
+                failure_kind = "NETWORK_ERROR"
+            elif isinstance(exc, OSError):
+                failure_kind = "INPUT_ERROR"
+            else:
+                failure_kind = "DATA_ERROR"
             report["symbols"][ticker] = {"status": "error", "source_symbol": source_symbol,
+                                         "failure_kind": failure_kind,
                                          "message": f"{type(exc).__name__}: {str(exc)[:180]}"}
     report["symbols"]["SPCX"] = {"status": "skipped", "reason": "Public ticker and data source not verified"}
     report["quality_audit"] = audit_source_report(report, today=today)
