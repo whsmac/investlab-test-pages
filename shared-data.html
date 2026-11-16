@@ -23,7 +23,7 @@
 <section class="panel"><div class="head"><h2 style="margin:0;font-size:17px">계정 로그인</h2><span class="small" id="authState">로그인하지 않음</span></div>
 <div class="form" style="grid-template-columns:1fr 1fr auto;margin-top:14px"><div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="username" placeholder="등록된 계정 이메일"></div><div class="field"><label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" placeholder="비밀번호"></div><button id="login" class="primary">로그인</button></div>
 <div class="status" id="authStatus">공유 데이터 프로젝트에 등록된 계정으로 로그인하세요. 공개 회원가입 기능은 제공하지 않습니다.</div></section>
-<section class="panel" aria-label="사용자별 저장 사전점검"><h2 style="margin:0;font-size:17px">개인 데이터 동기화 사전점검 (읽기 전용)</h2><p class="small">현재 로그인 계정이 TEST 프로젝트에 인증되었는지만 확인합니다. 개인 포트폴리오 테이블의 존재·RLS 정책·쓰기 권한은 아직 검증되지 않았습니다.</p><div class="grid"><div class="metric"><span class="small">로그인 인증</span><strong id="pilotAuth" style="font-size:16px">미확인</strong></div><div class="metric"><span class="small">개인 데이터 RLS</span><strong style="font-size:16px">미검증</strong></div><div class="metric"><span class="small">기기 간 저장</span><strong style="font-size:16px">미구현</strong></div></div><p class="small" id="pilotUser" role="status">인증 계정 확인 대기</p><p class="small">인증이 확인되더라도 사용자별 데이터 격리와 저장 권한이 보장되는 것은 아닙니다. 개인 데이터 조회·업로드 기능은 비활성 상태입니다.</p><p class="small">서버에서 인증된 계정 ID와 현재 브라우저의 포트폴리오 데이터 소유자 식별자를 결합해 오프라인 변환 검사를 수행할 수 있습니다. 서버에 개인 데이터를 보내지 않으며, 이 기기에 데이터가 없으면 0건입니다.</p><button id="verifiedPortfolioPreview" type="button" disabled>인증 계정 기준 포트폴리오 변환 검사</button><p class="small" id="verifiedPortfolioStatus" role="status">서버 인증 완료 후 검사할 수 있습니다.</p><p class="small"><a class="link" href="./docs/test-personal-data-rls-readonly-audit.sql" download="investlab-test-rls-audit.sql">TEST RLS·권한 읽기 전용 점검 SQL 받기</a></p><p class="small">TEST Supabase SQL Editor에서만 직접 실행하고, 결과를 확인하기 전에는 개인 데이터 쓰기를 활성화하지 않습니다. 이 페이지에서 SQL을 자동 실행하지 않습니다.</p></section>
+<section class="panel" aria-label="사용자별 저장 사전점검"><h2 style="margin:0;font-size:17px">개인 데이터 동기화 사전점검 (읽기 전용)</h2><p class="small">현재 로그인 계정이 TEST 프로젝트에 인증되었는지만 확인합니다. 개인 포트폴리오 테이블의 존재·RLS 정책·쓰기 권한은 아직 검증되지 않았습니다.</p><div class="grid"><div class="metric"><span class="small">로그인 인증</span><strong id="pilotAuth" style="font-size:16px">미확인</strong></div><div class="metric"><span class="small">개인 데이터 RLS</span><strong style="font-size:16px">미검증</strong></div><div class="metric"><span class="small">기기 간 저장</span><strong style="font-size:16px">미구현</strong></div></div><p class="small" id="pilotUser" role="status">인증 계정 확인 대기</p><p class="small">인증이 확인되더라도 사용자별 데이터 격리와 저장 권한이 보장되는 것은 아닙니다. 개인 데이터 조회·업로드 기능은 비활성 상태입니다.</p><p class="small">서버에서 인증된 계정 ID와 현재 브라우저의 포트폴리오 데이터 소유자 식별자를 결합해 오프라인 변환 검사를 수행할 수 있습니다. 서버에 개인 데이터를 보내지 않으며, 이 기기에 데이터가 없으면 0건입니다.</p><button id="verifiedPortfolioPreview" type="button" disabled>인증 계정 기준 포트폴리오 변환 검사</button><p class="small" id="verifiedPortfolioStatus" role="status">서버 인증 완료 후 검사할 수 있습니다.</p><p class="small"><a class="link" href="./docs/test-personal-data-rls-readonly-audit.sql" download="investlab-test-rls-audit.sql">TEST RLS·권한 읽기 전용 점검 SQL 받기</a></p><p class="small">TEST Supabase SQL Editor에서만 직접 실행하고, 결과를 확인하기 전에는 개인 데이터 쓰기를 활성화하지 않습니다. 이 페이지에서 SQL을 자동 실행하지 않습니다.</p><div style="margin-top:14px"><label for="rlsAuditFile" class="small">SQL 5번 결과 JSON 파일 (브라우저 내부 검사)</label><input id="rlsAuditFile" type="file" accept=".json,application/json"><button id="reviewRlsAudit" type="button">RLS 결과 구조 검토</button><p id="rlsAuditStatus" class="small" role="status">결과 파일을 선택하면 위험 신호를 요약합니다. 서버 전송 없음 · 쓰기 허용 판정 불가</p><div id="rlsAuditResults" class="small"></div></div></section>
 <section class="grid"><div class="metric"><span class="small">등록 기업</span><strong id="companyCount">—</strong></div><div class="metric"><span class="small">주가 관측값</span><strong id="priceCount">—</strong></div><div class="metric"><span class="small">분기 재무 관측값</span><strong id="financialCount">—</strong></div></section>
 <section class="panel"><div class="head"><h2 style="margin:0;font-size:17px">기업 목록</h2><button id="reload" disabled>새로고침</button></div><div class="table-wrap" id="companies"><div class="empty">프로젝트 연결 및 로그인 후 조회할 수 있습니다.</div></div></section>
 <section class="panel"><h2 style="margin:0 0 12px;font-size:17px">최근 주가 관측값</h2><div class="table-wrap" id="prices"><div class="empty">조회 대기</div></div></section>
@@ -32,6 +32,7 @@
 </main>
 <script type="module">
 import {buildPortfolioSyncEnvelope,previewPersonalSyncEnvelope} from "./src/sync/personal-sync-adapters.mjs";
+import {summarizePersonalRlsAudit} from "./src/sync/personal-rls-audit-review.mjs";
 (() => {
   const TARGET_URL = "https://gopofxyezhwpfxbecrxd.supabase.co";
   const STORAGE_KEY = "investlab_shared_data_connection_v1";
@@ -168,6 +169,20 @@ import {buildPortfolioSyncEnvelope,previewPersonalSyncEnvelope} from "./src/sync
       authStatus("조회 실패: " + error.message + " · TEST 프로젝트 로그인 상태, 공개용 키, 테이블 조회 권한(RLS)을 확인하세요. 데이터는 변경되지 않았습니다.");
     }
   }
+  $("reviewRlsAudit").onclick = async () => {
+    const status = $("rlsAuditStatus"), output = $("rlsAuditResults"); output.replaceChildren();
+    try {
+      const file = $("rlsAuditFile").files?.[0];
+      if (!file || file.size > 1048576) throw Error("1MiB 이하 JSON 파일을 선택하세요");
+      const summary = summarizePersonalRlsAudit(JSON.parse(await file.text()));
+      status.textContent = "검토 대상 " + summary.objects + "개 · 모두 추가 검증 필요 · 실제 사용자 간 격리 미검증 · 서버 저장 불가";
+      const list = document.createElement("ul");
+      for (const item of summary.items) {
+        const li = document.createElement("li"); li.textContent = item.name + " · " + item.status + " · 정책 " + item.policies + "개"; list.append(li);
+      }
+      output.append(list);
+    } catch (error) { status.textContent = "결과 검토 실패: " + error.message + " · 서버 저장 불가"; }
+  };
   $("verifiedPortfolioPreview").onclick = () => {
     const target = $("verifiedPortfolioStatus");
     const authenticatedUserId = verifiedUserId;
