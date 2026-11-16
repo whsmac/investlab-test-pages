@@ -64,3 +64,32 @@ test('an account cannot spend another account cash or sell its shares',()=>{
  assert.throws(()=>compareScenarios({cash:pension.usdCash,positions},[{name:'other account cash',trades:[{side:'buy',ticker:'TSLA',quantity:1,price:100}]}],{TSLA:150}),/scenario trade unavailable/);
  assert.throws(()=>compareScenarios({cash:pension.usdCash,positions},[{name:'other account shares',trades:[{side:'sell',ticker:'TSLA',quantity:3,price:150}]}],{TSLA:150}),/scenario trade unavailable/);
 });
+
+test('account-level virtual trade totals reconcile with combined portfolio',()=>{
+ const original=JSON.stringify(saved);
+ const toPositions=opening=>Object.fromEntries(opening.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const isa=extract({saved,accountId:a});
+ const pension=extract({saved,accountId:b});
+ const combined=combine({saved,accountIds:[a,b]});
+ const prices={TSLA:150,USD:40};
+ const isaOutcome=compareScenarios({cash:isa.usdCash,positions:toPositions(isa)},[{name:'ISA sale',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:150}]}],prices).scenarios[0];
+ const pensionOutcome=compareScenarios({cash:pension.usdCash,positions:toPositions(pension)},[{name:'Pension hold',trades:[]}],prices).scenarios[0];
+ const combinedOutcome=compareScenarios({cash:combined.usdCash,positions:toPositions(combined)},[{name:'Combined sale',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:150}]}],prices).scenarios[0];
+ const accounts=[isaOutcome,pensionOutcome];
+ const sumCash=accounts.reduce((sum,item)=>sum+item.final.cash,0);
+ const sumQuantity=ticker=>accounts.reduce((sum,item)=>sum+(item.final.positions[ticker]?.quantity??0),0);
+ const sumValue=accounts.reduce((sum,item)=>sum+item.terminalValue,0);
+ assert.equal(sumCash,650);
+ assert.equal(sumCash,combinedOutcome.final.cash);
+ assert.equal(sumQuantity('TSLA'),2);
+ assert.equal(sumQuantity('TSLA'),combinedOutcome.final.positions.TSLA.quantity);
+ assert.equal(sumQuantity('USD'),2);
+ assert.equal(sumQuantity('USD'),combinedOutcome.final.positions.USD.quantity);
+ assert.equal(sumValue,1030);
+ assert.equal(sumValue,combinedOutcome.terminalValue);
+ assert.equal(combinedOutcome.final.positions.TSLA.averageCost,100);
+ assert.equal(pensionOutcome.final.positions.TSLA.averageCost,95);
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(combined.canPost,false);
+ assert.equal(combined.serverVerified,false);
+});
