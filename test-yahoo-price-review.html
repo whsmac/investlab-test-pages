@@ -1,16 +1,38 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST · Yahoo 주가 대조</title>
 <style>:root{color-scheme:dark;font:16px system-ui;background:#0b1020;color:#edf2ff}body{margin:0}.wrap{max-width:900px;margin:auto;padding:24px 16px}a{color:#a9c5ff}.panel{background:#141b2d;border:1px solid #2a3550;border-radius:12px;padding:20px;margin-top:20px}button,input{font:inherit;background:#233657;color:#fff;border:1px solid #566789;padding:10px;border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}</style></head>
 <body><main class="wrap"><a href="./index.html">← TEST 홈</a><h1>Yahoo 주가 · TEST DB 대조</h1><p>먼저 게시된 Yahoo 주가 JSON을 자동으로 읽어보세요. 게시되지 않았다면 GitHub Actions에서 생성된 <code>yahoo-price-review-candidate.json</code> 파일을 선택하세요. 로그인된 TEST DB의 기업 ID와 주가를 읽어 비교합니다. DB 저장·수정은 하지 않습니다.</p>
-<section class="panel"><p><button id="schema">TEST DB 구조 진단 (읽기 전용)</button> <button id="schemaDownload" disabled>진단 결과 JSON 저장</button></p><pre id="schemaResult"></pre><p><button id="auto">게시된 최신 JSON 자동 읽기</button></p><p id="autoStatus">자동 게시 설정 전에는 JSON이 없을 수 있습니다.</p><p><button id="find">최신 Yahoo 수집 결과 찾기</button></p><p id="artifact"></p><label>Yahoo 검증 파일 <input type="file" id="file" accept=".json,application/json"></label><p><button id="run">읽기 전용 대조 실행</button> <button id="download" disabled>결과 JSON 저장</button></p><p id="status" role="status">대기 중</p><pre id="result"></pre></section></main>
+<section class="panel"><p><button id="schema">TEST DB 구조 진단 (읽기 전용)</button> <button id="schemaDownload" disabled>진단 결과 JSON 저장</button></p><pre id="schemaResult"></pre><p><button id="auto">게시된 최신 JSON 자동 읽기</button></p><p id="autoStatus">자동 게시 설정 전에는 JSON이 없을 수 있습니다.</p><div id="chart" aria-label="자동 수집 Yahoo 주가 추세 미리보기"></div><p><button id="find">최신 Yahoo 수집 결과 찾기</button></p><p id="artifact"></p><label>Yahoo 검증 파일 <input type="file" id="file" accept=".json,application/json"></label><p><button id="run">읽기 전용 대조 실행</button> <button id="download" disabled>결과 JSON 저장</button></p><p id="status" role="status">대기 중</p><pre id="result"></pre></section></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script type="module">
 import {diagnoseYahooTestSchema} from "./src/market/diagnose-yahoo-test-schema.mjs";
 import {buildSafeYahooSchemaReport} from "./src/market/export-yahoo-schema-report.mjs";
 import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review.mjs";
+import {buildYahooChartSeries} from "./src/market/yahoo-review-chart-series.mjs";
 import {findLatestYahooArtifact} from "./src/market/find-latest-yahoo-artifact.mjs";
 import {readYahooTestCompanyMap} from "./src/market/read-yahoo-test-company-map.mjs";
 import {readTestPriceSnapshot} from "./src/market/read-test-price-snapshot.mjs";
 import {reviewYahooCandidate} from "./src/market/review-yahoo-test-browser.mjs";
 const TARGET="https://gopofxyezhwpfxbecrxd.supabase.co", $=id=>document.getElementById(id);let last=null;let published=null;let sourceMode="none";let schemaReport=null;
+function renderReviewCharts(snapshot){
+ const target=$("chart");target.replaceChildren();
+ for(const series of buildYahooChartSeries(snapshot)){
+  const section=document.createElement("section"),heading=document.createElement("p");
+  heading.textContent=series.ticker+" · 최근 "+series.points.length+"거래일 · USD";
+  section.append(heading);
+  if(series.points.length<2){section.append(document.createTextNode("표시할 데이터 부족"));target.append(section);continue;}
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 600 100");svg.setAttribute("role","img");
+  svg.setAttribute("aria-label",series.ticker+" 종가 추세");
+  svg.style.cssText="width:100%;height:100px;background:#0d1424;border-radius:8px";
+  const prices=series.points.map(p=>p.close),low=Math.min(...prices),high=Math.max(...prices),range=high-low||1;
+  const line=document.createElementNS("http://www.w3.org/2000/svg","polyline");
+  line.setAttribute("points",prices.map((v,i)=>(10+i*580/(prices.length-1)).toFixed(1)+","+(90-(v-low)*80/range).toFixed(1)).join(" "));
+  line.setAttribute("fill","none");line.setAttribute("stroke","#7ca7ff");line.setAttribute("stroke-width","2");
+  svg.append(line);section.append(svg);
+  const caption=document.createElement("small");
+  caption.textContent=series.points[0].date+" ~ "+series.points.at(-1).date+" · 최근 종가 USD "+series.points.at(-1).close.toLocaleString("en-US");
+  section.append(caption);target.append(section);
+ }
+}
 function getTestClient(){
  let config;try{config=JSON.parse(localStorage.getItem("investlab_shared_data_connection_v1")||"{}")}catch{throw Error("TEST 연결 설정이 손상되었습니다. 공유 데이터 화면에서 다시 저장하세요.")}
  if(config.url!==TARGET||!config.key)throw Error("공유 데이터 화면에서 TEST 서버 연결·로그인을 먼저 완료하세요.");
@@ -32,12 +54,12 @@ $("schemaDownload").addEventListener("click",()=>{
 $("auto").addEventListener("click",async()=>{
  $("auto").disabled=true;
  try{
-  published=await loadPublishedYahooReview({origin:location.href});sourceMode="published";$("file").value="";
+  published=await loadPublishedYahooReview({origin:location.href});renderReviewCharts(published);sourceMode="published";$("file").value="";
   $("autoStatus").textContent="공개 JSON 읽기 성공: "+published.row_count+"건. 아래 '읽기 전용 대조 실행'을 누르세요.";
- }catch(error){published=null;sourceMode="none";$("autoStatus").textContent="자동 읽기 불가: "+error.message+" · GitHub 파일 다운로드 방식 이용 가능";}
+ }catch(error){published=null;sourceMode="none";$("chart").replaceChildren();$("autoStatus").textContent="자동 읽기 불가: "+error.message+" · GitHub 파일 다운로드 방식 이용 가능";}
  finally{$("auto").disabled=false}
 });
-$("file").addEventListener("change",()=>{published=null;sourceMode="file";$("autoStatus").textContent="수동 JSON 선택됨 · 자동 게시 데이터 대신 선택 파일을 대조합니다.";});
+$("file").addEventListener("change",()=>{published=null;$("chart").replaceChildren();sourceMode="file";$("autoStatus").textContent="수동 JSON 선택됨 · 자동 게시 데이터 대신 선택 파일을 대조합니다.";});
 $("find").addEventListener("click",async()=>{
  $("find").disabled=true;$("artifact").textContent="GitHub Actions 조회 중…";
  try{
