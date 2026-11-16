@@ -70,3 +70,12 @@ test('shared-data preview requires server verified user and never uploads portfo
  assert.match(html,/서버 저장 없음/);
  assert.match(html,/verifiedUserId = null; \+\+verificationSequence/);
 });
+
+test('shared data auth callback preserves verified identity on same-user refresh and ignores stale sessions',()=>{
+ const html=readFileSync(new URL('../shared-data.html',import.meta.url),'utf8');
+ assert.match(html,/const sessionClient = client/);
+ assert.match(html,/if \(client !== sessionClient\) return/);
+ assert.match(html,/previousUser !== nextUser \|\| event === "SIGNED_OUT"/);
+ assert.match(html,/if \(nextUser && verifiedUserId !== nextUser\)/);
+ assert.match(html,/client === activeClient && session\?\.user\?\.id === nextUser/);
+});
