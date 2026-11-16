@@ -45,3 +45,14 @@ test('shared-data pilot clears prior account data on logout and rejects stale se
  assert.match(html,/previousUser && previousUser !== session\.user\?\.id/);
  assert.match(html,/\$\(id\)\.replaceChildren\(\)/);
 });
+
+test('TEST pilot authentication status never claims personal RLS or cross-device sync is verified',()=>{
+ const html=readFileSync(new URL('../shared-data.html',import.meta.url),'utf8');
+ assert.match(html,/개인 데이터 동기화 사전점검 \(읽기 전용\)/);
+ assert.match(html,/id="pilotAuth"/);
+ assert.match(html,/id="pilotUser"/);
+ assert.match(html,/session\?\.user\?\.id/);
+ assert.match(html,/개인 데이터 RLS/);
+ assert.match(html,/기기 간 저장/);
+ assert.match(html,/개인 데이터 조회·업로드 기능은 비활성 상태입니다/);
+});
