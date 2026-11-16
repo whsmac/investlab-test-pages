@@ -37,3 +37,8 @@ test("manual file selection cannot be overwritten by an earlier pending auto fet
  assert.match(html,/if\(revision!==sourceRevision\)return/);
  assert.match(html,/sourceRevision\+\+;published=null/);
 });
+
+test("Yahoo freshness indicator exists before chart render",()=>{
+ assert.match(html,/id="freshness"/);
+ assert.match(html,/assessYahooChartFreshness\(snapshot\)/);
+});
