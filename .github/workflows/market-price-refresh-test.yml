@@ -48,6 +48,9 @@ jobs:
             echo "No Supabase write operation is performed by this workflow."
             echo "A successful source probe does not verify price adjustment basis or currency."
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Summarize per-ticker source quality
+        if: always()
+        run: python scripts/summarize_price_probe_test.py
       - name: Upload dry-run report even if source fails
         if: always()
         uses: actions/upload-artifact@v4
