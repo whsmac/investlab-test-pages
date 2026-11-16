@@ -42,7 +42,9 @@ test('shared-data pilot clears prior account data on logout and rejects stale se
  assert.match(html,/function clearSharedData\(/);
  assert.match(html,/session = null; clearSharedData\(\); updateAuth\(\)/);
  assert.match(html,/session\.user\?\.id !== requestedUser/);
- assert.match(html,/previousUser && previousUser !== session\.user\?\.id/);
+ assert.match(html,/previousUser !== nextUser \|\| event === "SIGNED_OUT"/);
+ assert.match(html,/verifiedUserId = null; \+\+verificationSequence; clearSharedData\(\)/);
+ assert.match(html,/if \(client !== sessionClient\) return/);
  assert.match(html,/\$\(id\)\.replaceChildren\(\)/);
 });
 
