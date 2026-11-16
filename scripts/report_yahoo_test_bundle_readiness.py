@@ -15,6 +15,9 @@ def assess_bundle(site: Path):
         return {"mode":"TEST_YAHOO_BUNDLE_READINESS_ONLY","ready":False,"deployed":False,
                 "database_writes":0,"reason":str(error)}
     return {"mode":"TEST_YAHOO_BUNDLE_READINESS_ONLY","ready":True,"deployed":False,
+            "publication_target":"https://whsmac.github.io/investlab-test-pages/",
+            "publication_asset":"data/yahoo-public-review.json",
+            "deployment_requires_separate_approval":True,
             "database_writes":0,"rows":details["rows"],"tickers":details["tickers"],
             "json_sha256":details["json_sha256"],
             "reason":"Offline TEST bundle validated; no online publication performed"}
