@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+test('TEST ledger baseline is frozen on confirmed import',()=>{assert.match(html,/let testOnlineBaseline=null/);assert.match(html,/testOnlineBaseline=testHandoffPositions\.map\(x=>\(\{ticker:x\.ticker,quantity:x\.quantity,averageCost:x\.averageCost\}\)\)/);assert.match(html,/if\(!confirm\(/);});
+test('first simulated scenario is compared to TEST ledger quantities without DB writes',()=>{assert.match(html,/id="testOnlineBaselineCompare"/);assert.match(html,/const original=new Map\(testOnlineBaseline\.map/);assert.match(html,/scenario\.final\.positions\[t\]\?\.quantity\?\?0/);assert.match(html,/온라인 평균취득단가 USD/);assert.match(html,/byId\('testOnlineBaselineCompare'\)\.hidden=false/);});
