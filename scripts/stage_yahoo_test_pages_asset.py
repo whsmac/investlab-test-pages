@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Stage an approved TEST Pages data asset without publishing or deploying."""
 import argparse
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -23,6 +24,7 @@ def stage_asset(source: Path, directory: Path):
     shutil.copyfile(source, destination)
     manifest = {"mode": "TEST_PAGES_STAGING_ONLY",
                 "target_path": TARGET.as_posix(), "row_count": payload["row_count"],
+                "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
                 "published": False, "database_writes": 0,
                 "instructions": "Review staged data and approve any separate TEST Pages publication action."}
     (directory / "manifest.json").write_text(
