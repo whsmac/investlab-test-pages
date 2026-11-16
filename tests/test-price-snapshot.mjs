@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readTestPriceSnapshot } from "../src/market/read-test-price-snapshot.mjs";
 
-function client(rows, { countOverride, truncate = false } = {}) {
+function client(rows, { countOverride, truncate = false, companies = [{id:1,ticker:"MSFT"}] } = {}) {
   return {
     supabaseUrl: "https://gopofxyezhwpfxbecrxd.supabase.co",
     auth: { async getUser() { return { data: { user: { id: "test-user" } }, error: null }; } },
