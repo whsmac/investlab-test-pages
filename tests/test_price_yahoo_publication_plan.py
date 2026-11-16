@@ -23,7 +23,7 @@ class PublicationPlanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"More than one"):
             build_plan(data,BRANCH_SHA)
     def test_invalid_branch_sha_blocked(self):
-        with self.assertRaisesRegex(ValueError,"branch commit"):
+        with self.assertRaisesRegex(ValueError,"commit SHA"):
             build_plan(review(),"gh-pages")
     def test_inconsistent_change_flag_blocked(self):
         data=review()
