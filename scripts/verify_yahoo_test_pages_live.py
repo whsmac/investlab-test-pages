@@ -16,6 +16,8 @@ TICKERS = {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
 MAX_BYTES = 2_000_000
 
 def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date | None = None):
+    if len(raw) > MAX_BYTES:
+        raise ValueError("Public TEST Pages JSON exceeds size limit")
     digest = hashlib.sha256(raw).hexdigest()
     if expected_sha256 and digest != expected_sha256.lower():
         raise ValueError("Published JSON SHA-256 does not match reviewed bundle")
