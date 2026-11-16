@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildPortfolioSyncEnvelope,buildLedgerSyncEnvelope,previewPersonalSyncEnvelope} from '../src/sync/personal-sync-adapters.mjs';
@@ -30,4 +31,13 @@ test('ledger adapter preserves input JSON without modifying it and rejects misma
 });
 test('adapter never provides network write methods',()=>{
  assert.equal('save' in buildPortfolioSyncEnvelope(storage({}),opts),false);
+});
+
+test('portfolio diagnostic offers offline-only conversion preview without network upload',()=>{
+ const html=readFileSync(new URL('../portfolio-connection-check.html',import.meta.url),'utf8');
+ assert.match(html,/id="previewSync"/);
+ assert.match(html,/buildPortfolioSyncEnvelope\(localStorage/);
+ assert.match(html,/previewPersonalSyncEnvelope\(envelope/);
+ assert.match(html,/TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단/);
+ assert.doesNotMatch(html,/\.from\(['"](?:portfolio|ledger)/);
 });
