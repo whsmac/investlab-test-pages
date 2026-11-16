@@ -149,3 +149,34 @@ test('account-specific realized gains reconcile before illustrative KRW tax esti
  assert.equal(isa.canPost,false);
  assert.equal(pension.serverVerified,false);
 });
+
+test('account sale loss offsets gains and reduces estimated annual tax without implying cash refund',()=>{
+ const original=JSON.stringify(saved);
+ const positions=x=>Object.fromEntries(x.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const isa=extract({saved,accountId:a}),pension=extract({saved,accountId:b});
+ const prices={TSLA:80,USD:40};
+ const isaLoss=compareScenarios({cash:isa.usdCash,positions:positions(isa)},[{name:'ISA loss',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:80}]}],prices).scenarios[0];
+ const pensionLoss=compareScenarios({cash:pension.usdCash,positions:positions(pension)},[{name:'Pension loss',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:80}]}],prices).scenarios[0];
+ assert.equal(isaLoss.final.realizedPnL,-30);
+ assert.equal(pensionLoss.final.realizedPnL,-15);
+ assert.equal(isaLoss.final.realizedPnL+pensionLoss.final.realizedPnL,-45);
+ const prior=5000000;
+ const confirmedTaxBasisKrw=[-1200000,-600000];
+ const estimate=estimateOverseasStockTax({priorRealizedKrw:prior,hypotheticalGainsKrw:confirmedTaxBasisKrw,annualDeductionKrw:2500000,taxRate:0.22});
+ assert.equal(estimate.hypotheticalNetKrw,-1800000);
+ assert.equal(estimate.projectedAnnualNetKrw,3200000);
+ assert.equal(estimate.baselineTaxKrw,550000);
+ assert.equal(estimate.projectedTaxKrw,154000);
+ assert.equal(estimate.incrementalTaxKrw,-396000);
+ assert.equal(estimate.stages[0].stageIncrementalTaxKrw,-264000);
+ assert.equal(estimate.stages[1].stageIncrementalTaxKrw,-132000);
+ assert.equal(estimate.stages.reduce((sum,stage)=>sum+stage.stageIncrementalTaxKrw,0),estimate.incrementalTaxKrw);
+ assert.equal(estimate.status,'estimate_only');
+ assert.equal(estimate.calculationBasis,'user_supplied_tax_basis_KRW');
+ const belowDeduction=estimateOverseasStockTax({priorRealizedKrw:3000000,hypotheticalGainsKrw:[-2000000],annualDeductionKrw:2500000,taxRate:0.22});
+ assert.equal(belowDeduction.projectedTaxKrw,0);
+ assert.equal(belowDeduction.incrementalTaxKrw,-110000);
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(isa.canPost,false);
+ assert.equal(pension.canPost,false);
+});
