@@ -40,7 +40,7 @@ test("partial company page is blocked",async()=>{
 test("required ticker beyond first 1000 rows is found",async()=>{
  const rows=Array.from({length:1000},(_,i)=>({id:i+10,ticker:"OTHER"+i}));
  rows.push(...five.map((r,i)=>({...r,id:2000+i})));
- const r=await diagnoseYahooTestSchema(client({companies:rows}));
+ const r=await diagnoseYahooTestSchema(client({companies:rows,prices:[{id:1}]}));
  assert.equal(r.compatible,true);assert.equal(r.checks[0].visible_rows_checked,1005);
 });
 test("duplicate ticker is blocked",async()=>{
