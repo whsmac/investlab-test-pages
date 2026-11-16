@@ -14,7 +14,9 @@ function draw(points){
  const svg=$("chart");svg.replaceChildren();
  if(!points.length){svg.append(node("text",{x:450,y:175,fill:"#aab8d1","text-anchor":"middle"},"조회된 주가 데이터가 없습니다."));return}
  const left=75,right=875,top=25,bottom=295;
- const values=points.map(p=>p.close),min=Math.min(...values),max=Math.max(...values),pad=(max-min||max*.05||1)*.12,lo=Math.max(0,min-pad),hi=max+pad;
+ let min=Infinity,max=-Infinity;
+ for(const p of points){if(p.close<min)min=p.close;if(p.close>max)max=p.close}
+ const pad=(max-min||max*.05||1)*.12,lo=Math.max(0,min-pad),hi=max+pad;
  const x=i=>left+(points.length===1?.5:i/(points.length-1))*(right-left),y=v=>bottom-(v-lo)/(hi-lo)*(bottom-top);
  for(let i=0;i<=4;i++){const val=lo+(hi-lo)*i/4,yy=y(val);svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#34425d"}));svg.append(node("text",{x:left-9,y:yy+4,fill:"#aab8d1","text-anchor":"end","font-size":12},val.toLocaleString("en-US",{maximumFractionDigits:2})))}
  const path=points.map((p,i)=>(i?"L":"M")+x(i).toFixed(2)+","+y(p.close).toFixed(2)).join(" ");
@@ -33,7 +35,13 @@ async function load(){
   const result=await readSharedPriceSeries(client,{ticker:$("ticker").value,from:dateFrom($("period").value)});
   draw(result.points);
   status(result.points.length?result.ticker+" · "+result.points.length.toLocaleString()+"개 관측값 조회 완료":"선택 기간에 데이터가 없습니다.");
-  if(result.points.length){const first=result.points[0],last=result.points.at(-1);$("details").textContent=first.date+" ~ "+last.date+" · 최근 저장 종가 "+last.close.toLocaleString("en-US")+" "+(last.currency||"")+" · "+(last.basis||"기준 미표시")+(result.truncated?" · 최대 조회 건수 도달 (일부만 표시)":"");}
+  if(result.points.length){
+   const first=result.points[0],last=result.points.at(-1);
+   const today=new Date(),lastDay=new Date(last.date+"T00:00:00Z");
+   const ageDays=Math.floor((Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),today.getUTCDate())-lastDay.getTime())/86400000);
+   const stale=ageDays>7?" · ⚠ 저장된 주가가 "+ageDays+"일 전 데이터입니다 (실시간 시세 아님)":" · 마지막 저장일 "+last.date+" (실시간 시세 아님)";
+   $("details").textContent=first.date+" ~ "+last.date+" · 최근 저장 종가 "+last.close.toLocaleString("en-US")+" "+(last.currency||"")+" · "+(last.basis||"기준 미표시")+stale+(result.truncated?" · 최대 조회 건수 도달 (일부만 표시)":"");
+  }
  }catch(error){status("조회 실패: "+error.message);draw([])}
  finally{$("refresh").disabled=false}
 }
