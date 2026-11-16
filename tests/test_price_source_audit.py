@@ -56,6 +56,24 @@ class AuditTests(unittest.TestCase):
         data["date_from"] = "2026-11-18"
         self.assertFalse(audit_source_report(data, today=TODAY)["checks_passed"])
 
+    def test_malformed_ticker_report_rejected_without_crash(self):
+        data = report()
+        data["symbols"]["TSLA"] = None
+        result = audit_source_report(data, today=TODAY)
+        self.assertFalse(result["checks_passed"])
+
+    def test_malformed_observation_rejected_without_crash(self):
+        data = report()
+        data["symbols"]["TSLA"]["observations"] = [None]
+        result = audit_source_report(data, today=TODAY)
+        self.assertFalse(result["checks_passed"])
+
+    def test_malformed_spcx_report_rejected_without_crash(self):
+        data = report()
+        data["symbols"]["SPCX"] = None
+        result = audit_source_report(data, today=TODAY)
+        self.assertFalse(result["checks_passed"])
+
     def test_spcx_cannot_be_silently_enabled(self):
         data = report()
         data["symbols"]["SPCX"]["status"] = "ok"
