@@ -26,14 +26,14 @@ class OfflinePipelineTests(unittest.TestCase):
 
     def test_equivalent_decimal_duplicate_is_not_conflict(self):
         from datetime import date
-        rows = parse_csv("Date,Close\\n2026-11-13,101.2\\n2026-11-13,101.20\\n",
+        rows = parse_csv("Date,Close\n2026-11-13,101.2\n2026-11-13,101.20\n",
                          date(2026, 11, 1), date(2026, 11, 16))
         self.assertEqual(len(rows), 1)
 
     def test_future_dated_row_rejected(self):
         from datetime import date
         with self.assertRaisesRegex(ValueError, "Future-dated"):
-            parse_csv("Date,Close\\n2026-11-17,101.2\\n",
+            parse_csv("Date,Close\n2026-11-17,101.2\n",
                       date(2026, 11, 1), date(2026, 11, 16))
 
     def test_missing_fixture_produces_error_report(self):
