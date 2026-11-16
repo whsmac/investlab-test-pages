@@ -42,6 +42,16 @@ class TestYahooPreviewValidation(unittest.TestCase):
             self.prepare(root)
             self.assertTrue(validate_preview(root)["checks_passed"])
 
+    def test_unsorted_tickers_are_accepted_without_changing_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            asset = self.prepare(root)
+            before = asset.read_bytes()
+            result = validate_preview(root)
+            self.assertTrue(result["checks_passed"])
+            self.assertEqual(asset.read_bytes(), before)
+            self.assertEqual(len(result["json_sha256"]), 64)
+
     def test_private_observation_field_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
