@@ -39,6 +39,7 @@ import {readMyLedgerAll} from "./src/sync/online-ledger-export.mjs";
 import {discoverTestLedgerColumns} from "./src/sync/test-ledger-live-schema.mjs";
 import {buildTestTrade,insertTestTrade} from "./src/sync/test-ledger-trade-write.mjs";
 import {summarizeTestLedgerHoldings} from "./src/sync/test-online-holdings.mjs";
+import {calculateTestAverageCosts} from "./src/sync/test-online-average-cost.mjs";
 (() => {
   const TARGET_URL = "https://gopofxyezhwpfxbecrxd.supabase.co";
   const STORAGE_KEY = "investlab_shared_data_connection_v1";
@@ -221,10 +222,10 @@ $("testOnlineHoldings").onclick=async()=>{
  try{
   const result=await readMyLedgerAll(source,{verifiedUserId:user,sessionUserId:session?.user?.id});
   if(source!==client||verifiedUserId!==user||session?.user?.id!==user)return;
-  const summary=summarizeTestLedgerHoldings(result.rows),table=document.createElement("table");
-  const head=document.createElement("tr");for(const label of ["종목","통화","순보유수량","거래 건수"]){const th=document.createElement("th");th.textContent=label;head.append(th);}table.append(head);
-  for(const holding of summary.holdings){const tr=document.createElement("tr");for(const value of [holding.symbol,holding.currency,holding.quantity,holding.trades]){const td=document.createElement("td");td.textContent=String(value);tr.append(td);}table.append(tr);}output.append(table);
-  status.textContent="TEST 원장 "+result.total+"건 기준 보유수량 · 검토 제외 "+summary.skipped+"건 · 실제 포트폴리오 미반영 · 평가금액 미계산";
+  const summary=summarizeTestLedgerHoldings(result.rows),costs=calculateTestAverageCosts(result.rows),costByKey=new Map(costs.map(x=>[x.currency+"|"+x.symbol,x])),table=document.createElement("table");
+  const head=document.createElement("tr");for(const label of ["종목","통화","순보유수량","평균취득단가 (TEST)","거래 건수"]){const th=document.createElement("th");th.textContent=label;head.append(th);}table.append(head);
+  for(const holding of summary.holdings){const tr=document.createElement("tr");for(const value of [holding.symbol,holding.currency,holding.quantity,(()=>{const c=costByKey.get(holding.currency+"|"+holding.symbol);return !c||c.reviewRequired?"검토 필요":c.averageCost===null?"—":c.averageCost.toLocaleString("en-US",{maximumFractionDigits:6});})(),holding.trades]){const td=document.createElement("td");td.textContent=String(value);tr.append(td);}table.append(tr);}output.append(table);
+  status.textContent="TEST 원장 "+result.total+"건 기준 보유수량 · 검토 제외 "+summary.skipped+"건 · 평균취득단가는 이동평균 참고값(세금 계산용 아님) · 실제 포트폴리오 미반영 · 평가금액 미계산";
  }catch(error){if(source===client&&verifiedUserId===user)status.textContent="TEST 보유수량 조회 실패: "+error.message;}
  finally{if(source===client)$("testOnlineHoldings").disabled=!verifiedUserId;}
 };
