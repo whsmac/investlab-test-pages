@@ -119,3 +119,33 @@ test('realized gain uses selling account cost rather than blended combined cost'
  assert.equal(isa.serverVerified,false);
  assert.equal(combined.canPost,false);
 });
+
+import {estimateOverseasStockTax} from '../src/simulator/overseas-stock-tax.mjs';
+test('account-specific realized gains reconcile before illustrative KRW tax estimation',()=>{
+ const original=JSON.stringify(saved);
+ const positions=x=>Object.fromEntries(x.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const isa=extract({saved,accountId:a}),pension=extract({saved,accountId:b});
+ const prices={TSLA:150,USD:40};
+ const isaSale=compareScenarios({cash:isa.usdCash,positions:positions(isa)},[{name:'ISA sale',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:150}]}],prices).scenarios[0];
+ const pensionSale=compareScenarios({cash:pension.usdCash,positions:positions(pension)},[{name:'Pension sale',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:150}]}],prices).scenarios[0];
+ assert.equal(isaSale.final.realizedPnL,40);
+ assert.equal(pensionSale.final.realizedPnL,55);
+ assert.equal(isaSale.final.realizedPnL+pensionSale.final.realizedPnL,95);
+ // Independently confirmed tax-basis KRW figures, not USD PnL times current FX.
+ const confirmedTaxBasisKrw=[1600000,2200000];
+ const estimate=estimateOverseasStockTax({priorRealizedKrw:500000,hypotheticalGainsKrw:confirmedTaxBasisKrw,annualDeductionKrw:2500000,taxRate:0.22});
+ assert.equal(estimate.hypotheticalNetKrw,3800000);
+ assert.equal(estimate.projectedAnnualNetKrw,4300000);
+ assert.equal(estimate.baselineTaxKrw,0);
+ assert.equal(estimate.projectedTaxKrw,396000);
+ assert.equal(estimate.incrementalTaxKrw,396000);
+ assert.equal(estimate.stages.length,2);
+ assert.equal(estimate.stages[0].cumulativeProjectedTaxKrw,0);
+ assert.equal(estimate.stages[1].cumulativeProjectedTaxKrw,396000);
+ assert.equal(estimate.stages.reduce((sum,stage)=>sum+stage.stageIncrementalTaxKrw,0),estimate.incrementalTaxKrw);
+ assert.equal(estimate.calculationBasis,'user_supplied_tax_basis_KRW');
+ assert.equal(estimate.status,'estimate_only');
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(isa.canPost,false);
+ assert.equal(pension.serverVerified,false);
+});
