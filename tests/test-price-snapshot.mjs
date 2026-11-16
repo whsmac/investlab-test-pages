@@ -8,7 +8,10 @@ function client(rows, { countOverride, truncate = false } = {}) {
     auth: { async getUser() { return { data: { user: { id: "test-user" } }, error: null }; } },
     from(table) {
       if (table === "companies") return {
-        select() { return { async order() { return { data: [{ id: 1, ticker: "MSFT" }], error: null }; } }; }
+        select(_fields,options={}) {
+          if(options.head) return Promise.resolve({count:companies.length,error:null});
+          return {order(){return {async range(start,end){return {data:companies.slice(start,end+1),error:null}}}}};
+        }
       };
       if (table !== "market_price_observations") throw Error("Unexpected table");
       return {
@@ -40,6 +43,26 @@ test("rejects truncated page", async () => {
 });
 test("rejects duplicate observation id", async () => {
   await assert.rejects(readTestPriceSnapshot(client([{ ...sample[0] }, { ...sample[0] }])), /Duplicate/);
+});
+test("maps companies beyond first thousand RLS-visible rows", async () => {
+  const companies=Array.from({length:1000},(_,i)=>({id:i+10,ticker:"OTHER"+i}));
+  companies.push({id:1,ticker:"MSFT"});
+  const result=await readTestPriceSnapshot(client(sample,{companies}));
+  assert.equal(result.observations[0].ticker,"MSFT");
+});
+test("rejects truncated company list", async () => {
+  const companies=[{id:1,ticker:"MSFT"}];
+  const broken=client(sample,{companies});
+  const original=broken.from;
+  broken.from=(table)=>{
+    const query=original(table);
+    if(table!=="companies")return query;
+    return {select(fields,opts){
+      if(opts?.head)return query.select(fields,opts);
+      return {order(){return {async range(){return {data:[],error:null}}}}};
+    }};
+  };
+  await assert.rejects(readTestPriceSnapshot(broken),/Company snapshot truncated/);
 });
 test("rejects invalid TEST project", async () => {
   const bad = client(sample); bad.supabaseUrl = "https://example.supabase.co";
