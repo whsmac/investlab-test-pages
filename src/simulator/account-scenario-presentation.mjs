@@ -21,3 +21,30 @@ export function summarizeAccountScenarioResults(comparison){
  const sorted=[...rows].sort((a,b)=>(a.status==='CALCULATED'?0:1)-(b.status==='CALCULATED'?0:1)||(b.deltaVsHold??-Infinity)-(a.deltaVsHold??-Infinity)||a.account.localeCompare(b.account)||a.name.localeCompare(b.name));
  return {rows:sorted,total:rows.length,available:available.length,unavailable,bestDelta:available.length?Math.max(...available.map(r=>r.deltaVsHold)):null,serverVerified:false};
 }
+
+/**
+ * Explain why a blended multi-account cost basis can disagree with the sum of
+ * account-level realized gains. Only compare a complete set of single-account
+ * successes with the matching combined group, for the same named scenario.
+ * This is not a tax aggregation or a ledger posting.
+ */
+export function compareAccountRealizedGains(comparison){
+ if(!comparison||!Array.isArray(comparison.rows))throw Error('비교 결과가 없습니다');
+ const singles=comparison.rows.filter(group=>Array.isArray(group.accountIds)&&group.accountIds.length===1);
+ const combined=comparison.rows.filter(group=>Array.isArray(group.accountIds)&&group.accountIds.length>1);
+ const results=[];
+ for(const group of combined){
+  const ids=group.accountIds;
+  if(new Set(ids).size!==ids.length)continue;
+  const matching=ids.map(id=>singles.find(single=>single.accountIds[0]===id));
+  if(matching.some(x=>!x))continue;
+  for(const item of group.results??[]){
+   const individual=matching.map(single=>(single.results??[]).find(r=>r.name===item.name));
+   if(item.status!=='CALCULATED'||!Number.isFinite(item.realizedPnL)||individual.some(r=>!r||r.status!=='CALCULATED'||!Number.isFinite(r.realizedPnL)))continue;
+   const sum=individual.reduce((total,r)=>total+r.realizedPnL,0);
+   const difference=item.realizedPnL-sum;
+   results.push({scenario:item.name,accounts:group.accountNames.join(' + '),accountSumRealizedPnL:sum,blendedRealizedPnL:item.realizedPnL,difference,hasDifference:Math.abs(difference)>1e-8});
+  }
+ }
+ return results;
+}
