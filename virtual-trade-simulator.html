@@ -30,7 +30,7 @@
  .primary-trade-panel .wide-editor .trade-grid,.primary-trade-panel .wide-editor .trade-head{min-width:584px}
 }
 @media(max-width:1050px){.layout>.primary-trade-panel{grid-column:auto;grid-row:auto}}
-</style></head>
+.scenario-price-row{display:grid;grid-template-columns:minmax(120px,1.3fr) minmax(90px,1fr) minmax(100px,1fr);gap:8px;align-items:center}.scenario-price-row input{font-size:16px}.trade-grid select[data-field="ticker"]{min-width:125px;width:100%;padding:9px;border:1px solid #52637e;border-radius:6px;background:#111a29;color:#fff}@media(max-width:740px){.scenario-price-row{grid-template-columns:minmax(0,1fr) minmax(0,.75fr) minmax(0,.85fr)}.scenario-price-row label{font-size:12px;overflow-wrap:anywhere}.trade-grid select[data-field="ticker"]{min-width:0;width:100%;min-height:44px;font-size:16px}}</style></head>
 <body><nav style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px"><a style="color:#8dc0ff" href="./index.html">대시보드</a><a style="color:#8dc0ff" href="./shared-data.html">공유 데이터 조회</a></nav><h1>INVESTLAB · 가상 매매 시뮬레이터</h1><p>하락장 재매수·종목 전환과 상승장 단계별 매도를 시험합니다. 기존 포트폴리오 보유정보를 읽기 전용으로 불러와 가상 거래에 사용합니다. 실제 포트폴리오와 매매원장은 변경하지 않습니다.</p>
 <details class="panel secondary-settings" style="margin-bottom:16px"><summary>기존 포트폴리오 종목 선택 · 연결 상태</summary><p class="hint" id="managedSymbolStatus">종목 목록 확인 중…</p><p id="savedQuoteStatus" class="hint" role="status"></p><button type="button" id="refreshManagedSymbols" style="max-width:240px">종목 목록 새로고침</button><datalist id="managedSymbolOptions"></datalist><p class="hint">이 화면은 기존 종목관리 정보를 읽기만 합니다. 종목 등록·수정은 기존 종목관리에서 수행하세요. 다른 도메인이나 기기의 목록은 자동 연결되지 않습니다.</p></details>
 <div class="layout">
@@ -573,7 +573,7 @@ function renderEditor(){
   const priceRows=document.createElement('div');priceDetails.append(priceRows);
   for(const item of portfolioState.prices){
    const ticker=String(item.ticker).trim().toUpperCase();if(!ticker)continue;
-   const row=document.createElement('div');row.className='simple-row';
+   const row=document.createElement('div');row.className='simple-row scenario-price-row';
    const label=document.createElement('label');label.textContent=ticker+' (기준 '+item.price+' USD)';
    const input=document.createElement('input');input.type='number';input.min='0';input.step='any';
    input.placeholder='공통 가격 사용';input.setAttribute('aria-label',ticker+' 전략별 최종 가정 주가');
@@ -581,14 +581,16 @@ function renderEditor(){
    input.addEventListener('input',()=>{strategy.terminalPrices??={};if(input.value==='')delete strategy.terminalPrices[ticker];else strategy.terminalPrices[ticker]=Number(input.value);simulatorInputRevision++;invalidateCalculatedResults();updateStrategySaveState();scheduleWorkingDraft();});
    const pct=document.createElement('input');pct.type='number';pct.step='any';pct.placeholder='등락률 %';pct.setAttribute('aria-label',ticker+' 기준 대비 등락률 퍼센트');
    const baseline=Number(item.price);
-   if(input.value!==''&&Number.isFinite(baseline)&&baseline>0)pct.value=String(Math.round((Number(input.value)/baseline-1)*10000)/100);
+   if(input.value!==''&&Number.isFinite(baseline)&&baseline>0){const change=Math.round((Number(input.value)/baseline-1)*10000)/100;pct.value=change>0?'+'+change:String(change);}
    pct.addEventListener('input',()=>{
     if(pct.value===''||!Number.isFinite(Number(pct.value))||!Number.isFinite(baseline)||baseline<=0)return;
     const price=Math.round(baseline*(1+Number(pct.value)/100)*1e8)/1e8;
     if(price<0)return;
     input.value=String(price);input.dispatchEvent(new Event('input',{bubbles:true}));
    });
-   row.append(label,input,pct);priceRows.append(row);
+   input.addEventListener('change',()=>{if(input.value!==''&&Number.isFinite(baseline)&&baseline>0){const change=Math.round((Number(input.value)/baseline-1)*10000)/100;pct.value=change>0?'+'+change:String(change);}});
+   pct.addEventListener('change',()=>{const change=Number(pct.value);if(Number.isFinite(change))pct.value=change>0?'+'+change:String(change);});
+   row.append(label,pct,input);priceRows.append(row);
   }
   card.append(priceDetails);
   const management=document.createElement('details');management.className='strategy-management';
@@ -615,7 +617,16 @@ function renderEditor(){
    const sideWrap=document.createElement('div');sideWrap.className='mobile-field';sideWrap.dataset.label='구분';sideWrap.append(side);row.append(sideWrap);
    for(const [key,label] of [['ticker','종목'],['quantity','수량'],['price','체결가격 USD']]){
     const input=document.createElement('input');input.dataset.field=key;input.setAttribute('aria-label',label);
-    input.type=key==='ticker'?'text':'number';if(key==='ticker')input.setAttribute('list','managedSymbolOptions');if(key!=='ticker'){input.min='0';input.step='any';}
+    if(key==='ticker'){
+     const select=document.createElement('select');select.dataset.field=key;select.setAttribute('aria-label',label);
+     const symbols=[...new Set([...portfolioState.positions.map(p=>p.ticker),...portfolioState.prices.map(p=>p.ticker),...document.querySelectorAll('#managedSymbolOptions option')].map(p=>typeof p==='string'?p:p.value),trade.ticker].map(t=>String(t||'').trim().toUpperCase()).filter(Boolean))].sort();
+     for(const symbol of symbols){const option=document.createElement('option');option.value=symbol;option.textContent=symbol;select.append(option);}
+     select.value=String(trade.ticker||'').trim().toUpperCase();
+     select.addEventListener('change',()=>{trade.ticker=select.value;});
+     const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;fieldWrap.append(select);row.append(fieldWrap);
+     continue;
+    }
+    input.type='number';input.min='0';input.step='any';
     input.placeholder=label;input.value=trade[key]??(key==='fee'?0:'');
     input.addEventListener('input',()=>{trade[key]=key==='ticker'?input.value:input.value===''?'':Number(input.value);});
     const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;fieldWrap.append(input);row.append(fieldWrap);
