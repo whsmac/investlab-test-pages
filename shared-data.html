@@ -222,7 +222,7 @@ $("onlineLedgerSchema").onclick=async()=>{
   const table=document.createElement("table"),head=document.createElement("tr");for(const label of ["컬럼","타입","필수 여부"]){const th=document.createElement("th");th.textContent=label;head.append(th);}table.append(head);
   for(const col of result.columns){const row=document.createElement("tr");for(const value of [col.name,col.type,col.required?"필수":"선택 또는 기본값"]){const td=document.createElement("td");td.textContent=value;row.append(td);}table.append(row);}output.append(table);
   status.textContent="TEST DB 실제 컬럼 "+result.columns.length+"개 확인 · 서버 데이터 변경 없음 · 저장 기능 준비 중";
- }catch(error){if(source===client&&verifiedUserId===user)status.textContent="원장 컬럼 조회 실패: "+error.message+" · DB 설정 변경 없음";}
+ }catch(error){if(source===client&&verifiedUserId===user)status.textContent="원장 메타데이터 확인 불가: "+error.message+" · 기존 온라인 원장 조회는 별개로 정상 작동할 수 있습니다. DB 변경 없음";}
  finally{if(source===client)$("onlineLedgerSchema").disabled=!verifiedUserId;}
 };
 $("onlineLedgerExport").onclick=async()=>{
