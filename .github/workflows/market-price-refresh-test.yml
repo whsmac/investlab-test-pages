@@ -1,0 +1,26 @@
+name: INVESTLAB TEST price source dry-run
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe free price source (no database writes)
+        run: python scripts/market_price_refresh_test.py
+      - name: Upload dry-run report even if source fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-price-source-report
+          path: price-source-probe.json
+          if-no-files-found: warn
+          retention-days: 7
