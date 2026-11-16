@@ -52,17 +52,20 @@ $("schemaDownload").addEventListener("click",()=>{
  a.href=url;a.download="investlab-test-schema-diagnostic.json";a.click();URL.revokeObjectURL(url);
 });
 async function autoLoadYahooReview(){
+ const revision=++sourceRevision;
  $("auto").disabled=true;
  try{
-  published=await loadPublishedYahooReview({origin:location.href});renderReviewCharts(published);sourceMode="published";$("file").value="";
+  const incoming=await loadPublishedYahooReview({origin:location.href});
+  if(revision!==sourceRevision)return;
+  published=incoming;renderReviewCharts(published);sourceMode="published";$("file").value="";
   $("autoStatus").textContent="공개 JSON 읽기 성공: "+published.row_count+"건. 아래 '읽기 전용 대조 실행'을 누르세요.";
- }catch(error){published=null;sourceMode="none";$("chart").replaceChildren();$("autoStatus").textContent="자동 읽기 불가: "+error.message+" · GitHub 파일 다운로드 방식 이용 가능";}
+ }catch(error){if(revision!==sourceRevision)return;published=null;sourceMode="none";$("chart").replaceChildren();$("autoStatus").textContent="자동 읽기 불가: "+error.message+" · GitHub 파일 다운로드 방식 이용 가능";}
  finally{$("auto").disabled=false}
 }
 $("auto").addEventListener("click",autoLoadYahooReview);
 // Automatically try the public read-only JSON on page load; no Supabase login or DB calls.
 void autoLoadYahooReview();
-$("file").addEventListener("change",()=>{published=null;$("chart").replaceChildren();sourceMode="file";$("autoStatus").textContent="수동 JSON 선택됨 · 자동 게시 데이터 대신 선택 파일을 대조합니다.";});
+$("file").addEventListener("change",()=>{sourceRevision++;published=null;$("chart").replaceChildren();sourceMode="file";$("autoStatus").textContent="수동 JSON 선택됨 · 자동 게시 데이터 대신 선택 파일을 대조합니다.";});
 $("find").addEventListener("click",async()=>{
  $("find").disabled=true;$("artifact").textContent="GitHub Actions 조회 중…";
  try{
