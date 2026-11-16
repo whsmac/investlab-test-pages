@@ -213,6 +213,8 @@ jobs:
         run: node --test tests/test-yahoo-test-browser-review.mjs
       - name: Validate Yahoo artifact discovery (mocked)
         run: node --test tests/test-yahoo-artifact-discovery.mjs
+      - name: Validate published Yahoo JSON loader (mocked)
+        run: node --test tests/test-yahoo-published-loader.mjs
       - name: Probe Yahoo Finance first (read-only, non-blocking)
         continue-on-error: true
         timeout-minutes: 2
