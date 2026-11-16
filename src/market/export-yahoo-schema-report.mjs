@@ -6,10 +6,13 @@ export function buildSafeYahooSchemaReport(diagnostic) {
       diagnostic.database_writes !== 0 || !Array.isArray(diagnostic.checks)) {
     throw Error("Invalid read-only TEST diagnostic");
   }
+  const seenTables = new Set();
   const checks = diagnostic.checks.map(check => {
     if (!ALLOWED_TABLES.has(check.table) || !ALLOWED_STATUSES.has(check.status)) {
       throw Error("Unexpected TEST diagnostic check");
     }
+    if (seenTables.has(check.table)) throw Error("Duplicate TEST diagnostic table");
+    seenTables.add(check.table);
     const out = {table:check.table,status:check.status};
     if (check.table === "companies") {
       if (Array.isArray(check.missing_tickers)) {
@@ -26,6 +29,7 @@ export function buildSafeYahooSchemaReport(diagnostic) {
     // Never export arbitrary backend error text, auth/session data or connection details.
     return out;
   });
+  if (![...ALLOWED_TABLES].every(table => seenTables.has(table))) throw Error("Incomplete TEST diagnostic report");
   return {mode:"TEST_YAHOO_SCHEMA_SAFE_REPORT",database_writes:0,
     compatible:diagnostic.compatible === true && checks.every(x=>x.status==="OK"),checks};
 }
