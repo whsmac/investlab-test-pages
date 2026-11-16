@@ -3,6 +3,7 @@
 import argparse
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 
 API = "https://api.github.com/repos/whsmac/investlab-test-pages"
