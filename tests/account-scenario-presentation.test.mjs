@@ -55,3 +55,14 @@ test('online pilot account comparison respects selected accounts and clears stal
  assert.match(html,/option.selected=true;select.append\(option\)/);
  assert.match(html,/byId\('accountOpeningComparison'\).replaceChildren\(\);byId\('accountScenarioComparison'\).replaceChildren\(\)/);
 });
+
+test('TEST home exposes five primary menus and separates offline tools',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const main=html.match(/<section class="grid" aria-label="INVESTLAB 주요 메뉴">([\s\S]*?)<\/section>/)?.[1];
+ assert.ok(main);
+ assert.equal((main.match(/class="card"/g)||[]).length,5);
+ for(const name of ['My Portfolio','Virtual Trade Simulator','Company Investment Analysis','Unified Ledger','Data Management'])assert.ok(main.includes(name));
+ assert.match(html,/보조 검증 도구 펼치기/);
+ assert.match(html,/서버 동기화 미검증/);
+ assert.match(html,/서버 연동 전/);
+});
