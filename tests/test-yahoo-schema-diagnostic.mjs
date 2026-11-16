@@ -2,14 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {diagnoseYahooTestSchema} from "../src/market/diagnose-yahoo-test-schema.mjs";
 const URL="https://gopofxyezhwpfxbecrxd.supabase.co";
-function client({companies=[],prices=[],companyError=null,priceError=null,shortPage=false}={}){
- const calls=[];
+function client({companies=[],prices=[],companyError=null,priceError=null,shortPage=false,countChanges=false}={}){
+ const calls=[];let countReads=0;
  return {supabaseUrl:URL,calls,auth:{getUser:async()=>({data:{user:{id:"test"}}})},
  from(table){
    calls.push(table);
    return {select(columns,opts={}){
      calls.push(columns);
-     if(table==="companies"&&opts.head) return Promise.resolve({count:companies.length,error:null});
+     if(table==="companies"&&opts.head) {countReads++;return Promise.resolve({count:companies.length+(countChanges&&countReads>1?1:0),error:null});}
      if(table==="companies") return {order(){return {range:async(start,end)=>({
        data:shortPage?[]:companies.slice(start,end+1),error:companyError
      })}}};
@@ -49,4 +49,13 @@ test("duplicate ticker is blocked",async()=>{
 });
 test("non-TEST URL is rejected",async()=>{
  await assert.rejects(()=>diagnoseYahooTestSchema({...client(),supabaseUrl:"https://other.supabase.co"}),/mismatch/);
+});
+
+test("changing RLS-visible company count blocks compatibility",async()=>{
+ const r=await diagnoseYahooTestSchema(client({companies:five,prices:[{id:1}],countChanges:true}));
+ assert.equal(r.compatible,false);assert.match(r.checks[0].reason,/count changed/);
+});
+test("zero RLS-visible price observations cannot be called compatible",async()=>{
+ const r=await diagnoseYahooTestSchema(client({companies:five,prices:[]}));
+ assert.equal(r.compatible,false);assert.match(r.checks[1].reason,/No RLS-visible/);
 });
