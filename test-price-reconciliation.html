@@ -15,9 +15,11 @@ function amount(value){const number=Number(value);if(!Number.isFinite(number)||n
 function validateDay(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(day))||Number.isNaN(Date.parse(day+"T00:00:00Z")))throw Error("잘못된 날짜");return day}
 function reconcile(probe,snapshot){
  if(probe?.mode!=="DRY_RUN_ONLY"||probe.writes_performed!==0||!probe.symbols||typeof probe.symbols!=="object")throw Error("읽기 전용 수집 보고서가 아닙니다.");
+ if(probe.quality_audit?.checks_passed!==true||probe.quality_audit?.database_insert_authorized!==false)throw Error("품질검증을 통과한 읽기 전용 수집 보고서가 아닙니다.");
+ if(!snapshot?.coverage?.complete||snapshot.coverage.scope!=="authenticated_RLS_visible_rows_only")throw Error("TEST 데이터 전체 조회 범위가 확인되지 않았습니다.");
  const index=new Map(), duplicates=[];
  for(const row of snapshot.observations){const key=row.ticker+"|"+validateDay(row.trading_date),value=amount(row.close_price);if(index.has(key)&&index.get(key).price!==value)duplicates.push(key);index.set(key,{price:value,currency:row.currency,basis:row.price_basis})}
- const result={mode:"READ_ONLY_RECONCILIATION",writes_performed:0,snapshot_complete:snapshot.coverage.complete,counts:{missing:0,same:0,conflicts:0,skipped:0},missing:[],conflicts:[],skipped:[],duplicate_db_keys:duplicates,source_basis_verified:false,currency_verified:false,insert_authorized:false};
+ const result={mode:"READ_ONLY_RECONCILIATION",writes_performed:0,snapshot_complete:snapshot.coverage.complete,snapshot_scope:snapshot.coverage.scope,counts:{missing:0,same:0,conflicts:0,skipped:0},missing:[],conflicts:[],skipped:[],duplicate_db_keys:duplicates,source_basis_verified:false,currency_verified:false,insert_authorized:false};
  for(const [ticker,source] of Object.entries(probe.symbols)){
   if(source.status!=="ok"){result.counts.skipped++;result.skipped.push({ticker,reason:source.status});continue}
   if(!Array.isArray(source.observations))throw Error("관측값 배열이 없습니다: "+ticker);
@@ -51,7 +53,7 @@ $("compare").addEventListener("click",async()=>{
   const client=window.supabase.createClient(TARGET,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"investlab_shared_data_auth_v1"}});
   const snapshot=await readTestPriceSnapshot(client);
   lastReport=reconcile(probe,snapshot);
-  $("result").textContent=JSON.stringify({snapshot_rows:snapshot.coverage.rows,snapshot_complete:snapshot.coverage.complete,counts:lastReport.counts,blocking_reasons:lastReport.blocking_reasons,conflicts_preview:lastReport.conflicts.slice(0,20),missing_preview:lastReport.missing.slice(0,20)},null,2);
+  $("result").textContent=JSON.stringify({snapshot_rows:snapshot.coverage.rows,snapshot_complete:snapshot.coverage.complete,snapshot_scope:snapshot.coverage.scope,counts:lastReport.counts,blocking_reasons:lastReport.blocking_reasons,conflicts_preview:lastReport.conflicts.slice(0,20),missing_preview:lastReport.missing.slice(0,20)},null,2);
   $("status").textContent="읽기 전용 대조 완료 · 데이터베이스 변경 0건";$("download").disabled=false;
  }catch(error){$("status").textContent="대조 실패: "+error.message}
  finally{$("compare").disabled=false}
