@@ -70,11 +70,25 @@ $("find").addEventListener("click",async()=>{
  }catch(error){$("artifact").textContent="조회 실패: "+error.message}
  finally{$("find").disabled=false}
 });
+async function selectedYahooSource(){
+ const file=sourceMode==="published"?null:$("file").files?.[0];
+ if(!file&&!published)throw Error("게시 JSON을 불러오거나 Yahoo 검증 파일을 선택하세요.");
+ if(file&&file.size>3000000)throw Error("파일 용량 3MB 초과");
+ return file?JSON.parse(await file.text()):published;
+}
+$("preview").addEventListener("click",async()=>{
+ $("preview").disabled=true;
+ try{
+  const source=await selectedYahooSource();
+  renderReviewCharts(source);
+  $("status").textContent="주가 차트 미리보기 완료 · TEST DB 로그인 불필요 · DB 변경 0건";
+ }catch(error){$("chart").replaceChildren();$("status").textContent="차트 미리보기 실패: "+error.message}
+ finally{$("preview").disabled=false}
+});
 $("run").addEventListener("click",async()=>{
  $("run").disabled=true;$("download").disabled=true;last=null;$("result").textContent="";
  try{
-  const file=sourceMode==="published"?null:$("file").files?.[0];if(!file&&!published)throw Error("게시 JSON을 불러오거나 Yahoo 검증 파일을 선택하세요.");if(file&&file.size>3000000)throw Error("파일 용량 3MB 초과");
-  const candidate=file?JSON.parse(await file.text()):published;
+  const candidate=await selectedYahooSource();
   renderReviewCharts(candidate);
   const client=getTestClient();
   $("status").textContent="TEST 기업 ID 및 주가를 조회하는 중…";
