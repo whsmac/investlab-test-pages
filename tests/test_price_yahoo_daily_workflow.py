@@ -13,6 +13,8 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         self.assertIn("scripts.build_gated_yahoo_public_review",text)
         self.assertIn("retention-days: 7",text)
         self.assertIn("ref: gh-pages",text)
+        self.assertIn("vars.INVESTLAB_TEST_PAGES_SOURCE",text)
+        self.assertIn("if: steps.pages_source.outputs.confirmed == 'true'",text)
         self.assertIn("scripts.review_yahoo_test_pages_refresh",text)
         self.assertIn("yahoo-pages-refresh-review.json",text)
         self.assertIn("scripts.plan_yahoo_test_pages_publication",text)
@@ -29,8 +31,10 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
     def test_failed_probe_cannot_run_candidate(self):
         text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
         self.assertIn("if: steps.probe.outcome == 'success'",text)
-        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then',text)
         self.assertIn("exit 1",text)
+        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then',text)
+        self.assertIn('if [ "$PAGES_SOURCE_CONFIRMED" != true ]; then',text)
+        self.assertIn('if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then',text)
         self.assertIn("if: steps.candidate.outcome == 'success'",text)
         self.assertIn("COMPARISON_OUTCOME",text)
 
