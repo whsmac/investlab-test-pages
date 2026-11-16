@@ -56,6 +56,13 @@ jobs:
         run: |
           BRANCH_SHA="$(git -C test-pages-current rev-parse HEAD)"
           python -m scripts.plan_yahoo_test_pages_publication --review yahoo-pages-refresh-review.json --branch-sha "$BRANCH_SHA" --output yahoo-pages-publication-plan.json
+      - name: Verify branch and file have not changed since review (NO DEPLOY)
+        if: steps.plan.outcome == 'success'
+        id: prewrite
+        continue-on-error: true
+        run: |
+          BRANCH_SHA="$(git -C test-pages-current rev-parse HEAD)"
+          python -m scripts.verify_yahoo_test_pages_prewrite --plan yahoo-pages-publication-plan.json --current-branch-sha "$BRANCH_SHA" --current-site test-pages-current --proposed-json yahoo-public-review.json --output yahoo-pages-prewrite-check.json
       - name: Upload review-only diagnostic and candidate (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
@@ -68,6 +75,7 @@ jobs:
             yahoo-public-review.json
             yahoo-pages-refresh-review.json
             yahoo-pages-publication-plan.json
+            yahoo-pages-prewrite-check.json
           if-no-files-found: warn
           retention-days: 7
       - name: Fail when collection or validation was blocked
@@ -77,8 +85,9 @@ jobs:
           CANDIDATE_OUTCOME: ${{ steps.candidate.outcome }}
           COMPARISON_OUTCOME: ${{ steps.comparison.outcome }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          PREWRITE_OUTCOME: ${{ steps.prewrite.outcome }}
         run: |
-          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ]; then
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ]; then
             echo "::error::Yahoo review failed; no data was published or written."
             exit 1
           fi
