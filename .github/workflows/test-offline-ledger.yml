@@ -231,6 +231,21 @@ jobs:
           path: yahoo-price-review-candidate.json
           if-no-files-found: ignore
           retention-days: 7
+      - name: Check Yahoo publication readiness (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-price-review-candidate.json ]; then
+            python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
+          fi
+      - name: Upload Yahoo publication readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-publication-preflight
+          path: yahoo-publication-preflight.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Build public-safe Yahoo browser snapshot (no deployment)
         if: always()
         continue-on-error: true
