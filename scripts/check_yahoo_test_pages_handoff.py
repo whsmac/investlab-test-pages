@@ -4,11 +4,12 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from datetime import date, timedelta
 
 EXPECTED_MODE = "TEST_YAHOO_BUNDLE_READINESS_ONLY"
 TARGET = "https://whsmac.github.io/investlab-test-pages/"
 
-def assess_handoff(readiness, site: Path, expected_commit: str):
+def assess_handoff(readiness, site: Path, expected_commit: str, today=None):
     if not isinstance(expected_commit, str) or len(expected_commit) != 40 or any(c not in "0123456789abcdef" for c in expected_commit):
         raise ValueError("Full lowercase 40-character reviewed commit SHA required")
     if readiness.get("mode") != EXPECTED_MODE or readiness.get("ready") is not True:
@@ -26,6 +27,12 @@ def assess_handoff(readiness, site: Path, expected_commit: str):
     if digest != readiness.get("json_sha256"):
         raise ValueError("Site JSON differs from reviewed readiness checksum")
     from scripts.validate_yahoo_test_site_preview import validate_preview
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    current = today or date.today()
+    for ticker in ("MSFT", "GOOGL", "AMZN", "META", "TSLA"):
+        dates = [date.fromisoformat(row["trading_date"]) for row in payload["observations"] if row["ticker"] == ticker]
+        if not dates or max(dates) > current or max(dates) < current - timedelta(days=7):
+            raise ValueError("Stale or future Yahoo price for " + ticker)
     validated = validate_preview(site)
     if not validated.get("checks_passed") or validated.get("json_sha256") != digest:
         raise ValueError("Site validation failed")
