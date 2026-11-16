@@ -23,14 +23,15 @@
 <section class="panel"><div class="head"><h2 style="margin:0;font-size:17px">계정 로그인</h2><span class="small" id="authState">로그인하지 않음</span></div>
 <div class="form" style="grid-template-columns:1fr 1fr auto;margin-top:14px"><div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="username" placeholder="등록된 계정 이메일"></div><div class="field"><label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" placeholder="비밀번호"></div><button id="login" class="primary">로그인</button></div>
 <div class="status" id="authStatus">공유 데이터 프로젝트에 등록된 계정으로 로그인하세요. 공개 회원가입 기능은 제공하지 않습니다.</div></section>
-<section class="panel" aria-label="사용자별 저장 사전점검"><h2 style="margin:0;font-size:17px">개인 데이터 동기화 사전점검 (읽기 전용)</h2><p class="small">현재 로그인 계정이 TEST 프로젝트에 인증되었는지만 확인합니다. 개인 포트폴리오 테이블의 존재·RLS 정책·쓰기 권한은 아직 검증되지 않았습니다.</p><div class="grid"><div class="metric"><span class="small">로그인 인증</span><strong id="pilotAuth" style="font-size:16px">미확인</strong></div><div class="metric"><span class="small">개인 데이터 RLS</span><strong style="font-size:16px">미검증</strong></div><div class="metric"><span class="small">기기 간 저장</span><strong style="font-size:16px">미구현</strong></div></div><p class="small" id="pilotUser" role="status">인증 계정 확인 대기</p><p class="small">인증이 확인되더라도 사용자별 데이터 격리와 저장 권한이 보장되는 것은 아닙니다. 개인 데이터 조회·업로드 기능은 비활성 상태입니다.</p><p class="small"><a class="link" href="./docs/test-personal-data-rls-readonly-audit.sql" download="investlab-test-rls-audit.sql">TEST RLS·권한 읽기 전용 점검 SQL 받기</a></p><p class="small">TEST Supabase SQL Editor에서만 직접 실행하고, 결과를 확인하기 전에는 개인 데이터 쓰기를 활성화하지 않습니다. 이 페이지에서 SQL을 자동 실행하지 않습니다.</p></section>
+<section class="panel" aria-label="사용자별 저장 사전점검"><h2 style="margin:0;font-size:17px">개인 데이터 동기화 사전점검 (읽기 전용)</h2><p class="small">현재 로그인 계정이 TEST 프로젝트에 인증되었는지만 확인합니다. 개인 포트폴리오 테이블의 존재·RLS 정책·쓰기 권한은 아직 검증되지 않았습니다.</p><div class="grid"><div class="metric"><span class="small">로그인 인증</span><strong id="pilotAuth" style="font-size:16px">미확인</strong></div><div class="metric"><span class="small">개인 데이터 RLS</span><strong style="font-size:16px">미검증</strong></div><div class="metric"><span class="small">기기 간 저장</span><strong style="font-size:16px">미구현</strong></div></div><p class="small" id="pilotUser" role="status">인증 계정 확인 대기</p><p class="small">인증이 확인되더라도 사용자별 데이터 격리와 저장 권한이 보장되는 것은 아닙니다. 개인 데이터 조회·업로드 기능은 비활성 상태입니다.</p><p class="small">서버에서 인증된 계정 ID와 현재 브라우저의 포트폴리오 데이터 소유자 식별자를 결합해 오프라인 변환 검사를 수행할 수 있습니다. 서버에 개인 데이터를 보내지 않으며, 이 기기에 데이터가 없으면 0건입니다.</p><button id="verifiedPortfolioPreview" type="button" disabled>인증 계정 기준 포트폴리오 변환 검사</button><p class="small" id="verifiedPortfolioStatus" role="status">서버 인증 완료 후 검사할 수 있습니다.</p><p class="small"><a class="link" href="./docs/test-personal-data-rls-readonly-audit.sql" download="investlab-test-rls-audit.sql">TEST RLS·권한 읽기 전용 점검 SQL 받기</a></p><p class="small">TEST Supabase SQL Editor에서만 직접 실행하고, 결과를 확인하기 전에는 개인 데이터 쓰기를 활성화하지 않습니다. 이 페이지에서 SQL을 자동 실행하지 않습니다.</p></section>
 <section class="grid"><div class="metric"><span class="small">등록 기업</span><strong id="companyCount">—</strong></div><div class="metric"><span class="small">주가 관측값</span><strong id="priceCount">—</strong></div><div class="metric"><span class="small">분기 재무 관측값</span><strong id="financialCount">—</strong></div></section>
 <section class="panel"><div class="head"><h2 style="margin:0;font-size:17px">기업 목록</h2><button id="reload" disabled>새로고침</button></div><div class="table-wrap" id="companies"><div class="empty">프로젝트 연결 및 로그인 후 조회할 수 있습니다.</div></div></section>
 <section class="panel"><h2 style="margin:0 0 12px;font-size:17px">최근 주가 관측값</h2><div class="table-wrap" id="prices"><div class="empty">조회 대기</div></div></section>
 <section class="panel"><h2 style="margin:0 0 12px;font-size:17px">최근 분기 재무 관측값</h2><div class="table-wrap" id="financials"><div class="empty">조회 대기</div></div></section>
 <div class="small" style="margin-top:18px">보안 원칙: service_role 키를 입력하거나 저장하지 마세요. 개인 투자원장용 Supabase 프로젝트 주소·키와 혼용하지 마세요. 데이터 입력·수정은 스키마 적용, 소유자 계정 확인 및 별도 권한 검증 이후에 추가합니다.</div>
 </main>
-<script>
+<script type="module">
+import {buildPortfolioSyncEnvelope,previewPersonalSyncEnvelope} from "./src/sync/personal-sync-adapters.mjs";
 (() => {
   const TARGET_URL = "https://gopofxyezhwpfxbecrxd.supabase.co";
   const STORAGE_KEY = "investlab_shared_data_connection_v1";
@@ -64,18 +65,19 @@
     $("pilotAuth").textContent = verifiedUserId ? "서버 인증 확인" : "서버 인증 미확인";
     $("pilotUser").textContent = verifiedUserId ? "서버 확인 계정 ID: " + verifiedUserId + " · RLS/개인 데이터 저장 미검증" : "서버 인증 확인 대기 · 저장된 세션만으로 인증을 확정하지 않습니다";
     $("logout").disabled = !session;
+    $("verifiedPortfolioPreview").disabled = !verifiedUserId;
     $("reload").disabled = !session;
   }
   async function verifyServerUser() {
     const currentClient = client, sequence = ++verificationSequence;
-    verifiedUserId = null; updateAuth();
+    verifiedUserId = null; $("verifiedPortfolioStatus").textContent = "서버 인증 완료 후 검사할 수 있습니다."; updateAuth();
     if (!currentClient || !session) { clearSharedData(); return; }
     const expectedUserId = session.user?.id;
     try {
       const { data, error } = await currentClient.auth.getUser();
       if (sequence !== verificationSequence || currentClient !== client || session?.user?.id !== expectedUserId) return;
       if (error || !data?.user?.id || data.user.id !== expectedUserId) throw error || new Error("세션 사용자 불일치");
-      verifiedUserId = data.user.id; updateAuth(); await loadData();
+      verifiedUserId = data.user.id; updateAuth(); $("verifiedPortfolioStatus").textContent = "서버 인증 확인됨 · 검사 버튼을 눌러 주세요."; await loadData();
     } catch (error) {
       if (sequence !== verificationSequence || currentClient !== client) return;
       verifiedUserId = null; clearSharedData(); updateAuth();
@@ -151,6 +153,22 @@
       authStatus("조회 실패: " + error.message + " · TEST 프로젝트 로그인 상태, 공개용 키, 테이블 조회 권한(RLS)을 확인하세요. 데이터는 변경되지 않았습니다.");
     }
   }
+  $("verifiedPortfolioPreview").onclick = () => {
+    const target = $("verifiedPortfolioStatus");
+    const authenticatedUserId = verifiedUserId;
+    if (!authenticatedUserId || session?.user?.id !== authenticatedUserId) {
+      target.textContent = "서버 인증 계정을 먼저 확인하세요."; return;
+    }
+    try {
+      const envelope = buildPortfolioSyncEnvelope(localStorage, {
+        authenticatedUserId, documentId: "33333333-3333-4333-8333-333333333333",
+        revision: 0, updatedAt: new Date().toISOString()
+      });
+      if (verifiedUserId !== authenticatedUserId || session?.user?.id !== authenticatedUserId) throw Error("검사 중 계정이 변경되었습니다");
+      const result = previewPersonalSyncEnvelope(envelope, { authenticatedUserId });
+      target.textContent = "오프라인 검사 성공 · 서버 인증 계정과 문서 소유자 일치 · 보유 " + result.counts.holdings + "건 · 관심 " + result.counts.watchlist + "건 · 거래이력 " + result.counts.past + "건 · 실제 개인 데이터 RLS 미검증 · 서버 저장 없음";
+    } catch (error) { target.textContent = "변환 검사 실패 · " + error.message + " · 서버 저장 없음"; }
+  };
   $("connect").onclick = () => {
     const url = $("projectUrl").value.trim().replace(/\/$/, ""), key = $("publicKey").value.trim();
     if (url !== TARGET_URL) return status("대상 프로젝트 URL이 일치하지 않습니다. investlab-ledger-test 주소를 확인하세요.");
@@ -160,7 +178,7 @@
   };
   $("login").onclick = login;
   $("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
-  $("logout").onclick = async () => { session = null; clearSharedData(); updateAuth(); if (client) { const {error} = await client.auth.signOut(); if (error) return authStatus("로그아웃 요청 실패: " + error.message + " · 표시된 데이터는 지웠습니다."); } authStatus("로그아웃했습니다."); };
+  $("logout").onclick = async () => { session = null; verifiedUserId = null; ++verificationSequence; $("verifiedPortfolioStatus").textContent = "로그아웃됨 · 검사 결과 초기화"; clearSharedData(); updateAuth(); if (client) { const {error} = await client.auth.signOut(); if (error) return authStatus("로그아웃 요청 실패: " + error.message + " · 표시된 데이터는 지웠습니다."); } authStatus("로그아웃했습니다."); };
   $("reload").onclick = loadData;
   connect(); updateAuth();
 })();
