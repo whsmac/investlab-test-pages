@@ -33,6 +33,10 @@ export async function diagnoseYahooTestSchema(client) {
       }
       fetched += result.data.length;
     }
+    const verifyCount = await client.from("companies").select("id", {count:"exact",head:true});
+    if (verifyCount.error || verifyCount.count !== companyCount.count) {
+      queryError = verifyCount.error?.message || "Company visible-row count changed during diagnostic";
+    }
     const missing = REQUIRED.filter(ticker => !found.has(ticker));
     checks.push({table:"companies",
       status:queryError || missing.length || invalidIds || duplicateTickers || duplicateIds ? "BLOCKED" : "OK",
@@ -47,8 +51,10 @@ export async function diagnoseYahooTestSchema(client) {
     checks.push({table:"market_price_observations",status:"BLOCKED",
       reason:prices.error.message || "select failed"});
   } else {
-    checks.push({table:"market_price_observations",status:"OK",
-      sample_rows_visible:(prices.data || []).length,
+    const visible = (prices.data || []).length;
+    checks.push({table:"market_price_observations",status:visible ? "OK" : "BLOCKED",
+      ...(visible?{}:{reason:"No RLS-visible price sample; cannot verify usable price data"}),
+      sample_rows_visible:visible,
       note:"Read-only column probe; empty RLS-visible result does not prove no underlying rows"});
   }
   return {mode:"TEST_YAHOO_SCHEMA_DIAGNOSTIC_ONLY",database_writes:0,
