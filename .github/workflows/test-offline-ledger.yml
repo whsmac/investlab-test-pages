@@ -289,13 +289,12 @@ jobs:
           fi
       - name: Validate complete TEST site preview assets and imports
         if: always()
-        continue-on-error: true
         run: |
           if [ -f /tmp/investlab-yahoo-site-preview/data/yahoo-public-review.json ]; then
             python -m scripts.validate_yahoo_test_site_preview --site /tmp/investlab-yahoo-site-preview
           fi
       - name: Upload complete TEST site preview (not published)
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: investlab-test-yahoo-complete-site-preview
