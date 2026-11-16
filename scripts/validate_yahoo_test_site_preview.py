@@ -50,6 +50,8 @@ def validate_preview(site: Path):
         raise ValueError("Browser published JSON loader is not wired")
     if 'id="preview"' not in html or "void autoLoadYahooReview()" not in html or "renderReviewCharts(" not in html:
         raise ValueError("Yahoo chart preview or startup auto-loading is not wired")
+    if 'id="freshness"' not in html or "assessYahooChartFreshness(snapshot)" not in html:
+        raise ValueError("Yahoo data freshness warning is not wired")
     if "reviewYahooCandidate(candidate,snapshot,companyMap)" not in html:
         raise ValueError("Browser read-only review is not wired")
     for import_path in re.findall(r'from\s+["\'](\./[^"\']+)["\']', html):
