@@ -287,6 +287,13 @@ jobs:
           if [ -f yahoo-test-pages-staging/manifest.json ]; then
             python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-test-pages-staging --output /tmp/investlab-yahoo-site-preview
           fi
+      - name: Validate complete TEST site preview assets and imports
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f /tmp/investlab-yahoo-site-preview/data/yahoo-public-review.json ]; then
+            python -m scripts.validate_yahoo_test_site_preview --site /tmp/investlab-yahoo-site-preview
+          fi
       - name: Upload complete TEST site preview (not published)
         if: always()
         uses: actions/upload-artifact@v4
