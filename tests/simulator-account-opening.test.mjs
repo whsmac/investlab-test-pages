@@ -93,3 +93,29 @@ test('account-level virtual trade totals reconcile with combined portfolio',()=>
  assert.equal(combined.canPost,false);
  assert.equal(combined.serverVerified,false);
 });
+
+test('realized gain uses selling account cost rather than blended combined cost',()=>{
+ const original=JSON.stringify(saved);
+ const toPositions=opening=>Object.fromEntries(opening.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const isa=extract({saved,accountId:a});
+ const pension=extract({saved,accountId:b});
+ const combined=combine({saved,accountIds:[a,b]});
+ const prices={TSLA:150,USD:40};
+ const sale=[{side:'sell',ticker:'TSLA',quantity:1,price:150}];
+ const isaResult=compareScenarios({cash:isa.usdCash,positions:toPositions(isa)},[{name:'ISA sale',trades:sale}],prices).scenarios[0];
+ const pensionResult=compareScenarios({cash:pension.usdCash,positions:toPositions(pension)},[{name:'Pension unchanged',trades:[]}],prices).scenarios[0];
+ const blendedResult=compareScenarios({cash:combined.usdCash,positions:toPositions(combined)},[{name:'Blended cost sale',trades:sale}],prices).scenarios[0];
+ assert.equal(isaResult.final.realizedPnL,40);
+ assert.equal(pensionResult.final.realizedPnL,0);
+ assert.equal(isaResult.final.realizedPnL+pensionResult.final.realizedPnL,40);
+ assert.equal(blendedResult.final.realizedPnL,50);
+ assert.notEqual(blendedResult.final.realizedPnL,isaResult.final.realizedPnL+pensionResult.final.realizedPnL);
+ assert.equal(isaResult.final.positions.TSLA.quantity,0);
+ assert.equal(pensionResult.final.positions.TSLA.quantity,2);
+ assert.equal(pensionResult.final.positions.TSLA.averageCost,95);
+ assert.equal(blendedResult.final.positions.TSLA.averageCost,100);
+ assert.equal(isaResult.terminalValue+pensionResult.terminalValue,blendedResult.terminalValue);
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(isa.serverVerified,false);
+ assert.equal(combined.canPost,false);
+});
