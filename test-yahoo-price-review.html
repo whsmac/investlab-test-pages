@@ -1,12 +1,23 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST · Yahoo 주가 대조</title>
 <style>:root{color-scheme:dark;font:16px system-ui;background:#0b1020;color:#edf2ff}body{margin:0}.wrap{max-width:900px;margin:auto;padding:24px 16px}a{color:#a9c5ff}.panel{background:#141b2d;border:1px solid #2a3550;border-radius:12px;padding:20px;margin-top:20px}button,input{font:inherit;background:#233657;color:#fff;border:1px solid #566789;padding:10px;border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}</style></head>
 <body><main class="wrap"><a href="./index.html">← TEST 홈</a><h1>Yahoo 주가 · TEST DB 대조</h1><p>GitHub Actions에서 생성된 <code>yahoo-price-review-candidate.json</code> 파일을 선택하세요. 로그인된 TEST DB의 기업 ID와 주가를 읽어 비교합니다. DB 저장·수정은 하지 않습니다.</p>
-<section class="panel"><label>Yahoo 검증 파일 <input type="file" id="file" accept=".json,application/json"></label><p><button id="run">읽기 전용 대조 실행</button> <button id="download" disabled>결과 JSON 저장</button></p><p id="status" role="status">대기 중</p><pre id="result"></pre></section></main>
+<section class="panel"><p><button id="find">최신 Yahoo 수집 결과 찾기</button></p><p id="artifact"></p><label>Yahoo 검증 파일 <input type="file" id="file" accept=".json,application/json"></label><p><button id="run">읽기 전용 대조 실행</button> <button id="download" disabled>결과 JSON 저장</button></p><p id="status" role="status">대기 중</p><pre id="result"></pre></section></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script type="module">
+import {findLatestYahooArtifact} from "./src/market/find-latest-yahoo-artifact.mjs";
 import {readYahooTestCompanyMap} from "./src/market/read-yahoo-test-company-map.mjs";
 import {readTestPriceSnapshot} from "./src/market/read-test-price-snapshot.mjs";
 import {reviewYahooCandidate} from "./src/market/review-yahoo-test-browser.mjs";
 const TARGET="https://gopofxyezhwpfxbecrxd.supabase.co", $=id=>document.getElementById(id);let last=null;
+$("find").addEventListener("click",async()=>{
+ $("find").disabled=true;$("artifact").textContent="GitHub Actions 조회 중…";
+ try{
+  const item=await findLatestYahooArtifact();
+  const a=document.createElement("a");a.href=item.artifact_url;a.target="_blank";a.rel="noopener noreferrer";
+  a.textContent="최신 Yahoo 검증 파일 다운로드 (GitHub ZIP)";
+  $("artifact").replaceChildren(a,document.createTextNode(" · 다운로드한 ZIP에서 JSON을 꺼내 아래에서 선택하세요. GitHub 로그인이 필요할 수 있습니다."));
+ }catch(error){$("artifact").textContent="조회 실패: "+error.message}
+ finally{$("find").disabled=false}
+});
 $("run").addEventListener("click",async()=>{
  $("run").disabled=true;$("download").disabled=true;last=null;$("result").textContent="";
  try{
