@@ -571,7 +571,24 @@ function renderEditor(){
   const priceSummary=document.createElement('summary');priceSummary.textContent='이 전략만의 최종 가정 주가 · 기준 대비 등락률';priceDetails.append(priceSummary);
   const priceHint=document.createElement('p');priceHint.className='hint';priceHint.textContent='비워두면 왼쪽 공통 가정주가를 사용합니다. 이 전략의 가격만 변경하며 다른 전략에는 영향을 주지 않습니다.';priceDetails.append(priceHint);
   const priceRows=document.createElement('div');priceDetails.append(priceRows);
-  const renderPriceRows=()=>{priceRows.replaceChildren();for(const item of portfolioState.prices){const ticker=String(item.ticker).trim().toUpperCase();if(!ticker)continue;const row=document.createElement('div');row.className='simple-row';const label=document.createElement('label');label.textContent=ticker+' (기준 
+  const renderPriceRows=()=>{
+   priceRows.replaceChildren();
+   for(const item of portfolioState.prices){
+    const ticker=String(item.ticker).trim().toUpperCase();if(!ticker)continue;
+    const row=document.createElement('div');row.className='simple-row';
+    const label=document.createElement('label');label.textContent=ticker+' (기준 '+item.price+' USD)';
+    const input=document.createElement('input');input.type='number';input.min='0';input.step='any';
+    input.placeholder='공통 가격 사용';input.setAttribute('aria-label',ticker+' 전략별 최종 가정 주가');
+    input.value=strategy.terminalPrices?.[ticker]??'';
+    input.addEventListener('input',()=>{
+     strategy.terminalPrices??={};
+     if(input.value==='')delete strategy.terminalPrices[ticker];else strategy.terminalPrices[ticker]=Number(input.value);
+     simulatorInputRevision++;invalidateCalculatedResults();updateStrategySaveState();scheduleWorkingDraft();
+    });
+    row.append(label,input);priceRows.append(row);
+   }
+  };
+  renderPriceRows();card.append(priceDetails);
   const management=document.createElement('details');management.className='strategy-management';
   const managementSummary=document.createElement('summary');managementSummary.textContent='이 전략 전체 삭제 · 관리';management.append(managementSummary);
   const remove=document.createElement('button');remove.textContent='이 전략 전체 삭제';remove.type='button';
