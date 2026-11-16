@@ -450,7 +450,7 @@ function renderCompactPortfolioOverview(){
  const stock=positions.reduce((sum,p)=>{const price=prices.get(String(p.ticker).trim().toUpperCase());return sum+(Number.isFinite(price)?Number(p.quantity)*price:0)},0);
  const cash=Number(byId('cash').value)||0;
  const summary=document.createElement('div');summary.className='portfolio-summary';
- for(const [label,value] of [['보유종목 평가금액 합계 (USD)',stock],['현금잔고 (USD)',cash],['총자산 (USD)',stock+cash]]){
+ for(const [label,value] of [['보유종목 평가금액 합계',stock],['현금잔고 (USD)',cash],['총자산 (USD)',stock+cash]]){
   const row=document.createElement('div');row.className='portfolio-summary-row';
   const title=document.createElement('span');title.textContent=label;
   const amount=document.createElement('strong');amount.textContent=fmt(Math.round(value));
