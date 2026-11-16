@@ -16,6 +16,7 @@ def assess_bundle(site: Path):
                 "database_writes":0,"reason":str(error)}
     return {"mode":"TEST_YAHOO_BUNDLE_READINESS_ONLY","ready":True,"deployed":False,
             "database_writes":0,"rows":details["rows"],"tickers":details["tickers"],
+            "json_sha256":details["json_sha256"],
             "reason":"Offline TEST bundle validated; no online publication performed"}
 
 def main():
