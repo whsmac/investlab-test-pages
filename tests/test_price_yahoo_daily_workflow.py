@@ -12,6 +12,9 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         self.assertIn("scripts.check_yahoo_publication_preflight",text)
         self.assertIn("scripts.build_gated_yahoo_public_review",text)
         self.assertIn("retention-days: 7",text)
+        self.assertIn("ref: gh-pages",text)
+        self.assertIn("scripts.review_yahoo_test_pages_refresh",text)
+        self.assertIn("yahoo-pages-refresh-review.json",text)
         self.assertNotIn("contents: write",text)
         self.assertNotIn("pages: write",text)
         self.assertNotIn("actions/deploy-pages",text)
@@ -22,6 +25,8 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         self.assertIn("if: steps.probe.outcome == 'success'",text)
         self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then',text)
         self.assertIn("exit 1",text)
+        self.assertIn("if: steps.candidate.outcome == 'success'",text)
+        self.assertIn("COMPARISON_OUTCOME",text)
 
 if __name__=="__main__":
     unittest.main()
