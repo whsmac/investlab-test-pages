@@ -7,9 +7,26 @@ export async function readTestPriceSnapshot(client, { pageSize = 1000, maxRows =
   if (!Number.isInteger(maxRows) || maxRows < 1 || maxRows > 100000) throw new Error("Invalid maxRows");
   const auth = await client.auth.getUser();
   if (auth.error || !auth.data?.user?.id) throw new Error("Verified TEST login required");
-  const companies = await client.from("companies").select("id,ticker").order("id");
-  if (companies.error) throw companies.error;
-  const symbols = new Map((companies.data || []).map(row => [String(row.id), row.ticker]));
+  const companyCount = await client.from("companies").select("id",{count:"exact",head:true});
+  if (companyCount.error) throw companyCount.error;
+  if (!Number.isSafeInteger(companyCount.count) || companyCount.count < 0 || companyCount.count > 10000)
+    throw new Error("Invalid or excessive visible company count");
+  const symbols = new Map();
+  for (let start=0;start<companyCount.count;start+=1000) {
+    const end=Math.min(start+999,companyCount.count-1);
+    const page=await client.from("companies").select("id,ticker").order("id",{ascending:true}).range(start,end);
+    if (page.error) throw page.error;
+    if (!Array.isArray(page.data) || page.data.length!==end-start+1)
+      throw new Error("Company snapshot truncated during paging");
+    for (const row of page.data) {
+      if (row.id==null || !String(row.ticker||"").trim() || symbols.has(String(row.id)))
+        throw new Error("Invalid or duplicate company in snapshot");
+      symbols.set(String(row.id),row.ticker);
+    }
+  }
+  const companyVerify=await client.from("companies").select("id",{count:"exact",head:true});
+  if (companyVerify.error || companyVerify.count!==companyCount.count)
+    throw new Error("Visible company count changed during snapshot");
   const countResult = await client.from("market_price_observations")
     .select("id", { count: "exact", head: true });
   if (countResult.error) throw countResult.error;
