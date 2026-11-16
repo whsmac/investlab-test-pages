@@ -54,6 +54,24 @@ class PricePipelineTests(unittest.TestCase):
         self.assertIn("Snapshot completeness is unverified", result["blocking_reasons"])
         self.assertFalse(result["safe_to_propose_insert"])
 
+    def test_reject_failed_source_quality_audit(self):
+        probe = {"mode": "DRY_RUN_ONLY", "writes_performed": 0,
+                 "input_mode": "LIVE_SOURCE_TRIAL", "symbols": {},
+                 "quality_audit": {"checks_passed": False,
+                                   "database_insert_authorized": False}}
+        with self.assertRaisesRegex(ValueError, "quality audit"):
+            reconcile(probe, [])
+
+    def test_offline_fixture_is_explicitly_blocked(self):
+        probe = {"mode": "DRY_RUN_ONLY", "writes_performed": 0,
+                 "input_mode": "OFFLINE_FIXTURE", "symbols": {},
+                 "quality_audit": {"checks_passed": True,
+                                   "database_insert_authorized": False}}
+        result = reconcile(probe, [])
+        self.assertIn("Offline fixtures are not live market observations",
+                      result["blocking_reasons"])
+        self.assertFalse(result["safe_to_propose_insert"])
+
     def test_reject_non_dry_run_report(self):
         with self.assertRaises(ValueError):
             reconcile({"mode": "WRITE", "writes_performed": 1, "symbols": {}}, [])
