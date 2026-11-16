@@ -18,11 +18,36 @@ jobs:
         with:
           node-version: '22'
       - name: Validate price pipeline offline
+        id: python_tests
+        continue-on-error: true
         run: python -m unittest discover -s tests -p 'test_price*.py' -v
       - name: Test read-only Supabase snapshot pagination (mocked)
+        id: node_tests
+        continue-on-error: true
         run: node --test tests/test-price-snapshot.mjs
       - name: Probe free price source (no database writes)
+        id: live_probe
+        continue-on-error: true
         run: python scripts/market_price_refresh_test.py
+      - name: Summarize test and source status
+        if: always()
+        env:
+          PYTHON_RESULT: ${{ steps.python_tests.outcome }}
+          NODE_RESULT: ${{ steps.node_tests.outcome }}
+          SOURCE_RESULT: ${{ steps.live_probe.outcome }}
+        run: |
+          {
+            echo "## INVESTLAB TEST · price source dry-run"
+            echo ""
+            echo "| Check | Outcome |"
+            echo "|---|---|"
+            echo "| Offline Python tests | $PYTHON_RESULT |"
+            echo "| Mocked Supabase pagination tests | $NODE_RESULT |"
+            echo "| Live free-source probe | $SOURCE_RESULT |"
+            echo ""
+            echo "No Supabase write operation is performed by this workflow."
+            echo "A successful source probe does not verify price adjustment basis or currency."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload dry-run report even if source fails
         if: always()
         uses: actions/upload-artifact@v4
@@ -31,3 +56,13 @@ jobs:
           path: price-source-probe.json
           if-no-files-found: warn
           retention-days: 7
+      - name: Fail job when any verification failed
+        if: always()
+        env:
+          PYTHON_RESULT: ${{ steps.python_tests.outcome }}
+          NODE_RESULT: ${{ steps.node_tests.outcome }}
+          SOURCE_RESULT: ${{ steps.live_probe.outcome }}
+        run: |
+          test "$PYTHON_RESULT" = success &&
+          test "$NODE_RESULT" = success &&
+          test "$SOURCE_RESULT" = success
