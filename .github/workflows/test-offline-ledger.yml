@@ -225,6 +225,8 @@ jobs:
         run: node --test tests/test-yahoo-schema-report.mjs
       - name: Validate automatic Yahoo review mini chart series
         run: node --test tests/test-yahoo-review-chart-series.mjs
+      - name: Validate Yahoo chart data freshness
+        run: node --test tests/test-yahoo-chart-freshness.mjs
       - name: Probe Yahoo Finance first (read-only, non-blocking)
         continue-on-error: true
         timeout-minutes: 2
