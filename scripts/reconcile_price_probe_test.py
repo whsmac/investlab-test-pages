@@ -62,8 +62,25 @@ def reconcile(probe, snapshot):
             else:
                 plan["conflicts"].append({**item, "stored_close_price": str(index[k])})
     plan["counts"] = {name: len(plan[name]) for name in ("missing", "same", "conflicts", "skipped")}
-    plan["safe_to_propose_insert"] = plan["counts"]["conflicts"] == 0
-    plan["notice"] = "Missing rows are candidates only; do not insert until source adjustment, currency, RLS and ownership are verified."
+    # Partial snapshots can misclassify existing rows as missing. Never authorize
+    # writes from an offline comparison without verified source provenance.
+    coverage = snapshot.get("coverage") if isinstance(snapshot, dict) else None
+    verified_snapshot = isinstance(coverage, dict) and coverage.get("complete") is True
+    plan["snapshot_complete_claimed"] = verified_snapshot
+    plan["source_price_basis_verified"] = False
+    plan["currency_verified"] = False
+    plan["safe_to_propose_insert"] = False
+    plan["blocking_reasons"] = []
+    if not verified_snapshot:
+        plan["blocking_reasons"].append("Snapshot completeness is unverified")
+    if plan["counts"]["conflicts"]:
+        plan["blocking_reasons"].append("Conflicting stored closing prices")
+    plan["blocking_reasons"].extend([
+        "External source adjustment basis not verified against stored price_basis",
+        "External source currency not verified against stored currency",
+        "TEST ownership/RLS and write authorization not verified",
+    ])
+    plan["notice"] = "Comparison is informational only. No insert, update, or overwrite is authorized."
     return plan
 
 def main():
