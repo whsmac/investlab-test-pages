@@ -13,8 +13,17 @@ test("auto load overrides previously selected local file",()=>{
 });
 test("manual file selection cancels stale published candidate",()=>{
  assert.match(html,/\$\("file"\)\.addEventListener\("change"/);
- assert.match(html,/published=null;sourceMode="file"/);
+ assert.match(html,/published=null;\$\("chart"\)\.replaceChildren\(\);sourceMode="file"/);
 });
 test("TEST page contains no DB mutation calls",()=>{
  assert.doesNotMatch(html,/\.insert\(|\.upsert\(|\.update\(|\.delete\(|\.rpc\(/);
+});
+
+test("standalone Yahoo chart preview does not require TEST login",()=>{
+ assert.match(html,/id="preview"/);
+ const start=html.indexOf('$("preview").addEventListener');
+ const end=html.indexOf('$("run").addEventListener',start);
+ const handler=html.slice(start,end);
+ assert.match(handler,/renderReviewCharts\(source\)/);
+ assert.doesNotMatch(handler,/getTestClient|readTestPriceSnapshot|readYahooTestCompanyMap/);
 });
