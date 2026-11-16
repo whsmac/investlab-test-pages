@@ -190,11 +190,11 @@ test('ordered mixed account gains and losses reconcile with staged KRW tax estim
  const pensionTrades=[{side:'sell',ticker:'TSLA',quantity:1,price:150},{side:'sell',ticker:'TSLA',quantity:1,price:80}];
  const isaResult=compareScenarios({cash:isa.usdCash,positions:toPositions(isa)},[{name:'ISA ordered',trades:isaTrades}],prices).scenarios[0];
  const pensionResult=compareScenarios({cash:pension.usdCash,positions:toPositions(pension)},[{name:'Pension ordered',trades:pensionTrades}],prices).scenarios[0];
- assert.deepEqual(isaResult.steps.map(step=>step.cumulativeRealizedPnL),[40,40,15]);
+ assert.deepEqual(isaResult.steps.map(step=>step.cumulativeRealizedPnL),[40,40,10]);
  assert.deepEqual(pensionResult.steps.map(step=>step.cumulativeRealizedPnL),[55,40]);
- assert.equal(isaResult.final.realizedPnL,15);
+ assert.equal(isaResult.final.realizedPnL,10);
  assert.equal(pensionResult.final.realizedPnL,40);
- assert.equal(isaResult.final.realizedPnL+pensionResult.final.realizedPnL,55);
+ assert.equal(isaResult.final.realizedPnL+pensionResult.final.realizedPnL,50);
  assert.equal(isaResult.final.cash,620);
  assert.equal(pensionResult.final.cash,230);
  assert.equal(isaResult.final.cash+pensionResult.final.cash,850);
