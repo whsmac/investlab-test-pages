@@ -1,0 +1,11 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {loadPublishedYahooReview} from "../src/market/load-published-yahoo-review.mjs";
+const origin="https://whsmac.github.io/investlab-test-pages/test-yahoo-price-review.html";
+const payload={mode:"REVIEW_ONLY",source:"Yahoo Finance",database_insert_authorized:false,writes_performed:0,row_count:0,observations:[]};
+const fetcher=async url=>{assert.equal(url,"https://whsmac.github.io/investlab-test-pages/data/yahoo-public-review.json");return {ok:true,headers:{get:()=> "application/json"},json:async()=>payload}};
+test("loads published same-origin TEST JSON",async()=>{const result=await loadPublishedYahooReview({origin,fetcher});assert.equal(result.row_count,0)});
+test("rejects non TEST host",async()=>{await assert.rejects(loadPublishedYahooReview({origin:"https://evil.example/investlab-test-pages/",fetcher}),/호스트/)});
+test("rejects external path",async()=>{await assert.rejects(loadPublishedYahooReview({origin,path:"https://example.org/data/yahoo-public-review.json",fetcher}),/경로/)});
+test("rejects missing published file",async()=>{await assert.rejects(loadPublishedYahooReview({origin,fetcher:async()=>({ok:false,status:404})}),/404/)});
+test("rejects unapproved JSON",async()=>{await assert.rejects(loadPublishedYahooReview({origin,fetcher:async()=>({ok:true,headers:{get:()=> "application/json"},json:async()=>({...payload,database_insert_authorized:true})})}),/검증/)});
