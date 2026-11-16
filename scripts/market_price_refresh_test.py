@@ -9,6 +9,7 @@ import urllib.error
 import urllib.request
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
+from scripts.audit_price_source_test import audit_source_report
 
 # Stooq's unofficial public CSV endpoint is used only as a trial source.
 # SPCX is deliberately excluded until an independently verified market symbol exists.
@@ -58,10 +59,11 @@ def main():
             report["symbols"][ticker] = {"status": "error", "source_symbol": source_symbol,
                                          "message": f"{type(exc).__name__}: {str(exc)[:180]}"}
     report["symbols"]["SPCX"] = {"status": "skipped", "reason": "Public ticker and data source not verified"}
+    report["quality_audit"] = audit_source_report(report, today=today)
     with open(OUTPUT, "w", encoding="utf-8") as handle:
         json.dump(report, handle, ensure_ascii=False, indent=2)
     print("TEST dry-run complete:", {key: value["status"] for key, value in report["symbols"].items()})
-    return 0 if all(report["symbols"][k]["status"] == "ok" for k in SYMBOLS) else 1
+    return 0 if report["quality_audit"]["checks_passed"] else 1
 
 if __name__ == "__main__":
     sys.exit(main())
