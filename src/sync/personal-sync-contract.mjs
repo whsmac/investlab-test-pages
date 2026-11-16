@@ -12,7 +12,7 @@ export function validatePersonalSyncEnvelope(envelope,{authenticatedUserId}={}){
   if(!uuid(envelope.documentId))throw Error('문서 식별자 오류');
   if(!Number.isSafeInteger(envelope.revision) || envelope.revision < 0)throw Error('문서 버전 오류');
   if(!plain(envelope.payload))throw Error('개인 데이터 본문 형식 오류');
-  if(!Object.hasOwn(envelope,'updatedAt') || typeof envelope.updatedAt !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}T/.test(envelope.updatedAt) || !Number.isFinite(Date.parse(envelope.updatedAt)))throw Error('수정 시각 오류');
+  if(!Object.hasOwn(envelope,'updatedAt') || typeof envelope.updatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(envelope.updatedAt) || !Number.isFinite(Date.parse(envelope.updatedAt)))throw Error('수정 시각 오류');
   const serialized=JSON.stringify(envelope);
   if(serialized.length>1024*1024)throw Error('문서 크기가 1MiB를 초과합니다');
   return {valid:true,kind:envelope.kind,documentId:envelope.documentId,revision:envelope.revision,serverVerified:false,canPost:false};
