@@ -301,6 +301,17 @@ jobs:
           if [ -f /tmp/investlab-yahoo-site-preview/data/yahoo-public-review.json ]; then
             python -m scripts.validate_yahoo_test_site_preview --site /tmp/investlab-yahoo-site-preview
           fi
+      - name: Report complete TEST site readiness (no deployment)
+        if: always()
+        run: python -m scripts.report_yahoo_test_bundle_readiness --site /tmp/investlab-yahoo-site-preview --output yahoo-test-site-readiness.json
+      - name: Upload TEST site readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-site-readiness
+          path: yahoo-test-site-readiness.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload complete TEST site preview (not published)
         if: success()
         uses: actions/upload-artifact@v4
