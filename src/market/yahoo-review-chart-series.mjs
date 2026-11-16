@@ -10,7 +10,7 @@ export function buildYahooChartSeries(snapshot,{limit=90}={}){
  const seen=new Set();
  for(const row of snapshot.observations){
    if(!Object.hasOwn(groups,row.ticker))continue;
-   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(row.trading_date)||!Number.isFinite(Date.parse(row.trading_date+"T00:00:00Z")))
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(row.trading_date)||!Number.isFinite(Date.parse(row.trading_date+"T00:00:00Z")))
      throw Error("Invalid trading date");
    const price=Number(row.close_price);
    if(!Number.isFinite(price)||price<=0||row.currency!=="USD"||row.price_basis!=="unadjusted_close")
