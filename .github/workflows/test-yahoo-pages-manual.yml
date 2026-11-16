@@ -1,0 +1,75 @@
+name: TEST Yahoo Pages publication (manual approval only)
+# This workflow never runs on push or PR. No Supabase credentials or DB operations.
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type PUBLISH_TEST_YAHOO_ONLY to authorize TEST Pages publication'
+        required: true
+        type: string
+      source_run_id:
+        description: 'Successful TEST offline ledger workflow run ID'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: test-yahoo-pages-manual
+  cancel-in-progress: false
+
+jobs:
+  publish-test-yahoo:
+    if: ${{ inputs.approval == 'PUBLISH_TEST_YAHOO_ONLY' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: test-yahoo-pages-manual-approval
+    steps:
+      - name: Checkout TEST feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - name: Retrieve staged TEST Yahoo artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-staging
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+          path: ./yahoo-staged
+      - name: Validate staged data and source
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('yahoo-staged/manifest.json').read_text())
+          data=json.loads(Path('yahoo-staged/data/yahoo-public-review.json').read_text())
+          assert manifest['mode']=='TEST_PAGES_STAGING_ONLY'
+          assert manifest['published'] is False and manifest['database_writes']==0
+          assert manifest['target_path']=='data/yahoo-public-review.json'
+          assert data['mode']=='REVIEW_ONLY' and data['database_insert_authorized'] is False
+          assert data['writes_performed']==0 and data['row_count']==len(data['observations'])
+          assert data['row_count']>0
+          print('Validated TEST Yahoo rows:',data['row_count'])
+          PY
+      - name: Prepare static TEST Pages bundle
+        run: |
+          mkdir -p site/data
+          cp yahoo-staged/data/yahoo-public-review.json site/data/yahoo-public-review.json
+          cp test-yahoo-price-review.html site/test-yahoo-price-review.html
+          cp -R src site/src
+          printf '%s\n' '<!doctype html><meta charset="utf-8"><title>TEST Yahoo review</title><a href="./test-yahoo-price-review.html">TEST Yahoo price review</a>' > site/index.html
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload TEST Pages bundle
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+      - name: Deploy TEST Pages (explicit manual authorization only)
+        id: deployment
+        uses: actions/deploy-pages@v4
