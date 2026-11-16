@@ -26,3 +26,13 @@ The existing TEST workflow is triggered by PR and manual events; it does **not**
 
 ## Scope
 This is a publication handoff only: no API credentials, no service-role key, no database writes, no PR merge, no production deployment, and no Pages publication.
+
+## Live website verification (read-only; run only after authorized publication)
+```sh
+python -m scripts.verify_yahoo_test_pages_live --expected-sha256 SHA256_FROM_APPROVED_READINESS_REPORT --output yahoo-live-check.json
+```
+The command only requests the exact public JSON URL, refuses redirects to other origins, limits download size, checks content type, all five tickers, no private observation fields, source flags, freshness (seven calendar days), and reviewed SHA-256. It exits nonzero if missing/stale/invalid. The report contains no portfolio data. Run offline unit tests before publication with:
+```sh
+python -m unittest tests.test_price_yahoo_live_pages -v
+```
+This verifier does not publish the website or establish a recurring schedule.
