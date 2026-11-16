@@ -25,3 +25,14 @@ test('portfolio snapshot flows into simulator without changing source holdings o
  assert.equal(snapshot.serverVerified,false);
  assert.equal(snapshot.canPost,false);
 });
+
+import {readFileSync} from 'node:fs';
+test('portfolio pilot diagnostics use read-only snapshot and disclose sync limits',()=>{
+ const html=readFileSync(new URL('../portfolio-connection-check.html',import.meta.url),'utf8');
+ assert.match(html,/readPortfolioSimulatorSnapshot\(localStorage\)/);
+ assert.match(html,/snapshot\.positions\.length/);
+ assert.match(html,/snapshot\.crossDeviceSynced/);
+ assert.match(html,/snapshot\.serverVerified/);
+ assert.match(html,/snapshot\.canPost/);
+ assert.match(html,/다른 도메인\/기기의 데이터는 자동 연결되지 않습니다/);
+});
