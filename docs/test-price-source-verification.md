@@ -52,3 +52,24 @@ not a transactionally consistent database export.
 GitHub Actions workflow is intentionally manual-only. GitHub may require the
 workflow definition to exist on the default branch before the Dispatch button
 is available; do not merge or move it to production just to enable execution.
+
+## Offline end-to-end trial (no network or database)
+
+Create a temporary directory with five files named `MSFT.csv`, `GOOGL.csv`,
+`AMZN.csv`, `META.csv`, and `TSLA.csv`. Each must contain `Date,Close`
+headers and realistic dates/prices. Run:
+
+```bash
+python scripts/market_price_refresh_test.py --csv-dir ./fixtures \
+  --as-of 2026-11-16 --output offline-probe.json
+```
+
+The fixed date option is **only** available in offline fixture mode. The
+output is marked `input_mode=OFFLINE_FIXTURE` and must never be interpreted
+as live price data. To exercise the same pipeline with no hand-created files,
+run `python -m unittest discover -s tests -p 'test_price*.py' -v`.
+
+This is a software execution check, **not** evidence that Stooq is reachable,
+that its close values are licensed for use, or that the series matches the
+existing database's price basis.
+
