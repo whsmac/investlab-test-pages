@@ -619,7 +619,7 @@ function renderEditor(){
     const input=document.createElement('input');input.dataset.field=key;input.setAttribute('aria-label',label);
     if(key==='ticker'){
      const select=document.createElement('select');select.dataset.field=key;select.setAttribute('aria-label',label);
-     const symbols=[...new Set([...portfolioState.positions.map(p=>p.ticker),...portfolioState.prices.map(p=>p.ticker),...document.querySelectorAll('#managedSymbolOptions option')].map(p=>typeof p==='string'?p:p.value),trade.ticker].map(t=>String(t||'').trim().toUpperCase()).filter(Boolean))].sort();
+     const symbols=[...new Set([...portfolioState.positions.map(p=>p.ticker),...portfolioState.prices.map(p=>p.ticker),...[...document.querySelectorAll('#managedSymbolOptions option')].map(p=>p.value),trade.ticker].map(t=>String(t||'').trim().toUpperCase()).filter(Boolean))].sort();
      for(const symbol of symbols){const option=document.createElement('option');option.value=symbol;option.textContent=symbol;select.append(option);}
      select.value=String(trade.ticker||'').trim().toUpperCase();
      select.addEventListener('change',()=>{trade.ticker=select.value;});
