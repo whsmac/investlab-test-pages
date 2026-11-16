@@ -11,7 +11,7 @@ import {readTestPriceSnapshot} from "./src/market/read-test-price-snapshot.mjs";
 import {reviewYahooCandidate} from "./src/market/review-yahoo-test-browser.mjs";
 const TARGET="https://gopofxyezhwpfxbecrxd.supabase.co", $=id=>document.getElementById(id);let last=null;let published=null;let sourceMode="none";
 function getTestClient(){
- const config=JSON.parse(localStorage.getItem("investlab_shared_data_connection_v1")||"{}");
+ let config;try{config=JSON.parse(localStorage.getItem("investlab_shared_data_connection_v1")||"{}")}catch{throw Error("TEST 연결 설정이 손상되었습니다. 공유 데이터 화면에서 다시 저장하세요.")}
  if(config.url!==TARGET||!config.key)throw Error("공유 데이터 화면에서 TEST 서버 연결·로그인을 먼저 완료하세요.");
  if(!window.supabase?.createClient)throw Error("Supabase 라이브러리 로드 실패");
  return window.supabase.createClient(TARGET,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"investlab_shared_data_auth_v1"}});
