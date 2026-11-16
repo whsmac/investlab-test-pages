@@ -280,6 +280,21 @@ jobs:
           path: yahoo-test-pages-staging/
           if-no-files-found: ignore
           retention-days: 7
+      - name: Assemble complete TEST site preview (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-test-pages-staging/manifest.json ]; then
+            python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-test-pages-staging --output /tmp/investlab-yahoo-site-preview
+          fi
+      - name: Upload complete TEST site preview (not published)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-complete-site-preview
+          path: /tmp/investlab-yahoo-site-preview/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload Yahoo trial diagnostics
         if: always()
         uses: actions/upload-artifact@v4
