@@ -69,3 +69,11 @@ test('personal data RLS preflight is metadata-only and never runs from browser',
  assert.match(html,/test-personal-data-rls-readonly-audit\.sql/);
  assert.match(html,/이 페이지에서 SQL을 자동 실행하지 않습니다/);
 });
+
+test('RLS audit highlights unprotected candidate tables and views without claiming safety',()=>{
+ const sql=readFileSync(new URL('../docs/test-personal-data-rls-readonly-audit.sql',import.meta.url),'utf8');
+ for(const signal of ['VIEW_REQUIRES_SEPARATE_REVIEW','RLS_DISABLED_REVIEW_REQUIRED','NO_POLICIES_REVIEW_REQUIRED','POLICIES_PRESENT_MANUAL_REVIEW_REQUIRED'])assert.ok(sql.includes(signal));
+ for(const privilege of ['SELECT','INSERT','UPDATE','DELETE'])assert.ok(sql.includes("has_table_privilege('authenticated',c.relation_oid,'"+privilege+"')"));
+ assert.match(sql,/security_invoker/);
+ assert.match(sql,/실제 사용자 간 격리 성공 판정이 아닙니다/);
+});
