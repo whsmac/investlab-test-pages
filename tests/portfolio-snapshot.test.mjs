@@ -56,3 +56,16 @@ test('TEST pilot authentication status never claims personal RLS or cross-device
  assert.match(html,/기기 간 저장/);
  assert.match(html,/개인 데이터 조회·업로드 기능은 비활성 상태입니다/);
 });
+
+test('personal data RLS preflight is metadata-only and never runs from browser',()=>{
+ const sql=readFileSync(new URL('../docs/test-personal-data-rls-readonly-audit.sql',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../shared-data.html',import.meta.url),'utf8');
+ assert.match(sql,/pg_catalog\.pg_policies/);
+ assert.match(sql,/relrowsecurity/);
+ assert.match(sql,/information_schema\.role_table_grants/);
+ assert.match(sql,/information_schema\.columns/);
+ const executable=sql.split('\\n').filter(line=>!line.trim().startsWith('--')).join('\\n');
+ assert.doesNotMatch(executable,/\\b(?:CREATE|ALTER|INSERT|UPDATE|DELETE|DROP|GRANT|REVOKE|TRUNCATE)\\b/i);
+ assert.match(html,/test-personal-data-rls-readonly-audit\.sql/);
+ assert.match(html,/이 페이지에서 SQL을 자동 실행하지 않습니다/);
+});
