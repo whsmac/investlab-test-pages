@@ -219,6 +219,8 @@ jobs:
         run: node --test tests/test-yahoo-pages-review-workflow.mjs
       - name: Validate Yahoo browser page source precedence
         run: node --test tests/test-yahoo-browser-page-contract.mjs
+      - name: Validate read-only TEST Supabase schema diagnostics
+        run: node --test tests/test-yahoo-schema-diagnostic.mjs
       - name: Probe Yahoo Finance first (read-only, non-blocking)
         continue-on-error: true
         timeout-minutes: 2
