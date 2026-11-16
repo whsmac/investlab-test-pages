@@ -16,6 +16,7 @@ function validateDay(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(day))||Number.is
 function reconcile(probe,snapshot){
  if(probe?.mode!=="DRY_RUN_ONLY"||probe.writes_performed!==0||!probe.symbols||typeof probe.symbols!=="object")throw Error("읽기 전용 수집 보고서가 아닙니다.");
  if(probe.quality_audit?.checks_passed!==true||probe.quality_audit?.database_insert_authorized!==false)throw Error("품질검증을 통과한 읽기 전용 수집 보고서가 아닙니다.");
+ if(probe.input_mode!=="LIVE_SOURCE_TRIAL")throw Error("오프라인 테스트용 주가 파일은 실제 DB 대조에 사용할 수 없습니다.");
  if(!snapshot?.coverage?.complete||snapshot.coverage.scope!=="authenticated_RLS_visible_rows_only")throw Error("TEST 데이터 전체 조회 범위가 확인되지 않았습니다.");
  const index=new Map(), duplicates=[];
  for(const row of snapshot.observations){const key=row.ticker+"|"+validateDay(row.trading_date),value=amount(row.close_price);if(index.has(key)&&index.get(key).price!==value)duplicates.push(key);index.set(key,{price:value,currency:row.currency,basis:row.price_basis})}
