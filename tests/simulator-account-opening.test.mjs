@@ -13,3 +13,27 @@ test('two accounts combine TSLA quantity and weighted average cost',()=>{const r
 test('single selected account stays isolated',()=>{const r=combine({saved,accountIds:[b]});assert.equal(r.positions.length,1);assert.equal(r.positions[0].averageCost,95);assert.equal(r.usdCash,0)});
 test('duplicate account selection is blocked',()=>assert.throws(()=>combine({saved,accountIds:[a,a]}),/중복/));
 test('empty selection is blocked',()=>assert.throws(()=>combine({saved,accountIds:[]}),/하나 이상/));
+
+import {compareScenarios} from '../src/simulator/scenario-comparison.mjs';
+test('combined confirmed accounts feed virtual trade without mutating reviewed ledger',()=>{
+ const original=JSON.stringify(saved);
+ const opening=combine({saved,accountIds:[a,b]});
+ const positions=Object.fromEntries(opening.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const tsla=positions.TSLA;
+ assert.equal(tsla.quantity,3);
+ assert.equal(tsla.averageCost,100);
+ assert.equal(positions.USD.quantity,2);
+ assert.equal(opening.usdCash,500);
+ const outcome=compareScenarios({cash:opening.usdCash,positions},[{name:'TSLA 1주 매도',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:150}]}],{TSLA:150,USD:40});
+ assert.equal(outcome.baseline.terminalValue,1030);
+ assert.equal(outcome.scenarios[0].final.cash,650);
+ assert.equal(outcome.scenarios[0].final.positions.TSLA.quantity,2);
+ assert.equal(outcome.scenarios[0].final.positions.TSLA.averageCost,100);
+ assert.equal(outcome.scenarios[0].final.positions.USD.quantity,2);
+ assert.equal(outcome.scenarios[0].terminalValue,1030);
+ assert.equal(outcome.scenarios[0].deltaVsHold,0);
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(opening.canPost,false);
+ assert.equal(opening.canMigrate,false);
+ assert.equal(opening.serverVerified,false);
+});
