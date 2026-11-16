@@ -47,6 +47,15 @@ jobs:
         run: |
           python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-staged --output "${RUNNER_TEMP}/investlab-test-site-review"
           python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-site-review"
+      - name: Record verified TEST bundle checksum (NO DEPLOY)
+        run: |
+          python -m scripts.report_yahoo_test_bundle_readiness --site "${RUNNER_TEMP}/investlab-test-site-review" --output "${RUNNER_TEMP}/yahoo-manual-review-readiness.json"
+      - name: Upload verified TEST bundle readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-manual-review-readiness
+          path: ${{ runner.temp }}/yahoo-manual-review-readiness.json
+          retention-days: 7
       - name: Upload offline TEST site preview only
         uses: actions/upload-artifact@v4
         with:
