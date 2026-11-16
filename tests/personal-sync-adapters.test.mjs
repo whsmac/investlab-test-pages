@@ -41,3 +41,12 @@ test('portfolio diagnostic offers offline-only conversion preview without networ
  assert.match(html,/TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단/);
  assert.doesNotMatch(html,/\.from\(['"](?:portfolio|ledger)/);
 });
+
+test('ledger preview uses validated offline envelope without enabling server writes',()=>{
+ const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+ assert.match(html,/id="ledger-sync-preview"/);
+ assert.match(html,/buildLedgerSyncEnvelope\(current/);
+ assert.match(html,/previewPersonalSyncEnvelope\(envelope/);
+ assert.match(html,/TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단/);
+ assert.match(html,/if\(!current\)throw Error\('먼저 원장 데이터를 불러오세요'\)/);
+});
