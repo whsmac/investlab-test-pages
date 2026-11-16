@@ -21,3 +21,11 @@ test("wrong mode or write count rejected",()=>{
 test("unexpected table rejected",()=>{
  assert.throws(()=>buildSafeYahooSchemaReport({...base,checks:[{table:"auth.users",status:"OK"}]}),/Unexpected/);
 });
+
+test("empty or incomplete diagnostic cannot claim compatibility",()=>{
+ assert.throws(()=>buildSafeYahooSchemaReport({...base,checks:[]}),/Incomplete/);
+ assert.throws(()=>buildSafeYahooSchemaReport({...base,checks:[base.checks[0]]}),/Incomplete/);
+});
+test("duplicate table checks are rejected",()=>{
+ assert.throws(()=>buildSafeYahooSchemaReport({...base,checks:[...base.checks,base.checks[0]]}),/Duplicate/);
+});
