@@ -30,6 +30,12 @@ def key(ticker, day):
 def reconcile(probe, snapshot):
     if probe.get("mode") != "DRY_RUN_ONLY" or probe.get("writes_performed") != 0:
         raise ValueError("Only dry-run source reports are accepted")
+    audit = probe.get("quality_audit")
+    if audit is not None:
+        if audit.get("checks_passed") is not True or audit.get("database_insert_authorized") is not False:
+            raise ValueError("Source quality audit failed or has invalid write authorization")
+        if probe.get("input_mode") not in ("LIVE_SOURCE_TRIAL", "OFFLINE_FIXTURE"):
+            raise ValueError("Unknown source input mode")
     stored = snapshot.get("observations", []) if isinstance(snapshot, dict) else snapshot
     if not isinstance(stored, list):
         raise ValueError("Snapshot must be a JSON array")
@@ -67,10 +73,16 @@ def reconcile(probe, snapshot):
     coverage = snapshot.get("coverage") if isinstance(snapshot, dict) else None
     verified_snapshot = isinstance(coverage, dict) and coverage.get("complete") is True
     plan["snapshot_complete_claimed"] = verified_snapshot
+    plan["snapshot_scope"] = coverage.get("scope", "unknown") if isinstance(coverage, dict) else "unknown"
+    plan["source_input_mode"] = probe.get("input_mode", "LEGACY_UNVERIFIED")
     plan["source_price_basis_verified"] = False
     plan["currency_verified"] = False
     plan["safe_to_propose_insert"] = False
     plan["blocking_reasons"] = []
+    if probe.get("input_mode") == "OFFLINE_FIXTURE":
+        plan["blocking_reasons"].append("Offline fixtures are not live market observations")
+    if audit is None:
+        plan["blocking_reasons"].append("Legacy probe without source quality audit")
     if not verified_snapshot:
         plan["blocking_reasons"].append("Snapshot completeness is unverified")
     if plan["counts"]["conflicts"]:
