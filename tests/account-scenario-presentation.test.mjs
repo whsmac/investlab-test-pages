@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {summarizeAccountScenarioResults as summarize} from '../src/simulator/account-scenario-presentation.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {summarizeAccountScenarioResults as summarize,compareAccountRealizedGains} from '../src/simulator/account-scenario-presentation.mjs';
 test('available first and sorted by delta',()=>{const r=summarize({rows:[{accountNames:['A'],results:[{name:'fail',status:'UNAVAILABLE',reason:'insufficient shares'},{name:'up',status:'CALCULATED',terminalValue:200,deltaVsHold:50},{name:'down',status:'CALCULATED',terminalValue:100,deltaVsHold:-10}]}]});assert.deepEqual(r.rows.map(x=>x.name),['up','down','fail']);assert.equal(r.available,2);assert.equal(r.unavailable,1);assert.equal(r.bestDelta,50)});
 test('no successful result has no best delta',()=>{const r=summarize({rows:[{accountNames:['A'],results:[{name:'fail',status:'UNAVAILABLE',reason:'cash'}]}]});assert.equal(r.bestDelta,null)});
 
@@ -13,4 +13,27 @@ test('account realized gain is preserved separately from valuation delta',()=>{
 test('unavailable account comparison has no realized gain',()=>{
  const result=summarize({rows:[{accountNames:['ISA'],results:[{name:'invalid',status:'UNAVAILABLE',reason:'cash',realizedPnL:100}]}]});
  assert.equal(result.rows[0].realizedPnL,null);
+});
+
+test('individual account gains are distinguished from blended average-cost gains',()=>{
+ const rows=[
+  {accountIds:['a'],accountNames:['ISA'],results:[{name:'sell',status:'CALCULATED',realizedPnL:40}]},
+  {accountIds:['b'],accountNames:['Pension'],results:[{name:'sell',status:'CALCULATED',realizedPnL:55}]},
+  {accountIds:['a','b'],accountNames:['ISA','Pension'],results:[{name:'sell',status:'CALCULATED',realizedPnL:100}]}
+ ];
+ const result=compareAccountRealizedGains({rows});
+ assert.equal(result.length,1);
+ assert.equal(result[0].accountSumRealizedPnL,95);
+ assert.equal(result[0].blendedRealizedPnL,100);
+ assert.equal(result[0].difference,5);
+ assert.equal(result[0].hasDifference,true);
+});
+test('comparison is suppressed if an individual account failed or was omitted',()=>{
+ const rows=[
+  {accountIds:['a'],accountNames:['ISA'],results:[{name:'sell',status:'CALCULATED',realizedPnL:40}]},
+  {accountIds:['b'],accountNames:['Pension'],results:[{name:'sell',status:'UNAVAILABLE',reason:'shares'}]},
+  {accountIds:['a','b'],accountNames:['ISA','Pension'],results:[{name:'sell',status:'CALCULATED',realizedPnL:100}]}
+ ];
+ assert.deepEqual(compareAccountRealizedGains({rows}),[]);
+ assert.deepEqual(compareAccountRealizedGains({rows:[rows[0],rows[2]]}),[]);
 });
