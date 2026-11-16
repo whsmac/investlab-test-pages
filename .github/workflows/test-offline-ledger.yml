@@ -211,6 +211,8 @@ jobs:
         run: node --test tests/test-yahoo-test-company-map.mjs
       - name: Validate TEST Yahoo browser comparison (mocked)
         run: node --test tests/test-yahoo-test-browser-review.mjs
+      - name: Validate Yahoo artifact discovery (mocked)
+        run: node --test tests/test-yahoo-artifact-discovery.mjs
       - name: Probe Yahoo Finance first (read-only, non-blocking)
         continue-on-error: true
         timeout-minutes: 2
