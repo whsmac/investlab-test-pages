@@ -23,7 +23,8 @@ class TestYahooPreviewValidation(unittest.TestCase):
             'import {a} from "./src/market/load-published-yahoo-review.mjs"; '
             'loadPublishedYahooReview({origin:location.href}); '
             'reviewYahooCandidate(candidate,snapshot,companyMap); '
-            'id="preview" void autoLoadYahooReview() renderReviewCharts(source);', encoding="utf-8")
+            'id="preview" id="freshness" void autoLoadYahooReview() '
+            'renderReviewCharts(source); assessYahooChartFreshness(snapshot);', encoding="utf-8")
         (root / "src/market/load-published-yahoo-review.mjs").write_text(
             'const path="./data/yahoo-public-review.json";', encoding="utf-8")
         asset = root / "data/yahoo-public-review.json"
