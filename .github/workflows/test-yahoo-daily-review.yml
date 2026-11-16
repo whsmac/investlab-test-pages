@@ -49,6 +49,13 @@ jobs:
         continue-on-error: true
         run: |
           python -m scripts.review_yahoo_test_pages_refresh --current-site test-pages-current --proposed-json yahoo-public-review.json --output yahoo-pages-refresh-review.json
+      - name: Prepare pinned single-file publication plan (NO DEPLOY)
+        if: steps.comparison.outcome == 'success'
+        id: plan
+        continue-on-error: true
+        run: |
+          BRANCH_SHA="$(git -C test-pages-current rev-parse HEAD)"
+          python -m scripts.plan_yahoo_test_pages_publication --review yahoo-pages-refresh-review.json --branch-sha "$BRANCH_SHA" --output yahoo-pages-publication-plan.json
       - name: Upload review-only diagnostic and candidate (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,6 +67,7 @@ jobs:
             yahoo-publication-preflight.json
             yahoo-public-review.json
             yahoo-pages-refresh-review.json
+            yahoo-pages-publication-plan.json
           if-no-files-found: warn
           retention-days: 7
       - name: Fail when collection or validation was blocked
@@ -68,8 +76,9 @@ jobs:
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
           CANDIDATE_OUTCOME: ${{ steps.candidate.outcome }}
           COMPARISON_OUTCOME: ${{ steps.comparison.outcome }}
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
         run: |
-          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ]; then
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ]; then
             echo "::error::Yahoo review failed; no data was published or written."
             exit 1
           fi
