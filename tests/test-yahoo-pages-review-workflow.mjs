@@ -14,3 +14,10 @@ test("review bundle preserves existing TEST site and adds JSON",()=>{
  assert.doesNotMatch(workflow,/tar --exclude|cp yahoo-staged/);
  assert.match(workflow,/actions\/upload-artifact@v4/);
 });
+
+test("manual TEST bundle review records SHA-256 readiness without publication",()=>{
+ assert.match(workflow,/scripts\.report_yahoo_test_bundle_readiness/);
+ assert.match(workflow,/investlab-test-yahoo-manual-review-readiness/);
+ assert.match(workflow,/yahoo-manual-review-readiness\.json/);
+ assert.doesNotMatch(workflow,/git push|peaceiris\/actions-gh-pages|JamesIves\/github-pages-deploy-action/);
+});
