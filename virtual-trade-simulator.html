@@ -470,7 +470,7 @@ async function loadSharedChartObservations(){
   if(error)throw new Error('주가 조회 실패: '+error.message);
   for(const p of data||[]){
    const ticker=ids.get(String(p.company_id)),price=Number(p.close_price);
-   if(ticker&&/^\\d{4}-\\d{2}-\\d{2}$/.test(p.trading_date||'')&&Number.isFinite(price)&&price>0)observations.push({date:p.trading_date,ticker,price});
+   if(ticker&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(p.trading_date||'')&&Number.isFinite(price)&&price>0)observations.push({date:p.trading_date,ticker,price});
   }
   if(!data||data.length<1000)break;
  }
