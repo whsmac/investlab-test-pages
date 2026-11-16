@@ -180,3 +180,37 @@ test('account sale loss offsets gains and reduces estimated annual tax without i
  assert.equal(isa.canPost,false);
  assert.equal(pension.canPost,false);
 });
+
+test('ordered mixed account gains and losses reconcile with staged KRW tax estimates',()=>{
+ const original=JSON.stringify(saved);
+ const toPositions=x=>Object.fromEntries(x.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const isa=extract({saved,accountId:a}),pension=extract({saved,accountId:b});
+ const prices={TSLA:150,USD:40};
+ const isaTrades=[{side:'sell',ticker:'TSLA',quantity:1,price:150},{side:'buy',ticker:'TSLA',quantity:1,price:120},{side:'sell',ticker:'TSLA',quantity:1,price:90}];
+ const pensionTrades=[{side:'sell',ticker:'TSLA',quantity:1,price:150},{side:'sell',ticker:'TSLA',quantity:1,price:80}];
+ const isaResult=compareScenarios({cash:isa.usdCash,positions:toPositions(isa)},[{name:'ISA ordered',trades:isaTrades}],prices).scenarios[0];
+ const pensionResult=compareScenarios({cash:pension.usdCash,positions:toPositions(pension)},[{name:'Pension ordered',trades:pensionTrades}],prices).scenarios[0];
+ assert.deepEqual(isaResult.steps.map(step=>step.cumulativeRealizedPnL),[40,40,15]);
+ assert.deepEqual(pensionResult.steps.map(step=>step.cumulativeRealizedPnL),[55,40]);
+ assert.equal(isaResult.final.realizedPnL,15);
+ assert.equal(pensionResult.final.realizedPnL,40);
+ assert.equal(isaResult.final.realizedPnL+pensionResult.final.realizedPnL,55);
+ assert.equal(isaResult.final.cash,620);
+ assert.equal(pensionResult.final.cash,230);
+ assert.equal(isaResult.final.cash+pensionResult.final.cash,850);
+ // Independently supplied KRW tax-basis amounts for each sale, in chronological order.
+ const taxBasisKrw=[1600000,2200000,-1000000,-600000];
+ const tax=estimateOverseasStockTax({priorRealizedKrw:1000000,hypotheticalGainsKrw:taxBasisKrw,annualDeductionKrw:2500000,taxRate:0.22});
+ assert.deepEqual(tax.stages.map(stage=>stage.cumulativeHypotheticalNetKrw),[1600000,3800000,2800000,2200000]);
+ assert.deepEqual(tax.stages.map(stage=>stage.cumulativeProjectedTaxKrw),[22000,506000,286000,154000]);
+ assert.deepEqual(tax.stages.map(stage=>stage.stageIncrementalTaxKrw),[22000,484000,-220000,-132000]);
+ assert.equal(tax.hypotheticalNetKrw,2200000);
+ assert.equal(tax.projectedAnnualNetKrw,3200000);
+ assert.equal(tax.projectedTaxKrw,154000);
+ assert.equal(tax.stages.reduce((sum,stage)=>sum+stage.stageIncrementalTaxKrw,0),tax.incrementalTaxKrw);
+ assert.equal(tax.calculationBasis,'user_supplied_tax_basis_KRW');
+ assert.equal(tax.status,'estimate_only');
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(isa.canPost,false);
+ assert.equal(pension.canPost,false);
+});
