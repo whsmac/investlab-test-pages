@@ -42,9 +42,11 @@ def parse_csv(content, start, end):
         price = Decimal(row["Close"])
         if not price.is_finite() or price <= 0:
             raise ValueError("Invalid closing price")
+        if day > end:
+            raise ValueError("Future-dated source observation")
         if start <= day <= end:
             key = day.isoformat()
-            if key in observations and observations[key] != str(price):
+            if key in observations and Decimal(observations[key]) != price:
                 raise ValueError("Conflicting duplicate date")
             observations[key] = str(price)
     return [{"trading_date": d, "close_price": observations[d]} for d in sorted(observations)]
