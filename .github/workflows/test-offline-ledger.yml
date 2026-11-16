@@ -261,6 +261,21 @@ jobs:
           path: yahoo-public-review.json
           if-no-files-found: ignore
           retention-days: 7
+      - name: Stage Yahoo JSON for future TEST Pages review (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-public-review.json ]; then
+            python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-test-pages-staging
+          fi
+      - name: Upload TEST Pages staging package (not published)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-staging
+          path: yahoo-test-pages-staging/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload Yahoo trial diagnostics
         if: always()
         uses: actions/upload-artifact@v4
