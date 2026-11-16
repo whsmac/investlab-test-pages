@@ -46,3 +46,12 @@ test('simulator account comparison labels virtual USD gains and warns against au
  assert.match(html,/실제 과세 대상 거래의 원화 기준 취득·양도금액/);
  assert.match(html,/compareAccountRealizedGains\(compared\)/);
 });
+
+test('online pilot account comparison respects selected accounts and clears stale file results',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const selected="const ids=[...byId('accountOpeningSelect').selectedOptions].map(o=>o.value)";
+ assert.equal(html.split(selected).length-1,2);
+ assert.match(html,/if\(!ids.length\)throw Error\('비교할 계좌를 하나 이상 선택하세요'\)/);
+ assert.match(html,/option.selected=true;select.append\(option\)/);
+ assert.match(html,/byId\('accountOpeningComparison'\).replaceChildren\(\);byId\('accountScenarioComparison'\).replaceChildren\(\)/);
+});
