@@ -1,4 +1,5 @@
 import json
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,12 +19,13 @@ class YahooSitePreviewTests(unittest.TestCase):
         (repo / ".github").mkdir()
         (repo / ".github/secrets.txt").write_text("not-for-preview")
         (staging / "data").mkdir(parents=True)
-        (staging / "manifest.json").write_text(json.dumps({
-            "mode": "TEST_PAGES_STAGING_ONLY", "published": False,
-            "database_writes": 0, "target_path": "data/yahoo-public-review.json"}))
         (staging / "data/yahoo-public-review.json").write_text(json.dumps({
             "mode": "REVIEW_ONLY", "database_insert_authorized": False,
             "writes_performed": 0, "row_count": 1, "observations": [{}]}))
+        (staging / "manifest.json").write_text(json.dumps({
+            "mode": "TEST_PAGES_STAGING_ONLY", "published": False,
+            "database_writes": 0, "target_path": "data/yahoo-public-review.json",
+            "sha256": hashlib.sha256((staging / "data/yahoo-public-review.json").read_bytes()).hexdigest()}))
         return repo, staging
 
     def test_full_site_and_data_copied_without_github_metadata(self):
