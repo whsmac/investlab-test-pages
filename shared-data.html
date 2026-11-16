@@ -36,6 +36,7 @@
   const STORAGE_KEY = "investlab_shared_data_connection_v1";
   const $ = id => document.getElementById(id);
   let client = null, session = null;
+  let verifiedUserId = null, verificationSequence = 0;
   const saved = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch (_) { return {}; } })();
   $("projectUrl").value = saved.url || TARGET_URL;
   $("publicKey").value = saved.key || "";
@@ -60,12 +61,29 @@
   }
   function updateAuth() {
     $("authState").textContent = session ? "로그인됨" : "로그인하지 않음";
-    $("pilotAuth").textContent = session?.user?.id ? "인증 확인" : "미인증";
-    $("pilotUser").textContent = session?.user?.id ? "현재 계정 ID: " + session.user.id + " · 인증만 확인됨 · RLS/개인 데이터 저장 미검증" : "인증 계정 확인 대기";
+    $("pilotAuth").textContent = verifiedUserId ? "서버 인증 확인" : "서버 인증 미확인";
+    $("pilotUser").textContent = verifiedUserId ? "서버 확인 계정 ID: " + verifiedUserId + " · RLS/개인 데이터 저장 미검증" : "서버 인증 확인 대기 · 저장된 세션만으로 인증을 확정하지 않습니다";
     $("logout").disabled = !session;
     $("reload").disabled = !session;
   }
+  async function verifyServerUser() {
+    const currentClient = client, sequence = ++verificationSequence;
+    verifiedUserId = null; updateAuth();
+    if (!currentClient || !session) { clearSharedData(); return; }
+    const expectedUserId = session.user?.id;
+    try {
+      const { data, error } = await currentClient.auth.getUser();
+      if (sequence !== verificationSequence || currentClient !== client || session?.user?.id !== expectedUserId) return;
+      if (error || !data?.user?.id || data.user.id !== expectedUserId) throw error || new Error("세션 사용자 불일치");
+      verifiedUserId = data.user.id; updateAuth(); await loadData();
+    } catch (error) {
+      if (sequence !== verificationSequence || currentClient !== client) return;
+      verifiedUserId = null; clearSharedData(); updateAuth();
+      authStatus("서버 인증 확인 실패: " + error.message);
+    }
+  }
   function connect() {
+    ++verificationSequence; verifiedUserId = null; clearSharedData(); updateAuth();
     const cfg = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch (_) { return {}; } })();
     if (!cfg.url || !cfg.key) {
       client = null; session = null; clearSharedData(); updateAuth(); status("Project URL과 공개용 키를 입력해 연결하세요."); return;
@@ -79,9 +97,9 @@
     client = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "investlab_shared_data_auth_v1" } });
     client.auth.getSession().then(({ data, error }) => {
       if (error) authStatus("세션 확인 실패: " + error.message);
-      session = data?.session || null; updateAuth(); if (session) loadData(); else clearSharedData();
+      session = data?.session || null; updateAuth(); if (session) void verifyServerUser(); else clearSharedData();
     });
-    client.auth.onAuthStateChange((_event, next) => { const previousUser = session?.user?.id; session = next; updateAuth(); if (!session || (previousUser && previousUser !== session.user?.id)) clearSharedData(); if (session) loadData(); });
+    client.auth.onAuthStateChange((_event, next) => { const previousUser = session?.user?.id; session = next; verifiedUserId = null; ++verificationSequence; updateAuth(); if (!session || (previousUser && previousUser !== session.user?.id)) clearSharedData(); if (session) setTimeout(() => { if (client && session?.user?.id === next.user?.id) void verifyServerUser(); }, 0); });
     status("공유 데이터 프로젝트 연결 설정을 읽었습니다. 로그인 후 조회할 수 있습니다.");
   }
   async function login() {
@@ -92,13 +110,13 @@
     try {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      const previousUser = session?.user?.id; session = data.session; updateAuth(); if (previousUser && previousUser !== session?.user?.id) clearSharedData(); authStatus("로그인되었습니다."); await loadData();
+      const previousUser = session?.user?.id; session = data.session; updateAuth(); if (previousUser && previousUser !== session?.user?.id) clearSharedData(); authStatus("로그인 세션 수신 · 서버 사용자 확인 중"); await verifyServerUser();
     } catch (error) { authStatus("로그인 실패: " + error.message); }
     finally { $("login").disabled = false; }
   }
   async function loadData() {
-    if (!client || !session) { clearSharedData(); return; }
-    const requestedUser = session.user?.id;
+    if (!client || !session || verifiedUserId !== session.user?.id) { clearSharedData(); return; }
+    const requestedUser = verifiedUserId;
     $("companies").innerHTML = '<div class="empty">조회 중…</div>';
     const specs = [
       ["companies", "id,ticker,company_name,exchange,is_active"],
@@ -112,7 +130,7 @@
         if (name === "quarterly_financial_observations") query = query.order("fiscal_period", { ascending: false });
         return query.limit(100);
       }));
-      if (!session || session.user?.id !== requestedUser) return;
+      if (!session || session.user?.id !== requestedUser || verifiedUserId !== requestedUser) return;
       const failed = results.find(x => x.error);
       if (failed) throw failed.error;
       const [companies, prices, financials] = results.map(x => x.data || []);
