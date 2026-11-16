@@ -23,7 +23,7 @@ test("compatible TEST schema uses exact count and paginated read-only selects",a
  const r=await diagnoseYahooTestSchema(c);
  assert.equal(r.compatible,true);assert.equal(r.database_writes,0);
  assert.equal(r.checks[0].visible_rows_checked,5);
- assert.equal(c.calls.filter(x=>x==="companies").length,2);
+ assert.equal(c.calls.filter(x=>x==="companies").length,3);
 });
 test("missing ticker blocks compatibility",async()=>{
  const r=await diagnoseYahooTestSchema(client({companies:[{id:1,ticker:"MSFT"}]}));
