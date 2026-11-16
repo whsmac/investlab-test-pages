@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate offline TEST site preview assets; no network, deployment or DB access."""
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -42,6 +43,13 @@ def validate_preview(site: Path):
             or data.get("row_count") != len(data["observations"])
             or not data["observations"]):
         raise ValueError("Invalid published-review data")
+    from scripts.export_yahoo_public_review import build_public_snapshot
+    try:
+        sanitized = build_public_snapshot(data)
+    except (ValueError, KeyError, TypeError, OverflowError) as error:
+        raise ValueError("Invalid public Yahoo observations") from error
+    if sanitized["observations"] != data["observations"]:
+        raise ValueError("Public Yahoo observations contain unexpected or unsanitized fields")
     tickers = {row.get("ticker") for row in data["observations"]}
     if tickers != EXPECTED:
         raise ValueError("Unexpected ticker coverage: " + str(sorted(tickers)))
@@ -64,6 +72,7 @@ def validate_preview(site: Path):
     return {"mode": "TEST_SITE_STATIC_VALIDATION", "checks_passed": True,
             "published": False, "database_writes": 0,
             "rows": data["row_count"], "tickers": sorted(tickers),
+            "json_sha256": hashlib.sha256((site / "data/yahoo-public-review.json").read_bytes()).hexdigest(),
             "local_module_imports_checked": len(re.findall(r'from\s+["\'](\./[^"\']+)["\']', html))}
 
 
