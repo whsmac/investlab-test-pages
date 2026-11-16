@@ -13,7 +13,7 @@ test("auto load overrides previously selected local file",()=>{
 });
 test("manual file selection cancels stale published candidate",()=>{
  assert.match(html,/\$\("file"\)\.addEventListener\("change"/);
- assert.match(html,/published=null;\$\("chart"\)\.replaceChildren\(\);sourceMode="file"/);
+ assert.match(html,/published=null;\$\("chart"\)\.replaceChildren\(\);\$\("freshness"\)\.textContent="선택한 파일 미리보기 전";sourceMode="file"/);
 });
 test("TEST page contains no DB mutation calls",()=>{
  assert.doesNotMatch(html,/\.insert\(|\.upsert\(|\.update\(|\.delete\(|\.rpc\(/);
