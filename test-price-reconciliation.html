@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST · 주가 수집 검증</title>
+<style>:root{color-scheme:dark;font:16px system-ui,sans-serif;background:#0b1020;color:#edf2ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1000px;margin:auto;padding:22px 16px}a{color:#a9c5ff}.panel{background:#141b2d;border:1px solid #2a3550;border-radius:12px;padding:18px;margin:15px 0}button,input{font:inherit;padding:10px;background:#1c2940;color:#fff;border:1px solid #566789;border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}.controls{display:flex;gap:12px;flex-wrap:wrap}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#cbd7ee}.muted{color:#abb9d3}.warning{color:#f5d98b}h1{font-size:clamp(23px,4vw,30px)}</style></head><body><main class="wrap">
+<a href="./index.html">← TEST 홈</a><h1>주가 데이터 대조 · 읽기 전용</h1>
+<p class="warning">이 페이지는 기존 DB를 변경하지 않습니다. 외부 수집 보고서와 TEST DB의 날짜별 종가를 비교하고, 불일치 목록을 확인하는 용도입니다.</p>
+<section class="panel"><h2>1. 외부 주가 수집 보고서 선택</h2><p class="muted">GitHub Actions 또는 로컬 수집 프로그램에서 생성한 <code>price-source-probe.json</code> 파일을 선택하세요.</p><input id="probe" type="file" accept=".json,application/json"></section>
+<section class="panel"><h2>2. TEST 데이터와 대조</h2><div class="controls"><button id="compare">TEST 데이터 읽고 비교</button><button id="download" disabled>대조 결과 JSON 저장</button></div><p id="status" role="status">대기 중</p><pre id="result"></pre></section>
+<p class="muted">보안: 로그인된 TEST Supabase에만 연결합니다. service_role 키를 사용하지 않습니다. 데이터 조회량 제한에 도달하거나 가격 기준·통화가 확인되지 않으면 저장 후보로 승인하지 않습니다.</p>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script type="module">
+import {readTestPriceSnapshot} from "./src/market/read-test-price-snapshot.mjs";
+const TARGET="https://gopofxyezhwpfxbecrxd.supabase.co",KEY="investlab_shared_data_connection_v1";
+const $=id=>document.getElementById(id);
+let lastReport=null;
+function amount(value){const number=Number(value);if(!Number.isFinite(number)||number<=0)throw Error("유효하지 않은 종가");return number}
+function validateDay(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(day))||Number.isNaN(Date.parse(day+"T00:00:00Z")))throw Error("잘못된 날짜");return day}
+function reconcile(probe,snapshot){
+ if(probe?.mode!=="DRY_RUN_ONLY"||probe.writes_performed!==0||!probe.symbols||typeof probe.symbols!=="object")throw Error("읽기 전용 수집 보고서가 아닙니다.");
+ const index=new Map(), duplicates=[];
+ for(const row of snapshot.observations){const key=row.ticker+"|"+validateDay(row.trading_date),value=amount(row.close_price);if(index.has(key)&&index.get(key).price!==value)duplicates.push(key);index.set(key,{price:value,currency:row.currency,basis:row.price_basis})}
+ const result={mode:"READ_ONLY_RECONCILIATION",writes_performed:0,snapshot_complete:snapshot.coverage.complete,counts:{missing:0,same:0,conflicts:0,skipped:0},missing:[],conflicts:[],skipped:[],duplicate_db_keys:duplicates,source_basis_verified:false,currency_verified:false,insert_authorized:false};
+ for(const [ticker,source] of Object.entries(probe.symbols)){
+  if(source.status!=="ok"){result.counts.skipped++;result.skipped.push({ticker,reason:source.status});continue}
+  if(!Array.isArray(source.observations))throw Error("관측값 배열이 없습니다: "+ticker);
+  const seen=new Map();
+  for(const row of source.observations){
+   const day=validateDay(row.trading_date),value=amount(row.close_price),key=ticker+"|"+day;
+   if(seen.has(key)&&seen.get(key)!==value)throw Error("외부 데이터 중복 충돌: "+key);
+   seen.set(key,value);
+  }
+  for(const [key,value] of seen){
+   const current=index.get(key),[symbol,day]=key.split("|");
+   if(!current){result.counts.missing++;result.missing.push({ticker:symbol,trading_date:day,source_close_price:value})}
+   else if(current.price===value)result.counts.same++;
+   else{result.counts.conflicts++;result.conflicts.push({ticker:symbol,trading_date:day,source_close_price:value,stored_close_price:current.price,currency:current.currency,price_basis:current.basis})}
+  }
+ }
+ result.blocking_reasons=["외부 주가의 수정주가 기준 미검증","외부 주가의 통화 기준 미검증","DB 쓰기 권한·RLS 검증 전"];
+ if(!snapshot.coverage.complete)result.blocking_reasons.push("DB 전체 조회 완료 여부 미확인");
+ if(duplicates.length)result.blocking_reasons.push("DB 내부 날짜별 가격 충돌");
+ if(result.counts.conflicts)result.blocking_reasons.push("외부·DB 종가 충돌");
+ return result;
+}
+$("compare").addEventListener("click",async()=>{
+ $("compare").disabled=true;$("download").disabled=true;lastReport=null;$("result").textContent="";
+ try{
+  const file=$("probe").files?.[0];if(!file)throw Error("외부 수집 보고서 JSON을 먼저 선택하세요.");if(file.size>2_000_000)throw Error("파일 크기 2MB 초과");
+  const probe=JSON.parse(await file.text()),config=JSON.parse(localStorage.getItem(KEY)||"{}");
+  if(config.url!==TARGET||!config.key)throw Error("공유 데이터 화면에서 TEST 서버 연결과 로그인을 먼저 완료하세요.");
+  if(!window.supabase?.createClient)throw Error("Supabase 라이브러리 로드 실패");
+  $("status").textContent="TEST 주가 데이터를 읽는 중…";
+  const client=window.supabase.createClient(TARGET,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"investlab_shared_data_auth_v1"}});
+  const snapshot=await readTestPriceSnapshot(client);
+  lastReport=reconcile(probe,snapshot);
+  $("result").textContent=JSON.stringify({snapshot_rows:snapshot.coverage.rows,snapshot_complete:snapshot.coverage.complete,counts:lastReport.counts,blocking_reasons:lastReport.blocking_reasons,conflicts_preview:lastReport.conflicts.slice(0,20),missing_preview:lastReport.missing.slice(0,20)},null,2);
+  $("status").textContent="읽기 전용 대조 완료 · 데이터베이스 변경 0건";$("download").disabled=false;
+ }catch(error){$("status").textContent="대조 실패: "+error.message}
+ finally{$("compare").disabled=false}
+});
+$("download").addEventListener("click",()=>{if(!lastReport)return;const blob=new Blob([JSON.stringify(lastReport,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="investlab-test-price-reconciliation.json";a.click();URL.revokeObjectURL(url)});
+</script></body></html>
