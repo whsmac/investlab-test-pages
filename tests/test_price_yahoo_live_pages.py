@@ -32,6 +32,15 @@ class LiveVerifierTests(unittest.TestCase):
         data["observations"][0]["account_id"]="secret"
         with self.assertRaisesRegex(ValueError,"Unexpected public Yahoo"):
             verify_payload(raw(data),today=date(2026,11,16))
+    def test_oversized_payload_rejected(self):
+        with self.assertRaisesRegex(ValueError,"size limit"):
+            verify_payload(b" " * 2000001,today=date(2026,11,16))
+    def test_too_many_rows_rejected(self):
+        data=fixture()
+        data["observations"]=data["observations"] * 2001
+        data["row_count"]=len(data["observations"])
+        with self.assertRaisesRegex(ValueError,"count invalid"):
+            verify_payload(raw(data),today=date(2026,11,16))
     def test_redirect_url_is_forbidden(self):
         with self.assertRaisesRegex(ValueError,"exact TEST"):
             fetch_public_json("https://example.org/data.json")
