@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
-from scripts.market_price_refresh_test import main, parse_csv
+from scripts.market_price_refresh_test import main, parse_csv, save_report
 
 class OfflinePipelineTests(unittest.TestCase):
     def test_five_symbol_fixture_end_to_end_no_db_writes(self):
@@ -35,6 +35,20 @@ class OfflinePipelineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Future-dated"):
             parse_csv("Date,Close\n2026-11-17,101.2\n",
                       date(2026, 11, 1), date(2026, 11, 16))
+
+    def test_partial_report_is_saved_without_write_authority(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "partial.json"
+            report = {"mode": "DRY_RUN_ONLY", "source": "TEST",
+                      "generated_on": "2026-11-16", "date_from": "2026-11-02",
+                      "date_to": "2026-11-16", "writes_performed": 0,
+                      "symbols": {"MSFT": {"status": "error", "failure_kind": "NETWORK_ERROR"}}}
+            save_report(report, output, date(2026, 11, 16))
+            saved = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(saved["symbols"]["MSFT"]["failure_kind"], "NETWORK_ERROR")
+            self.assertEqual(saved["symbols"]["SPCX"]["status"], "skipped")
+            self.assertFalse(saved["quality_audit"]["database_insert_authorized"])
+            self.assertEqual(saved["writes_performed"], 0)
 
     def test_missing_fixture_produces_error_report(self):
         with tempfile.TemporaryDirectory() as directory:
