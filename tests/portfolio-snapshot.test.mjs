@@ -36,3 +36,12 @@ test('portfolio pilot diagnostics use read-only snapshot and disclose sync limit
  assert.match(html,/snapshot\.canPost/);
  assert.match(html,/다른 도메인\/기기의 데이터는 자동 연결되지 않습니다/);
 });
+
+test('shared-data pilot clears prior account data on logout and rejects stale session results',()=>{
+ const html=readFileSync(new URL('../shared-data.html',import.meta.url),'utf8');
+ assert.match(html,/function clearSharedData\(/);
+ assert.match(html,/session = null; clearSharedData\(\); updateAuth\(\)/);
+ assert.match(html,/session\.user\?\.id !== requestedUser/);
+ assert.match(html,/previousUser && previousUser !== session\.user\?\.id/);
+ assert.match(html,/\$\(id\)\.replaceChildren\(\)/);
+});
