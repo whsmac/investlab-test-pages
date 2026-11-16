@@ -1,9 +1,10 @@
 name: TEST Yahoo daily review candidate (NO DEPLOY)
 # Inert on feature branch. GitHub schedules execute from the default branch only.
+# UTC Sunday-Thursday 23:35 = Korea Monday-Friday 08:35 (KST).
 # This workflow must not be enabled/published without a separate approval.
 on:
   schedule:
-    - cron: '35 23 * * 1-5'
+    - cron: '35 23 * * 0-4'
   workflow_dispatch:
 
 permissions:
