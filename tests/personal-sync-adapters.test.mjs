@@ -59,3 +59,14 @@ test('shared data requires server-verified user before any authenticated reads',
  assert.match(html,/서버 인증 미확인/);
  assert.match(html,/서버 인증 확인 실패/);
 });
+
+test('shared-data preview requires server verified user and never uploads portfolio',()=>{
+ const html=readFileSync(new URL('../shared-data.html',import.meta.url),'utf8');
+ assert.match(html,/id="verifiedPortfolioPreview"[^>]*disabled/);
+ assert.match(html,/"verifiedPortfolioPreview"\)\.disabled = !verifiedUserId/);
+ assert.match(html,/authenticatedUserId = verifiedUserId/);
+ assert.match(html,/buildPortfolioSyncEnvelope\(localStorage/);
+ assert.match(html,/previewPersonalSyncEnvelope\(envelope/);
+ assert.match(html,/서버 저장 없음/);
+ assert.match(html,/verifiedUserId = null; \+\+verificationSequence/);
+});
