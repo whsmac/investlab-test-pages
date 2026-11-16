@@ -27,3 +27,13 @@ test("standalone Yahoo chart preview does not require TEST login",()=>{
  assert.match(handler,/renderReviewCharts\(source\)/);
  assert.doesNotMatch(handler,/getTestClient|readTestPriceSnapshot|readYahooTestCompanyMap/);
 });
+
+test("public Yahoo chart auto-loads on startup without authentication",()=>{
+ assert.match(html,/void autoLoadYahooReview\(\)/);
+ assert.match(html,/\$\("auto"\)\.addEventListener\("click",autoLoadYahooReview\)/);
+});
+test("manual file selection cannot be overwritten by an earlier pending auto fetch",()=>{
+ assert.match(html,/const revision=\+\+sourceRevision/);
+ assert.match(html,/if\(revision!==sourceRevision\)return/);
+ assert.match(html,/sourceRevision\+\+;published=null/);
+});
