@@ -5,7 +5,10 @@ export async function discoverTestLedgerColumns({url,key,accessToken,fetchImpl=f
  if(typeof key!=='string'||!key||key.startsWith('sb_secret_')||key.toLowerCase().includes('service_role'))throw Error('공개용 키만 허용합니다');
  if(typeof accessToken!=='string'||!accessToken)throw Error('로그인 토큰이 필요합니다');
  const response=await fetchImpl(url+'/rest/v1/',{method:'GET',headers:{apikey:key,Authorization:'Bearer '+accessToken,Accept:'application/openapi+json'}});
- if(!response.ok)throw Error('TEST DB 스키마 조회 실패 (HTTP '+response.status+')');
+ if(!response.ok){
+  if(response.status===401||response.status===403)throw Error('Supabase OpenAPI 메타데이터 접근 제한 (HTTP '+response.status+'). 원장 조회 권한과 별개입니다. DB 설정이나 키를 변경하지 마세요');
+  throw Error('TEST DB 스키마 조회 실패 (HTTP '+response.status+')');
+ }
  const document=await response.json();
  const schema=document?.definitions?.ledger_transactions;
  if(!schema||!schema.properties||typeof schema.properties!=='object'||Array.isArray(schema.properties))throw Error('원장 테이블 컬럼 정보가 API에 공개되지 않았습니다');
