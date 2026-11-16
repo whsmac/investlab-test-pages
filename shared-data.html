@@ -97,11 +97,26 @@ import {buildPortfolioSyncEnvelope,previewPersonalSyncEnvelope} from "./src/sync
       client = null; status("연결 설정을 저장했습니다. Supabase 클라이언트 라이브러리를 불러오면 연결할 수 있습니다."); return;
     }
     client = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "investlab_shared_data_auth_v1" } });
+    const sessionClient = client;
     client.auth.getSession().then(({ data, error }) => {
+      if (client !== sessionClient) return;
       if (error) authStatus("세션 확인 실패: " + error.message);
       session = data?.session || null; updateAuth(); if (session) void verifyServerUser(); else clearSharedData();
     });
-    client.auth.onAuthStateChange((_event, next) => { const previousUser = session?.user?.id; session = next; verifiedUserId = null; ++verificationSequence; updateAuth(); if (!session || (previousUser && previousUser !== session.user?.id)) clearSharedData(); if (session) setTimeout(() => { if (client && session?.user?.id === next.user?.id) void verifyServerUser(); }, 0); });
+    client.auth.onAuthStateChange((event, next) => {
+      const activeClient = client;
+      const previousUser = session?.user?.id;
+      const nextUser = next?.user?.id;
+      session = next;
+      if (!nextUser || previousUser !== nextUser || event === "SIGNED_OUT") {
+        verifiedUserId = null; ++verificationSequence; clearSharedData();
+        $("verifiedPortfolioStatus").textContent = "계정 변경 또는 로그아웃 · 검사 결과 초기화";
+      }
+      updateAuth();
+      if (nextUser && verifiedUserId !== nextUser) {
+        setTimeout(() => { if (client === activeClient && session?.user?.id === nextUser) void verifyServerUser(); }, 0);
+      }
+    });
     status("공유 데이터 프로젝트 연결 설정을 읽었습니다. 로그인 후 조회할 수 있습니다.");
   }
   async function login() {
@@ -146,7 +161,7 @@ import {buildPortfolioSyncEnvelope,previewPersonalSyncEnvelope} from "./src/sync
       $("financials").innerHTML = financialTotal === 0 ? '<div class="empty">분기 재무 데이터 없음 · TEST DB에 매출액·CAPEX 관측값이 아직 등록되지 않았습니다. 미수집은 0 USD가 아닙니다.</div>' : table(["기업 ID","회계분기","매출(USD bn)","CAPEX(USD bn)","CAPEX 정의"], financials.slice().sort((a,b)=>b.fiscal_period.localeCompare(a.fiscal_period)).slice(0,20).map(x => [x.company_id,x.fiscal_period,x.revenue_usd_bn ?? '미수집',x.capex_usd_bn ?? '미수집',x.capex_definition ?? '미수집']));
       authStatus("조회 완료 · 읽기 전용 · 전체 건수는 정확한 COUNT 기준이며, 상세 목록은 테이블별 최대 100행만 표시합니다." + (financialTotal === 0 ? " · 분기 매출·CAPEX는 아직 미수집 상태입니다." : ""));
     } catch (error) {
-      if (!session || session.user?.id !== requestedUser) return;
+      if (!session || session.user?.id !== requestedUser || verifiedUserId !== requestedUser) return;
       $("companyCount").textContent = $("priceCount").textContent = $("financialCount").textContent = "—";
       $("companies").innerHTML = '<div class="empty">공유 데이터 테이블을 조회할 수 없습니다.</div>';
       $("prices").innerHTML = $("financials").innerHTML = '<div class="empty">조회 대기</div>';
