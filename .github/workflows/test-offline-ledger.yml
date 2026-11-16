@@ -304,6 +304,20 @@ jobs:
       - name: Report complete TEST site readiness (no deployment)
         if: always()
         run: python -m scripts.report_yahoo_test_bundle_readiness --site /tmp/investlab-yahoo-site-preview --output yahoo-test-site-readiness.json
+      - name: Check TEST Pages manual publication handoff (NO DEPLOY)
+        if: always()
+        run: |
+          if [ -f /tmp/investlab-yahoo-site-preview/data/yahoo-public-review.json ]; then
+            python -m scripts.check_yahoo_test_pages_handoff --readiness yahoo-test-site-readiness.json --site /tmp/investlab-yahoo-site-preview --reviewed-commit "${{ github.sha }}" --output yahoo-test-pages-handoff.json
+          fi
+      - name: Upload TEST Pages manual handoff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-handoff
+          path: yahoo-test-pages-handoff.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload TEST site readiness report
         if: always()
         uses: actions/upload-artifact@v4
