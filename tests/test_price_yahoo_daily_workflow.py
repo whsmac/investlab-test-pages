@@ -1,0 +1,27 @@
+import unittest
+from pathlib import Path
+
+class DailyReviewWorkflowContractTests(unittest.TestCase):
+    def test_schedule_is_read_only_and_never_deploys(self):
+        text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
+        self.assertIn("cron: '35 23 * * 1-5'",text)
+        self.assertIn("contents: read",text)
+        self.assertIn("persist-credentials: false",text)
+        self.assertIn("concurrency:",text)
+        self.assertIn("scripts/yahoo_price_probe_test.py",text)
+        self.assertIn("scripts.check_yahoo_publication_preflight",text)
+        self.assertIn("scripts.build_gated_yahoo_public_review",text)
+        self.assertIn("retention-days: 7",text)
+        self.assertNotIn("contents: write",text)
+        self.assertNotIn("pages: write",text)
+        self.assertNotIn("actions/deploy-pages",text)
+        self.assertNotIn("git push",text)
+        self.assertNotIn("supabase",text.lower())
+    def test_failed_probe_cannot_run_candidate(self):
+        text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
+        self.assertIn("if: steps.probe.outcome == 'success'",text)
+        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then',text)
+        self.assertIn("exit 1",text)
+
+if __name__=="__main__":
+    unittest.main()
