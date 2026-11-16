@@ -37,3 +37,30 @@ test('combined confirmed accounts feed virtual trade without mutating reviewed l
  assert.equal(opening.canMigrate,false);
  assert.equal(opening.serverVerified,false);
 });
+
+test('virtual trade in one account leaves the other account unchanged',()=>{
+ const original=JSON.stringify(saved);
+ const isa=extract({saved,accountId:a});
+ const pension=extract({saved,accountId:b});
+ const toPositions=opening=>Object.fromEntries(opening.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ const pensionBefore=JSON.stringify(pension);
+ const isaResult=compareScenarios({cash:isa.usdCash,positions:toPositions(isa)},[{name:'ISA TSLA 매도',trades:[{side:'sell',ticker:'TSLA',quantity:1,price:150}]}],{TSLA:150,USD:40});
+ assert.equal(isaResult.scenarios[0].final.cash,650);
+ assert.equal(isaResult.scenarios[0].final.positions.TSLA.quantity,0);
+ assert.equal(isaResult.scenarios[0].final.positions.USD.quantity,2);
+ const pensionAfter=extract({saved,accountId:b});
+ assert.equal(JSON.stringify(pensionAfter),pensionBefore);
+ assert.equal(pensionAfter.positions[0].quantity,2);
+ assert.equal(pensionAfter.positions[0].averageCost,95);
+ assert.equal(pensionAfter.usdCash,0);
+ assert.equal(JSON.stringify(saved),original);
+ assert.equal(isa.canPost,false);
+ assert.equal(pension.canPost,false);
+});
+
+test('an account cannot spend another account cash or sell its shares',()=>{
+ const pension=extract({saved,accountId:b});
+ const positions=Object.fromEntries(pension.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]));
+ assert.throws(()=>compareScenarios({cash:pension.usdCash,positions},[{name:'other account cash',trades:[{side:'buy',ticker:'TSLA',quantity:1,price:100}]}],{TSLA:150}),/scenario trade unavailable/);
+ assert.throws(()=>compareScenarios({cash:pension.usdCash,positions},[{name:'other account shares',trades:[{side:'sell',ticker:'TSLA',quantity:3,price:150}]}],{TSLA:150}),/scenario trade unavailable/);
+});
