@@ -51,6 +51,16 @@ class YahooSitePreviewTests(unittest.TestCase):
                 assemble_site(repo, staging, root / "preview")
             self.assertFalse((root / "preview").exists())
 
+    def test_modified_staged_json_is_rejected_by_checksum(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            repo, staging = self.setup_files(root)
+            asset = staging / "data/yahoo-public-review.json"
+            asset.write_text(asset.read_text() + " ", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Invalid staging data"):
+                assemble_site(repo, staging, root / "preview")
+            self.assertFalse((root / "preview").exists())
+
     def test_output_inside_repository_blocked(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
