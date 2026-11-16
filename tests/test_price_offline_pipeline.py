@@ -45,6 +45,7 @@ class OfflinePipelineTests(unittest.TestCase):
             self.assertEqual(status, 1)
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["symbols"]["TSLA"]["status"], "error")
+            self.assertEqual(result["symbols"]["TSLA"]["failure_kind"], "INPUT_ERROR")
             self.assertFalse(result["quality_audit"]["checks_passed"])
             self.assertEqual(result["writes_performed"], 0)
 
