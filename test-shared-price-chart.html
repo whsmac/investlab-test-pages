@@ -39,8 +39,11 @@ async function load(){
    const first=result.points[0],last=result.points.at(-1);
    const today=new Date(),lastDay=new Date(last.date+"T00:00:00Z");
    const ageDays=Math.floor((Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),today.getUTCDate())-lastDay.getTime())/86400000);
+   const currencies=new Set(result.points.map(p=>p.currency||"미표시"));
+   const bases=new Set(result.points.map(p=>p.basis||"미표시"));
+   const mixed=(currencies.size>1?" · ⚠ 통화 혼재("+[...currencies].join(", ")+")":"")+(bases.size>1?" · ⚠ 주가 기준 혼재("+[...bases].join(", ")+")":"");
    const stale=ageDays>7?" · ⚠ 저장된 주가가 "+ageDays+"일 전 데이터입니다 (실시간 시세 아님)":" · 마지막 저장일 "+last.date+" (실시간 시세 아님)";
-   $("details").textContent=first.date+" ~ "+last.date+" · 최근 저장 종가 "+last.close.toLocaleString("en-US")+" "+(last.currency||"")+" · "+(last.basis||"기준 미표시")+stale+(result.truncated?" · 최대 조회 건수 도달 (일부만 표시)":"");
+   $("details").textContent=first.date+" ~ "+last.date+" · 최근 저장 종가 "+last.close.toLocaleString("en-US")+" "+(last.currency||"")+" · "+(last.basis||"기준 미표시")+stale+mixed+(result.truncated?" · 최대 조회 건수 도달 (일부만 표시)":"");
   }
  }catch(error){status("조회 실패: "+error.message);draw([])}
  finally{$("refresh").disabled=false}
