@@ -24,7 +24,7 @@ OUTPUT = os.environ.get("INVESTLAB_PRICE_REPORT", "price-source-probe.json")
 def fetch_csv(symbol, start, end):
     url = f"https://stooq.com/q/d/l/?s={symbol}&d1={start:%Y%m%d}&d2={end:%Y%m%d}&i=d"
     request = urllib.request.Request(url, headers={"User-Agent": "INVESTLAB-TEST-DataQualityProbe/1.0", "Accept": "text/csv"})
-    with urllib.request.urlopen(request, timeout=25) as response:
+    with urllib.request.urlopen(request, timeout=8) as response:
         if response.status != 200:
             raise ValueError(f"HTTP {response.status}")
         content_type = response.headers.get("Content-Type", "").lower()
@@ -56,6 +56,17 @@ def parse_csv(content, start, end):
                 raise ValueError("Conflicting duplicate date")
             observations[key] = str(price)
     return [{"trading_date": d, "close_price": observations[d]} for d in sorted(observations)]
+
+def save_report(report, output, today, offline=False):
+    """Persist progress after every symbol so CI timeouts retain diagnostics."""
+    report["symbols"]["SPCX"] = {"status": "skipped", "reason": "Public ticker and data source not verified"}
+    report["quality_audit"] = audit_source_report(report, today=today)
+    report["input_mode"] = "OFFLINE_FIXTURE" if offline else "LIVE_SOURCE_TRIAL"
+    report["quality_audit"]["database_insert_authorized"] = False
+    temporary = output.with_name(output.name + ".tmp")
+    with open(temporary, "w", encoding="utf-8") as handle:
+        json.dump(report, handle, ensure_ascii=False, indent=2)
+    os.replace(temporary, output)
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='TEST-only price source probe; never writes to Supabase')
@@ -92,15 +103,8 @@ def main(argv=None):
             report["symbols"][ticker] = {"status": "error", "source_symbol": source_symbol,
                                          "failure_kind": failure_kind,
                                          "message": f"{type(exc).__name__}: {str(exc)[:180]}"}
-    report["symbols"]["SPCX"] = {"status": "skipped", "reason": "Public ticker and data source not verified"}
-    report["quality_audit"] = audit_source_report(report, today=today)
-    if args.csv_dir:
-        report["input_mode"] = "OFFLINE_FIXTURE"
-        report["quality_audit"]["database_insert_authorized"] = False
-    else:
-        report["input_mode"] = "LIVE_SOURCE_TRIAL"
-    with open(args.output, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, ensure_ascii=False, indent=2)
+        save_report(report, args.output, today, offline=bool(args.csv_dir))
+    save_report(report, args.output, today, offline=bool(args.csv_dir))
     print("TEST dry-run complete:", {key: value["status"] for key, value in report["symbols"].items()})
     return 0 if report["quality_audit"]["checks_passed"] else 1
 
