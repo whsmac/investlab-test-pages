@@ -23,6 +23,7 @@
 <section class="panel"><div class="head"><h2 style="margin:0;font-size:17px">계정 로그인</h2><span class="small" id="authState">로그인하지 않음</span></div>
 <div class="form" style="grid-template-columns:1fr 1fr auto;margin-top:14px"><div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="username" placeholder="등록된 계정 이메일"></div><div class="field"><label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" placeholder="비밀번호"></div><button id="login" class="primary">로그인</button></div>
 <div class="status" id="authStatus">공유 데이터 프로젝트에 등록된 계정으로 로그인하세요. 공개 회원가입 기능은 제공하지 않습니다.</div></section>
+<section class="panel" aria-label="사용자별 저장 사전점검"><h2 style="margin:0;font-size:17px">개인 데이터 동기화 사전점검 (읽기 전용)</h2><p class="small">현재 로그인 계정이 TEST 프로젝트에 인증되었는지만 확인합니다. 개인 포트폴리오 테이블의 존재·RLS 정책·쓰기 권한은 아직 검증되지 않았습니다.</p><div class="grid"><div class="metric"><span class="small">로그인 인증</span><strong id="pilotAuth" style="font-size:16px">미확인</strong></div><div class="metric"><span class="small">개인 데이터 RLS</span><strong style="font-size:16px">미검증</strong></div><div class="metric"><span class="small">기기 간 저장</span><strong style="font-size:16px">미구현</strong></div></div><p class="small" id="pilotUser" role="status">인증 계정 확인 대기</p><p class="small">인증이 확인되더라도 사용자별 데이터 격리와 저장 권한이 보장되는 것은 아닙니다. 개인 데이터 조회·업로드 기능은 비활성 상태입니다.</p></section>
 <section class="grid"><div class="metric"><span class="small">등록 기업</span><strong id="companyCount">—</strong></div><div class="metric"><span class="small">주가 관측값</span><strong id="priceCount">—</strong></div><div class="metric"><span class="small">분기 재무 관측값</span><strong id="financialCount">—</strong></div></section>
 <section class="panel"><div class="head"><h2 style="margin:0;font-size:17px">기업 목록</h2><button id="reload" disabled>새로고침</button></div><div class="table-wrap" id="companies"><div class="empty">프로젝트 연결 및 로그인 후 조회할 수 있습니다.</div></div></section>
 <section class="panel"><h2 style="margin:0 0 12px;font-size:17px">최근 주가 관측값</h2><div class="table-wrap" id="prices"><div class="empty">조회 대기</div></div></section>
@@ -59,6 +60,8 @@
   }
   function updateAuth() {
     $("authState").textContent = session ? "로그인됨" : "로그인하지 않음";
+    $("pilotAuth").textContent = session?.user?.id ? "인증 확인" : "미인증";
+    $("pilotUser").textContent = session?.user?.id ? "현재 계정 ID: " + session.user.id + " · 인증만 확인됨 · RLS/개인 데이터 저장 미검증" : "인증 계정 확인 대기";
     $("logout").disabled = !session;
     $("reload").disabled = !session;
   }
