@@ -48,7 +48,7 @@ def validate_preview(site: Path):
         sanitized = build_public_snapshot(data)
     except (ValueError, KeyError, TypeError, OverflowError) as error:
         raise ValueError("Invalid public Yahoo observations") from error
-    if sanitized["observations"] != data["observations"]:
+    if sanitized["observations"] != sorted(data["observations"], key=lambda row: (row["ticker"], row["trading_date"])):
         raise ValueError("Public Yahoo observations contain unexpected or unsanitized fields")
     tickers = {row.get("ticker") for row in data["observations"]}
     if tickers != EXPECTED:
