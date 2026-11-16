@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Assemble full TEST website preview from a staged Yahoo asset, without deploying."""
 import argparse
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -18,10 +19,12 @@ def assemble_site(repo: Path, staging: Path, output: Path):
     manifest = json.loads((staging / "manifest.json").read_text(encoding="utf-8"))
     source = staging / "data/yahoo-public-review.json"
     payload = json.loads(source.read_text(encoding="utf-8"))
+    checksum = hashlib.sha256(source.read_bytes()).hexdigest()
     if (manifest.get("mode") != "TEST_PAGES_STAGING_ONLY"
             or manifest.get("published") is not False
             or manifest.get("database_writes") != 0
             or manifest.get("target_path") != "data/yahoo-public-review.json"
+            or manifest.get("sha256") != checksum
             or payload.get("mode") != "REVIEW_ONLY"
             or payload.get("database_insert_authorized") is not False
             or payload.get("writes_performed") != 0
@@ -37,6 +40,8 @@ def assemble_site(repo: Path, staging: Path, output: Path):
     destination = output / "data/yahoo-public-review.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, destination)
+    if hashlib.sha256(destination.read_bytes()).hexdigest() != checksum:
+        raise ValueError("Preview asset checksum mismatch")
     for relative in REQUIRED:
         if not (output / relative).is_file():
             raise ValueError("Preview bundle incomplete: " + relative)
