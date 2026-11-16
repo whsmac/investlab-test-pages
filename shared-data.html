@@ -46,6 +46,17 @@
       rows.map(row => '<tr>' + row.map(x => '<td>' + escapeHtml(x ?? "—") + '</td>').join("") + '</tr>').join("") + '</tbody></table>';
   }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  // Clear data from the previous session before a new user can see this page.
+  function clearSharedData(message = "로그인 후 조회할 수 있습니다.") {
+    for (const id of ["companyCount","priceCount","financialCount"]) $(id).textContent = "—";
+    for (const id of ["companies","prices","financials"]) {
+      $(id).replaceChildren();
+      const placeholder = document.createElement("div");
+      placeholder.className = "empty";
+      placeholder.textContent = message;
+      $(id).append(placeholder);
+    }
+  }
   function updateAuth() {
     $("authState").textContent = session ? "로그인됨" : "로그인하지 않음";
     $("logout").disabled = !session;
@@ -54,10 +65,10 @@
   function connect() {
     const cfg = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch (_) { return {}; } })();
     if (!cfg.url || !cfg.key) {
-      client = null; status("Project URL과 공개용 키를 입력해 연결하세요."); return;
+      client = null; session = null; clearSharedData(); updateAuth(); status("Project URL과 공개용 키를 입력해 연결하세요."); return;
     }
     if (cfg.url !== TARGET_URL) {
-      client = null; status("안전 확인: 대상 프로젝트 URL이 지정된 investlab-ledger-test와 다릅니다. 올바른 URL을 확인하세요."); return;
+      client = null; session = null; clearSharedData(); updateAuth(); status("안전 확인: 대상 프로젝트 URL이 지정된 investlab-ledger-test와 다릅니다. 올바른 URL을 확인하세요."); return;
     }
     if (!window.supabase?.createClient) {
       client = null; status("연결 설정을 저장했습니다. Supabase 클라이언트 라이브러리를 불러오면 연결할 수 있습니다."); return;
@@ -65,9 +76,9 @@
     client = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "investlab_shared_data_auth_v1" } });
     client.auth.getSession().then(({ data, error }) => {
       if (error) authStatus("세션 확인 실패: " + error.message);
-      session = data?.session || null; updateAuth(); if (session) loadData();
+      session = data?.session || null; updateAuth(); if (session) loadData(); else clearSharedData();
     });
-    client.auth.onAuthStateChange((_event, next) => { session = next; updateAuth(); if (session) loadData(); });
+    client.auth.onAuthStateChange((_event, next) => { const previousUser = session?.user?.id; session = next; updateAuth(); if (!session || (previousUser && previousUser !== session.user?.id)) clearSharedData(); if (session) loadData(); });
     status("공유 데이터 프로젝트 연결 설정을 읽었습니다. 로그인 후 조회할 수 있습니다.");
   }
   async function login() {
@@ -78,12 +89,13 @@
     try {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      session = data.session; updateAuth(); authStatus("로그인되었습니다."); await loadData();
+      const previousUser = session?.user?.id; session = data.session; updateAuth(); if (previousUser && previousUser !== session?.user?.id) clearSharedData(); authStatus("로그인되었습니다."); await loadData();
     } catch (error) { authStatus("로그인 실패: " + error.message); }
     finally { $("login").disabled = false; }
   }
   async function loadData() {
-    if (!client || !session) return;
+    if (!client || !session) { clearSharedData(); return; }
+    const requestedUser = session.user?.id;
     $("companies").innerHTML = '<div class="empty">조회 중…</div>';
     const specs = [
       ["companies", "id,ticker,company_name,exchange,is_active"],
@@ -97,6 +109,7 @@
         if (name === "quarterly_financial_observations") query = query.order("fiscal_period", { ascending: false });
         return query.limit(100);
       }));
+      if (!session || session.user?.id !== requestedUser) return;
       const failed = results.find(x => x.error);
       if (failed) throw failed.error;
       const [companies, prices, financials] = results.map(x => x.data || []);
@@ -110,6 +123,7 @@
       $("financials").innerHTML = financialTotal === 0 ? '<div class="empty">분기 재무 데이터 없음 · TEST DB에 매출액·CAPEX 관측값이 아직 등록되지 않았습니다. 미수집은 0 USD가 아닙니다.</div>' : table(["기업 ID","회계분기","매출(USD bn)","CAPEX(USD bn)","CAPEX 정의"], financials.slice().sort((a,b)=>b.fiscal_period.localeCompare(a.fiscal_period)).slice(0,20).map(x => [x.company_id,x.fiscal_period,x.revenue_usd_bn ?? '미수집',x.capex_usd_bn ?? '미수집',x.capex_definition ?? '미수집']));
       authStatus("조회 완료 · 읽기 전용 · 전체 건수는 정확한 COUNT 기준이며, 상세 목록은 테이블별 최대 100행만 표시합니다." + (financialTotal === 0 ? " · 분기 매출·CAPEX는 아직 미수집 상태입니다." : ""));
     } catch (error) {
+      if (!session || session.user?.id !== requestedUser) return;
       $("companyCount").textContent = $("priceCount").textContent = $("financialCount").textContent = "—";
       $("companies").innerHTML = '<div class="empty">공유 데이터 테이블을 조회할 수 없습니다.</div>';
       $("prices").innerHTML = $("financials").innerHTML = '<div class="empty">조회 대기</div>';
@@ -125,7 +139,7 @@
   };
   $("login").onclick = login;
   $("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
-  $("logout").onclick = async () => { if (client) await client.auth.signOut(); session = null; updateAuth(); authStatus("로그아웃했습니다."); };
+  $("logout").onclick = async () => { session = null; clearSharedData(); updateAuth(); if (client) { const {error} = await client.auth.signOut(); if (error) return authStatus("로그아웃 요청 실패: " + error.message + " · 표시된 데이터는 지웠습니다."); } authStatus("로그아웃했습니다."); };
   $("reload").onclick = loadData;
   connect(); updateAuth();
 })();
