@@ -66,6 +66,23 @@ class TestYahooPreviewValidation(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Broken local module"):
                 validate_preview(root)
 
+    def test_private_files_in_preview_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            (root / ".env").write_text("PRIVATE=1")
+            with self.assertRaisesRegex(ValueError, "non-public"):
+                validate_preview(root)
+
+    def test_backend_script_in_preview_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            (root / "scripts").mkdir()
+            (root / "scripts/internal.py").write_text("secret")
+            with self.assertRaisesRegex(ValueError, "non-public"):
+                validate_preview(root)
+
 
 if __name__ == "__main__":
     unittest.main()
