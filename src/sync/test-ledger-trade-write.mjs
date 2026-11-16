@@ -8,7 +8,7 @@ export function buildTestTrade({date,type,symbol,quantity,price,currency='USD',n
  if(!['USD','KRW'].includes(currency))throw Error('통화 형식 오류');
  if(typeof note!=='string'||note.length>300)throw Error('비고 최대 300자');
  if(!/^[0-9a-f-]{36}$/i.test(userId||'')||!/^[0-9a-f-]{36}$/i.test(transactionId||'')||!/^[0-9a-f-]{36}$/i.test(requestId||''))throw Error('거래 식별값 오류');
- return {id:transactionId,user_id:userId,transaction_date:date,sequence_no:1,transaction_type:type,symbol,quantity:qty,unit_price:unit,currency,gross_amount:Number((qty*unit).toFixed(8)),fees:0,idempotency_key:requestId,note};
+ return {id:transactionId,user_id:userId,transaction_date:date,sequence_no:1,transaction_type:type,symbol,quantity:qty,unit_price:unit,currency,gross_amount:null,withholding_tax:0,fees:0,from_currency:null,from_amount:null,to_currency:null,to_amount:null,idempotency_key:requestId,note};
 }
 export async function insertTestTrade(client,row,{verifiedUserId,sessionUserId}={}){
  if(!client||!verifiedUserId||verifiedUserId!==sessionUserId||row?.user_id!==verifiedUserId)throw Error('사용자 인증 불일치');
