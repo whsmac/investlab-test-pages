@@ -579,7 +579,16 @@ function renderEditor(){
    input.placeholder='공통 가격 사용';input.setAttribute('aria-label',ticker+' 전략별 최종 가정 주가');
    input.value=strategy.terminalPrices?.[ticker]??'';
    input.addEventListener('input',()=>{strategy.terminalPrices??={};if(input.value==='')delete strategy.terminalPrices[ticker];else strategy.terminalPrices[ticker]=Number(input.value);simulatorInputRevision++;invalidateCalculatedResults();updateStrategySaveState();scheduleWorkingDraft();});
-   row.append(label,input);priceRows.append(row);
+   const pct=document.createElement('input');pct.type='number';pct.step='any';pct.placeholder='등락률 %';pct.setAttribute('aria-label',ticker+' 기준 대비 등락률 퍼센트');
+   const baseline=Number(item.price);
+   if(input.value!==''&&Number.isFinite(baseline)&&baseline>0)pct.value=String(Math.round((Number(input.value)/baseline-1)*10000)/100);
+   pct.addEventListener('input',()=>{
+    if(pct.value===''||!Number.isFinite(Number(pct.value))||!Number.isFinite(baseline)||baseline<=0)return;
+    const price=Math.round(baseline*(1+Number(pct.value)/100)*1e8)/1e8;
+    if(price<0)return;
+    input.value=String(price);input.dispatchEvent(new Event('input',{bubbles:true}));
+   });
+   row.append(label,input,pct);priceRows.append(row);
   }
   card.append(priceDetails);
   const management=document.createElement('details');management.className='strategy-management';
