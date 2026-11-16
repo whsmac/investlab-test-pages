@@ -6,8 +6,17 @@ import json
 import shutil
 from pathlib import Path
 
-EXCLUDE = {".git", ".github", "node_modules", "__pycache__", ".venv", "site",
-           "yahoo-staged", "yahoo-test-pages-staging", "yahoo-site-preview"}
+# Explicit public asset allowlist. Never copy repository metadata, env files or backend scripts.
+ROOT_EXTENSIONS = {".html", ".css", ".js", ".mjs"}
+ASSET_EXTENSIONS = {".css", ".js", ".mjs", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".woff", ".woff2"}
+PUBLIC_DIRS = {"src", "assets", "css", "js", "images"}
+def public_asset(relative: Path) -> bool:
+    if any(part.startswith(".") or part in {"node_modules", "__pycache__", "tests", "scripts"} for part in relative.parts):
+        return False
+    if len(relative.parts) == 1:
+        return relative.suffix.lower() in ROOT_EXTENSIONS
+    return relative.parts[0] in PUBLIC_DIRS and relative.suffix.lower() in ASSET_EXTENSIONS
+
 REQUIRED = ("index.html", "test-yahoo-price-review.html",
             "src/market/load-published-yahoo-review.mjs",
             "src/market/review-yahoo-test-browser.mjs")
@@ -36,7 +45,16 @@ def assemble_site(repo: Path, staging: Path, output: Path):
             raise ValueError("Missing TEST site file: " + relative)
     if output.exists():
         shutil.rmtree(output)
-    shutil.copytree(repo, output, ignore=shutil.ignore_patterns(*EXCLUDE))
+    output.mkdir(parents=True)
+    for candidate in repo.rglob("*"):
+        if candidate.is_symlink() or not candidate.is_file():
+            continue
+        relative = candidate.relative_to(repo)
+        if not public_asset(relative):
+            continue
+        destination_file = output / relative
+        destination_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(candidate, destination_file)
     destination = output / "data/yahoo-public-review.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, destination)
