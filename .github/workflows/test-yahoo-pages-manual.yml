@@ -45,16 +45,11 @@ jobs:
           PY
       - name: Prepare full TEST site bundle (NO DEPLOY)
         run: |
-          mkdir -p site
-          tar --exclude=.git --exclude=.github --exclude=site --exclude=yahoo-staged -cf - . | tar -xf - -C site
-          mkdir -p site/data
-          cp yahoo-staged/data/yahoo-public-review.json site/data/yahoo-public-review.json
-          test -f site/index.html
-          test -f site/test-yahoo-price-review.html
-          test -f site/src/market/load-published-yahoo-review.mjs
+          python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-staged --output "${RUNNER_TEMP}/investlab-test-site-review"
+          python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-site-review"
       - name: Upload offline TEST site preview only
         uses: actions/upload-artifact@v4
         with:
           name: investlab-test-yahoo-pages-bundle-review
-          path: site/
+          path: ${{ runner.temp }}/investlab-test-site-review/
           retention-days: 7
