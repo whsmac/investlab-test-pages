@@ -1,5 +1,5 @@
 """Conservative source quality gate for INVESTLAB TEST (no DB writes)."""
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal, InvalidOperation
 
 SUPPORTED = frozenset({"MSFT", "GOOGL", "AMZN", "META", "TSLA"})
@@ -36,6 +36,9 @@ def audit_source_report(report, *, today=None, max_age_days=7):
     for ticker in sorted(SUPPORTED):
         item = symbols.get(ticker, {})
         problems = []
+        if not isinstance(item, dict):
+            item = {}
+            problems.append("Invalid ticker report")
         if item.get("status") != "ok":
             problems.append("No successful data")
         observations = item.get("observations", [])
@@ -46,6 +49,8 @@ def audit_source_report(report, *, today=None, max_age_days=7):
         last = None
         for row in observations:
             try:
+                if not isinstance(row, dict):
+                    raise ValueError("Observation must be an object")
                 day = date.fromisoformat(row["trading_date"])
                 amount = Decimal(str(row["close_price"]))
                 if not amount.is_finite() or amount <= 0:
@@ -69,7 +74,8 @@ def audit_source_report(report, *, today=None, max_age_days=7):
                            "source_price_basis_verified": False, "currency_verified": False}
         if problems:
             issues.append(f"{ticker}: " + ", ".join(sorted(set(problems))))
-    if symbols.get("SPCX", {}).get("status") != "skipped":
+    spcx = symbols.get("SPCX")
+    if not isinstance(spcx, dict) or spcx.get("status") != "skipped":
         issues.append("SPCX must remain excluded pending symbol verification")
     return {"mode": "SOURCE_QUALITY_AUDIT", "writes_performed": 0,
             "checks_passed": not issues, "issues": issues, "symbols": summary,
