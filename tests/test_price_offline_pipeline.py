@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
-from scripts.market_price_refresh_test import main
+from scripts.market_price_refresh_test import main, parse_csv
 
 class OfflinePipelineTests(unittest.TestCase):
     def test_five_symbol_fixture_end_to_end_no_db_writes(self):
@@ -23,6 +23,18 @@ class OfflinePipelineTests(unittest.TestCase):
             self.assertTrue(result["quality_audit"]["checks_passed"])
             self.assertEqual(result["symbols"]["MSFT"]["count"], 2)
             self.assertEqual(result["symbols"]["SPCX"]["status"], "skipped")
+
+    def test_equivalent_decimal_duplicate_is_not_conflict(self):
+        from datetime import date
+        rows = parse_csv("Date,Close\\n2026-11-13,101.2\\n2026-11-13,101.20\\n",
+                         date(2026, 11, 1), date(2026, 11, 16))
+        self.assertEqual(len(rows), 1)
+
+    def test_future_dated_row_rejected(self):
+        from datetime import date
+        with self.assertRaisesRegex(ValueError, "Future-dated"):
+            parse_csv("Date,Close\\n2026-11-17,101.2\\n",
+                      date(2026, 11, 1), date(2026, 11, 16))
 
     def test_missing_fixture_produces_error_report(self):
         with tempfile.TemporaryDirectory() as directory:
