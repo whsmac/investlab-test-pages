@@ -217,6 +217,8 @@ jobs:
         run: node --test tests/test-yahoo-published-loader.mjs
       - name: Validate TEST Yahoo Pages no-deploy workflow
         run: node --test tests/test-yahoo-pages-review-workflow.mjs
+      - name: Validate Yahoo browser page source precedence
+        run: node --test tests/test-yahoo-browser-page-contract.mjs
       - name: Probe Yahoo Finance first (read-only, non-blocking)
         continue-on-error: true
         timeout-minutes: 2
