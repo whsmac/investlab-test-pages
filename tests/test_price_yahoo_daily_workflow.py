@@ -23,7 +23,7 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
     def test_failed_probe_cannot_run_candidate(self):
         text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
         self.assertIn("if: steps.probe.outcome == 'success'",text)
-        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then',text)
+        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ]; then',text)
         self.assertIn("exit 1",text)
         self.assertIn("if: steps.candidate.outcome == 'success'",text)
         self.assertIn("COMPARISON_OUTCOME",text)
