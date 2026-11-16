@@ -18,10 +18,21 @@ def audit_source_report(report, *, today=None, max_age_days=7):
             issues.append("Source report is stale or future-dated")
     except (ValueError, KeyError, TypeError):
         issues.append("Invalid report generation date")
+    try:
+        window_start = date.fromisoformat(report["date_from"])
+        window_end = date.fromisoformat(report["date_to"])
+        if window_start > window_end or window_end > today or (today - window_end).days > max_age_days:
+            issues.append("Invalid or stale requested source window")
+    except (ValueError, KeyError, TypeError):
+        window_start = window_end = None
+        issues.append("Invalid source window dates")
     symbols = report.get("symbols", {})
     if not isinstance(symbols, dict):
         symbols = {}
         issues.append("Invalid symbols object")
+    unexpected = set(symbols) - SUPPORTED - {"SPCX"}
+    if unexpected:
+        issues.append("Unexpected ticker(s): " + ", ".join(sorted(unexpected)))
     for ticker in sorted(SUPPORTED):
         item = symbols.get(ticker, {})
         problems = []
@@ -45,6 +56,8 @@ def audit_source_report(report, *, today=None, max_age_days=7):
                 last = max(last, day) if last else day
                 if day > today:
                     problems.append("Future trading date")
+                if window_start is not None and not (window_start <= day <= window_end):
+                    problems.append("Observation outside requested source window")
             except (ValueError, KeyError, TypeError, InvalidOperation):
                 problems.append("Invalid observation")
         if item.get("count") != len(observations):
