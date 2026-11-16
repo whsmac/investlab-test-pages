@@ -63,6 +63,19 @@ jobs:
         run: |
           BRANCH_SHA="$(git -C test-pages-current rev-parse HEAD)"
           python -m scripts.verify_yahoo_test_pages_prewrite --plan yahoo-pages-publication-plan.json --current-branch-sha "$BRANCH_SHA" --current-site test-pages-current --proposed-json yahoo-public-review.json --output yahoo-pages-prewrite-check.json
+      - name: Preserve previous JSON and rollback manifest (NO DEPLOY)
+        if: steps.prewrite.outcome == 'success'
+        id: backup
+        continue-on-error: true
+        run: |
+          python -m scripts.backup_yahoo_test_pages_asset --plan yahoo-pages-publication-plan.json --current-site test-pages-current --output-dir yahoo-pages-rollback
+      - name: Upload rollback package for review only (NO DEPLOY)
+        if: steps.backup.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-rollback-review
+          path: yahoo-pages-rollback/
+          retention-days: 7
       - name: Upload review-only diagnostic and candidate (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
@@ -86,8 +99,9 @@ jobs:
           COMPARISON_OUTCOME: ${{ steps.comparison.outcome }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
           PREWRITE_OUTCOME: ${{ steps.prewrite.outcome }}
+          BACKUP_OUTCOME: ${{ steps.backup.outcome }}
         run: |
-          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ]; then
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then
             echo "::error::Yahoo review failed; no data was published or written."
             exit 1
           fi
