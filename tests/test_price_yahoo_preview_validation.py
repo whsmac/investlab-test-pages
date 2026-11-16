@@ -10,6 +10,7 @@ class TestYahooPreviewValidation(unittest.TestCase):
         for path in (
             "index.html", "test-yahoo-price-review.html",
             "src/market/load-published-yahoo-review.mjs",
+            "src/market/yahoo-review-chart-series.mjs",
             "src/market/read-yahoo-test-company-map.mjs",
             "src/market/read-test-price-snapshot.mjs",
             "src/market/review-yahoo-test-browser.mjs",
@@ -20,7 +21,8 @@ class TestYahooPreviewValidation(unittest.TestCase):
         (root / "test-yahoo-price-review.html").write_text(
             'import {a} from "./src/market/load-published-yahoo-review.mjs"; '
             'loadPublishedYahooReview({origin:location.href}); '
-            'reviewYahooCandidate(candidate,snapshot,companyMap);', encoding="utf-8")
+            'reviewYahooCandidate(candidate,snapshot,companyMap); '
+            'id="preview" void autoLoadYahooReview() renderReviewCharts(source);', encoding="utf-8")
         (root / "src/market/load-published-yahoo-review.mjs").write_text(
             'const path="./data/yahoo-public-review.json";', encoding="utf-8")
         asset = root / "data/yahoo-public-review.json"
@@ -55,6 +57,14 @@ class TestYahooPreviewValidation(unittest.TestCase):
             data["row_count"] = 4
             asset.write_text(json.dumps(data))
             with self.assertRaisesRegex(ValueError, "ticker coverage"):
+                validate_preview(root)
+
+    def test_missing_chart_module_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            (root / "src/market/yahoo-review-chart-series.mjs").unlink()
+            with self.assertRaisesRegex(ValueError, "Missing"):
                 validate_preview(root)
 
     def test_broken_import_is_rejected(self):
