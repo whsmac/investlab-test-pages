@@ -33,7 +33,7 @@ class TestYahooPreviewValidation(unittest.TestCase):
             "mode": "REVIEW_ONLY", "source": "Yahoo Finance",
             "database_insert_authorized": False, "writes_performed": 0,
             "row_count": 5, "observations": [
-                {"ticker": t} for t in ("MSFT", "GOOGL", "AMZN", "META", "TSLA")]}))
+                {"ticker": t, "trading_date": "2026-11-13", "close_price": "100", "currency": "USD", "price_basis": "unadjusted_close"} for t in ("MSFT", "GOOGL", "AMZN", "META", "TSLA")]}))
         return asset
 
     def test_complete_preview_passes(self):
@@ -41,6 +41,16 @@ class TestYahooPreviewValidation(unittest.TestCase):
             root = Path(tmp)
             self.prepare(root)
             self.assertTrue(validate_preview(root)["checks_passed"])
+
+    def test_private_observation_field_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            asset = self.prepare(root)
+            data = json.loads(asset.read_text())
+            data["observations"][0]["user_email"] = "private@example.invalid"
+            asset.write_text(json.dumps(data))
+            with self.assertRaisesRegex(ValueError, "unexpected or unsanitized"):
+                validate_preview(root)
 
     def test_missing_module_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
