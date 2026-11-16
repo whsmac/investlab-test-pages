@@ -36,6 +36,19 @@ jobs:
           python -m scripts.build_yahoo_review_candidate --input yahoo-price-probe.json --output yahoo-price-review-candidate.json
           python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
           python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+      - name: Checkout current TEST Pages branch into read-only comparison directory
+        if: steps.candidate.outcome == 'success'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: test-pages-current
+          persist-credentials: false
+      - name: Compare proposed JSON against current TEST Pages (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        id: comparison
+        continue-on-error: true
+        run: |
+          python -m scripts.review_yahoo_test_pages_refresh --current-site test-pages-current --proposed-json yahoo-public-review.json --output yahoo-pages-refresh-review.json
       - name: Upload review-only diagnostic and candidate (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,6 +59,7 @@ jobs:
             yahoo-price-review-candidate.json
             yahoo-publication-preflight.json
             yahoo-public-review.json
+            yahoo-pages-refresh-review.json
           if-no-files-found: warn
           retention-days: 7
       - name: Fail when collection or validation was blocked
@@ -53,8 +67,9 @@ jobs:
         env:
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
           CANDIDATE_OUTCOME: ${{ steps.candidate.outcome }}
+          COMPARISON_OUTCOME: ${{ steps.comparison.outcome }}
         run: |
-          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ]; then
             echo "::error::Yahoo review failed; no data was published or written."
             exit 1
           fi
