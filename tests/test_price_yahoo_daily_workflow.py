@@ -17,6 +17,8 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         self.assertIn("yahoo-pages-refresh-review.json",text)
         self.assertIn("scripts.plan_yahoo_test_pages_publication",text)
         self.assertIn("yahoo-pages-publication-plan.json",text)
+        self.assertIn("scripts.verify_yahoo_test_pages_prewrite",text)
+        self.assertIn("yahoo-pages-prewrite-check.json",text)
         self.assertNotIn("contents: write",text)
         self.assertNotIn("pages: write",text)
         self.assertNotIn("actions/deploy-pages",text)
@@ -25,7 +27,7 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
     def test_failed_probe_cannot_run_candidate(self):
         text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
         self.assertIn("if: steps.probe.outcome == 'success'",text)
-        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ]; then',text)
+        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ]; then',text)
         self.assertIn("exit 1",text)
         self.assertIn("if: steps.candidate.outcome == 'success'",text)
         self.assertIn("COMPARISON_OUTCOME",text)
