@@ -1,4 +1,6 @@
 import tempfile
+import json
+from datetime import date
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -39,14 +41,36 @@ class HandoffTests(unittest.TestCase):
             import hashlib
             site=Path(tmp)
             (site/"data").mkdir()
-            data=b"test"
+            data=json.dumps({"observations":[{"ticker":t,"trading_date":"2026-11-16"} for t in ("MSFT","GOOGL","AMZN","META","TSLA")]}).encode()
             (site/"data/yahoo-public-review.json").write_bytes(data)
             r=readiness()
             r["json_sha256"]=hashlib.sha256(data).hexdigest()
             with patch("scripts.validate_yahoo_test_site_preview.validate_preview",return_value={"checks_passed":True,"json_sha256":r["json_sha256"]}):
-                result=assess_handoff(r,site,SHA)
+                result=assess_handoff(r,site,SHA,today=date(2026,11,17))
             self.assertTrue(result["handoff_ready"])
             self.assertFalse(result["deployment_authorized"])
             self.assertFalse(result["deployment_performed"])
+    def test_stale_prices_block_handoff(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            site=Path(tmp)
+            (site/"data").mkdir()
+            data=json.dumps({"observations":[{"ticker":t,"trading_date":"2026-10-01"} for t in ("MSFT","GOOGL","AMZN","META","TSLA")]}).encode()
+            (site/"data/yahoo-public-review.json").write_bytes(data)
+            r=readiness()
+            r["json_sha256"]=hashlib.sha256(data).hexdigest()
+            with self.assertRaisesRegex(ValueError,"Stale or future"):
+                assess_handoff(r,site,SHA,today=date(2026,11,17))
+    def test_future_prices_block_handoff(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            site=Path(tmp)
+            (site/"data").mkdir()
+            data=json.dumps({"observations":[{"ticker":t,"trading_date":"2026-11-18"} for t in ("MSFT","GOOGL","AMZN","META","TSLA")]}).encode()
+            (site/"data/yahoo-public-review.json").write_bytes(data)
+            r=readiness()
+            r["json_sha256"]=hashlib.sha256(data).hexdigest()
+            with self.assertRaisesRegex(ValueError,"Stale or future"):
+                assess_handoff(r,site,SHA,today=date(2026,11,17))
 if __name__=="__main__":
     unittest.main()
