@@ -38,6 +38,19 @@ jobs:
           python -m scripts.build_yahoo_review_candidate --input yahoo-price-probe.json --output yahoo-price-review-candidate.json
           python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
           python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+      - name: Stage validated Yahoo JSON for offline TEST site review (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        id: staging
+        continue-on-error: true
+        run: |
+          python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-staged
+      - name: Upload validated Yahoo staging artifact (NO DEPLOY)
+        if: steps.staging.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-staging
+          path: yahoo-staged/
+          retention-days: 7
       - name: Confirm actual TEST Pages source before branch-specific review
         if: steps.candidate.outcome == 'success'
         id: pages_source
@@ -118,6 +131,7 @@ jobs:
         env:
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
           CANDIDATE_OUTCOME: ${{ steps.candidate.outcome }}
+          STAGING_OUTCOME: ${{ steps.staging.outcome }}
           COMPARISON_OUTCOME: ${{ steps.comparison.outcome }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
           PREWRITE_OUTCOME: ${{ steps.prewrite.outcome }}
@@ -125,7 +139,7 @@ jobs:
           DECISION_OUTCOME: ${{ steps.decision.outcome }}
           PAGES_SOURCE_CONFIRMED: ${{ steps.pages_source.outputs.confirmed }}
         run: |
-          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$STAGING_OUTCOME" != success ]; then
             echo "::error::Yahoo collection or validation failed; no data was published."
             exit 1
           fi
