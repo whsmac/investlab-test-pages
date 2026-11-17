@@ -24,6 +24,8 @@ jobs:
         id: branches
         continue-on-error: true
         run: python -m scripts.audit_yahoo_test_pages_branch --output yahoo-branch-audit.json
+      - name: Audit actual TEST GitHub Pages publishing source via API (read-only)
+        run: python -m scripts.audit_yahoo_test_pages_source --output yahoo-pages-source-audit.json
       - name: Check exact online TEST Yahoo JSON URL (read-only)
         id: live
         continue-on-error: true
@@ -39,6 +41,7 @@ jobs:
           name: investlab-test-yahoo-online-readiness
           path: |
             yahoo-branch-audit.json
+            yahoo-pages-source-audit.json
             yahoo-live-check.json
             yahoo-online-readiness.json
           if-no-files-found: warn
