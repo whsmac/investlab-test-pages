@@ -12,6 +12,7 @@ const now=new Date("2026-11-17T08:00:00Z");
 test("fills missing prices for supported holdings only",()=>{
  const result=previewYahooPortfolioPriceFill(snapshot(),[{ticker:"TSLA"},{ticker:"SPCX"}],{}, {now});
  assert.deepEqual(result.updates,{TSLA:104});
+ assert.deepEqual(result.updateDates,{TSLA:"2026-11-16"});
  assert.deepEqual(result.skipped,[{ticker:"SPCX",reason:"UNSUPPORTED_TICKER"}]);
  assert.equal(result.canPersist,false);
 });
@@ -31,4 +32,11 @@ test("stale data never fills missing price",()=>{
 });
 test("duplicate holdings rejected",()=>{
  assert.throws(()=>previewYahooPortfolioPriceFill(snapshot(),[{ticker:"TSLA"},{ticker:"TSLA"}],{}, {now}),/duplicate/);
+});
+
+test("different supported tickers preserve their own closing dates",()=>{
+ const data=snapshot();
+ data.observations.find(row=>row.ticker==="TSLA").trading_date="2026-11-13";
+ const result=previewYahooPortfolioPriceFill(data,[{ticker:"TSLA"},{ticker:"MSFT"}],{}, {now});
+ assert.deepEqual(result.updateDates,{TSLA:"2026-11-13",MSFT:"2026-11-16"});
 });
