@@ -123,6 +123,23 @@ class TestYahooPreviewValidation(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Broken TEST portfolio module"):
                 validate_preview(root)
 
+    def test_missing_nested_portfolio_import_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            module = root / "src/ledger/yahoo-portfolio-price-fill.mjs"
+            module.write_text('import {x} from "../market/missing-nested.mjs";', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Broken transitive module import"):
+                validate_preview(root)
+
+    def test_nested_portfolio_import_inside_bundle_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            module = root / "src/ledger/yahoo-portfolio-price-fill.mjs"
+            module.write_text('import {x} from "../market/yahoo-latest-prices.mjs";', encoding="utf-8")
+            self.assertTrue(validate_preview(root)["checks_passed"])
+
     def test_private_files_in_preview_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
