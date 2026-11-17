@@ -13,6 +13,8 @@ on:
       - 'src/ledger/yahoo-portfolio-price-fill.mjs'
       - 'tests/yahoo-portfolio-price-fill.test.mjs'
       - 'tests/yahoo-portfolio-ui.test.mjs'
+      - 'src/ledger/yahoo-portfolio-valuation-preview.mjs'
+      - 'tests/yahoo-portfolio-valuation-preview.test.mjs'
       - 'tests/test-yahoo-latest-prices.mjs'
       - '.github/workflows/market-price-refresh-test.yml'
       - 'tests/offline-ledger-check.test.mjs'
@@ -218,6 +220,8 @@ jobs:
         run: node --test tests/yahoo-portfolio-price-fill.test.mjs
       - name: Validate Yahoo portfolio UI wiring and module syntax
         run: node --test tests/yahoo-portfolio-ui.test.mjs
+      - name: Validate offline Yahoo-to-portfolio valuation integration
+        run: node --test tests/yahoo-portfolio-valuation-preview.test.mjs
       - name: Validate TEST Yahoo company mapping (mocked)
         run: node --test tests/test-yahoo-test-company-map.mjs
       - name: Validate TEST Yahoo browser comparison (mocked)
