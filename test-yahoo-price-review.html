@@ -7,6 +7,7 @@ import {diagnoseYahooTestSchema} from "./src/market/diagnose-yahoo-test-schema.m
 import {buildSafeYahooSchemaReport} from "./src/market/export-yahoo-schema-report.mjs";
 import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review.mjs";
 import {buildYahooChartSeries} from "./src/market/yahoo-review-chart-series.mjs";
+import {renderYahooAxesChart} from "./src/market/yahoo-axes-chart.mjs";
 import {assessYahooChartFreshness} from "./src/market/yahoo-chart-freshness.mjs";
 import {findLatestYahooArtifact} from "./src/market/find-latest-yahoo-artifact.mjs";
 import {readYahooTestCompanyMap} from "./src/market/read-yahoo-test-company-map.mjs";
@@ -22,15 +23,7 @@ function renderReviewCharts(snapshot){
   heading.textContent=series.ticker+" · 최근 "+series.points.length+"거래일 · USD";
   section.append(heading);
   if(series.points.length<2){section.append(document.createTextNode("표시할 데이터 부족"));target.append(section);continue;}
-  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("viewBox","0 0 600 100");svg.setAttribute("role","img");
-  svg.setAttribute("aria-label",series.ticker+" 종가 추세");
-  svg.style.cssText="width:100%;height:100px;background:#0d1424;border-radius:8px";
-  const prices=series.points.map(p=>p.close),low=Math.min(...prices),high=Math.max(...prices),range=high-low||1;
-  const line=document.createElementNS("http://www.w3.org/2000/svg","polyline");
-  line.setAttribute("points",prices.map((v,i)=>(10+i*580/(prices.length-1)).toFixed(1)+","+(90-(v-low)*80/range).toFixed(1)).join(" "));
-  line.setAttribute("fill","none");line.setAttribute("stroke","#7ca7ff");line.setAttribute("stroke-width","2");
-  svg.append(line);section.append(svg);
+  section.append(renderYahooAxesChart(document,series.points,series.ticker));
   const caption=document.createElement("small");
   caption.textContent=series.points[0].date+" ~ "+series.points.at(-1).date+" · 최근 종가 USD "+series.points.at(-1).close.toLocaleString("en-US");
   section.append(caption);target.append(section);
