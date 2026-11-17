@@ -5,7 +5,7 @@ import {previewPortfolioValuation} from "./portfolio-valuation-preview.mjs";
 
 export function previewYahooPortfolioValuation({snapshot,holdings,accounts,assumedPrices={},now=new Date()}){
  const fill=previewYahooPortfolioPriceFill(snapshot,holdings,assumedPrices,{now});
- const prices={...assumedPrices,...fill.updates};
+ const prices={...assumedPrices,...Object.fromEntries(Object.entries(fill.updates).map(([ticker,price])=>[ticker,String(price)]))};
  const valuation=previewPortfolioValuation({holdings,accounts,prices});
  return {mode:"TEST_READ_ONLY_YAHOO_VALUATION_PREVIEW",fill,valuation,
    canPersist:false,serverVerified:false};
