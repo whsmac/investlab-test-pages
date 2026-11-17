@@ -12,6 +12,7 @@ on:
       - 'src/market/yahoo-latest-prices.mjs'
       - 'src/ledger/yahoo-portfolio-price-fill.mjs'
       - 'tests/yahoo-portfolio-price-fill.test.mjs'
+      - 'tests/yahoo-portfolio-ui.test.mjs'
       - 'tests/test-yahoo-latest-prices.mjs'
       - '.github/workflows/market-price-refresh-test.yml'
       - 'tests/offline-ledger-check.test.mjs'
@@ -215,6 +216,8 @@ jobs:
         run: node --test tests/test-yahoo-latest-prices.mjs
       - name: Validate Yahoo-to-portfolio price fill preserves user inputs
         run: node --test tests/yahoo-portfolio-price-fill.test.mjs
+      - name: Validate Yahoo portfolio UI wiring and module syntax
+        run: node --test tests/yahoo-portfolio-ui.test.mjs
       - name: Validate TEST Yahoo company mapping (mocked)
         run: node --test tests/test-yahoo-test-company-map.mjs
       - name: Validate TEST Yahoo browser comparison (mocked)
