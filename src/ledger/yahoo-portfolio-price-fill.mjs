@@ -9,7 +9,7 @@ export function previewYahooPortfolioPriceFill(snapshot,holdings,assumedPrices={
  if(typeof overwrite!=="boolean")throw Error("Invalid overwrite option");
  const feed=buildYahooLatestPrices(snapshot,{now});
  const available=new Map(feed.prices.map(row=>[row.ticker,row]));
- const updates={};const skipped=[];const seen=new Set();
+ const updates={};const updateDates={};const skipped=[];const seen=new Set();
  for(const holding of holdings){
   const ticker=String(holding?.ticker||"").trim().toUpperCase();
   if(!/^[A-Z0-9.^-]{1,16}$/.test(ticker)||seen.has(ticker))throw Error("Invalid or duplicate portfolio ticker");
@@ -22,7 +22,8 @@ export function previewYahooPortfolioPriceFill(snapshot,holdings,assumedPrices={
     skipped.push({ticker,reason:"USER_PRICE_PRESERVED"});continue;
   }
   updates[ticker]=source.price;
+  updateDates[ticker]=source.tradingDate;
  }
  return {mode:"TEST_PRICE_FILL_PREVIEW",source:"Yahoo Finance (TEST REVIEW_ONLY)",
-   isLive:false,canPersist:false,updates,skipped,feedStatus:feed.overallStatus};
+   isLive:false,canPersist:false,updates,updateDates,skipped,feedStatus:feed.overallStatus};
 }
