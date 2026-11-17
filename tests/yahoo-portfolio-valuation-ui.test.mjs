@@ -7,11 +7,14 @@ const html=readFileSync(new URL("../test-my-portfolio-ledger.html",import.meta.u
 test("TEST portfolio exposes opt-in non-mutating Yahoo valuation preview",()=>{
  assert.match(html,/id="yahoo-valuation-preview"/);
  assert.match(html,/id="yahoo-valuation-preview-result"/);
- assert.match(html,/import \{previewYahooPortfolioValuation\}/);
+ assert.match(html,/import \{compareYahooPortfolioValuation\}/);
  assert.match(html,/previewYahooPortfolioValuation\(\{/);
  assert.match(html,/snapshot,holdings:currentView\.holdings,accounts:selectedValuationAccounts\(currentView\),assumedPrices/);
  assert.match(html,/if\(current!==initialLedger\|\|el\('account'\)\.value!==initialAccount\)/);
  assert.match(html,/원장·입력값·서버 저장 변경 없음/);
+ assert.match(html,/Yahoo 종가 적용/);
+ assert.match(html,/사용자 가정주가 유지/);
+ assert.match(html,/평가금액 차이/);
 });
 test("portfolio embedded module syntax is valid",()=>{
  const match=html.match(/<script type="module">([\s\S]*?)<\/script>/);
