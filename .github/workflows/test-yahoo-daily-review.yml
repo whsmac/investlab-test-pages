@@ -39,6 +39,10 @@ jobs:
           python -m scripts.build_yahoo_review_candidate --input yahoo-price-probe.json --output yahoo-price-review-candidate.json
           python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
           python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+      - name: Summarize ticker coverage and freshness (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        run: |
+          python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Stage validated Yahoo JSON for offline TEST site review (NO DEPLOY)
         if: steps.candidate.outcome == 'success'
         id: staging
@@ -120,6 +124,7 @@ jobs:
             yahoo-price-probe.json
             yahoo-price-review-candidate.json
             yahoo-publication-preflight.json
+            yahoo-feed-coverage.json
             yahoo-public-review.json
             yahoo-pages-refresh-review.json
             yahoo-pages-publication-plan.json
