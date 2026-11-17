@@ -72,3 +72,16 @@ test('ledger reload and invalid JSON both discard previous account valuation',()
  assert.match(handler,/el\('valuation-completion-status'\)\.dataset\.state='stale'/);
  assert.match(handler,/catch\(e\)\{current=null;lastYahooPriceDisplay=new Map\(\);lastPortfolioValuation=null;resetValuationSummary\('원장 입력 오류/);
 });
+
+test('valid ledger reload restarts selected Yahoo preview once, invalid ledger does not',()=>{
+ const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+ const start=html.indexOf("el('render').addEventListener('click',()=>{");
+ const end=html.indexOf("el('ledger-load').addEventListener",start);
+ const handler=html.slice(start,end);
+ const valid=handler.slice(handler.indexOf('try{const parsed='),handler.indexOf('}catch(e){current=null;'));
+ const invalid=handler.slice(handler.indexOf('}catch(e){current=null;'));
+ assert.ok(valid.includes("rebuildAssumedPriceRows();el('yahoo-valuation-preview').disabled=false;el('yahoo-valuation-preview').click();"));
+ assert.ok(!invalid.includes("el('yahoo-valuation-preview').click()"));
+ assert.ok(html.includes("el('yahoo-valuation-price-mode').value='latest-close';\nel('render').click();"));
+ assert.ok(!html.includes("el('render').click();\nel('yahoo-valuation-price-mode').value='latest-close';\nel('yahoo-valuation-preview').click();"));
+});
