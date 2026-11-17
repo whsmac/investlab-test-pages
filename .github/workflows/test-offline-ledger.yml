@@ -14,6 +14,8 @@ on:
       - 'tests/yahoo-portfolio-price-fill.test.mjs'
       - 'tests/yahoo-portfolio-ui.test.mjs'
       - 'tests/yahoo-portfolio-valuation-ui.test.mjs'
+      - 'tests/yahoo-portfolio-valuation-comparison.test.mjs'
+      - 'src/ledger/yahoo-portfolio-valuation-comparison.mjs'
       - 'src/ledger/yahoo-portfolio-valuation-preview.mjs'
       - 'tests/yahoo-portfolio-valuation-preview.test.mjs'
       - 'tests/test-yahoo-latest-prices.mjs'
@@ -266,7 +268,7 @@ jobs:
       - name: Validate TEST price source pipeline offline
         run: python -m unittest discover -s tests -p 'test_price*.py' -v
       - name: Validate TEST shared price snapshot (mocked)
-        run: node --test tests/yahoo-portfolio-valuation-ui.test.mjs tests/yahoo-axes-chart.test.mjs tests/test-price-snapshot.mjs
+        run: node --test tests/yahoo-portfolio-valuation-comparison.test.mjs tests/yahoo-portfolio-valuation-ui.test.mjs tests/yahoo-axes-chart.test.mjs tests/test-price-snapshot.mjs
       - name: Validate read-only latest Yahoo prices and stale blocking
         run: node --test tests/yahoo-online-feed-status.test.mjs
           node --test tests/test-yahoo-latest-prices.mjs
