@@ -19,8 +19,13 @@ def summarize(plan, prewrite):
         or plan.get("previous_sha256") != prewrite.get("old_sha256")
         or plan.get("proposed_sha256") != prewrite.get("new_sha256")):
         raise ValueError("Publication review and prewrite do not match")
-    needed=plan.get("publication_needed",plan.get("change_needed"))
-    if not isinstance(needed,bool) or needed != prewrite.get("publication_needed",prewrite.get("change_needed")):
+    change_needed = plan.get("change_needed")
+    if (not isinstance(change_needed, bool)
+        or prewrite.get("change_needed") is not change_needed
+        or change_needed is not (plan.get("previous_sha256") != plan.get("proposed_sha256"))):
+        raise ValueError("Change-needed decision mismatch")
+    needed=plan.get("publication_needed",change_needed)
+    if not isinstance(needed,bool) or (needed and not change_needed) or needed != prewrite.get("publication_needed",prewrite.get("change_needed")):
         raise ValueError("Publication-needed decision mismatch")
     return {"mode":"TEST_YAHOO_REFRESH_DECISION_ONLY",
             "status":"AWAITING_SEPARATE_APPROVAL" if needed else "NO_OBSERVATION_CHANGE",
