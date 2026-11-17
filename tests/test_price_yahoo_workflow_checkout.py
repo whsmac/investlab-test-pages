@@ -32,6 +32,16 @@ class YahooWorkflowCheckoutTests(unittest.TestCase):
         self.assertIn("contents: read", workflow)
         self.assertNotIn("actions/deploy-pages", workflow)
 
+    def test_manual_bundle_runs_first_publication_review_without_deploy(self):
+        workflow = (ROOT / ".github/workflows/test-yahoo-pages-manual.yml").read_text(encoding="utf-8")
+        self.assertIn("python -m scripts.audit_yahoo_test_pages_source", workflow)
+        self.assertIn("python -m scripts.report_yahoo_online_readiness", workflow)
+        self.assertIn("python -m scripts.report_yahoo_first_publication_gate", workflow)
+        self.assertIn("investlab-test-yahoo-first-publication-review", workflow)
+        self.assertIn("contents: read", workflow)
+        self.assertNotIn("actions/deploy-pages", workflow)
+        self.assertNotIn("git push", workflow)
+
     def test_manual_bundle_requires_sha_pinned_fresh_handoff(self):
         workflow = (ROOT / ".github/workflows/test-yahoo-pages-manual.yml").read_text(encoding="utf-8")
         self.assertIn("python -m scripts.check_yahoo_test_pages_handoff", workflow)
