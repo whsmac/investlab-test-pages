@@ -506,7 +506,7 @@ el('ledger-sync-preview').addEventListener('click',()=>{
   target.textContent='원장 변환 검사 성공 · 형식 '+envelope.format+' · 원장 문서 확인 · TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단: '+(!result.canPost?'예':'아니오');
  }catch(error){target.textContent='원장 변환 검사 실패 · '+error.message+' · 원장 데이터는 변경하지 않았습니다.';}
 });
-el('account').addEventListener('change',()=>{invalidateYahooComparison();lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;resetValuationSummary('계좌 변경 · 선택 계좌 평가를 다시 계산 중입니다.');el('valuation-completion-status').dataset.state='stale';el('valuation-completion-status').textContent='계좌 변경 · 평가 재계산 중';show();rebuildAssumedPriceRows();el('yahoo-valuation-preview').click();});el('cost-review-rows').addEventListener('input',markValuationStale);el('holding-search').addEventListener('input',show);el('holding-sort').addEventListener('change',show);el('render').click();
+el('account').addEventListener('change',()=>{invalidateYahooComparison();lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;resetValuationSummary('계좌 변경 · 선택 계좌 평가를 다시 계산 중입니다.');el('valuation-completion-status').dataset.state='stale';el('valuation-completion-status').textContent='계좌 변경 · 평가 재계산 중';el('yahoo-valuation-preview').disabled=false;show();rebuildAssumedPriceRows();el('yahoo-valuation-preview').click();});el('cost-review-rows').addEventListener('input',markValuationStale);el('holding-search').addEventListener('input',show);el('holding-sort').addEventListener('change',show);el('render').click();
 el('yahoo-valuation-price-mode').value='latest-close';
 el('yahoo-valuation-preview').click();
 </script></body></html>
