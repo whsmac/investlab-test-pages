@@ -31,7 +31,7 @@ def verify_prewrite(plan, current_branch_sha, current_site: Path, proposed_json:
         raise ValueError("Existing Yahoo JSON changed since review")
     if new_sha != plan.get("proposed_sha256"):
         raise ValueError("Proposed Yahoo JSON changed since review")
-    if (old != proposed) is not plan.get("change_needed"):
+    if not isinstance(plan.get("change_needed"), bool) or (old != proposed) is not plan["change_needed"]:
         raise ValueError("Change-needed flag inconsistent")
     publication_needed = plan.get("publication_needed", old != proposed)
     if not isinstance(publication_needed, bool) or (publication_needed and old == proposed):
