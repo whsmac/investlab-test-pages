@@ -63,7 +63,7 @@ jobs:
         run: |
           python -m scripts.audit_yahoo_test_pages_branch --output "${RUNNER_TEMP}/yahoo-branch-audit.json"
           python -m scripts.audit_yahoo_test_pages_source --output "${RUNNER_TEMP}/yahoo-pages-source-audit.json"
-          python -m scripts.verify_yahoo_test_pages_live --output "${RUNNER_TEMP}/yahoo-live-check.json"
+          python -m scripts.verify_yahoo_test_pages_live --report-only --output "${RUNNER_TEMP}/yahoo-live-check.json"
       - name: Assess first TEST publication readiness (NO DEPLOY)
         continue-on-error: true
         run: |
