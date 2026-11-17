@@ -227,6 +227,12 @@ jobs:
             --pages-source pages-source.json \
             --live-check pages-live.json \
             --output pages-readiness.json
+      - name: Report actual blockers to TEST online Yahoo activation
+        run: |
+          python -m scripts.report_yahoo_test_activation_blockers \
+            --pages-source pages-source.json \
+            --online-readiness pages-readiness.json \
+            --output pages-activation-blockers.json
       - name: Preserve read-only audit evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -237,6 +243,7 @@ jobs:
             pages-live.json
             pages-branches.json
             pages-readiness.json
+            pages-activation-blockers.json
           if-no-files-found: warn
           retention-days: 7
 
