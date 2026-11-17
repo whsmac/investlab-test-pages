@@ -17,6 +17,14 @@ class YahooWorkflowCheckoutTests(unittest.TestCase):
         self.assertNotIn("actions/deploy-pages", workflow)
         self.assertNotIn("git push", workflow)
 
+    def test_daily_review_requires_api_source_and_explicit_setting(self):
+        workflow = (ROOT / ".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
+        self.assertIn("python -m scripts.audit_yahoo_test_pages_source", workflow)
+        self.assertIn('audit.get("source_confirmed") is True', workflow)
+        self.assertIn('audit.get("branch") == "gh-pages"', workflow)
+        self.assertIn('os.environ.get("CONFIRMED_PAGES_SOURCE") == "gh-pages"', workflow)
+        self.assertIn("yahoo-pages-source-audit.json", workflow)
+
     def test_manual_bundle_review_uses_pinned_test_checkout(self):
         workflow = (ROOT / ".github/workflows/test-yahoo-pages-manual.yml").read_text(encoding="utf-8")
         self.assertIn("ref: " + BRANCH, workflow)
