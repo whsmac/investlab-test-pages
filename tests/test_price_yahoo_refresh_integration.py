@@ -16,7 +16,7 @@ TICKERS=("MSFT","GOOGL","AMZN","META","TSLA")
 
 def candidate():
     observations=[{"ticker":ticker,"trading_date":"2026-11-16","close_price":"100",
-                   "currency":"USD","price_basis":"unadjusted_close"} for ticker in TICKERS]
+                   "currency":"USD","price_basis":"unadjusted_close"} for ticker in sorted(TICKERS)]
     return {"mode":"REVIEW_ONLY","source":"Yahoo Finance",
             "database_insert_authorized":False,"writes_performed":0,
             "row_count":len(observations),"observations":observations}
