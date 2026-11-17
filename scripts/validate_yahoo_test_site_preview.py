@@ -23,6 +23,32 @@ REQUIRED = (
 EXPECTED = {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
 
 
+def check_transitive_modules(site: Path, entry: str):
+    """Reject missing or out-of-bundle dependencies imported by TEST ES modules."""
+    visited = set()
+    pending = [Path(entry)]
+    while pending:
+        relative = pending.pop()
+        if relative in visited:
+            continue
+        visited.add(relative)
+        source = site / relative
+        if not source.is_file():
+            raise ValueError("Missing local module: " + relative.as_posix())
+        if source.suffix not in {".html", ".js", ".mjs"}:
+            continue
+        for specifier in re.findall(r"""from\s+["'](\.{1,2}/[^"']+)["']""", source.read_text(encoding="utf-8")):
+            target = (source.parent / specifier).resolve()
+            try:
+                target_relative = target.relative_to(site.resolve())
+            except ValueError as error:
+                raise ValueError("Module import escapes TEST site: " + specifier) from error
+            if not target.is_file():
+                raise ValueError("Broken transitive module import: " + relative.as_posix() + " -> " + specifier)
+            pending.append(target_relative)
+    return len(visited)
+
+
 def validate_preview(site: Path):
     missing = [name for name in REQUIRED if not (site / name).is_file()]
     if missing:
@@ -79,6 +105,7 @@ def validate_preview(site: Path):
         target = site / import_path.removeprefix("./")
         if not target.is_file():
             raise ValueError("Broken TEST portfolio module import: " + import_path)
+    checked_modules = check_transitive_modules(site, "test-my-portfolio-ledger.html") + check_transitive_modules(site, "test-yahoo-price-review.html")
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
     if "./data/yahoo-public-review.json" not in loader:
         raise ValueError("Published JSON path does not match preview asset")
@@ -86,7 +113,7 @@ def validate_preview(site: Path):
             "published": False, "database_writes": 0,
             "rows": data["row_count"], "tickers": sorted(tickers),
             "json_sha256": hashlib.sha256((site / "data/yahoo-public-review.json").read_bytes()).hexdigest(),
-            "local_module_imports_checked": len(re.findall(r'from\s+["\'](\./[^"\']+)["\']', html))}
+            "local_module_imports_checked": checked_modules}
 
 
 def main():
