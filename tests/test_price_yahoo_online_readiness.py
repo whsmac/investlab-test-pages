@@ -57,6 +57,26 @@ class OnlineReadinessTests(unittest.TestCase):
                 self.assertEqual(result["next_action"], "INVESTIGATE_LIVE_CHECK_NO_PUBLISH")
                 self.assertFalse(result["online_ready"])
 
+    def test_pages_source_audit_controls_publication_planning(self):
+        live = live_check()
+        live["error_kind"] = "NOT_PUBLISHED"
+        source = {"mode": "TEST_PAGES_SOURCE_READ_ONLY_AUDIT",
+                  "status": "SOURCE_CONFIRMED", "source_confirmed": True,
+                  "branch": "gh-pages", "deployment_performed": False, "database_writes": 0}
+        ready = summarize_online_readiness(branch_audit(), live, source)
+        self.assertTrue(ready["pages_source_confirmed"])
+        self.assertTrue(ready["publication_planning_ready"])
+        self.assertFalse(ready["deployment_authorized"])
+        source["source_confirmed"] = False
+        blocked = summarize_online_readiness(branch_audit(), live, source)
+        self.assertFalse(blocked["publication_planning_ready"])
+
+    def test_unsafe_pages_source_audit_rejected(self):
+        source = {"mode": "TEST_PAGES_SOURCE_READ_ONLY_AUDIT",
+                  "source_confirmed": True, "deployment_performed": True, "database_writes": 0}
+        with self.assertRaisesRegex(ValueError, "unsafe"):
+            summarize_online_readiness(branch_audit(), live_check(), source)
+
     def test_unrecognized_error_kind_rejected(self):
         report = live_check()
         report["error_kind"] = "SUCCESS"
