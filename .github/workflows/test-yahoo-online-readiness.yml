@@ -33,7 +33,7 @@ jobs:
       - name: Summarize online readiness without authorizing publication
         if: steps.branches.outcome == 'success' && steps.live.outcome != 'skipped'
         run: |
-          python -m scripts.report_yahoo_online_readiness --branch-audit yahoo-branch-audit.json --live-check yahoo-live-check.json --output yahoo-online-readiness.json
+          python -m scripts.report_yahoo_online_readiness --branch-audit yahoo-branch-audit.json --live-check yahoo-live-check.json --pages-source yahoo-pages-source-audit.json --output yahoo-online-readiness.json
       - name: Upload read-only evidence even when offline
         if: always()
         uses: actions/upload-artifact@v4
