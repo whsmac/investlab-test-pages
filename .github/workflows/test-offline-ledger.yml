@@ -200,6 +200,46 @@ on:
       - '.github/workflows/test-offline-ledger.yml'
   workflow_dispatch:
 jobs:
+  yahoo-pages-live-source-audit:
+    name: TEST Pages live evidence (read-only, non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect actual TEST Pages source
+        run: python -m scripts.audit_yahoo_test_pages_source --output pages-source.json
+      - name: Inspect live Yahoo TEST file
+        run: python -m scripts.verify_yahoo_test_pages_live --output pages-live.json
+      - name: Inspect TEST branch assets
+        run: python -m scripts.audit_yahoo_test_pages_branch --output pages-branches.json
+      - name: Summarize online state
+        run: |
+          python -m scripts.report_yahoo_online_readiness \
+            --branch-audit pages-branches.json \
+            --pages-source pages-source.json \
+            --live-check pages-live.json \
+            --output pages-readiness.json
+      - name: Preserve read-only audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-pages-live-source-evidence
+          path: |
+            pages-source.json
+            pages-live.json
+            pages-branches.json
+            pages-readiness.json
+          if-no-files-found: warn
+          retention-days: 7
+
   ledger-unit-tests:
     runs-on: ubuntu-latest
     permissions:
