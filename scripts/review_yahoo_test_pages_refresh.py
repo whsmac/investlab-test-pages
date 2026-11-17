@@ -44,11 +44,29 @@ def assess_refresh(current: Path, proposed: Path, today=None):
         raise ValueError("Current asset is symlinked")
     previous = old_asset.read_bytes() if old_asset.is_file() else None
     incoming = proposed.read_bytes()
+    observations_changed = True
+    if previous is not None:
+        try:
+            old_payload = json.loads(previous.decode("utf-8"))
+            old_rows = old_payload.get("observations")
+            if (old_payload.get("mode") == "REVIEW_ONLY"
+                and old_payload.get("source") == "Yahoo Finance"
+                and old_payload.get("database_insert_authorized") is False
+                and old_payload.get("writes_performed") == 0
+                and isinstance(old_rows, list)
+                and old_payload.get("row_count") == len(old_rows)
+                and build_public_snapshot(old_payload)["observations"] == normalized["observations"]
+                and old_rows == normalized["observations"]):
+                observations_changed = False
+        except (ValueError, KeyError, TypeError, UnicodeError, OverflowError):
+            observations_changed = True
     return {"mode":"TEST_PAGES_SINGLE_ASSET_REFRESH_REVIEW",
             "review_only":True,"deployment_authorized":False,"deployment_performed":False,
             "database_writes":0,"allowed_change_paths":[ASSET.as_posix()],
             "asset_existed":previous is not None,
             "change_needed":previous != incoming,
+            "observations_changed":observations_changed,
+            "publication_needed":observations_changed,
             "previous_sha256":hashlib.sha256(previous).hexdigest() if previous is not None else None,
             "proposed_sha256":hashlib.sha256(incoming).hexdigest(),
             "rows":len(rows),"tickers":sorted(tickers),
