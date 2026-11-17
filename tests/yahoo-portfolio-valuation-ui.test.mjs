@@ -23,6 +23,9 @@ test("TEST portfolio exposes opt-in non-mutating Yahoo valuation preview",()=>{
  assert.match(html,/Yahoo 종가 적용/);
  assert.match(html,/사용자 가정주가 유지/);
  assert.match(html,/평가금액 차이/);
+ assert.match(html,/lastYahooPriceDisplay=new Map\(result\.rows\.map/);
+ assert.match(html,/className='holding-current-price'/);
+ assert.match(html,/현재가 USD/);
  assert.match(html,/lastPortfolioValuation=result\.latest/);
  assert.match(html,/renderValuationSummary\(result\.latest\)/);
  assert.match(html,/yahoo-valuation-price-mode\x27\)\.value=\x27latest-close\x27/);
