@@ -58,6 +58,39 @@ jobs:
             --site "${RUNNER_TEMP}/investlab-test-site-review" \
             --reviewed-commit "$REVIEWED_SHA" \
             --output "${RUNNER_TEMP}/yahoo-manual-review-handoff.json"
+      - name: Audit TEST Pages source and live state (read-only, NO DEPLOY)
+        continue-on-error: true
+        run: |
+          python -m scripts.audit_yahoo_test_pages_branch --output "${RUNNER_TEMP}/yahoo-branch-audit.json"
+          python -m scripts.audit_yahoo_test_pages_source --output "${RUNNER_TEMP}/yahoo-pages-source-audit.json"
+          python -m scripts.verify_yahoo_test_pages_live --output "${RUNNER_TEMP}/yahoo-live-check.json"
+      - name: Assess first TEST publication readiness (NO DEPLOY)
+        if: ${{ hashFiles(format('{0}/yahoo-branch-audit.json', runner.temp)) != '' }}
+        continue-on-error: true
+        run: |
+          python -m scripts.report_yahoo_online_readiness \
+            --branch-audit "${RUNNER_TEMP}/yahoo-branch-audit.json" \
+            --pages-source "${RUNNER_TEMP}/yahoo-pages-source-audit.json" \
+            --live-check "${RUNNER_TEMP}/yahoo-live-check.json" \
+            --output "${RUNNER_TEMP}/yahoo-online-readiness.json"
+          python -m scripts.report_yahoo_first_publication_gate \
+            --pages-source "${RUNNER_TEMP}/yahoo-pages-source-audit.json" \
+            --handoff "${RUNNER_TEMP}/yahoo-manual-review-handoff.json" \
+            --online-readiness "${RUNNER_TEMP}/yahoo-online-readiness.json" \
+            --output "${RUNNER_TEMP}/yahoo-first-publication-gate.json"
+      - name: Upload first-publication review evidence (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-first-publication-review
+          path: |
+            ${{ runner.temp }}/yahoo-branch-audit.json
+            ${{ runner.temp }}/yahoo-pages-source-audit.json
+            ${{ runner.temp }}/yahoo-live-check.json
+            ${{ runner.temp }}/yahoo-online-readiness.json
+            ${{ runner.temp }}/yahoo-first-publication-gate.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Upload manual handoff verification (NO DEPLOY)
         uses: actions/upload-artifact@v4
         with:
