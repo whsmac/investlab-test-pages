@@ -1,0 +1,53 @@
+name: TEST Yahoo Pages live source audit (read-only, NO DEPLOY)
+on:
+  push:
+    branches:
+      - feature/test-navigation-20261112
+    paths:
+      - 'scripts/audit_yahoo_test_pages_source.py'
+      - 'scripts/verify_yahoo_test_pages_live.py'
+      - 'scripts/report_yahoo_online_readiness.py'
+      - 'scripts/report_yahoo_first_publication_gate.py'
+      - '.github/workflows/test-yahoo-pages-source-live-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-test-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read actual TEST Pages publishing source
+        run: python -m scripts.audit_yahoo_test_pages_source --output pages-source.json
+      - name: Read current TEST Yahoo public asset availability
+        run: python -m scripts.verify_yahoo_test_pages_live --output pages-live.json
+      - name: Read TEST branches without changing them
+        run: python -m scripts.audit_yahoo_test_pages_branch --output pages-branches.json
+      - name: Summarize TEST readiness without publishing
+        run: |
+          python -m scripts.report_yahoo_online_readiness \
+            --branch-audit pages-branches.json \
+            --pages-source pages-source.json \
+            --live-check pages-live.json \
+            --output pages-readiness.json
+      - name: Upload source and live evidence (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-pages-live-source-evidence
+          path: |
+            pages-source.json
+            pages-live.json
+            pages-branches.json
+            pages-readiness.json
+          if-no-files-found: warn
+          retention-days: 7
