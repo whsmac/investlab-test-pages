@@ -33,8 +33,12 @@ def verify_prewrite(plan, current_branch_sha, current_site: Path, proposed_json:
         raise ValueError("Proposed Yahoo JSON changed since review")
     if (old != proposed) is not plan.get("change_needed"):
         raise ValueError("Change-needed flag inconsistent")
+    publication_needed = plan.get("publication_needed", old != proposed)
+    if not isinstance(publication_needed, bool) or (publication_needed and old == proposed):
+        raise ValueError("Invalid publication-needed decision")
     return {"mode":"TEST_PAGES_PREWRITE_VERIFICATION_ONLY",
             "verified":True,"change_needed":old != proposed,
+            "publication_needed":publication_needed,
             "branch_sha":current_branch_sha,"old_sha256":old_sha,
             "new_sha256":new_sha,"allowed_change_paths":[ASSET],
             "deployment_authorized":False,"deployment_performed":False,"database_writes":0}
