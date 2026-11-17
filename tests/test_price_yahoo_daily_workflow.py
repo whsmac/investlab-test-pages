@@ -23,6 +23,8 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         self.assertIn("yahoo-pages-prewrite-check.json",text)
         self.assertIn("scripts.backup_yahoo_test_pages_asset",text)
         self.assertIn("investlab-test-yahoo-rollback-review",text)
+        self.assertIn("scripts.summarize_yahoo_test_refresh_decision",text)
+        self.assertIn("yahoo-pages-refresh-decision.json",text)
         self.assertNotIn("contents: write",text)
         self.assertNotIn("pages: write",text)
         self.assertNotIn("actions/deploy-pages",text)
@@ -34,7 +36,7 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         self.assertIn("exit 1",text)
         self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then',text)
         self.assertIn('if [ "$PAGES_SOURCE_CONFIRMED" != true ]; then',text)
-        self.assertIn('if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then',text)
+        self.assertIn('if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ] || [ "$DECISION_OUTCOME" != success ]; then',text)
         self.assertIn("if: steps.candidate.outcome == 'success'",text)
         self.assertIn("COMPARISON_OUTCOME",text)
 
