@@ -31,8 +31,14 @@ def summarize_online_readiness(branch_audit, live_check):
     if not isinstance(reachable, bool):
         raise ValueError("Invalid live availability")
     fresh = live_check.get("fresh") is True if reachable else False
+    error_kind = live_check.get("error_kind") if not reachable else None
+    if error_kind is not None and error_kind not in ("NOT_PUBLISHED", "HTTP_ERROR", "NETWORK_ERROR", "INVALID_CONTENT"):
+        raise ValueError("Invalid live error classification")
     status = ("ONLINE_FRESH" if reachable and fresh else
-              "ONLINE_STALE" if reachable else "NOT_ONLINE")
+              "ONLINE_STALE" if reachable else
+              "NOT_PUBLISHED" if error_kind == "NOT_PUBLISHED" else
+              "LIVE_CHECK_FAILED" if error_kind in ("HTTP_ERROR", "NETWORK_ERROR", "INVALID_CONTENT") else
+              "NOT_ONLINE")
     return {
         "mode": "TEST_YAHOO_ONLINE_READINESS_ONLY",
         "status": status,
@@ -41,9 +47,11 @@ def summarize_online_readiness(branch_audit, live_check):
         "branch_asset_present": {branch: branches[branch]["asset_present"] for branch in BRANCHES},
         "pages_source_confirmed": branch_audit.get("pages_source_confirmed") is True,
         "live_reachable": reachable,
+        "live_error_kind": error_kind,
         "live_fresh": fresh,
         "next_action": ("VERIFY_BROWSER_READ_ONLY" if status == "ONLINE_FRESH"
                         else "REVIEW_FRESHNESS_NO_PUBLISH" if reachable
+                        else "INVESTIGATE_LIVE_CHECK_NO_PUBLISH" if status == "LIVE_CHECK_FAILED"
                         else "REVIEW_PAGES_SOURCE_AND_PUBLICATION_SEPARATELY"),
         "deployment_authorized": False,
         "deployment_performed": False,
