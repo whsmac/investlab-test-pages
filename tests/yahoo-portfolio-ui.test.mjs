@@ -10,7 +10,10 @@ test("TEST portfolio exposes opt-in Yahoo price fill",()=>{
  assert.match(html,/for\(const \[ticker,price\] of updates\)setAssumedPrice/);
  assert.match(html,/if\(updates\.length\)\{/);
  assert.match(html,/el\('portfolio-price-calc'\)\.click\(\)/);
- assert.match(html,/button\.disabled=true/);
+ assert.match(html,/button\\.disabled=true/);
+ assert.match(html,/if\\(current!==initialLedger\\|\\|el\\('account'\\)\\.value!==initialAccount\\)/);
+ assert.match(html,/view\\.holdings\\.map\\(h=>h\\.ticker\\)\\.join\\('\\|'\\)!==initialTickers/);
+ assert.match(html,/priceRows\\.length!==view\\.holdings\\.length/);
  assert.match(html,/finally\{button\.disabled=false;\}/);
 });
 test("portfolio module remains valid JavaScript",()=>{
