@@ -61,3 +61,14 @@ test('account switch unlocks pending Yahoo preview button before starting replac
  assert.match(fetchHandler,/const revision=\+\+yahooComparisonRevision/);
  assert.match(fetchHandler,/finally\{if\(revision===yahooComparisonRevision\)button\.disabled=false;\}/);
 });
+
+test('ledger reload and invalid JSON both discard previous account valuation',()=>{
+ const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+ const start=html.indexOf("el('render').addEventListener('click',()=>{");
+ const end=html.indexOf("el('ledger-load').addEventListener",start);
+ assert.ok(start>=0&&end>start);
+ const handler=html.slice(start,end);
+ assert.match(handler,/invalidateYahooComparison\(\);lastYahooPriceDisplay=new Map\(\);lastPortfolioValuation=null;resetValuationSummary\('원장 변경/);
+ assert.match(handler,/el\('valuation-completion-status'\)\.dataset\.state='stale'/);
+ assert.match(handler,/catch\(e\)\{current=null;lastYahooPriceDisplay=new Map\(\);lastPortfolioValuation=null;resetValuationSummary\('원장 입력 오류/);
+});
