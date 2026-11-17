@@ -43,7 +43,7 @@ test("SVG contains USD axis, date labels, and price line",()=>{
  assert.ok(nodes.some(n=>n.tag==="polyline"));
 });
 
-test("TEST page loads the axis chart module",()=>{
+test("TEST page loads the axis chart module",async()=>{
  const page=await import("node:fs/promises").then(fs=>fs.readFile(new URL("../test-yahoo-price-review.html",import.meta.url),"utf8"));
  assert.match(page,/import \{renderYahooAxesChart\}/);
  assert.match(page,/section\.append\(renderYahooAxesChart\(document,series\.points,series\.ticker\)\)/);
