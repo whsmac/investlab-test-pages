@@ -15,6 +15,7 @@
 <script type="module">
 import {buildPortfolioLedgerView} from './src/ledger/portfolio-ledger-view-model.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
+import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
 import {previewYahooPortfolioPriceFill} from './src/ledger/yahoo-portfolio-price-fill.mjs';
 import {buildLedgerSyncEnvelope,previewPersonalSyncEnvelope} from './src/sync/personal-sync-adapters.mjs';
 import {inspectLedgerShape} from './src/sync/ledger-shape-inventory.mjs';
@@ -192,9 +193,20 @@ async function checkYahooPublishedFeedOnLoad(){
    if(!latestByTicker.has(row.ticker)||row.trading_date>latestByTicker.get(row.ticker))
     latestByTicker.set(row.ticker,row.trading_date);
   }
-  status.textContent='온라인 종가 파일 확인 · '+latestByTicker.size+'개 종목 · 수동 적용 대기 · 실시간 시세 아님';
+  const feed=buildYahooLatestPrices(snapshot);
+  const fresh=feed.prices.filter(row=>row.price!==null);
+  const unavailable=feed.prices.filter(row=>row.price===null);
+  const newest=fresh.map(row=>row.tradingDate).sort().at(-1);
+  // A manual button click may complete while the startup check is still pending.
+  if(el('yahoo-price-fill').disabled)return;
+  status.textContent=fresh.length
+    ? '온라인 종가 확인 · 사용 가능 '+fresh.length+'개 · 최근 거래일 '+newest+
+      (unavailable.length?' · 최신성 미확인 '+unavailable.map(row=>row.ticker).join(', '):'')+
+      ' · 수동 적용 대기 · 실시간 시세 아님'
+    : '온라인 종가 파일 확인 · 최신 종가 사용 불가 · 기존 입력 유지 · 실시간 시세 아님';
  }catch(error){
-  status.textContent='온라인 종가 확인: '+error.message;
+  if(!el('yahoo-price-fill').disabled)
+   status.textContent='온라인 종가 확인: '+error.message;
  }
 }
 void checkYahooPublishedFeedOnLoad();
