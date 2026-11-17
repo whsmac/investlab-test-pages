@@ -39,7 +39,7 @@ test("invalid or insufficient chart points are rejected",()=>{
 test("SVG contains USD axis, date labels, and price line",()=>{
  const nodes=[];
  const doc={createElementNS(_ns,tag){
-  const node={tag,attrs:{},children:[],textContent:"",
+  const node={tag,attrs:{},children:[],textContent:"",style:{},
    setAttribute(key,value){this.attrs[key]=value;},append(child){this.children.push(child)}};
   nodes.push(node);return node;
  }};
