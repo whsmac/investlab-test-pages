@@ -32,3 +32,18 @@ test("stale price is marked unavailable, never treated as current",()=>{
  assert.equal(result.rows[0].source,"PRICE_UNAVAILABLE");
  assert.equal(result.latest.totalMarketValueUsd,null);
 });
+
+test("latest-close preview overrides only calculation, never the saved user price",()=>{
+ const assumedPrices={TSLA:"150"};
+ const result=compareYahooPortfolioValuation({snapshot:snapshot(),holdings,accounts,assumedPrices,priceMode:"latest-close",now});
+ assert.equal(result.priceMode,"latest-close");
+ assert.equal(result.rows[0].source,"YAHOO_LATEST_CLOSE");
+ assert.equal(result.existing.totalMarketValueUsd,300);
+ assert.equal(result.latest.totalMarketValueUsd,208);
+ assert.equal(result.totalDifferenceUsd,-92);
+ assert.deepEqual(assumedPrices,{TSLA:"150"});
+ assert.equal(result.canPersist,false);
+});
+test("invalid price mode is rejected",()=>{
+ assert.throws(()=>compareYahooPortfolioValuation({snapshot:snapshot(),holdings,accounts,priceMode:"unknown",now}),/Invalid price mode/);
+});
