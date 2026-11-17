@@ -28,9 +28,13 @@ def build_plan(review, branch_sha):
         raise ValueError("Full reviewed gh-pages commit SHA required")
     if review.get("change_needed") is not (old_sha != new_sha):
         raise ValueError("Change flag does not match SHA256 values")
+    publication_needed = review.get("publication_needed", review["change_needed"])
+    if not isinstance(publication_needed, bool) or (publication_needed and not review["change_needed"]):
+        raise ValueError("Invalid publication-needed decision")
     return {"mode":"TEST_PAGES_PUBLICATION_PLAN_ONLY","repository":REPO,
             "target_branch":BRANCH,"expected_branch_commit":branch_sha,
             "allowed_change_paths":[ASSET],"change_needed":review["change_needed"],
+            "publication_needed":publication_needed,
             "previous_sha256":old_sha,"proposed_sha256":new_sha,
             "precondition":"Recheck branch commit SHA and previous file SHA256 immediately before any future write",
             "requires_explicit_deployment_approval":True,"deployment_authorized":False,
