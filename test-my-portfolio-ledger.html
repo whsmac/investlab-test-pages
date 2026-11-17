@@ -185,9 +185,19 @@ el('yahoo-price-fill').addEventListener('click',async()=>{
  button.disabled=true;
  try{
   if(!current)throw Error('먼저 보유종목을 조회하세요.');
-  const view=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});
-  if(!view.holdings.length)throw Error('현재 계좌에 보유종목이 없습니다.');
+  const initialLedger=current,initialAccount=el('account').value;
+  const initialView=buildPortfolioLedgerView({...initialLedger,selectedAccountId:initialAccount||null});
+  if(!initialView.holdings.length)throw Error('현재 계좌에 보유종목이 없습니다.');
+  const initialTickers=initialView.holdings.map(h=>h.ticker).join('|');
   const snapshot=await loadPublishedYahooReview({origin:location.href});
+  if(current!==initialLedger||el('account').value!==initialAccount)
+    throw Error('조회 중 계좌 또는 원장이 변경되었습니다. 다시 시도하세요.');
+  const view=buildPortfolioLedgerView({...current,selectedAccountId:initialAccount||null});
+  if(view.holdings.map(h=>h.ticker).join('|')!==initialTickers)
+    throw Error('조회 중 보유종목이 변경되었습니다. 다시 시도하세요.');
+  const priceRows=[...el('portfolio-price-rows').children];
+  if(priceRows.length!==view.holdings.length||priceRows.some((r,i)=>r.dataset.ticker!==view.holdings[i].ticker))
+    throw Error('현재 계좌 기준 주가 입력표가 준비되지 않았습니다.');
   const prices=Object.fromEntries(view.holdings.map(h=>[h.ticker,getAssumedPrice(h.ticker)]));
   const result=previewYahooPortfolioPriceFill(snapshot,view.holdings,prices);
   const updates=Object.entries(result.updates);
