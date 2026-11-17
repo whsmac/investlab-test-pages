@@ -24,6 +24,14 @@ class YahooWorkflowCheckoutTests(unittest.TestCase):
         self.assertIn("contents: read", workflow)
         self.assertNotIn("actions/deploy-pages", workflow)
 
+    def test_manual_bundle_requires_sha_pinned_fresh_handoff(self):
+        workflow = (ROOT / ".github/workflows/test-yahoo-pages-manual.yml").read_text(encoding="utf-8")
+        self.assertIn("python -m scripts.check_yahoo_test_pages_handoff", workflow)
+        self.assertIn('REVIEWED_SHA="$(git rev-parse HEAD)"', workflow)
+        self.assertIn('--reviewed-commit "$REVIEWED_SHA"', workflow)
+        self.assertIn("investlab-test-yahoo-manual-handoff", workflow)
+        self.assertIn("NO DEPLOY", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
