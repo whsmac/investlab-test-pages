@@ -218,7 +218,9 @@ el('yahoo-price-fill').addEventListener('click',async()=>{
     ? (new Set(appliedDates).size===1?'적용 종가 기준일 '+appliedDates[0]
       :'적용 종가 기준일 '+appliedDates.slice().sort()[0]+' ~ '+appliedDates.slice().sort().at(-1))
     : '새로 적용한 종가 없음';
-  status.textContent=dateLabel+' · '+updates.length+'개 종목 종가 입력 · 기존 입력 '+preserved+'개 유지 · 갱신 불가 '+unavailable+'개 · 미지원 '+unsupported+'개 · 실시간 시세 아님';
+  const perTickerDates=Object.entries(result.updateDates)
+    .map(([ticker,day])=>ticker+' '+day).join(' · ');
+  status.textContent=dateLabel+(perTickerDates?' ('+perTickerDates+')':'')+' · '+updates.length+'개 종목 종가 입력 · 기존 입력 '+preserved+'개 유지 · 갱신 불가 '+unavailable+'개 · 미지원 '+unsupported+'개 · 실시간 시세 아님';
  }catch(error){status.textContent='종가 가져오기 확인 필요: '+error.message+' · 입력된 값이 있다면 재계산 상태를 확인하세요';}
  finally{button.disabled=false;}
 });
