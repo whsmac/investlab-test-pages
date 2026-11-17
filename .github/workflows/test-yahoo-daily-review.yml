@@ -74,7 +74,7 @@ jobs:
                        and audit.get("branch") == "gh-pages"
                        and os.environ.get("CONFIRMED_PAGES_SOURCE") == "gh-pages")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write("confirmed=" + str(confirmed).lower() + "\\n")
+              output.write("confirmed=" + str(confirmed).lower() + "\n")
           if confirmed:
               print("Verified TEST Pages API and explicit gh-pages source setting.")
           else:
