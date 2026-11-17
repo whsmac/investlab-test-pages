@@ -9,6 +9,9 @@ from pathlib import Path
 REQUIRED = (
     "index.html",
     "test-yahoo-price-review.html",
+    "test-my-portfolio-ledger.html",
+    "src/market/yahoo-latest-prices.mjs",
+    "src/ledger/yahoo-portfolio-price-fill.mjs",
     "src/market/load-published-yahoo-review.mjs",
     "src/market/yahoo-review-chart-series.mjs",
     "src/market/yahoo-chart-freshness.mjs",
@@ -66,6 +69,16 @@ def validate_preview(site: Path):
         target = site / import_path.removeprefix("./")
         if not target.is_file():
             raise ValueError("Broken local module import: " + import_path)
+    portfolio = (site / "test-my-portfolio-ledger.html").read_text(encoding="utf-8")
+    for marker in ('id="yahoo-price-fill"', "loadPublishedYahooReview({origin:location.href})",
+                   "previewYahooPortfolioPriceFill(snapshot,view.holdings,prices)",
+                   "el('portfolio-price-calc').click()"):
+        if marker not in portfolio:
+            raise ValueError("TEST portfolio Yahoo integration missing: " + marker)
+    for import_path in re.findall(r'from\\s+["\\'](\\./[^"\\']+)["\\']', portfolio):
+        target = site / import_path.removeprefix("./")
+        if not target.is_file():
+            raise ValueError("Broken TEST portfolio module import: " + import_path)
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
     if "./data/yahoo-public-review.json" not in loader:
         raise ValueError("Published JSON path does not match preview asset")
