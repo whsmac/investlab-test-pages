@@ -17,7 +17,7 @@ import {buildPortfolioLedgerView} from './src/ledger/portfolio-ledger-view-model
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
 import {previewYahooPortfolioPriceFill} from './src/ledger/yahoo-portfolio-price-fill.mjs';
-import {previewYahooPortfolioValuation} from './src/ledger/yahoo-portfolio-valuation-preview.mjs';
+import {compareYahooPortfolioValuation} from './src/ledger/yahoo-portfolio-valuation-comparison.mjs';
 import {buildLedgerSyncEnvelope,previewPersonalSyncEnvelope} from './src/sync/personal-sync-adapters.mjs';
 import {inspectLedgerShape} from './src/sync/ledger-shape-inventory.mjs';
 import {previewLedgerColumnMapping} from './src/sync/ledger-column-mapping.mjs';
@@ -227,17 +227,20 @@ el('yahoo-valuation-preview').addEventListener('click',async()=>{
   if(currentView.holdings.map(h=>h.ticker).join('|')!==view.holdings.map(h=>h.ticker).join('|'))
    throw Error('조회 중 보유종목이 변경되었습니다. 다시 시도하세요.');
   const assumedPrices=Object.fromEntries(currentView.holdings.map(h=>[h.ticker,getAssumedPrice(h.ticker)]));
-  const result=previewYahooPortfolioValuation({
+  const result=compareYahooPortfolioValuation({
    snapshot,holdings:currentView.holdings,accounts:selectedValuationAccounts(currentView),assumedPrices
   });
   const money=value=>value===null?'미계산':'USD '+value.toLocaleString('en-US',{maximumFractionDigits:2});
-  const lines=['TEST 최신 종가 기준 평가 미리보기 · 실시간 시세 아님',
-   '평가금액 합계 '+money(result.valuation.totalMarketValueUsd),
-   '평가손익 합계 '+money(result.valuation.totalUnrealizedPnlUsd),
-   '자동 보완 '+Object.keys(result.fill.updates).length+'개 · 기존 가정주가 유지 '+result.fill.skipped.filter(x=>x.reason==='USER_PRICE_PRESERVED').length+'개'];
-  for(const row of result.valuation.rows){
-   const date=result.fill.updateDates[row.ticker];
-   lines.push(row.ticker+' · '+money(row.marketValueUsd)+(date?' · 종가 기준일 '+date:' · 기존 가정값 또는 가격 미확인'));
+  const lines=['TEST 종가·가정주가 비교 · 실시간 시세 아님',
+   '기존 입력 기준 평가금액 '+money(result.existing.totalMarketValueUsd),
+   'Yahoo 빈칸 보완 후 평가금액 '+money(result.latest.totalMarketValueUsd),
+   '평가금액 차이 '+money(result.totalDifferenceUsd)+' (양쪽 합계가 모두 계산된 경우만)',
+   '평가손익 합계 '+money(result.latest.totalUnrealizedPnlUsd),
+   'Yahoo 종가 적용 '+Object.keys(result.fill.updates).length+'개 · 사용자 가정주가 유지 '+result.fill.skipped.filter(x=>x.reason==='USER_PRICE_PRESERVED').length+'개'];
+  for(const row of result.rows){
+   const label=row.source==='YAHOO_LATEST_CLOSE'?'Yahoo 종가 '+row.tradingDate:
+    row.source==='USER_ASSUMPTION'?'사용자 가정주가 유지':'가격 없음';
+   lines.push(row.ticker+' · '+label+' · 평가금액 '+money(row.marketValueUsd));
   }
   lines.push('원장·입력값·서버 저장 변경 없음');
   output.textContent=lines.join('\\n');
