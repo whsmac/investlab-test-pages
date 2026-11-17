@@ -33,3 +33,17 @@ test('account switch clears previous summary before asynchronous Yahoo preview',
  assert.match(html,/if\(current!==initialLedger\|\|el\('account'\)\.value!==initialAccount\)/);
  assert.match(html,/revision!==yahooComparisonRevision/);
 });
+
+test('failed Yahoo fetch clears selected-account summary and reports error state',()=>{
+ const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+ const start=html.indexOf("el('yahoo-valuation-preview').addEventListener('click',async()=>{");
+ const end=html.indexOf("el('yahoo-price-fill').addEventListener",start);
+ assert.ok(start>=0&&end>start);
+ const handler=html.slice(start,end);
+ assert.match(handler,/if\(revision===yahooComparisonRevision\)\{/);
+ assert.match(handler,/lastYahooPriceDisplay=new Map\(\);lastPortfolioValuation=null/);
+ assert.match(handler,/resetValuationSummary\('최신 종가 조회 실패/);
+ assert.match(handler,/el\('valuation-completion-status'\)\.dataset\.state='error'/);
+ assert.match(handler,/finally\{if\(revision===yahooComparisonRevision\)button\.disabled=false;\}/);
+ assert.match(handler,/revision!==yahooComparisonRevision\|\|current!==initialLedger\|\|el\('account'\)\.value!==initialAccount/);
+});
