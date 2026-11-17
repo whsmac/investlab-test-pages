@@ -56,19 +56,30 @@ jobs:
           name: investlab-test-yahoo-pages-staging
           path: yahoo-staged/
           retention-days: 7
+      - name: Audit actual Pages publishing source via GitHub API (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        run: python -m scripts.audit_yahoo_test_pages_source --output yahoo-pages-source-audit.json
       - name: Confirm actual TEST Pages source before branch-specific review
         if: steps.candidate.outcome == 'success'
         id: pages_source
         env:
           CONFIRMED_PAGES_SOURCE: ${{ vars.INVESTLAB_TEST_PAGES_SOURCE }}
         run: |
-          if [ "$CONFIRMED_PAGES_SOURCE" = "gh-pages" ]; then
-            echo "confirmed=true" >> "$GITHUB_OUTPUT"
-            echo "TEST Pages source explicitly confirmed: gh-pages"
-          else
-            echo "confirmed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Pages source unconfirmed. Collection artifact remains available; branch-specific comparison and publication planning are blocked."
-          fi
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          audit = json.loads(Path("yahoo-pages-source-audit.json").read_text(encoding="utf-8"))
+          confirmed = (audit.get("source_confirmed") is True
+                       and audit.get("branch") == "gh-pages"
+                       and os.environ.get("CONFIRMED_PAGES_SOURCE") == "gh-pages")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("confirmed=" + str(confirmed).lower() + "\\n")
+          if confirmed:
+              print("Verified TEST Pages API and explicit gh-pages source setting.")
+          else:
+              print("Pages API and explicit source setting are not both confirmed; branch comparison blocked.")
+          PY
       - name: Checkout current TEST Pages branch into read-only comparison directory
         if: steps.pages_source.outputs.confirmed == 'true'
         uses: actions/checkout@v4
@@ -125,6 +136,7 @@ jobs:
             yahoo-price-review-candidate.json
             yahoo-publication-preflight.json
             yahoo-feed-coverage.json
+            yahoo-pages-source-audit.json
             yahoo-public-review.json
             yahoo-pages-refresh-review.json
             yahoo-pages-publication-plan.json
