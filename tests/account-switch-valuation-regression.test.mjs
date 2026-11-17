@@ -47,3 +47,17 @@ test('failed Yahoo fetch clears selected-account summary and reports error state
  assert.match(handler,/finally\{if\(revision===yahooComparisonRevision\)button\.disabled=false;\}/);
  assert.match(handler,/revision!==yahooComparisonRevision\|\|current!==initialLedger\|\|el\('account'\)\.value!==initialAccount/);
 });
+
+test('account switch unlocks pending Yahoo preview button before starting replacement request',()=>{
+ const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+ const start=html.indexOf("el('account').addEventListener('change',()=>{");
+ assert.ok(start>=0);
+ const handler=html.slice(start,html.indexOf("});",start)+3);
+ assert.match(handler,/invalidateYahooComparison\(\)/);
+ assert.match(handler,/el\('yahoo-valuation-preview'\)\.disabled=false;show\(\);rebuildAssumedPriceRows\(\);el\('yahoo-valuation-preview'\)\.click\(\)/);
+ const fetchStart=html.indexOf("el('yahoo-valuation-preview').addEventListener('click',async()=>{");
+ const fetchEnd=html.indexOf("el('yahoo-price-fill').addEventListener",fetchStart);
+ const fetchHandler=html.slice(fetchStart,fetchEnd);
+ assert.match(fetchHandler,/const revision=\+\+yahooComparisonRevision/);
+ assert.match(fetchHandler,/finally\{if\(revision===yahooComparisonRevision\)button\.disabled=false;\}/);
+});
