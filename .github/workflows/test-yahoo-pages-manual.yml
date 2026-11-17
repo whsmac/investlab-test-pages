@@ -65,9 +65,12 @@ jobs:
           python -m scripts.audit_yahoo_test_pages_source --output "${RUNNER_TEMP}/yahoo-pages-source-audit.json"
           python -m scripts.verify_yahoo_test_pages_live --output "${RUNNER_TEMP}/yahoo-live-check.json"
       - name: Assess first TEST publication readiness (NO DEPLOY)
-        if: ${{ hashFiles(format('{0}/yahoo-branch-audit.json', runner.temp)) != '' }}
         continue-on-error: true
         run: |
+          if [ ! -f "${RUNNER_TEMP}/yahoo-branch-audit.json" ] || [ ! -f "${RUNNER_TEMP}/yahoo-pages-source-audit.json" ] || [ ! -f "${RUNNER_TEMP}/yahoo-live-check.json" ]; then
+            echo "::notice::Read-only audit evidence incomplete; first-publication review not evaluated."
+            exit 0
+          fi
           python -m scripts.report_yahoo_online_readiness \
             --branch-audit "${RUNNER_TEMP}/yahoo-branch-audit.json" \
             --pages-source "${RUNNER_TEMP}/yahoo-pages-source-audit.json" \
