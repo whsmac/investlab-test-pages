@@ -40,6 +40,29 @@ class OnlineReadinessTests(unittest.TestCase):
         self.assertEqual(result["next_action"], "VERIFY_BROWSER_READ_ONLY")
         self.assertFalse(result["deployment_performed"])
 
+    def test_missing_json_404_is_not_confused_with_server_failure(self):
+        report = live_check()
+        report["error_kind"] = "NOT_PUBLISHED"
+        result = summarize_online_readiness(branch_audit(), report)
+        self.assertEqual(result["status"], "NOT_PUBLISHED")
+        self.assertEqual(result["next_action"], "REVIEW_PAGES_SOURCE_AND_PUBLICATION_SEPARATELY")
+
+    def test_network_and_invalid_json_are_diagnostic_failures(self):
+        for kind in ("NETWORK_ERROR", "HTTP_ERROR", "INVALID_CONTENT"):
+            with self.subTest(kind=kind):
+                report = live_check()
+                report["error_kind"] = kind
+                result = summarize_online_readiness(branch_audit(), report)
+                self.assertEqual(result["status"], "LIVE_CHECK_FAILED")
+                self.assertEqual(result["next_action"], "INVESTIGATE_LIVE_CHECK_NO_PUBLISH")
+                self.assertFalse(result["online_ready"])
+
+    def test_unrecognized_error_kind_rejected(self):
+        report = live_check()
+        report["error_kind"] = "SUCCESS"
+        with self.assertRaisesRegex(ValueError, "Invalid live error"):
+            summarize_online_readiness(branch_audit(), report)
+
     def test_unsafe_report_rejected(self):
         report = live_check()
         report["database_writes"] = 1
