@@ -101,3 +101,30 @@ test('price and cost edits invalidate pending Yahoo preview before it can overwr
  assert.match(handler,/revision!==yahooComparisonRevision/);
  assert.match(handler,/if\(revision===yahooComparisonRevision\)/);
 });
+
+test('two-account portfolio totals reconcile with account views across multiple tickers',()=>{
+ const accounts=[
+  {accountId:'a',name:'A',holdings:[{ticker:'TSLA',quantityDisplay:3,averageCostUsd:180},{ticker:'MSFT',quantityDisplay:4,averageCostUsd:300}]},
+  {accountId:'b',name:'B',holdings:[{ticker:'TSLA',quantityDisplay:2,averageCostUsd:210},{ticker:'GOOGL',quantityDisplay:5,averageCostUsd:100}]}
+ ];
+ const prices={TSLA:200,MSFT:350,GOOGL:120};
+ const cases=[
+  {ids:['a'],tickers:['TSLA','MSFT'],market:2000,pnl:260},
+  {ids:['b'],tickers:['TSLA','GOOGL'],market:1000,pnl:80},
+  {ids:['a','b'],tickers:['TSLA','MSFT','GOOGL'],market:3000,pnl:340}
+ ];
+ for(const c of cases){
+  const selected=accounts.filter(a=>c.ids.includes(a.accountId));
+  const valuation=previewPortfolioValuation({holdings:c.tickers.map(ticker=>({ticker})),accounts:selected,prices});
+  assert.equal(valuation.totalMarketValueUsd,c.market);
+  assert.equal(valuation.totalUnrealizedPnlUsd,c.pnl);
+  assert.equal(valuation.rows.reduce((sum,row)=>sum+row.marketValueUsd,0),c.market);
+  assert.equal(valuation.rows.reduce((sum,row)=>sum+row.unrealizedPnlUsd,0),c.pnl);
+ }
+ const all=previewPortfolioValuation({holdings:cases[2].tickers.map(ticker=>({ticker})),accounts,prices});
+ const a=previewPortfolioValuation({holdings:cases[0].tickers.map(ticker=>({ticker})),accounts:[accounts[0]],prices});
+ const b=previewPortfolioValuation({holdings:cases[1].tickers.map(ticker=>({ticker})),accounts:[accounts[1]],prices});
+ assert.equal(all.totalMarketValueUsd,a.totalMarketValueUsd+b.totalMarketValueUsd);
+ assert.equal(all.totalUnrealizedPnlUsd,a.totalUnrealizedPnlUsd+b.totalUnrealizedPnlUsd);
+ assert.equal(weightedAverageAcquisitionCost('TSLA',accounts).averageCostUsd,192);
+});
