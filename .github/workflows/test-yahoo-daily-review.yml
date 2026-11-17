@@ -90,6 +90,12 @@ jobs:
           name: investlab-test-yahoo-rollback-review
           path: yahoo-pages-rollback/
           retention-days: 7
+      - name: Summarize price observation change (NO DEPLOY)
+        if: steps.prewrite.outcome == 'success'
+        id: decision
+        continue-on-error: true
+        run: |
+          python -m scripts.summarize_yahoo_test_refresh_decision --plan yahoo-pages-publication-plan.json --prewrite yahoo-pages-prewrite-check.json --output yahoo-pages-refresh-decision.json
       - name: Upload review-only diagnostic and candidate (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
@@ -103,6 +109,7 @@ jobs:
             yahoo-pages-refresh-review.json
             yahoo-pages-publication-plan.json
             yahoo-pages-prewrite-check.json
+            yahoo-pages-refresh-decision.json
           if-no-files-found: warn
           retention-days: 7
       - name: Fail when collection or validation was blocked
@@ -114,6 +121,7 @@ jobs:
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
           PREWRITE_OUTCOME: ${{ steps.prewrite.outcome }}
           BACKUP_OUTCOME: ${{ steps.backup.outcome }}
+          DECISION_OUTCOME: ${{ steps.decision.outcome }}
           PAGES_SOURCE_CONFIRMED: ${{ steps.pages_source.outputs.confirmed }}
         run: |
           if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then
@@ -124,7 +132,7 @@ jobs:
             echo "::notice::Review-only Yahoo collection succeeded; Pages comparison intentionally skipped pending source confirmation."
             exit 0
           fi
-          if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ]; then
+          if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ] || [ "$DECISION_OUTCOME" != success ]; then
             echo "::error::Yahoo review failed; no data was published or written."
             exit 1
           fi
