@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
 const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
 test('returns have sign-dependent styles without coloring missing data',()=>{assert.match(html,/\.valuation-positive\{/);assert.match(html,/\.valuation-negative\{/);assert.match(html,/amount>0\?'valuation-positive':amount<0\?'valuation-negative'/);assert.match(html,/value\.unrealizedPnlRatePct>0\?'valuation-positive':value\.unrealizedPnlRatePct<0\?'valuation-negative'/);});
-test('mobile table scrolls without dropping columns',()=>{assert.match(html,/class="holding-table-scroll" role="region"/);assert.match(html,/overflow-x:auto/);assert.match(html,/min-width:700px/);});
+test('mobile table scrolls without dropping columns',()=>{assert.match(html,/class="holding-table-scroll" role="region"/);assert.match(html,/overflow-x:auto/);assert.match(html,/min-width:950px/);});
 test('inline script parses',()=>{const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);});
