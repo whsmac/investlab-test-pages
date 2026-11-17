@@ -302,6 +302,7 @@ el('yahoo-price-fill').addEventListener('click',async()=>{
   const prices=Object.fromEntries(view.holdings.map(h=>[h.ticker,getAssumedPrice(h.ticker)]));
   const result=previewYahooPortfolioPriceFill(snapshot,view.holdings,prices);
   const updates=Object.entries(result.updates);
+  if(updates.length)invalidateYahooComparison();
   for(const [ticker,price] of updates)setAssumedPrice(ticker,String(price));
   if(updates.length){
    const selected=el('holding-detail').dataset.ticker;
