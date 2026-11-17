@@ -9,7 +9,8 @@ export function chartAxisModel(points,{width=680,height=210}={}){
  const x=i=>margin.left+i*plotWidth/(points.length-1);
  const y=v=>margin.top+(upper-v)*plotHeight/(upper-lower);
  const yTicks=Array.from({length:5},(_,i)=>({value:lower+(upper-lower)*i/4,y:y(lower+(upper-lower)*i/4)}));
- const indices=[0,Math.floor((points.length-1)/2),points.length-1];
+ const last=points.length-1;
+ const indices=Array.from({length:Math.min(5,points.length)},(_,i)=>Math.round(i*last/(Math.min(5,points.length)-1)));
  const xTicks=[...new Set(indices)].map(i=>({date:points[i].date,x:x(i)}));
  return {width,height,margin,plotWidth,plotHeight,yTicks,xTicks,
   path:points.map((p,i)=>`${x(i).toFixed(2)},${y(p.close).toFixed(2)}`).join(" ")};
