@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       source_run_id:
-        description: 'Successful TEST offline ledger workflow run ID'
+        description: 'Successful TEST Yahoo daily review run ID containing staging artifact'
         required: true
         type: string
 
