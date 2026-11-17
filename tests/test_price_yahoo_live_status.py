@@ -16,7 +16,7 @@ class YahooLiveStatusTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "live.json"
             with patch("sys.argv", ["verify_yahoo_test_pages_live", "--output", str(output)]), \
-                 patch.object(live, "fetch_public_json", side_effect=side_effect), \
+                 patch.object(live, "fetch_public_json", **({"return_value": side_effect} if isinstance(side_effect, bytes) else {"side_effect": side_effect})), \
                  redirect_stdout(io.StringIO()):
                 with self.assertRaises(SystemExit) as exit_result:
                     live.main()
