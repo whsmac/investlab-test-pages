@@ -4,12 +4,15 @@ import argparse
 import hashlib
 import json
 import shutil
+from scripts.export_yahoo_public_review import build_public_snapshot
 from pathlib import Path
 
 TARGET = Path("data/yahoo-public-review.json")
 
 
 def stage_asset(source: Path, directory: Path):
+    if not source.is_file() or source.is_symlink() or source.stat().st_size > 2_000_000:
+        raise ValueError("Rejected missing, linked or oversized Yahoo review asset")
     payload = json.loads(source.read_text(encoding="utf-8"))
     if (payload.get("mode") != "REVIEW_ONLY"
             or payload.get("source") != "Yahoo Finance"
@@ -19,6 +22,10 @@ def stage_asset(source: Path, directory: Path):
             or payload.get("row_count") != len(payload["observations"])
             or not payload["observations"]):
         raise ValueError("Rejected invalid Yahoo review asset")
+    # Staging is a trust boundary: verify every public row, not just metadata.
+    normalized = build_public_snapshot(payload)
+    if normalized["observations"] != payload["observations"]:
+        raise ValueError("Rejected unsorted, duplicate or private Yahoo observations")
     destination = directory / TARGET
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, destination)
