@@ -16,6 +16,8 @@ on:
       - 'src/ledger/yahoo-portfolio-valuation-preview.mjs'
       - 'tests/yahoo-portfolio-valuation-preview.test.mjs'
       - 'tests/test-yahoo-latest-prices.mjs'
+      - 'tests/yahoo-online-feed-status.test.mjs'
+      - 'src/market/load-published-yahoo-review.mjs'
       - '.github/workflows/market-price-refresh-test.yml'
       - 'tests/offline-ledger-check.test.mjs'
       - 'tests/multi-user-ledger-isolation.test.mjs'
@@ -215,7 +217,8 @@ jobs:
       - name: Validate TEST shared price snapshot (mocked)
         run: node --test tests/test-price-snapshot.mjs
       - name: Validate read-only latest Yahoo prices and stale blocking
-        run: node --test tests/test-yahoo-latest-prices.mjs
+        run: node --test tests/yahoo-online-feed-status.test.mjs
+          node --test tests/test-yahoo-latest-prices.mjs
       - name: Validate Yahoo-to-portfolio price fill preserves user inputs
         run: node --test tests/yahoo-portfolio-price-fill.test.mjs
       - name: Validate Yahoo portfolio UI wiring and module syntax
