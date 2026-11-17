@@ -85,3 +85,19 @@ test('valid ledger reload restarts selected Yahoo preview once, invalid ledger d
  assert.ok(html.includes("el('yahoo-valuation-price-mode').value='latest-close';\nel('render').click();"));
  assert.ok(!html.includes("el('render').click();\nel('yahoo-valuation-price-mode').value='latest-close';\nel('yahoo-valuation-preview').click();"));
 });
+
+test('price and cost edits invalidate pending Yahoo preview before it can overwrite valuation',()=>{
+ const html=readFileSync(new URL('../test-my-portfolio-ledger.html',import.meta.url),'utf8');
+ const start=html.indexOf('function markValuationStale(){');
+ const end=html.indexOf("el('holding-assumed-price').addEventListener",start);
+ assert.ok(start>=0&&end>start);
+ const stale=html.slice(start,end);
+ assert.match(stale,/invalidateYahooComparison\(\)/);
+ assert.match(stale,/el\('yahoo-valuation-preview'\)\.disabled=false/);
+ assert.match(stale,/lastPortfolioValuation=null/);
+ const yahooStart=html.indexOf("el('yahoo-valuation-preview').addEventListener('click',async()=>{");
+ const yahooEnd=html.indexOf("el('yahoo-price-fill').addEventListener",yahooStart);
+ const handler=html.slice(yahooStart,yahooEnd);
+ assert.match(handler,/revision!==yahooComparisonRevision/);
+ assert.match(handler,/if\(revision===yahooComparisonRevision\)/);
+});
