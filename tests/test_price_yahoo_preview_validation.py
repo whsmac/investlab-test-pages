@@ -8,7 +8,9 @@ from scripts.validate_yahoo_test_site_preview import validate_preview
 class TestYahooPreviewValidation(unittest.TestCase):
     def prepare(self, root):
         for path in (
-            "index.html", "test-yahoo-price-review.html",
+            "index.html", "test-yahoo-price-review.html", "test-my-portfolio-ledger.html",
+            "src/market/yahoo-latest-prices.mjs",
+            "src/ledger/yahoo-portfolio-price-fill.mjs",
             "src/market/load-published-yahoo-review.mjs",
             "src/market/yahoo-review-chart-series.mjs",
             "src/market/yahoo-chart-freshness.mjs",
@@ -25,6 +27,12 @@ class TestYahooPreviewValidation(unittest.TestCase):
             'reviewYahooCandidate(candidate,snapshot,companyMap); '
             'id="preview" id="freshness" void autoLoadYahooReview() '
             'renderReviewCharts(source); assessYahooChartFreshness(snapshot);', encoding="utf-8")
+        (root / "test-my-portfolio-ledger.html").write_text(
+            'import {a} from "./src/market/load-published-yahoo-review.mjs"; '
+            'import {b} from "./src/ledger/yahoo-portfolio-price-fill.mjs"; '
+            'id="yahoo-price-fill" loadPublishedYahooReview({origin:location.href}) '
+            'previewYahooPortfolioPriceFill(snapshot,view.holdings,prices) '
+            "el('portfolio-price-calc').click()", encoding="utf-8")
         (root / "src/market/load-published-yahoo-review.mjs").write_text(
             'const path="./data/yahoo-public-review.json";', encoding="utf-8")
         asset = root / "data/yahoo-public-review.json"
@@ -96,6 +104,23 @@ class TestYahooPreviewValidation(unittest.TestCase):
             page = root / "test-yahoo-price-review.html"
             page.write_text(page.read_text() + ' import {x} from "./src/market/missing.mjs";')
             with self.assertRaisesRegex(ValueError, "Broken local module"):
+                validate_preview(root)
+
+    def test_missing_portfolio_price_fill_module_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            (root / "src/ledger/yahoo-portfolio-price-fill.mjs").unlink()
+            with self.assertRaisesRegex(ValueError, "Missing"):
+                validate_preview(root)
+
+    def test_broken_portfolio_import_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            page = root / "test-my-portfolio-ledger.html"
+            page.write_text(page.read_text() + ' import {x} from "./src/ledger/missing.mjs";')
+            with self.assertRaisesRegex(ValueError, "Broken TEST portfolio module"):
                 validate_preview(root)
 
     def test_private_files_in_preview_are_rejected(self):
