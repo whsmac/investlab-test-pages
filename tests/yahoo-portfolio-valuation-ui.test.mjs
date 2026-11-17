@@ -23,6 +23,11 @@ test("TEST portfolio exposes opt-in non-mutating Yahoo valuation preview",()=>{
  assert.match(html,/Yahoo 종가 적용/);
  assert.match(html,/사용자 가정주가 유지/);
  assert.match(html,/평가금액 차이/);
+ assert.match(html,/function invalidateYahooComparison\(\)/);
+ assert.match(html,/yahooComparisonRevision\+\+/);
+ assert.match(html,/revision!==yahooComparisonRevision/);
+ assert.match(html,/yahoo-valuation-price-mode\x27\)\.addEventListener\(\x27change\x27,invalidateYahooComparison\)/);
+ assert.match(html,/cost-review-rows\x27\)\.addEventListener\(\x27input\x27,invalidateYahooComparison\)/);
 });
 test("portfolio embedded module syntax is valid",()=>{
  const match=html.match(/<script type="module">([\s\S]*?)<\/script>/);
