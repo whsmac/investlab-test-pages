@@ -47,6 +47,25 @@ def assess_refresh(current: Path, proposed: Path, today=None):
     observations_changed = True
     if previous is not None:
         try:
+            old_payload_for_dates = json.loads(previous.decode("utf-8"))
+            old_rows_for_dates = old_payload_for_dates.get("observations")
+            if (old_payload_for_dates.get("mode") == "REVIEW_ONLY"
+                and old_payload_for_dates.get("source") == "Yahoo Finance"
+                and old_payload_for_dates.get("database_insert_authorized") is False
+                and old_payload_for_dates.get("writes_performed") == 0
+                and isinstance(old_rows_for_dates, list)
+                and old_payload_for_dates.get("row_count") == len(old_rows_for_dates)):
+                old_normalized = build_public_snapshot(old_payload_for_dates)
+                if old_normalized["observations"] == sorted(old_rows_for_dates, key=lambda row: (row["ticker"], row["trading_date"])):
+                    for ticker in EXPECTED:
+                        previous_dates = [date.fromisoformat(row["trading_date"]) for row in old_rows_for_dates if row["ticker"] == ticker]
+                        proposed_dates = [date.fromisoformat(row["trading_date"]) for row in rows if row["ticker"] == ticker]
+                        if previous_dates and max(proposed_dates) < max(previous_dates):
+                            raise ValueError("Price history regression rejected: " + ticker)
+        except (UnicodeError, json.JSONDecodeError, KeyError, TypeError, OverflowError):
+            pass
+    if previous is not None:
+        try:
             old_payload = json.loads(previous.decode("utf-8"))
             old_rows = old_payload.get("observations")
             if (old_payload.get("mode") == "REVIEW_ONLY"
