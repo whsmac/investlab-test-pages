@@ -214,7 +214,7 @@ el('yahoo-price-fill').addEventListener('click',async()=>{
   const unavailable=result.skipped.filter(item=>item.reason==='PRICE_UNAVAILABLE').length;
   const unsupported=result.skipped.filter(item=>item.reason==='UNSUPPORTED_TICKER').length;
   const latestTradingDate=snapshot.observations.reduce((latest,row)=>row.trading_date>latest?row.trading_date:latest,'');
-  status.textContent='기준 거래일 '+latestTradingDate+' · '+updates.length+'개 종목 종가 입력 · 기존 입력 '+preserved+'개 유지 · 갱신 불가 '+unavailable+'개 · 미지원 '+unsupported+'개 · 실시간 시세 아님';
+  status.textContent='데이터 최근 거래일 '+latestTradingDate+' · '+updates.length+'개 종목 종가 입력 · 기존 입력 '+preserved+'개 유지 · 갱신 불가 '+unavailable+'개 · 미지원 '+unsupported+'개 · 실시간 시세 아님';
  }catch(error){status.textContent='종가 가져오기 확인 필요: '+error.message+' · 입력된 값이 있다면 재계산 상태를 확인하세요';}
  finally{button.disabled=false;}
 });
