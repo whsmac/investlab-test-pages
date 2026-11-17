@@ -29,7 +29,7 @@ jobs:
       - name: Read actual TEST Pages publishing source
         run: python -m scripts.audit_yahoo_test_pages_source --output pages-source.json
       - name: Read current TEST Yahoo public asset availability
-        run: python -m scripts.verify_yahoo_test_pages_live --output pages-live.json
+        run: python -m scripts.verify_yahoo_test_pages_live --report-only --output pages-live.json
       - name: Read TEST branches without changing them
         run: python -m scripts.audit_yahoo_test_pages_branch --output pages-branches.json
       - name: Summarize TEST readiness without publishing
