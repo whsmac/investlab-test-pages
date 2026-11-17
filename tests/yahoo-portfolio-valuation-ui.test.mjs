@@ -11,6 +11,10 @@ test("TEST portfolio exposes opt-in non-mutating Yahoo valuation preview",()=>{
  assert.match(html,/value="latest-close"/);
  assert.match(html,/priceMode:el\("yahoo-valuation-price-mode"\)\.value/);
  assert.match(html,/id="yahoo-valuation-preview-result"/);
+ assert.match(html,/id="yahoo-valuation-preview-table"/);
+ assert.match(html,/tableRoot\.replaceChildren\(table\)/);
+ assert.match(html,/평가금액 USD/);
+ assert.match(html,/평가손익 USD/);
  assert.match(html,/import \{compareYahooPortfolioValuation\}/);
  assert.match(html,/compareYahooPortfolioValuation\(\{/);
  assert.match(html,/snapshot,holdings:currentView\.holdings,accounts:selectedValuationAccounts\(currentView\),assumedPrices/);
