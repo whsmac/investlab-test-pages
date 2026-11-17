@@ -4,7 +4,7 @@ from pathlib import Path
 class DailyReviewWorkflowContractTests(unittest.TestCase):
     def test_schedule_is_read_only_and_never_deploys(self):
         text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
-        self.assertIn("cron: '35 23 * * 0-4'",text)
+        self.assertIn("cron: '35 23 * * 1-5'",text)
         self.assertIn("contents: read",text)
         self.assertIn("persist-credentials: false",text)
         self.assertIn("concurrency:",text)
