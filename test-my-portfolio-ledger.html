@@ -180,6 +180,24 @@ function renderMissingInputActions(completion){
  }
 }
 el('holding-recalculate-all').addEventListener('click',()=>{el('portfolio-price-calc').click();el('valuation-completion-status').scrollIntoView({behavior:'smooth',block:'center'});});
+// Read-only source availability check on page load. Never fills or overwrites user prices.
+async function checkYahooPublishedFeedOnLoad(){
+ const status=el('yahoo-price-fill-status');
+ if(location.protocol!=='https:'||location.hostname!=='whsmac.github.io'||
+    !location.pathname.startsWith('/investlab-test-pages/'))return;
+ try{
+  const snapshot=await loadPublishedYahooReview({origin:location.href});
+  const latestByTicker=new Map();
+  for(const row of snapshot.observations){
+   if(!latestByTicker.has(row.ticker)||row.trading_date>latestByTicker.get(row.ticker))
+    latestByTicker.set(row.ticker,row.trading_date);
+  }
+  status.textContent='온라인 종가 파일 확인 · '+latestByTicker.size+'개 종목 · 수동 적용 대기 · 실시간 시세 아님';
+ }catch(error){
+  status.textContent='온라인 종가 확인: '+error.message;
+ }
+}
+void checkYahooPublishedFeedOnLoad();
 el('yahoo-price-fill').addEventListener('click',async()=>{
  const button=el('yahoo-price-fill'),status=el('yahoo-price-fill-status');
  button.disabled=true;
