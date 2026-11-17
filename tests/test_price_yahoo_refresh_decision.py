@@ -37,6 +37,27 @@ class DecisionTests(unittest.TestCase):
         checked["new_sha256"]="d"*64
         with self.assertRaisesRegex(ValueError,"do not match"):
             summarize(plan,checked)
+    def test_metadata_only_change_needs_no_publication(self):
+        plan,checked=pair(True)
+        plan["publication_needed"]=False
+        checked["publication_needed"]=False
+        result=summarize(plan,checked)
+        self.assertFalse(result["publication_needed"])
+        self.assertEqual(result["status"],"NO_OBSERVATION_CHANGE")
+
+    def test_mismatched_change_flag_rejected(self):
+        plan,checked=pair(True)
+        checked["change_needed"]=False
+        with self.assertRaisesRegex(ValueError,"Change-needed"):
+            summarize(plan,checked)
+
+    def test_false_change_flag_with_different_hashes_rejected(self):
+        plan,checked=pair(True)
+        plan["change_needed"]=False
+        checked["change_needed"]=False
+        with self.assertRaisesRegex(ValueError,"Change-needed"):
+            summarize(plan,checked)
+
     def test_unsafe_deployment_rejected(self):
         plan,checked=pair()
         checked["deployment_performed"]=True
