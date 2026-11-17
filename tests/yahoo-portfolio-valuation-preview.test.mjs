@@ -21,7 +21,7 @@ test("fresh Yahoo price fills empty assumption and computes portfolio valuation 
  assert.deepEqual(input.assumedPrices,{});
 });
 test("existing user price remains authoritative in valuation",()=>{
- const result=previewYahooPortfolioValuation({snapshot:snapshot(),holdings,accounts,assumedPrices:{TSLA:150},now});
+ const result=previewYahooPortfolioValuation({snapshot:snapshot(),holdings,accounts,assumedPrices:{TSLA:"150"},now});
  assert.deepEqual(result.fill.updates,{});
  assert.equal(result.valuation.totalMarketValueUsd,300);
  assert.equal(result.valuation.totalUnrealizedPnlUsd,140);
@@ -33,7 +33,7 @@ test("stale Yahoo price does not produce a fabricated portfolio total",()=>{
 });
 test("missing cost basis leaves market value but not total unrealized profit",()=>{
  const result=previewYahooPortfolioValuation({snapshot:snapshot(),holdings,
- accounts:[{accountId:"a",name:"TEST",holdings:[{ticker:"TSLA",quantityDisplay:"2"}]}],now});
+ accounts:[{accountId:"a",name:"TEST",holdings:[{ticker:"TSLA",quantityDisplay:"2",averageCostUsd:null}]}],now});
  assert.equal(result.valuation.totalMarketValueUsd,208);
  assert.equal(result.valuation.totalUnrealizedPnlUsd,null);
 });
