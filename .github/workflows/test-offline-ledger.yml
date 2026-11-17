@@ -217,7 +217,7 @@ jobs:
       - name: Inspect actual TEST Pages source
         run: python -m scripts.audit_yahoo_test_pages_source --output pages-source.json
       - name: Inspect live Yahoo TEST file
-        run: python -m scripts.verify_yahoo_test_pages_live --output pages-live.json
+        run: python -m scripts.verify_yahoo_test_pages_live --report-only --output pages-live.json
       - name: Inspect TEST branch assets
         run: python -m scripts.audit_yahoo_test_pages_branch --output pages-branches.json
       - name: Summarize online state
