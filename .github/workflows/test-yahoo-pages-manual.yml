@@ -50,6 +50,20 @@ jobs:
       - name: Record verified TEST bundle checksum (NO DEPLOY)
         run: |
           python -m scripts.report_yahoo_test_bundle_readiness --site "${RUNNER_TEMP}/investlab-test-site-review" --output "${RUNNER_TEMP}/yahoo-manual-review-readiness.json"
+      - name: Verify fresh reviewed commit and JSON for manual handoff (NO DEPLOY)
+        run: |
+          REVIEWED_SHA="$(git rev-parse HEAD)"
+          python -m scripts.check_yahoo_test_pages_handoff \
+            --readiness "${RUNNER_TEMP}/yahoo-manual-review-readiness.json" \
+            --site "${RUNNER_TEMP}/investlab-test-site-review" \
+            --reviewed-commit "$REVIEWED_SHA" \
+            --output "${RUNNER_TEMP}/yahoo-manual-review-handoff.json"
+      - name: Upload manual handoff verification (NO DEPLOY)
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-manual-handoff
+          path: ${{ runner.temp }}/yahoo-manual-review-handoff.json
+          retention-days: 7
       - name: Upload verified TEST bundle readiness report
         uses: actions/upload-artifact@v4
         with:
