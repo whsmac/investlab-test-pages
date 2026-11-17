@@ -43,6 +43,18 @@ class PrewriteTests(unittest.TestCase):
         self.plan["deployment_authorized"]=True
         with self.assertRaisesRegex(ValueError,"Unsafe"):
             verify_prewrite(self.plan,SHA,self.site,self.new)
+    def test_nonboolean_change_flag_rejected(self):
+        self.plan["change_needed"]=1
+        with self.assertRaisesRegex(ValueError,"Change-needed"):
+            verify_prewrite(self.plan,SHA,self.site,self.new)
+
+    def test_metadata_only_change_does_not_request_publication(self):
+        self.plan["publication_needed"]=False
+        result=verify_prewrite(self.plan,SHA,self.site,self.new)
+        self.assertTrue(result["change_needed"])
+        self.assertFalse(result["publication_needed"])
+        self.assertEqual(self.old.read_bytes(),b"old")
+
     def test_noop_when_files_identical(self):
         self.new.write_bytes(b"old")
         same=hashlib.sha256(b"old").hexdigest()
