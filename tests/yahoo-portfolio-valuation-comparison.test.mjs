@@ -47,3 +47,19 @@ test("latest-close preview overrides only calculation, never the saved user pric
 test("invalid price mode is rejected",()=>{
  assert.throws(()=>compareYahooPortfolioValuation({snapshot:snapshot(),holdings,accounts,priceMode:"unknown",now}),/Invalid price mode/);
 });
+
+test("latest-close mode refuses stale Yahoo even when user assumption exists",()=>{
+ const assumedPrices={TSLA:"150"};
+ const result=compareYahooPortfolioValuation({snapshot:snapshot("2026-09-01"),holdings,accounts,assumedPrices,priceMode:"latest-close",now});
+ assert.equal(result.rows[0].source,"PRICE_UNAVAILABLE");
+ assert.equal(result.rows[0].marketValueUsd,null);
+ assert.equal(result.latest.totalMarketValueUsd,null);
+ assert.equal(result.latest.totalUnrealizedPnlUsd,null);
+ assert.equal(result.existing.totalMarketValueUsd,300);
+ assert.deepEqual(assumedPrices,{TSLA:"150"});
+});
+test("fill-missing mode still explicitly permits the user assumption on stale Yahoo",()=>{
+ const result=compareYahooPortfolioValuation({snapshot:snapshot("2026-09-01"),holdings,accounts,assumedPrices:{TSLA:"150"},priceMode:"fill-missing",now});
+ assert.equal(result.rows[0].source,"USER_ASSUMPTION");
+ assert.equal(result.latest.totalMarketValueUsd,300);
+});
