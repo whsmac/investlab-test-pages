@@ -79,8 +79,13 @@ def main():
         report = verify_payload(fetch_public_json(), expected_sha256=args.expected_sha256)
         report["url"] = TARGET
     except (ValueError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+        # A missing asset is different from an invalid file or a temporary network failure.
+        error_kind = ("NOT_PUBLISHED" if isinstance(exc, urllib.error.HTTPError) and exc.code == 404
+                      else "HTTP_ERROR" if isinstance(exc, urllib.error.HTTPError)
+                      else "NETWORK_ERROR" if isinstance(exc, (urllib.error.URLError, TimeoutError, OSError))
+                      else "INVALID_CONTENT")
         report = {"mode": "TEST_PAGES_LIVE_READ_ONLY_CHECK", "reachable": False,
-                  "url": TARGET, "reason": str(exc),
+                  "url": TARGET, "error_kind": error_kind, "reason": str(exc),
                   "database_writes": 0, "deployment_performed": False}
     if args.output:
         args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
