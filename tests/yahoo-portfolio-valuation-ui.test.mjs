@@ -6,6 +6,10 @@ import {spawnSync} from "node:child_process";
 const html=readFileSync(new URL("../test-my-portfolio-ledger.html",import.meta.url),"utf8");
 test("TEST portfolio exposes opt-in non-mutating Yahoo valuation preview",()=>{
  assert.match(html,/id="yahoo-valuation-preview"/);
+ assert.match(html,/id="yahoo-valuation-price-mode"/);
+ assert.match(html,/value="fill-missing"/);
+ assert.match(html,/value="latest-close"/);
+ assert.match(html,/priceMode:el\("yahoo-valuation-price-mode"\)\.value/);
  assert.match(html,/id="yahoo-valuation-preview-result"/);
  assert.match(html,/import \{compareYahooPortfolioValuation\}/);
  assert.match(html,/compareYahooPortfolioValuation\(\{/);
