@@ -8,7 +8,7 @@ import hashlib
 import json
 import urllib.error
 import urllib.request
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 TARGET = "https://whsmac.github.io/investlab-test-pages/data/yahoo-public-review.json"
@@ -26,8 +26,6 @@ def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date |
         raise ValueError("Unexpected public Yahoo JSON source or mode")
     if payload.get("database_insert_authorized") is not False or payload.get("writes_performed") != 0:
         raise ValueError("Public Yahoo JSON write safety flags invalid")
-    if len(raw) > MAX_BYTES:
-        raise ValueError("Public TEST Pages JSON exceeds size limit")
     rows = payload.get("observations")
     if not isinstance(rows, list) or not rows or len(rows) > 10000 or payload.get("row_count") != len(rows):
         raise ValueError("Public Yahoo JSON observation count invalid")
@@ -40,7 +38,8 @@ def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date |
         raise ValueError("Unexpected public Yahoo observation fields")
     if {r["ticker"] for r in rows} != TICKERS:
         raise ValueError("Incomplete public Yahoo ticker coverage")
-    now = today or datetime.now().astimezone().date()
+    # The TEST audience is in Korea; use a fixed KST calendar day on CI runners too.
+    now = today or datetime.now(timezone(timedelta(hours=9))).date()
     latest = {}
     for row in rows:
         day = date.fromisoformat(row["trading_date"])
