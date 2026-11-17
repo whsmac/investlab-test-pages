@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -57,12 +58,20 @@ def fetch_chart(ticker):
     request = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (compatible; INVESTLAB-TEST/1.0)",
         "Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=8) as response:
-        if response.status != 200:
-            raise ValueError("Non-200 response")
-        data = response.read(1_000_001)
-        if len(data) > 1_000_000:
-            raise ValueError("Response exceeds 1 MB")
+    # Retry only transient gateway failures; never retry Yahoo rate-limit (429).
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=8) as response:
+                if response.status != 200:
+                    raise ValueError("Non-200 response")
+                data = response.read(1_000_001)
+                if len(data) > 1_000_000:
+                    raise ValueError("Response exceeds 1 MB")
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (502, 503, 504) or attempt:
+                raise
+            time.sleep(2)
     return parse_chart(json.loads(data.decode("utf-8")), ticker)
 
 
