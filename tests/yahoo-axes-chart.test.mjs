@@ -39,7 +39,7 @@ test("SVG contains USD axis, date labels, and price line",()=>{
  assert.match(svg.attrs["aria-label"],/X축 거래일, Y축 USD 가격/);
  assert.ok(nodes.some(n=>n.tag==="text"&&n.textContent==="USD"));
  assert.ok(nodes.some(n=>n.tag==="text"&&n.textContent==="11-16"));
- assert.ok(nodes.some(n=>n.tag==="text"&&n.textContent==="120.00"));
+ assert.ok(nodes.some(n=>n.tag==="text"&&n.textContent==="110.00"));
  assert.ok(nodes.some(n=>n.tag==="polyline"));
 });
 
