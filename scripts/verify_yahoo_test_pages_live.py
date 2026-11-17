@@ -73,6 +73,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--expected-sha256", default=None)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--report-only", action="store_true", help="Always exit zero after writing a diagnostic report; does not treat unavailable data as ready")
     args = parser.parse_args()
     try:
         report = verify_payload(fetch_public_json(), expected_sha256=args.expected_sha256)
@@ -89,7 +90,7 @@ def main():
     if args.output:
         args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False))
-    if not report["reachable"] or not report.get("fresh"):
+    if (not report["reachable"] or not report.get("fresh")) and not args.report_only:
         raise SystemExit(1)
 
 if __name__ == "__main__":
