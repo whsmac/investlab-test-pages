@@ -41,7 +41,7 @@ class RefreshRegressionTests(unittest.TestCase):
     def test_one_ticker_rollback_rejected(self):
         old = payload(self.today - timedelta(days=2))
         new = payload(self.today - timedelta(days=1))
-        old["observations"][0]["trading_date"] = (self.today - timedelta(days=1)).isoformat()
+        old["observations"][0]["trading_date"] = self.today.isoformat()
         with self.assertRaisesRegex(ValueError, "Price history regression"):
             self.write(old, new)
             assess_refresh(self.site, self.proposed, today=self.today)
