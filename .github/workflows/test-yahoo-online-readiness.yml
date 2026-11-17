@@ -1,0 +1,55 @@
+name: TEST Yahoo online readiness audit (manual, NO DEPLOY)
+# Manual read-only diagnostic. Never deploy, publish, or access Supabase.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-online-test-yahoo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout TEST feature branch without write credentials
+        uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Audit TEST branches for published candidate (read-only)
+        id: branches
+        continue-on-error: true
+        run: python -m scripts.audit_yahoo_test_pages_branch --output yahoo-branch-audit.json
+      - name: Check exact online TEST Yahoo JSON URL (read-only)
+        id: live
+        continue-on-error: true
+        run: python -m scripts.verify_yahoo_test_pages_live --output yahoo-live-check.json
+      - name: Summarize online readiness without authorizing publication
+        if: steps.branches.outcome == 'success' && steps.live.outcome == 'success'
+        run: |
+          python -m scripts.report_yahoo_online_readiness --branch-audit yahoo-branch-audit.json --live-check yahoo-live-check.json --output yahoo-online-readiness.json
+      - name: Upload read-only evidence even when offline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-online-readiness
+          path: |
+            yahoo-branch-audit.json
+            yahoo-live-check.json
+            yahoo-online-readiness.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Fail only on audit execution errors, not expected unpublished JSON
+        if: always()
+        env:
+          BRANCH_RESULT: ${{ steps.branches.outcome }}
+        run: |
+          if [ "$BRANCH_RESULT" != success ] || [ ! -f yahoo-live-check.json ] || [ ! -f yahoo-online-readiness.json ]; then
+            echo "::error::Read-only diagnostic failed to execute completely."
+            exit 1
+          fi
+          echo "Read-only online readiness evidence captured. No deployment or database writes."
