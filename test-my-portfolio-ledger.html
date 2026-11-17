@@ -125,6 +125,9 @@ function renderValuationSummary(result){
 let lastPortfolioValuation=null;
 let lastYahooPriceDisplay=new Map();
 function markValuationStale(){
+ // Invalidate any in-flight Yahoo preview before it can overwrite edited costs or prices.
+ if(typeof invalidateYahooComparison==='function')invalidateYahooComparison();
+ el('yahoo-valuation-preview').disabled=false;
  lastPortfolioValuation=null;
  lastYahooPriceDisplay=new Map();
  for(const row of el('holdings').rows){if(row.cells[0])row.cells[0].textContent='—';for(const cell of [...row.cells].slice(5))cell.textContent='미계산';}
