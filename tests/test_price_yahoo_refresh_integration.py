@@ -53,6 +53,30 @@ class OfflineRefreshIntegrationTests(unittest.TestCase):
         self.assertEqual(backup["previous_sha256"],hashlib.sha256(previous).hexdigest())
         self.assertEqual((self.root/"rollback/previous-yahoo-public-review.json").read_bytes(),previous)
         self.assertEqual(self.old.read_bytes(),previous)
+    def test_timestamp_only_change_skips_publication(self):
+        old_payload=candidate()
+        old_payload["published_at"]="2026-11-17T00:00:00+00:00"
+        new_payload=candidate()
+        new_payload["published_at"]="2026-11-17T01:00:00+00:00"
+        self.old.write_text(json.dumps(old_payload))
+        self.new.write_text(json.dumps(new_payload))
+        review=assess_refresh(self.site,self.new,today=DAY)
+        self.assertTrue(review["change_needed"])
+        self.assertFalse(review["observations_changed"])
+        self.assertFalse(review["publication_needed"])
+        plan=build_plan(review,BRANCH_SHA)
+        self.assertFalse(plan["publication_needed"])
+        checked=verify_prewrite(plan,BRANCH_SHA,self.site,self.new)
+        self.assertFalse(checked["publication_needed"])
+        self.assertEqual(json.loads(self.old.read_text())["published_at"],old_payload["published_at"])
+    def test_price_change_requires_publication(self):
+        self.old.write_text(json.dumps(candidate()))
+        changed=candidate()
+        changed["observations"][0]["close_price"]="101"
+        self.new.write_text(json.dumps(changed))
+        review=assess_refresh(self.site,self.new,today=DAY)
+        self.assertTrue(review["observations_changed"])
+        self.assertTrue(build_plan(review,BRANCH_SHA)["publication_needed"])
     def test_moved_branch_and_modified_asset_fail_without_writes(self):
         previous=b"original"
         self.old.write_bytes(previous)
