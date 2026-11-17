@@ -284,6 +284,12 @@ el('yahoo-valuation-preview').addEventListener('click',async()=>{
    tbody.append(tr);
   }
   table.append(tbody);tableRoot.replaceChildren(table);
+  // Show the same read-only result in the primary holdings table and summary.
+  // The source ledger, price drafts and account cost inputs remain unchanged.
+  lastPortfolioValuation=result.latest;
+  show();
+  renderValuationSummary(result.latest);
+  el('summary-note').textContent='선택 주가 기준 · '+(result.priceMode==='latest-close'?'Yahoo 최신 종가 우선':'사용자 가정주가 우선')+' · 실시간 시세 아님 · 서버 미검증';
  }catch(error){if(revision===yahooComparisonRevision)output.textContent='최신 종가 기준 평가 미리보기 불가: '+error.message+' · 기존 입력값 유지';}
  finally{button.disabled=false;}
 });
@@ -485,5 +491,7 @@ el('ledger-sync-preview').addEventListener('click',()=>{
   target.textContent='원장 변환 검사 성공 · 형식 '+envelope.format+' · 원장 문서 확인 · TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단: '+(!result.canPost?'예':'아니오');
  }catch(error){target.textContent='원장 변환 검사 실패 · '+error.message+' · 원장 데이터는 변경하지 않았습니다.';}
 });
-el('account').addEventListener('change',()=>{invalidateYahooComparison();lastPortfolioValuation=null;show();rebuildAssumedPriceRows();});el('cost-review-rows').addEventListener('input',markValuationStale);el('holding-search').addEventListener('input',show);el('holding-sort').addEventListener('change',show);el('render').click();
+el('account').addEventListener('change',()=>{invalidateYahooComparison();lastPortfolioValuation=null;show();rebuildAssumedPriceRows();el('yahoo-valuation-preview').click();});el('cost-review-rows').addEventListener('input',markValuationStale);el('holding-search').addEventListener('input',show);el('holding-sort').addEventListener('change',show);el('render').click();
+el('yahoo-valuation-price-mode').value='latest-close';
+el('yahoo-valuation-preview').click();
 </script></body></html>
