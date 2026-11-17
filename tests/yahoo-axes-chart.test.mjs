@@ -8,12 +8,21 @@ const points=[
  {date:"2026-11-16",close:110}
 ];
 
-test("chart includes X date ticks and five Y USD ticks",()=>{
+test("chart includes X trading-date ticks and five Y USD ticks",()=>{
  const model=chartAxisModel(points);
  assert.deepEqual(model.xTicks.map(t=>t.date),["2026-11-12","2026-11-13","2026-11-16"]);
+ assert.equal(model.xTicks.length,3);
  assert.equal(model.yTicks.length,5);
  assert.ok(model.yTicks.every(t=>Number.isFinite(t.y)));
  assert.equal(model.path.split(" ").length,3);
+});
+
+test("21 trading sessions show five evenly spaced date labels",()=>{
+ const sessions=Array.from({length:21},(_,i)=>({date:`2026-10-${String(i+1).padStart(2,"0")}`,close:100+i}));
+ const model=chartAxisModel(sessions);
+ assert.equal(model.xTicks.length,5);
+ assert.deepEqual(model.xTicks.map(t=>t.date),["2026-10-01","2026-10-06","2026-10-11","2026-10-16","2026-10-21"]);
+ assert.ok(model.xTicks.every((tick,i,all)=>i===0||tick.x>all[i-1].x));
 });
 
 test("flat price series still yields finite coordinates",()=>{
