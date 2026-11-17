@@ -29,7 +29,7 @@ jobs:
         continue-on-error: true
         run: python -m scripts.verify_yahoo_test_pages_live --output yahoo-live-check.json
       - name: Summarize online readiness without authorizing publication
-        if: steps.branches.outcome == 'success' && steps.live.outcome == 'success'
+        if: steps.branches.outcome == 'success' && steps.live.outcome != 'skipped'
         run: |
           python -m scripts.report_yahoo_online_readiness --branch-audit yahoo-branch-audit.json --live-check yahoo-live-check.json --output yahoo-online-readiness.json
       - name: Upload read-only evidence even when offline
