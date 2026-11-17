@@ -9,6 +9,8 @@ on:
       - 'scripts/summarize_price_probe_test.py'
       - 'tests/test_price*.py'
       - 'tests/test-price-snapshot.mjs'
+      - 'src/market/yahoo-latest-prices.mjs'
+      - 'tests/test-yahoo-latest-prices.mjs'
       - '.github/workflows/market-price-refresh-test.yml'
       - 'tests/offline-ledger-check.test.mjs'
       - 'tests/multi-user-ledger-isolation.test.mjs'
@@ -207,6 +209,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_price*.py' -v
       - name: Validate TEST shared price snapshot (mocked)
         run: node --test tests/test-price-snapshot.mjs
+      - name: Validate read-only latest Yahoo prices and stale blocking
+        run: node --test tests/test-yahoo-latest-prices.mjs
       - name: Validate TEST Yahoo company mapping (mocked)
         run: node --test tests/test-yahoo-test-company-map.mjs
       - name: Validate TEST Yahoo browser comparison (mocked)
