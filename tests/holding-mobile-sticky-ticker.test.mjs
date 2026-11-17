@@ -9,3 +9,10 @@ test('sticky ticker column has a bounded width and cannot cover the next value c
  assert.match(html,/\.holding-table-scroll \.holding-pick\{[^}]*max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\}/);
  assert.match(html,/\.holding-table-scroll th:first-child,\.holding-table-scroll td:first-child\{[^}]*min-width:48px;width:48px\}/);
 });
+
+test('mobile holdings headings and numeric columns remain readable without stray filter text',()=>{
+ assert.ok(!html.includes("</select>'</div><p id=\"holding-filter-status\""));
+ assert.match(html,/\.holding-table-scroll th\{font-size:clamp\(11px,1\.4vw,13px\);line-height:1\.35\}/);
+ assert.match(html,/\.holding-table-scroll td\{font-size:clamp\(12px,1\.5vw,14px\)\}/);
+ assert.match(html,/class="holding-scroll-hint"/);
+});
