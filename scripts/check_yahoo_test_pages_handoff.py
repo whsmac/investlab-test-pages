@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 EXPECTED_MODE = "TEST_YAHOO_BUNDLE_READINESS_ONLY"
 TARGET = "https://whsmac.github.io/investlab-test-pages/"
@@ -28,7 +28,7 @@ def assess_handoff(readiness, site: Path, expected_commit: str, today=None):
         raise ValueError("Site JSON differs from reviewed readiness checksum")
     from scripts.validate_yahoo_test_site_preview import validate_preview
     payload = json.loads(source.read_text(encoding="utf-8"))
-    current = today or date.today()
+    current = today or datetime.now(timezone(timedelta(hours=9))).date()
     for ticker in ("MSFT", "GOOGL", "AMZN", "META", "TSLA"):
         dates = [date.fromisoformat(row["trading_date"]) for row in payload["observations"] if row["ticker"] == ticker]
         if not dates or max(dates) > current or max(dates) < current - timedelta(days=7):
