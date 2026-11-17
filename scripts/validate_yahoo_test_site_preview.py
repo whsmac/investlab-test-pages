@@ -75,7 +75,7 @@ def validate_preview(site: Path):
                    "el('portfolio-price-calc').click()"):
         if marker not in portfolio:
             raise ValueError("TEST portfolio Yahoo integration missing: " + marker)
-    for import_path in re.findall(r'from\\s+["\\'](\\./[^"\\']+)["\\']', portfolio):
+    for import_path in re.findall(r"from\\s+['\\\"](\\./[^'\\\"]+)['\\\"]", portfolio):
         target = site / import_path.removeprefix("./")
         if not target.is_file():
             raise ValueError("Broken TEST portfolio module import: " + import_path)
