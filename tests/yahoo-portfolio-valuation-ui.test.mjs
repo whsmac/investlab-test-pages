@@ -42,3 +42,9 @@ test("portfolio embedded module syntax is valid",()=>{
  const result=spawnSync(process.execPath,["--check","--input-type=module"],{input:match[1],encoding:"utf8"});
  assert.equal(result.status,0,result.stderr);
 });
+
+test("Yahoo fetch failure clears stale displayed totals and remains visible outside advanced tools",()=>{
+ assert.match(html,/lastYahooPriceDisplay=new Map\(\);lastPortfolioValuation=null;\s*show\(\);resetValuationSummary\('최신 종가 조회 실패/);
+ assert.match(html,/평가금액 미계산 · 기존 가정주가 보존/);
+ assert.match(html,/id="summary-note"/);
+});
