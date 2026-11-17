@@ -21,3 +21,10 @@ test("invalid quantity and negative cost are rejected",()=>{
  assert.throws(()=>weightedAverageAcquisitionCost("TSLA",[{holdings:[{ticker:"TSLA",quantityDisplay:"NaN",averageCostUsd:"1"}]}]));
  assert.throws(()=>weightedAverageAcquisitionCost("TSLA",[{holdings:[{ticker:"TSLA",quantityDisplay:"1",averageCostUsd:"-1"}]}]));
 });
+
+import {readFileSync} from "node:fs";
+test("selected-account table filters acquisition costs to the selected account",()=>{
+ const html=readFileSync(new URL("../test-my-portfolio-ledger.html",import.meta.url),"utf8");
+ assert.match(html,/selectedValuationAccounts\(v\)\.filter\(a=>!v\.selectedAccountId\|\|a\.accountId===v\.selectedAccountId\)/);
+ assert.match(html,/보유종목 평가금액 합계/);
+});
