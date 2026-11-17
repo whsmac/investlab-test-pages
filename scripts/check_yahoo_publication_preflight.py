@@ -2,7 +2,7 @@
 """Offline gate for future TEST Pages Yahoo JSON publication. No deployment or DB access."""
 import argparse
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from scripts.export_yahoo_public_review import build_public_snapshot
 
@@ -10,7 +10,7 @@ EXPECTED = {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
 
 
 def assess_publication(candidate, today=None):
-    today = today or date.today()
+    today = today or datetime.now(timezone(timedelta(hours=9))).date()
     public = build_public_snapshot(candidate)
     symbols = {row["ticker"] for row in public["observations"]}
     issues = []
