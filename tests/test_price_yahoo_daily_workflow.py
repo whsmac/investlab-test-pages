@@ -34,7 +34,7 @@ class DailyReviewWorkflowContractTests(unittest.TestCase):
         text=Path(".github/workflows/test-yahoo-daily-review.yml").read_text(encoding="utf-8")
         self.assertIn("if: steps.probe.outcome == 'success'",text)
         self.assertIn("exit 1",text)
-        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ]; then',text)
+        self.assertIn('if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$STAGING_OUTCOME" != success ]; then',text)
         self.assertIn('if [ "$PAGES_SOURCE_CONFIRMED" != true ]; then',text)
         self.assertIn('if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ] || [ "$DECISION_OUTCOME" != success ]; then',text)
         self.assertIn("if: steps.candidate.outcome == 'success'",text)
