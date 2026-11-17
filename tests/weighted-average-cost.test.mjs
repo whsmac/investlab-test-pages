@@ -27,4 +27,7 @@ test("selected-account table filters acquisition costs to the selected account",
  const html=readFileSync(new URL("../test-my-portfolio-ledger.html",import.meta.url),"utf8");
  assert.match(html,/selectedValuationAccounts\(v\)\.filter\(a=>!v\.selectedAccountId\|\|a\.accountId===v\.selectedAccountId\)/);
  assert.match(html,/보유종목 평가금액 합계/);
+ assert.match(html,/return view\.accounts\.filter\(a=>!view\.selectedAccountId\|\|a\.accountId===view\.selectedAccountId\)\.map/);
+ assert.match(html,/accounts:selectedValuationAccounts\(currentView\),assumedPrices/);
+ assert.match(html,/accounts:selectedValuationAccounts\(view\),prices/);
 });
