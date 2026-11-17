@@ -1,6 +1,7 @@
 name: TEST Yahoo daily review candidate (NO DEPLOY)
 # Inert on feature branch. GitHub schedules execute from the default branch only.
-# UTC Monday-Friday 23:35 = Korea Tuesday-Saturday 08:35 (KST).\n# US Monday-Friday close is reviewed on the following KST morning; holidays may have no new close.
+# UTC Monday-Friday 23:35 = Korea Tuesday-Saturday 08:35 (KST).
+# US Monday-Friday close is reviewed on the following KST morning; holidays may have no new close.
 # This workflow must not be enabled/published without a separate approval.
 on:
   schedule:
