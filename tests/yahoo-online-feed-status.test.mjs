@@ -32,3 +32,12 @@ test("write-enabled payload is rejected",async()=>{
 test("untrusted origin is rejected before fetch",async()=>{
   await assert.rejects(loadPublishedYahooReview({origin:"https://example.com/investlab-test-pages/test-my-portfolio-ledger.html",fetcher:()=>{throw Error("fetch must not run");}}),/허용되지 않은 TEST 호스트/);
 });
+
+test("nested lookalike JSON path is rejected before fetching",async()=>{
+  await assert.rejects(loadPublishedYahooReview({origin,path:"./data/other/yahoo-public-review.json",fetcher:()=>{throw Error("fetch must not run");}}),/허용되지 않은 JSON 경로/);
+});
+test("JSON URL query or fragment cannot bypass the fixed asset path",async()=>{
+  for(const path of ["./data/yahoo-public-review.json?source=other","./data/yahoo-public-review.json#cached"]){
+    await assert.rejects(loadPublishedYahooReview({origin,path,fetcher:()=>{throw Error("fetch must not run");}}),/허용되지 않은 JSON 경로/);
+  }
+});
