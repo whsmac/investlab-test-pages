@@ -1,0 +1,43 @@
+name: TEST shared portfolio preview package (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'shared-data.html'
+      - 'virtual-trade-simulator.html'
+      - 'src/sync/**'
+      - 'src/simulator/**'
+      - 'src/ledger/**'
+      - 'tests/test-account-holdings.test.mjs'
+      - 'tests/test-cash-*.test.mjs'
+      - 'tests/test-ledger-account-options.test.mjs'
+      - 'tests/test-unified-portfolio-view.test.mjs'
+      - '.github/workflows/test-shared-portfolio-preview.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate TEST account and cash UI modules
+        run: |
+          node --test tests/test-account-holdings.test.mjs tests/test-cash-movement-review.test.mjs tests/test-cash-ledger-completeness.test.mjs tests/test-cash-reconciliation-preview.test.mjs tests/test-ledger-account-options.test.mjs tests/test-unified-portfolio-view.test.mjs
+      - name: Assemble offline TEST preview (no publish, no database writes)
+        run: |
+          mkdir -p preview
+          cp shared-data.html virtual-trade-simulator.html preview/
+          cp -R src preview/src
+          printf '%s\n' 'INVESTLAB TEST branch preview — local only.' 'Unzip, open a terminal in this folder, and run: python3 -m http.server 8765' 'Open http://127.0.0.1:8765/shared-data.html' 'This package does not publish to GitHub Pages or change Supabase.' 'Only use the TEST Supabase project with its publishable key; never use a service-role key.' > preview/README.txt
+          test -f preview/shared-data.html
+          test -f preview/src/sync/test-ledger-account-options.mjs
+          test -f preview/src/sync/test-cash-reconciliation-preview.mjs
+          test -f preview/src/sync/test-account-holdings.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-shared-portfolio-preview
+          path: preview/
+          retention-days: 7
+          if-no-files-found: error
