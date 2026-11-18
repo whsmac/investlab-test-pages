@@ -18,18 +18,18 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 <body><main class="wrap">
 <header><div class="brand">INVEST<span>LAB</span></div><div class="tag">TEST ONLY · GitHub Pages</div></header>
 <h1>투자 분석 대시보드</h1>
-<p>5개 주요 메뉴를 중심으로 기능을 확인할 수 있습니다. 현재는 TEST 파일럿 준비 단계이며, 메뉴별로 데이터 연결과 온라인 검증 상태가 다릅니다.</p>
+<p>1단계 Pilot의 5개 주요 기능을 한곳에서 이용합니다. 현재 온라인 저장이 완료되지 않은 메뉴는 아래에 상태를 표시했습니다.</p>
 <section class="grid" aria-label="INVESTLAB 주요 메뉴">
-<a class="card" href="./portfolio-connection-check.html"><h2>1. My Portfolio</h2><p>보유·관심·거래이력 종목 및 계좌 데이터 연결 상태 확인</p><span class="state pending">● 읽기 전용 연결 점검 · 운영 기능 미완성</span></a>
+<a class="card" href="./shared-data.html#testPortfolioPanel"><h2>1. My Portfolio</h2><p>TEST 원장 기반 보유종목·계좌 통합 조회</p><span class="state pending">● TEST 원장 조회 · 입력·현금 연동 미완성</span></a>
 <a class="card" href="./virtual-trade-simulator.html"><h2>2. Virtual Trade Simulator</h2><p>가상 매수·매도 전략과 계좌별 손익 비교</p><span class="state pending">● 브라우저 기반 · 서버 동기화 미검증</span></a>
 <a class="card" href="./shared-data.html"><h2>3. Company Investment Analysis</h2><p>6개 기업의 주가·분기 재무 관측값 조회</p><span class="state">● TEST 공유 데이터 조회 기능</span></a>
-<a class="card" href="./test-my-portfolio-ledger.html"><h2>4. Unified Ledger</h2><p>계좌별 거래 원장·보유종목·현금잔고 검토</p><span class="state pending">● 예시 JSON 기반 · 서버 연동 전</span></a>
+<a class="card" href="./shared-data.html#onlineLedgerRead"><h2>4. Unified Ledger</h2><p>TEST 원장 데이터 조회 · 현금 및 거래 입력 연동 예정</p><span class="state pending">● 서버 읽기 가능 · 입력 기능 미완성</span></a>
 <a class="card" href="./test-portfolio-ledger-reconcile.html"><h2>5. Data Management</h2><p>계좌별 원장 대조 및 JSON 검토 결과 관리</p><span class="state pending">● 임시 검증 화면 · 자동 수집·공유 저장 미완성</span></a>
 </section>
-<p><a href="./test-shared-price-chart.html">공통 주가 차트 TEST 미리보기 (CSV 없이 서버 조회)</a></p>
+<details style="margin-top:22px"><summary style="cursor:pointer;font-weight:700">개발·데이터 점검 링크 펼치기</summary><p><a href="./test-shared-price-chart.html">공통 주가 차트 TEST 미리보기 (CSV 없이 서버 조회)</a></p>
 <p><a href="./test-yahoo-price-review.html">Yahoo 주가와 TEST DB 실제 대조 (읽기 전용)</a></p>
 <p><a href="./test-yahoo-company-map.html">Yahoo Finance 연동용 TEST 기업 ID 조회 (읽기 전용)</a></p>
-<p><a href="./test-price-reconciliation.html">주가 수집 데이터와 TEST DB 대조 (읽기 전용)</a></p>
+<p><a href="./test-price-reconciliation.html">주가 수집 데이터와 TEST DB 대조 (읽기 전용)</a></p></details>
 <details style="margin-top:22px"><summary style="cursor:pointer;font-weight:700">보조 검증 도구 펼치기</summary><section class="grid" aria-label="보조 검증 도구">
 <a class="card" href="./test-portfolio-account-allocation.html"><h2>계좌별 초기잔고 배정</h2><p>보유종목과 USD·KRW 현금잔고를 계좌별로 검토</p><span class="state pending">● 오프라인 검증 전용</span></a>
 <a class="card" href="./test-portfolio-ledger-reconcile.html"><h2>원장 잔고 대조</h2><p>계좌별 포트폴리오와 원장 계산 결과를 비교하고 JSON 보고서 저장</p><span class="state pending">● 오프라인 검증 전용</span></a>
