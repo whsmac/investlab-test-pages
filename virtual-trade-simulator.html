@@ -617,12 +617,14 @@ function loadPortfolioPositions(){
  const snapshot=readPortfolioSimulatorSnapshot(window.localStorage);
  const positions=snapshot.positions;
  const sourceCash=snapshot.usdCash;
- if(sourceCash!==null){byId('cash').value=String(sourceCash);}
  if(!positions.length){
   updateInitialValuation();
-  byId('positionLoadStatus').textContent='원본 포트폴리오에 유효한 보유종목이 없습니다. 종목관리에서 먼저 등록하세요.';
+  byId('positionLoadStatus').textContent='원본 포트폴리오에 유효한 보유종목이 없습니다. 기존 보유정보·시작 현금·가정 주가·전략을 유지합니다. 종목관리에서 먼저 등록하세요.';
   return;
  }
+ // Apply cash only when a valid position snapshot is available, so an empty
+ // source cannot unexpectedly replace a manually prepared simulation.
+ if(sourceCash!==null){byId('cash').value=String(sourceCash);}
  portfolioState.positions=positions.map(p=>({...p}));
  // Reimporting the original holdings intentionally resets only the starting
  // positions; preserve manually configured terminal prices and scenario trades.
