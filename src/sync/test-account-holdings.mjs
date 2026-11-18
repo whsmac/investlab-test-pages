@@ -30,6 +30,7 @@ export function summarizeTestAllAccounts(accountBreakdown){
  const combined=new Map();
  for(const account of accountBreakdown.accounts){
   if(!Array.isArray(account.holdings))throw Error('계좌별 종목 정보 오류');
+  if(account.accountId==null)continue; // Never blend unassigned trades into identified account totals.
   for(const holding of account.holdings){
    const key=String(holding.currency||'USD')+'|'+String(holding.symbol||'');
    const entry=combined.get(key)||{symbol:holding.symbol,currency:holding.currency||'USD',quantity:0,weightedCost:0,accountCount:0,reviewRequired:false,unassignedIncluded:false};
