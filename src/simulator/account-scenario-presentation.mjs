@@ -2,7 +2,7 @@
 export function summarizeAccountScenarioResults(comparison){
  if(!comparison||!Array.isArray(comparison.rows))throw Error('비교 결과가 없습니다');
  const rows=comparison.rows.flatMap(group=>group.results.map(result=>({
-  account:group.accountNames.join(' + '),name:result.name,
+  account:group.accountNames.join(' + '),accountBasis:group.accountIds.length>1?'전체 합산 (가중평균)':'개별 계좌',name:result.name,
   status:result.status,
   terminalValue:result.status==='CALCULATED'?result.terminalValue:null,
   deltaVsHold:result.status==='CALCULATED'?result.deltaVsHold:null,
