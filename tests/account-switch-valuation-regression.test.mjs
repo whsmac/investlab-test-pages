@@ -173,3 +173,27 @@ test('missing price after account switch cannot retain the previous complete val
  assert.equal(recovered.totalMarketValueUsd,1000);
  assert.equal(recovered.totalUnrealizedPnlUsd,40);
 });
+
+test('account-only tickers do not leak across selected account valuations',()=>{
+ const accounts=[
+  {accountId:'a',name:'A',holdings:[{ticker:'TSLA',quantityDisplay:3,averageCostUsd:180},{ticker:'MSFT',quantityDisplay:2,averageCostUsd:300}]},
+  {accountId:'b',name:'B',holdings:[{ticker:'TSLA',quantityDisplay:2,averageCostUsd:210},{ticker:'GOOGL',quantityDisplay:4,averageCostUsd:100}]}
+ ];
+ const prices={TSLA:200,MSFT:350,GOOGL:120};
+ const cases=[
+  {selected:accounts,tickers:['TSLA','MSFT','GOOGL'],market:2180,pnl:200,tslaQuantity:5,tslaAverage:192},
+  {selected:[accounts[0]],tickers:['TSLA','MSFT'],market:1300,pnl:160,tslaQuantity:3,tslaAverage:180},
+  {selected:[accounts[1]],tickers:['TSLA','GOOGL'],market:880,pnl:40,tslaQuantity:2,tslaAverage:210},
+  {selected:accounts,tickers:['TSLA','MSFT','GOOGL'],market:2180,pnl:200,tslaQuantity:5,tslaAverage:192}
+ ];
+ for(const c of cases){
+  const valuation=previewPortfolioValuation({holdings:c.tickers.map(ticker=>({ticker})),accounts:c.selected,prices});
+  const cost=weightedAverageAcquisitionCost('TSLA',c.selected);
+  assert.equal(valuation.status,'COMPLETE_HYPOTHETICAL');
+  assert.deepEqual(valuation.rows.map(row=>row.ticker),c.tickers);
+  assert.equal(valuation.totalMarketValueUsd,c.market);
+  assert.equal(valuation.totalUnrealizedPnlUsd,c.pnl);
+  assert.equal(cost.quantity,c.tslaQuantity);
+  assert.equal(cost.averageCostUsd,c.tslaAverage);
+ }
+});
