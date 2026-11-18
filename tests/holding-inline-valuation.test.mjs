@@ -21,3 +21,13 @@ test('missing acquisition cost does not suppress known market value',()=>{
  assert.match(html,/const pnlText=value\?\.unrealizedPnlUsd==null\?\(missingPrice/);
  assert.match(html,/\[\[value\?\.marketValueUsd,marketText\],\[value\?\.unrealizedPnlUsd,pnlText\]\]/);
 });
+
+test('summary identifies missing quote and acquisition-cost tickers without inventing totals',()=>{
+ assert.match(html,/function valuationMissingReason\(result\)/);
+ assert.match(html,/row\.status==='PRICE_MISSING'/);
+ assert.match(html,/row\.status==='COST_MISSING'/);
+ assert.match(html,/주가 없음 /);
+ assert.match(html,/매입단가 없음 /);
+ assert.match(html,/valuationMissingReason\(result\.latest\)/);
+ assert.match(html,/valuationMissingReason\(result\)/);
+});
