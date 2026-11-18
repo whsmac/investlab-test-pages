@@ -128,3 +128,28 @@ test('two-account portfolio totals reconcile with account views across multiple 
  assert.equal(all.totalUnrealizedPnlUsd,a.totalUnrealizedPnlUsd+b.totalUnrealizedPnlUsd);
  assert.equal(weightedAverageAcquisitionCost('TSLA',accounts).averageCostUsd,192);
 });
+
+test('per-ticker cost, market value, and P&L update consistently across account switches',()=>{
+ const accounts=[
+  {accountId:'a',name:'A',holdings:[{ticker:'TSLA',quantityDisplay:'3',averageCostUsd:'180'},{ticker:'MSFT',quantityDisplay:'2',averageCostUsd:'300'}]},
+  {accountId:'b',name:'B',holdings:[{ticker:'TSLA',quantityDisplay:'2',averageCostUsd:'210'},{ticker:'MSFT',quantityDisplay:'1',averageCostUsd:'360'}]}
+ ];
+ const prices={TSLA:'200',MSFT:'350'};
+ const steps=[
+  {id:null,tsla:[5,192,1000,40],msft:[3,320,1050,90],market:2050,pnl:130},
+  {id:'a',tsla:[3,180,600,60],msft:[2,300,700,100],market:1300,pnl:160},
+  {id:'b',tsla:[2,210,400,-20],msft:[1,360,350,-10],market:750,pnl:-30},
+  {id:null,tsla:[5,192,1000,40],msft:[3,320,1050,90],market:2050,pnl:130}
+ ];
+ for(const step of steps){
+  const selected=step.id?accounts.filter(a=>a.accountId===step.id):accounts;
+  const valuation=previewPortfolioValuation({holdings:[{ticker:'TSLA'},{ticker:'MSFT'}],accounts:selected,prices});
+  for(const [ticker,expected] of [['TSLA',step.tsla],['MSFT',step.msft]]){
+   const cost=weightedAverageAcquisitionCost(ticker,selected);
+   const row=valuation.rows.find(row=>row.ticker===ticker);
+   assert.deepEqual([cost.quantity,cost.averageCostUsd,row.marketValueUsd,row.unrealizedPnlUsd],expected);
+  }
+  assert.equal(valuation.totalMarketValueUsd,step.market);
+  assert.equal(valuation.totalUnrealizedPnlUsd,step.pnl);
+ }
+});
