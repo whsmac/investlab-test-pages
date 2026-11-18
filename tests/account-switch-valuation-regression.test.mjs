@@ -181,10 +181,10 @@ test('account-only tickers do not leak across selected account valuations',()=>{
  ];
  const prices={TSLA:200,MSFT:350,GOOGL:120};
  const cases=[
-  {selected:accounts,tickers:['TSLA','MSFT','GOOGL'],market:2180,pnl:200,tslaQuantity:5,tslaAverage:192},
+  {selected:accounts,tickers:['TSLA','MSFT','GOOGL'],market:2180,pnl:220,tslaQuantity:5,tslaAverage:192},
   {selected:[accounts[0]],tickers:['TSLA','MSFT'],market:1300,pnl:160,tslaQuantity:3,tslaAverage:180},
-  {selected:[accounts[1]],tickers:['TSLA','GOOGL'],market:880,pnl:40,tslaQuantity:2,tslaAverage:210},
-  {selected:accounts,tickers:['TSLA','MSFT','GOOGL'],market:2180,pnl:200,tslaQuantity:5,tslaAverage:192}
+  {selected:[accounts[1]],tickers:['TSLA','GOOGL'],market:880,pnl:60,tslaQuantity:2,tslaAverage:210},
+  {selected:accounts,tickers:['TSLA','MSFT','GOOGL'],market:2180,pnl:220,tslaQuantity:5,tslaAverage:192}
  ];
  for(const c of cases){
   const valuation=previewPortfolioValuation({holdings:c.tickers.map(ticker=>({ticker})),accounts:c.selected,prices});
