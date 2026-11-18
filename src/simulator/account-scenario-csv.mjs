@@ -12,3 +12,23 @@ export function accountScenarioStepsCsv(comparison){
  }
  return '\uFEFF'+lines.map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
 }
+
+/** Export the same account/scenario figures as the comparison table.
+ * Separate from trade-step CSV; no ledger writes or tax aggregation.
+ */
+export function accountScenarioSummaryCsv(comparison){
+ if(!comparison||!Array.isArray(comparison.rows))throw Error('비교 결과가 없습니다');
+ const lines=[['계좌','계산 기준','전략','실행 상태','최종 평가액 USD','보유 유지 대비 USD','시작 현금 USD','최종 현금 USD','현금 증감 USD','실현손익 USD (계좌 기준)','수량 변화']];
+ for(const group of comparison.rows){
+  const account=group.accountNames.join(' + ');
+  const basis=group.accountIds.length>1?'전체 합산 (가중평균)':'개별 계좌';
+  for(const result of group.results){
+   const ok=result.status==='CALCULATED';
+   const changes=ok?(result.quantityChanges.length?result.quantityChanges.map(p=>p.ticker+' '+(p.change>0?'+':'')+p.change+'주').join(' · '):'변동 없음'):'';
+   lines.push([account,basis,result.name,ok?'실행 가능':'실행 불가: '+(result.reason??''),
+    ok?result.terminalValue:'',ok?result.deltaVsHold:'',group.usdCash,
+    ok?result.finalCash:'',ok?result.cashChange:'',ok?result.realizedPnL??'':'',changes]);
+  }
+ }
+ return '\uFEFF'+lines.map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
+}
