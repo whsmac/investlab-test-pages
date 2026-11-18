@@ -256,3 +256,20 @@ test('account comparison table labels blended and individual cost basis separate
  assert.match(html,/\['계좌','계산 기준','전략','실행 상태'/);
  assert.match(html,/const values=\[result\.account,result\.accountBasis,result\.name,available\?/);
 });
+
+test('account comparison presents opening cash alongside closing cash and change',()=>{
+ const presentation=summarizeAccountScenarioResults({rows:[
+  {accountIds:['a'],accountNames:['계좌 A'],usdCash:200,results:[{name:'매도',status:'CALCULATED',terminalValue:1000,deltaVsHold:20,finalCash:640,cashChange:440,realizedPnL:80,quantityChanges:[],steps:[]}]},
+  {accountIds:['b'],accountNames:['계좌 B'],usdCash:300,results:[{name:'매도',status:'CALCULATED',terminalValue:1000,deltaVsHold:20,finalCash:740,cashChange:440,realizedPnL:20,quantityChanges:[],steps:[]}]},
+  {accountIds:['a','b'],accountNames:['계좌 A','계좌 B'],usdCash:500,results:[{name:'매도',status:'CALCULATED',terminalValue:2000,deltaVsHold:40,finalCash:940,cashChange:440,realizedPnL:56,quantityChanges:[],steps:[]}]}
+ ]});
+ for(const [name,opening,closing] of [['계좌 A',200,640],['계좌 B',300,740],['계좌 A + 계좌 B',500,940]]){
+  const row=presentation.rows.find(r=>r.account===name);
+  assert.equal(row.openingCash,opening);
+  assert.equal(row.finalCash,closing);
+  assert.equal(row.cashChange,closing-opening);
+ }
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/'시작 현금 USD','최종 현금 USD','현금 증감 USD'/);
+ assert.match(html,/result\.openingCash\.toLocaleString\('ko-KR'/);
+});
