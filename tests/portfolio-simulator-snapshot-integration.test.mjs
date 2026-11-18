@@ -5,6 +5,7 @@ import {readPortfolioSimulatorSnapshot,comparePortfolioSimulatorSnapshot} from '
 import {simulateTrades} from '../src/simulator/virtual-trade-engine.mjs';
 import {compareScenarios} from '../src/simulator/scenario-comparison.mjs';
 import {summarizeAccountScenarioResults} from '../src/simulator/account-scenario-presentation.mjs';
+import {accountScenarioSummaryCsv} from '../src/simulator/account-scenario-csv.mjs';
 
 function storageFor(holdings,watchlist=[],past=[]){
  const data=new Map(Object.entries({
@@ -288,4 +289,20 @@ test('account scenario comparison table stays horizontally readable and emphasiz
  assert.match(section,/cell\.style\.fontVariantNumeric='tabular-nums'/);
  assert.match(section,/cell\.style\.whiteSpace='nowrap'/);
  assert.match(html,/id="accountScenarioComparison" style="overflow-x:auto"/);
+});
+
+test('account summary CSV matches account comparison totals and preserves calculation basis',()=>{
+ const comparison={rows:[
+  {accountIds:['a'],accountNames:['계좌 A'],usdCash:200,results:[{name:'TSLA 매도',status:'CALCULATED',terminalValue:1000,deltaVsHold:20,finalCash:640,cashChange:440,realizedPnL:80,quantityChanges:[{ticker:'TSLA',change:-2}]}]},
+  {accountIds:['a','b'],accountNames:['계좌 A','계좌 B'],usdCash:500,results:[{name:'TSLA 매도',status:'CALCULATED',terminalValue:2000,deltaVsHold:40,finalCash:940,cashChange:440,realizedPnL:56,quantityChanges:[{ticker:'TSLA',change:-2}]}]}
+ ]};
+ const csv=accountScenarioSummaryCsv(comparison);
+ assert.ok(csv.startsWith('\uFEFF'));
+ assert.match(csv,/계산 기준/);
+ assert.match(csv,/"계좌 A","개별 계좌","TSLA 매도","실행 가능","1000","20","200","640","440","80","TSLA -2주"/);
+ assert.match(csv,/"계좌 A \+ 계좌 B","전체 합산 \(가중평균\)","TSLA 매도","실행 가능","2000","40","500","940","440","56","TSLA -2주"/);
+ assert.equal(csv.trim().split('\r\n').length,3);
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/accountScenarioSummaryCsv\(compared\)/);
+ assert.match(html,/investlab-test-account-scenario-summary\.csv/);
 });
