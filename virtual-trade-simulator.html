@@ -923,6 +923,7 @@ document.addEventListener('click',event=>{
 });
 byId('saveScenario').addEventListener('click',()=>storageAction(()=>{
  const strategies=validateSavedStrategy(readStrategies());
+ const saveReview=reviewLocalScenarioSave(strategies); // TEST read-only validation before existing browser save
  const name=String(strategies[0]?.name??'').trim();
  if(!name||name.length>80||name==='__proto__'||name==='constructor'||name==='prototype')throw Error('위쪽 첫 번째 전략 이름을 1~80자로 입력하세요.');
  const saved=getSavedScenarios();
@@ -937,7 +938,7 @@ byId('saveScenario').addEventListener('click',()=>storageAction(()=>{
  Object.defineProperty(saved,name,{value:strategies,enumerable:true,writable:true,configurable:true});
  localStorage.setItem(SCENARIO_STORAGE_KEY,JSON.stringify(saved));
  refreshSavedScenarioList();byId('savedScenarioList').value=name;
- byId('scenarioStorageStatus').textContent='전략을 이 브라우저에 저장했습니다: '+name;
+ byId('scenarioStorageStatus').textContent='전략을 이 브라우저에 저장했습니다: '+name+' · 가상 거래 '+saveReview.virtualTradeCount+'건 사전 점검 완료 · 서버 저장 아님';
  updateStrategySaveState();
 }));
 byId('loadScenario').addEventListener('click',()=>storageAction(()=>{
@@ -1113,6 +1114,7 @@ document.addEventListener('keydown',event=>{
 byId('status').textContent='기준 보유정보와 시작 현금을 확인한 뒤 시나리오 계산을 누르세요.';
 // TEST read-only preview; does not change legacy strategy saving.
 import {previewLegacySimulatorStrategies} from './src/sync/test-legacy-simulator-preview.mjs';
+import {reviewLocalScenarioSave} from './src/sync/test-local-scenario-save-gate.mjs';
 const DRAFT_KEY='investlab_simulator_working_draft_v1';
 let draftTimer=null;
 function previewCurrentLegacyScenarioStorage(){
