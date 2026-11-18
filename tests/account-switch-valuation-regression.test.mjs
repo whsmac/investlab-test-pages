@@ -197,3 +197,28 @@ test('account-only tickers do not leak across selected account valuations',()=>{
   assert.equal(cost.averageCostUsd,c.tslaAverage);
  }
 });
+
+test('portfolio-to-simulator opening positions reconcile by account without manual cost re-entry',()=>{
+ const accounts=[
+  {accountId:'retirement',name:'Retirement',holdings:[{ticker:'TSLA',quantityDisplay:'6',averageCostUsd:'180'},{ticker:'SOXL',quantityDisplay:'4',averageCostUsd:'25'}]},
+  {accountId:'isa',name:'ISA',holdings:[{ticker:'TSLA',quantityDisplay:'4',averageCostUsd:'210'},{ticker:'TQQQ',quantityDisplay:'2',averageCostUsd:'50'}]}
+ ];
+ const prices={TSLA:200,SOXL:30,TQQQ:60};
+ const tickers=['TSLA','SOXL','TQQQ'];
+ const openingPositions=tickers.map(ticker=>weightedAverageAcquisitionCost(ticker,accounts)).filter(position=>position.quantity>0);
+ assert.deepEqual(openingPositions.map(({ticker,quantity,averageCostUsd})=>({ticker,quantity,averageCostUsd})),[
+  {ticker:'TSLA',quantity:10,averageCostUsd:192},
+  {ticker:'SOXL',quantity:4,averageCostUsd:25},
+  {ticker:'TQQQ',quantity:2,averageCostUsd:50}
+ ]);
+ const all=previewPortfolioValuation({holdings:tickers.map(ticker=>({ticker})),accounts,prices});
+ const perAccount=accounts.map(account=>{
+  const symbols=account.holdings.map(holding=>({ticker:holding.ticker}));
+  return previewPortfolioValuation({holdings:symbols,accounts:[account],prices});
+ });
+ assert.equal(all.totalMarketValueUsd,2240);
+ assert.equal(all.totalUnrealizedPnlUsd,120);
+ assert.equal(perAccount.reduce((sum,value)=>sum+value.totalMarketValueUsd,0),all.totalMarketValueUsd);
+ assert.equal(perAccount.reduce((sum,value)=>sum+value.totalUnrealizedPnlUsd,0),all.totalUnrealizedPnlUsd);
+ assert.equal(openingPositions.reduce((sum,position)=>sum+position.costBasisUsd,0),2120);
+});
