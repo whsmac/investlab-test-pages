@@ -30,7 +30,7 @@ as $fn$
         and (assumptions->>'targetCash')::numeric >= 0))
   and (not assumptions ? 'terminalPrices' or
        (jsonb_typeof(assumptions->'terminalPrices') = 'object'
-        and jsonb_object_length(assumptions->'terminalPrices') <= 300
+        and (select count(*) from jsonb_object_keys(assumptions->'terminalPrices') as price_key) <= 300
         and coalesce((
           select bool_and(k.key ~ '^[A-Z0-9.^_-]{1,20}$'
             and jsonb_typeof(k.value) = 'number'
