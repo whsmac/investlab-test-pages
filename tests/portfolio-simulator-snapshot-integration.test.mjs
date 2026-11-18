@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {readPortfolioSimulatorSnapshot,comparePortfolioSimulatorSnapshot} from '../src/simulator/portfolio-snapshot.mjs';
+import {simulateTrades} from '../src/simulator/virtual-trade-engine.mjs';
 
 function storageFor(holdings,watchlist=[],past=[]){
  const data=new Map(Object.entries({
@@ -79,4 +80,44 @@ test('empty portfolio does not overwrite simulator cash or positions',()=>{
  const guardReturn=handler.indexOf('return;',emptyGuard);
  assert.ok(guardReturn>emptyGuard&&guardReturn<cashApply);
  assert.match(handler.slice(emptyGuard,guardReturn),/기존 보유정보·시작 현금·가정 주가·전략을 유지/);
+});
+
+function simulationOpening(snapshot){
+ return {cash:snapshot.usdCash??0,positions:Object.fromEntries(snapshot.positions.map(p=>[p.ticker,{quantity:p.quantity,averageCost:p.averageCost}]))};
+}
+
+test('a saved sell strategy rejects insufficient shares after portfolio refresh without changing source snapshot',()=>{
+ const oldSnapshot=readPortfolioSimulatorSnapshot(storageFor([{symbol:'TSLA',shares:10,avg_cost:192},{symbol:'USD-CASH',shares:100}]));
+ const latestSnapshot=readPortfolioSimulatorSnapshot(storageFor([{symbol:'TSLA',shares:4,avg_cost:192},{symbol:'USD-CASH',shares:100}]));
+ const strategy=[{side:'sell',ticker:'TSLA',quantity:6,price:200}];
+ const oldResult=simulateTrades(simulationOpening(oldSnapshot),strategy);
+ assert.equal(oldResult.final.positions.TSLA.quantity,4);
+ assert.equal(oldResult.final.cash,1300);
+ assert.throws(()=>simulateTrades(simulationOpening(latestSnapshot),strategy),/insufficient shares at 0/);
+ assert.equal(latestSnapshot.positions[0].quantity,4);
+ assert.equal(latestSnapshot.usdCash,100);
+});
+
+test('a saved buy strategy rejects insufficient cash after portfolio refresh',()=>{
+ const oldSnapshot=readPortfolioSimulatorSnapshot(storageFor([{symbol:'TSLA',shares:2,avg_cost:180},{symbol:'USD-CASH',shares:1000}]));
+ const latestSnapshot=readPortfolioSimulatorSnapshot(storageFor([{symbol:'TSLA',shares:2,avg_cost:180},{symbol:'USD-CASH',shares:100}]));
+ const strategy=[{side:'buy',ticker:'TQQQ',quantity:5,price:100}];
+ assert.equal(simulateTrades(simulationOpening(oldSnapshot),strategy).final.cash,500);
+ assert.throws(()=>simulateTrades(simulationOpening(latestSnapshot),strategy),/insufficient cash at 0/);
+ assert.equal(latestSnapshot.usdCash,100);
+});
+
+test('valid refreshed opening positions recalculate cash, quantity and realized P&L without ledger writes',()=>{
+ const snapshot=readPortfolioSimulatorSnapshot(storageFor([{symbol:'TSLA',shares:5,avg_cost:180},{symbol:'USD-CASH',shares:200}]));
+ const result=simulateTrades(simulationOpening(snapshot),[
+  {side:'sell',ticker:'TSLA',quantity:2,price:210},
+  {side:'buy',ticker:'TQQQ',quantity:3,price:100}
+ ]);
+ assert.equal(result.final.cash,320);
+ assert.equal(result.final.positions.TSLA.quantity,3);
+ assert.equal(result.final.positions.TQQQ.quantity,3);
+ assert.equal(result.final.realizedPnL,60);
+ assert.equal(snapshot.positions[0].quantity,5);
+ assert.equal(snapshot.usdCash,200);
+ assert.equal(result.taxStatus,'not_calculated');
 });
