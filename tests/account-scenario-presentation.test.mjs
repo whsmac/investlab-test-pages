@@ -66,3 +66,12 @@ test('TEST home exposes five primary menus and separates offline tools',()=>{
  assert.match(html,/서버 동기화 미검증/);
  assert.match(html,/서버 연동 전/);
 });
+
+test('legacy comparison rows without account IDs retain individual and combined labels',()=>{
+ const result=summarize({rows:[
+  {accountNames:['ISA'],usdCash:100,results:[{name:'hold',status:'CALCULATED',terminalValue:100,deltaVsHold:0}]},
+  {accountNames:['ISA','Pension'],usdCash:200,results:[{name:'hold',status:'CALCULATED',terminalValue:200,deltaVsHold:0}]}
+ ]});
+ assert.equal(result.rows.find(row=>row.account==='ISA').accountBasis,'개별 계좌');
+ assert.equal(result.rows.find(row=>row.account==='ISA + Pension').accountBasis,'전체 합산 (가중평균)');
+});
