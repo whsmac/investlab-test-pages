@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {readPortfolioSimulatorSnapshot,comparePortfolioSimulatorSnapshot} from '../src/simulator/portfolio-snapshot.mjs';
 import {simulateTrades} from '../src/simulator/virtual-trade-engine.mjs';
+import {compareScenarios} from '../src/simulator/scenario-comparison.mjs';
 
 function storageFor(holdings,watchlist=[],past=[]){
  const data=new Map(Object.entries({
@@ -120,4 +121,38 @@ test('valid refreshed opening positions recalculate cash, quantity and realized 
  assert.equal(snapshot.positions[0].quantity,5);
  assert.equal(snapshot.usdCash,200);
  assert.equal(result.taxStatus,'not_calculated');
+});
+
+test('scenario comparison identifies the exact failing strategy, trade and ticker after refresh',()=>{
+ const opening=simulationOpening(readPortfolioSimulatorSnapshot(storageFor([
+  {symbol:'TSLA',shares:4,avg_cost:192},{symbol:'USD-CASH',shares:100}
+ ])));
+ const terminalPrices={TSLA:200,TQQQ:100};
+ const cases=[
+  {name:'매도 초과',trades:[{side:'sell',ticker:'TSLA',quantity:2,price:200},{side:'sell',ticker:'TSLA',quantity:3,price:200}],index:1,reason:'insufficient shares',ticker:'TSLA'},
+  {name:'현금 부족',trades:[{side:'buy',ticker:'TQQQ',quantity:1,price:50},{side:'buy',ticker:'TQQQ',quantity:2,price:100}],index:1,reason:'insufficient cash',ticker:'TQQQ'}
+ ];
+ for(const c of cases){
+  assert.throws(()=>compareScenarios(opening,[{name:c.name,trades:c.trades}],terminalPrices),error=>{
+   assert.equal(error.message,'scenario trade unavailable');
+   assert.equal(error.scenarioName,c.name);
+   assert.equal(error.tradeIndex,c.index);
+   assert.equal(error.reason,c.reason);
+   assert.equal(error.ticker,c.ticker);
+   return true;
+  });
+ }
+ assert.equal(opening.cash,100);
+ assert.equal(opening.positions.TSLA.quantity,4);
+});
+
+test('simulator error UI shows failed strategy and trade and focuses its quantity input',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/const unavailable=e\.message==='scenario trade unavailable'&&Number\.isInteger\(e\.tradeIndex\)/);
+ assert.match(html,/e\.scenarioName/);
+ assert.match(html,/e\.tradeIndex\+1/);
+ assert.match(html,/e\.ticker/);
+ assert.match(html,/if\(unavailable\)focusFailedTrade\(e\)/);
+ assert.match(html,/row\.classList\.add\('trade-error'\)/);
+ assert.match(html,/row\.querySelector\('\[data-field="quantity"\]'\)\?\.focus/);
 });
