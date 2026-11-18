@@ -273,3 +273,19 @@ test('account comparison presents opening cash alongside closing cash and change
  assert.match(html,/'시작 현금 USD','최종 현금 USD','현금 증감 USD'/);
  assert.match(html,/result\.openingCash\.toLocaleString\('ko-KR'/);
 });
+
+test('account scenario comparison table stays horizontally readable and emphasizes blended rows',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("const table=document.createElement('table');table.style.width='100%';table.style.minWidth='1100px'");
+ assert.ok(start>=0);
+ const end=html.indexOf('root.append(table);',start);
+ assert.ok(end>start);
+ const section=html.slice(start,end);
+ assert.match(section,/table\.style\.minWidth='1100px'/);
+ assert.match(section,/result\.accountBasis==='전체 합산 \(가중평균\)'/);
+ assert.match(section,/tr\.dataset\.accountBasis=combinedBasis\?'combined':'individual'/);
+ assert.match(section,/cell\.style\.textAlign='right'/);
+ assert.match(section,/cell\.style\.fontVariantNumeric='tabular-nums'/);
+ assert.match(section,/cell\.style\.whiteSpace='nowrap'/);
+ assert.match(html,/id="accountScenarioComparison" style="overflow-x:auto"/);
+});
