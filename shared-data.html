@@ -42,7 +42,7 @@ import {buildTestTrade,insertTestTrade} from "./src/sync/test-ledger-trade-write
 import {summarizeTestLedgerHoldings} from "./src/sync/test-online-holdings.mjs";
 import {calculateTestAverageCosts} from "./src/sync/test-online-average-cost.mjs";
 import {inspectLedgerAccountCashReadiness} from "./src/sync/test-ledger-account-cash-readiness.mjs";
-import {buildTestAccountHoldings} from "./src/sync/test-account-holdings.mjs";
+import {buildTestAccountHoldings,summarizeTestAllAccounts} from "./src/sync/test-account-holdings.mjs";
 (() => {
   const TARGET_URL = "https://gopofxyezhwpfxbecrxd.supabase.co";
   const STORAGE_KEY = "investlab_shared_data_connection_v1";
@@ -247,7 +247,17 @@ $("testAccountHoldings").onclick=async()=>{
  try{
   const result=await readMyLedgerAll(source,{verifiedUserId:user,sessionUserId:session?.user?.id});
   if(source!==client||verifiedUserId!==user||session?.user?.id!==user)return;
-  const breakdown=buildTestAccountHoldings(result.rows);
+  const breakdown=buildTestAccountHoldings(result.rows),combined=summarizeTestAllAccounts(breakdown);
+  const overallTitle=document.createElement("h4");overallTitle.textContent="전체 계좌 합산 (계좌 미지정 거래 제외) · 현금 미확인";output.append(overallTitle);
+  const overallTable=document.createElement("table"),overallHead=document.createElement("tr");
+  for(const label of ["종목","통화","전체 수량","수량 가중평균 취득단가","포함 계좌","상태"]){const th=document.createElement("th");th.textContent=label;overallHead.append(th);}overallTable.append(overallHead);
+  for(const holding of combined.holdings){
+   const tr=document.createElement("tr");
+   for(const value of [holding.symbol,holding.currency,holding.quantity??"검토 필요",holding.averageCost==null?"—":holding.averageCost.toLocaleString("en-US",{maximumFractionDigits:4}),holding.accountCount,holding.reviewRequired?"검토 필요":"참고값"]){
+    const td=document.createElement("td");td.textContent=String(value);tr.append(td);
+   }overallTable.append(tr);
+  }output.append(overallTable);
+  const note=document.createElement("p");note.textContent="계좌 미지정 거래 "+breakdown.unassignedTransactions+"건은 전체 계좌 합산에서 제외 · 세금용 취득원가·현금잔고 아님";output.append(note);
   for(const account of breakdown.accounts){
    const title=document.createElement("h4");title.textContent=account.accountLabel+" · 거래 "+account.transactionCount+"건 · 현금 미확인";output.append(title);
    const t=document.createElement("table"),head=document.createElement("tr");
