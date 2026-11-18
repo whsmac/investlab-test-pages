@@ -415,10 +415,10 @@ $("testOnlineHoldings").onclick=async()=>{
  }catch(error){if(source===client&&verifiedUserId===user)status.textContent="TEST 보유수량 조회 실패: "+error.message;}
  finally{if(source===client)$("testOnlineHoldings").disabled=!verifiedUserId;}
 };
-let pilotTradeAccountVerified=false;
+let pilotTradeAccountVerified=false;let pilotTradeAccountOwner=null;
 $("testTradeLoadAccounts").onclick=async()=>{
  const user=verifiedUserId,source=client,select=$("testTradeAccount"),status=$("testTradeStatus"),button=$("testTradeLoadAccounts");
- pilotTradeAccountVerified=false;select.replaceChildren();button.disabled=true;
+ pilotTradeAccountVerified=false;pilotTradeAccountOwner=null;select.replaceChildren();button.disabled=true;
  try{
   if(!user||session?.user?.id!==user)throw Error("로그인이 필요합니다");
   const result=await readMyLedgerAll(source,{verifiedUserId:user,sessionUserId:session?.user?.id});
@@ -429,7 +429,7 @@ $("testTradeLoadAccounts").onclick=async()=>{
   for(const account of accounts.accounts.filter(a=>verifiedIds.has(a.id))){
    const option=document.createElement("option");option.value=account.id;option.textContent=account.id+" · 거래 "+account.transactions+"건";select.append(option);
   }
-  pilotTradeAccountVerified=verifiedIds.size>0;
+  pilotTradeAccountVerified=verifiedIds.size>0;pilotTradeAccountOwner=user;
   status.textContent=pilotTradeAccountVerified?"기존 원장에서 확인된 계좌를 선택하세요 · 새 계좌 생성은 미지원":"원장에서 account_id 계좌를 확인하지 못했습니다. 계좌 입력은 보류됩니다.";
  }catch(error){status.textContent="계좌 조회 실패: "+error.message;}
  finally{if(source===client)button.disabled=!verifiedUserId;}
@@ -439,7 +439,7 @@ $("testTradeSave").onclick=async()=>{
  if(!user||session?.user?.id!==user){status.textContent="서버 인증이 필요합니다";return;}
  let row;
  const accountId=$("testTradeAccount").value;
- if(!pilotTradeAccountVerified||!accountId||![...$("testTradeAccount").options].some(o=>o.value===accountId)){status.textContent="검증된 계좌를 먼저 선택하세요. 계좌 미지정 거래는 저장하지 않습니다.";return;}
+ if(!pilotTradeAccountVerified||pilotTradeAccountOwner!==user||!accountId||![...$("testTradeAccount").options].some(o=>o.value===accountId)){status.textContent="검증된 계좌를 먼저 선택하세요. 계좌 미지정 거래는 저장하지 않습니다.";return;}
  try{row=buildTestTrade({accountId,accountColumn:"account_id",date:$("testTradeDate").value,type:$("testTradeType").value,symbol:$("testTradeSymbol").value.trim().toUpperCase(),quantity:$("testTradeQty").value,price:$("testTradePrice").value,currency:$("testTradeCurrency").value,note:$("testTradeNote").value},{userId:user,transactionId:crypto.randomUUID(),requestId:crypto.randomUUID()});}
  catch(error){status.textContent="입력 오류: "+error.message;return;}
  if(!confirm("TEST Supabase에 실제 거래 1건을 저장합니다.\n"+"계좌 "+row.account_id+"\\n"+row.transaction_date+" "+row.transaction_type+" "+row.symbol+" "+row.quantity+"주 × "+row.unit_price+" "+row.currency+"\n저장하시겠습니까?"))return;
