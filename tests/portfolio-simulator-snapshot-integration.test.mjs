@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {readPortfolioSimulatorSnapshot,comparePortfolioSimulatorSnapshot} from '../src/simulator/portfolio-snapshot.mjs';
 import {simulateTrades} from '../src/simulator/virtual-trade-engine.mjs';
 import {compareScenarios} from '../src/simulator/scenario-comparison.mjs';
+import {summarizeAccountScenarioResults} from '../src/simulator/account-scenario-presentation.mjs';
 
 function storageFor(holdings,watchlist=[],past=[]){
  const data=new Map(Object.entries({
@@ -242,4 +243,16 @@ test('account opening import preserves price assumptions and invalidates previou
  assert.match(handler,/const known=new Set\(portfolioState\.prices\.map/);
  assert.match(handler,/if\(!known\.has\(p\.ticker\)\)/);
  assert.match(handler,/renderPortfolio\(\)/);
+});
+
+test('account comparison table labels blended and individual cost basis separately',()=>{
+ const presentation=summarizeAccountScenarioResults({rows:[
+  {accountIds:['a'],accountNames:['계좌 A'],results:[{name:'매도',status:'CALCULATED',terminalValue:100,deltaVsHold:10,finalCash:50,cashChange:10,realizedPnL:10,quantityChanges:[],steps:[]}]},
+  {accountIds:['a','b'],accountNames:['계좌 A','계좌 B'],results:[{name:'매도',status:'CALCULATED',terminalValue:200,deltaVsHold:20,finalCash:80,cashChange:20,realizedPnL:12,quantityChanges:[],steps:[]}]}
+ ]});
+ assert.equal(presentation.rows.find(r=>r.account==='계좌 A').accountBasis,'개별 계좌');
+ assert.equal(presentation.rows.find(r=>r.account==='계좌 A + 계좌 B').accountBasis,'전체 합산 (가중평균)');
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/\['계좌','계산 기준','전략','실행 상태'/);
+ assert.match(html,/const values=\[result\.account,result\.accountBasis,result\.name,available\?/);
 });
