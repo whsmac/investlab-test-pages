@@ -156,3 +156,31 @@ test('simulator error UI shows failed strategy and trade and focuses its quantit
  assert.match(html,/row\.classList\.add\('trade-error'\)/);
  assert.match(html,/row\.querySelector\('\[data-field="quantity"\]'\)\?\.focus/);
 });
+
+test('editing a failed strategy and retrying produces a clean successful recalculation',()=>{
+ const opening=simulationOpening(readPortfolioSimulatorSnapshot(storageFor([
+  {symbol:'TSLA',shares:4,avg_cost:192},{symbol:'USD-CASH',shares:100}
+ ])));
+ const prices={TSLA:200,TQQQ:100};
+ const invalid={name:'재계산 검증',trades:[{side:'sell',ticker:'TSLA',quantity:5,price:200}]};
+ assert.throws(()=>compareScenarios(opening,[invalid],prices),e=>e.message==='scenario trade unavailable'&&e.tradeIndex===0);
+ const corrected={...invalid,trades:[{...invalid.trades[0],quantity:2}]};
+ const result=compareScenarios(opening,[corrected],prices);
+ assert.equal(result.scenarios[0].final.positions.TSLA.quantity,2);
+ assert.equal(result.scenarios[0].final.cash,500);
+ assert.equal(result.scenarios[0].final.realizedPnL,16);
+ assert.equal(opening.positions.TSLA.quantity,4);
+ assert.equal(opening.cash,100);
+});
+
+test('retry and input edit clear obsolete trade error highlighting before new results',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const editStart=html.indexOf('function invalidateCalculatedResults(){');
+ const editEnd=html.indexOf('function trackSimulatorEdit(',editStart);
+ const retryStart=html.indexOf('function refreshFxAndCalculate(){');
+ const retryEnd=html.indexOf("byId('recalcNotice').hidden=true;",retryStart);
+ assert.ok(editStart>=0&&editEnd>editStart&&retryStart>=0&&retryEnd>retryStart);
+ assert.match(html.slice(editStart,editEnd),/clearTradeErrorHighlight\(\)/);
+ assert.match(html.slice(retryStart,retryEnd),/clearTradeErrorHighlight\(\)/);
+ assert.match(html,/if\(unavailable\)focusFailedTrade\(e\)/);
+});
