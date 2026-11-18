@@ -43,3 +43,11 @@ test('holdings sort dropdown contains no stray expression text',()=>{
  assert.doesNotMatch(dropdown,/\(\)=>'/);
  assert.match(dropdown,/<option value="quantity-asc">보유수량 적은 순<\/option>/);
 });
+
+test('mobile missing-input actions have accessible touch targets and holdings can scroll horizontally',()=>{
+ const css=html.match(/<style>([\s\S]*?)<\/style>/)?.[1];
+ assert.ok(css);
+ assert.match(css,/@media\(max-width:640px\)\{\.holding-recalculate-all/);
+ assert.match(css,/\.missing-input-jump\{min-height:44px;flex:1 1 120px/);
+ assert.match(css,/\.holding-table-scroll\{max-width:100%;overflow-x:auto/);
+});
