@@ -21,3 +21,21 @@ export function comparePersonalSyncRevision({localRevision,remoteRevision}={}){
   if(!Number.isSafeInteger(localRevision)||localRevision<0||!Number.isSafeInteger(remoteRevision)||remoteRevision<0)throw Error('비교할 문서 버전 오류');
   return {state:localRevision===remoteRevision?'MATCH':localRevision>remoteRevision?'LOCAL_AHEAD':'REMOTE_AHEAD',autoOverwrite:false,canPost:false};
 }
+
+/**
+ * Validate a server-returned personal document before exposing it to a module.
+ * Read-only: callers must separately verify RLS and authorize any future writes.
+ */
+export function reviewRemotePersonalDocument(remote,{authenticatedUserId,expectedKind,expectedDocumentId,localRevision}={}){
+ const checked=validatePersonalSyncEnvelope(remote,{authenticatedUserId});
+ if(checked.kind!==expectedKind)throw Error('요청한 데이터 유형과 서버 문서 유형이 다릅니다');
+ if(checked.documentId!==expectedDocumentId)throw Error('요청한 문서와 서버 응답 문서가 다릅니다');
+ const revision=comparePersonalSyncRevision({localRevision,remoteRevision:checked.revision});
+ return {
+  documentId:checked.documentId,kind:checked.kind,remoteRevision:checked.revision,
+  revisionState:revision.state,canApply:revision.state==='MATCH',
+  requiresReview:revision.state!=='MATCH',
+  serverVerified:false,rlsVerified:false,canPost:false,autoOverwrite:false,
+  payload:revision.state==='MATCH'?structuredClone(remote.payload):null
+ };
+}
