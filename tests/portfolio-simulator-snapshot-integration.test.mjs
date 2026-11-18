@@ -63,3 +63,18 @@ test('simulator UI loads portfolio snapshot on startup and manual refresh withou
  assert.match(html,/byId\('loadPortfolioPositions'\)\.addEventListener\('click',loadPortfolioPositions\);\s*loadPortfolioPositions\(\)/);
  assert.doesNotMatch(handler,/localStorage\.setItem|localStorage\.removeItem|supabase\.from\(/);
 });
+
+test('empty portfolio does not overwrite simulator cash or positions',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf('function loadPortfolioPositions(){');
+ const end=html.indexOf('let selectedOpeningReview=null;',start);
+ assert.ok(start>=0&&end>start);
+ const handler=html.slice(start,end);
+ const emptyGuard=handler.indexOf('if(!positions.length){');
+ const cashApply=handler.indexOf("if(sourceCash!==null){byId('cash').value=String(sourceCash);}");
+ const positionsApply=handler.indexOf('portfolioState.positions=positions.map');
+ assert.ok(emptyGuard>=0&&cashApply>emptyGuard&&positionsApply>emptyGuard);
+ const guardReturn=handler.indexOf('return;',emptyGuard);
+ assert.ok(guardReturn>emptyGuard&&guardReturn<cashApply);
+ assert.match(handler.slice(emptyGuard,guardReturn),/기존 보유정보·시작 현금·가정 주가·전략을 유지/);
+});
