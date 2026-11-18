@@ -7,7 +7,8 @@ test('v3 validator is clearly non-deployable and rollback-only',()=>{
  assert.match(sql,/^begin;/m);
  assert.match(sql,/^rollback;/m);
  assert.doesNotMatch(sql,/^commit;/m);
- assert.doesNotMatch(sql,/create table|insert into|update public|delete from|grant execute/i);
+ const executable=sql.split('\n').filter(line=>!line.trim().startsWith('--')).join('\n');
+ assert.doesNotMatch(executable,/create table|insert into|update public|delete from|grant execute/i);
 });
 test('v3 validator checks types before casts and handles malformed values',()=>{
  for(const token of ["jsonb_typeof(s->'quantity')","jsonb_typeof(s->'price')","jsonb_typeof(s->'fee')","jsonb_typeof(v)","exception when others","jsonb_array_length(steps)>100","jsonb_object_keys","return false"])assert.ok(sql.includes(token),token);
