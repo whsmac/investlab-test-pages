@@ -197,3 +197,49 @@ test('manual portfolio and account imports invalidate prior results and pending 
  assert.match(invalidate,/byId\('status'\)\.textContent='입력값이 변경되었습니다/);
  assert.match(html,/if\(simulatorInputRevision!==inputRevisionAtStart\)throw new Error/);
 });
+
+test('two-account opening snapshots reconcile quantities, weighted cost, cash and simulated sales',()=>{
+ const a=readPortfolioSimulatorSnapshot(storageFor([
+  {symbol:'TSLA',shares:6,avg_cost:180},{symbol:'SOXL',shares:4,avg_cost:25},{symbol:'USD-CASH',shares:200}
+ ]));
+ const b=readPortfolioSimulatorSnapshot(storageFor([
+  {symbol:'TSLA',shares:4,avg_cost:210},{symbol:'TQQQ',shares:2,avg_cost:50},{symbol:'USD-CASH',shares:300}
+ ]));
+ const combined=readPortfolioSimulatorSnapshot(storageFor([
+  {symbol:'TSLA',shares:6,avg_cost:180},{symbol:'SOXL',shares:4,avg_cost:25},
+  {symbol:'TSLA',shares:4,avg_cost:210},{symbol:'TQQQ',shares:2,avg_cost:50},
+  {symbol:'USD-CASH',shares:200},{symbol:'USD-CASH',shares:300}
+ ]));
+ assert.equal(combined.usdCash,a.usdCash+b.usdCash);
+ assert.deepEqual(combined.positions.find(p=>p.ticker==='TSLA'),{ticker:'TSLA',quantity:10,averageCost:192});
+ assert.equal(combined.positions.find(p=>p.ticker==='SOXL').quantity,4);
+ assert.equal(combined.positions.find(p=>p.ticker==='TQQQ').quantity,2);
+ const trade=[{side:'sell',ticker:'TSLA',quantity:2,price:220}];
+ const resultA=simulateTrades(simulationOpening(a),trade);
+ const resultB=simulateTrades(simulationOpening(b),trade);
+ const resultAll=simulateTrades(simulationOpening(combined),trade);
+ assert.equal(resultA.final.cash,640);
+ assert.equal(resultB.final.cash,740);
+ assert.equal(resultAll.final.cash,940);
+ assert.equal(resultAll.final.positions.TSLA.quantity,8);
+ assert.equal(resultAll.final.realizedPnL,56);
+ assert.equal(resultA.final.realizedPnL,80);
+ assert.equal(resultB.final.realizedPnL,20);
+ assert.equal(combined.positions.find(p=>p.ticker==='TSLA').quantity,10);
+ assert.equal(combined.usdCash,500);
+});
+
+test('account opening import preserves price assumptions and invalidates previous valuation',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const start=html.indexOf("byId('loadAccountOpening').addEventListener('click'");
+ const end=html.indexOf("byId('loadPortfolioPositions').addEventListener('click'",start);
+ assert.ok(start>=0&&end>start);
+ const handler=html.slice(start,end);
+ assert.match(handler,/extractSimulatorCombinedOpening\(\{saved:selectedOpeningReview,accountIds:selectedIds\}\)/);
+ assert.match(handler,/simulatorInputRevision\+\+;invalidateCalculatedResults\(\)/);
+ assert.match(handler,/portfolioState\.positions=opening\.positions\.map/);
+ assert.match(handler,/byId\('cash'\)\.value=String\(opening\.usdCash\)/);
+ assert.match(handler,/const known=new Set\(portfolioState\.prices\.map/);
+ assert.match(handler,/if\(!known\.has\(p\.ticker\)\)/);
+ assert.match(handler,/renderPortfolio\(\)/);
+});
