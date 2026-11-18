@@ -36,12 +36,14 @@ jobs:
           cp -R src preview/src
           printf '%s\n' 'INVESTLAB TEST branch preview — local only.' 'Unzip, open a terminal in this folder, and run: python3 -m http.server 8765' 'Open http://127.0.0.1:8765/shared-data.html' 'This package does not publish to GitHub Pages or change Supabase.' 'Only use the TEST Supabase project with its publishable key; never use a service-role key.' > preview/README.txt
           test -f preview/shared-data.html
+          echo 'Preview sync module inventory:'
+          ls -la preview/src/sync
           test -f preview/src/sync/test-ledger-account-options.mjs
           test -f preview/src/sync/test-cash-reconciliation-preview.mjs
           test -f preview/src/sync/test-account-holdings.mjs
-          test -f preview/src/sync/test-personal-storage-dedup-policy.mjs
-          test -f preview/src/sync/test-scenario-storage-normalization.mjs
-          test -f preview/src/sync/test-legacy-simulator-preview.mjs
+          for module in test-personal-storage-dedup-policy.mjs test-scenario-storage-normalization.mjs test-legacy-simulator-preview.mjs; do
+            if [ ! -f "preview/src/sync/$module" ]; then echo "ERROR: missing $module from preview package"; exit 1; fi
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: investlab-test-shared-portfolio-preview
