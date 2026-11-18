@@ -31,3 +31,15 @@ test('summary identifies missing quote and acquisition-cost tickers without inve
  assert.match(html,/valuationMissingReason\(result\.latest\)/);
  assert.match(html,/valuationMissingReason\(result\)/);
 });
+
+test('missing-input navigation exposes ticker-specific focus targets',()=>{
+ assert.match(html,/button\.setAttribute\('aria-label',ticker\+' '\+\(kind==='price'/);
+ assert.match(html,/showHoldingDetail\(ticker\)/);
+ assert.match(html,/target\.scrollIntoView\(\{behavior:'smooth',block:'center'\}\);target\.focus\(\)/);
+});
+test('holdings sort dropdown contains no stray expression text',()=>{
+ const dropdown=html.match(/<select id="holding-sort">([\s\S]*?)<\/select>/)?.[1];
+ assert.ok(dropdown);
+ assert.doesNotMatch(dropdown,/\(\)=>'/);
+ assert.match(dropdown,/<option value="quantity-asc">보유수량 적은 순<\/option>/);
+});
