@@ -17,6 +17,7 @@ on:
       - 'tests/test-legacy-simulator-preview.test.mjs'
       - 'tests/test-scenario-rotation-offline.test.mjs'
       - 'tests/test-local-scenario-save-gate.test.mjs'
+      - 'tests/test-scenario-storage-location.test.mjs'
       - '.github/workflows/test-shared-portfolio-preview.yml'
 permissions:
   contents: read
@@ -30,7 +31,7 @@ jobs:
           node-version: '22'
       - name: Validate TEST account and cash UI modules
         run: |
-          node --test tests/test-account-holdings.test.mjs tests/test-cash-movement-review.test.mjs tests/test-cash-ledger-completeness.test.mjs tests/test-cash-reconciliation-preview.test.mjs tests/test-ledger-account-options.test.mjs tests/test-unified-portfolio-view.test.mjs tests/test-personal-document-read-probe.test.mjs tests/test-personal-storage-dedup-policy.test.mjs tests/test-scenario-storage-normalization.test.mjs tests/test-legacy-simulator-preview.test.mjs tests/test-scenario-rotation-offline.test.mjs tests/test-local-scenario-save-gate.test.mjs
+          node --test tests/test-account-holdings.test.mjs tests/test-cash-movement-review.test.mjs tests/test-cash-ledger-completeness.test.mjs tests/test-cash-reconciliation-preview.test.mjs tests/test-ledger-account-options.test.mjs tests/test-unified-portfolio-view.test.mjs tests/test-personal-document-read-probe.test.mjs tests/test-personal-storage-dedup-policy.test.mjs tests/test-scenario-storage-normalization.test.mjs tests/test-legacy-simulator-preview.test.mjs tests/test-scenario-rotation-offline.test.mjs tests/test-local-scenario-save-gate.test.mjs tests/test-scenario-storage-location.test.mjs
       - name: Assemble offline TEST preview (no publish, no database writes)
         run: |
           mkdir -p preview
