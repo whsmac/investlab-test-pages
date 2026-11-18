@@ -409,11 +409,13 @@ try{
 byId("testOnlineSimulatorCancel").addEventListener("click",()=>{testHandoffPositions=null;byId("testOnlineSimulatorImport").hidden=true;});
 byId("testOnlineSimulatorApply").addEventListener("click",()=>{
  if(!testHandoffPositions)return;
- if(!confirm("기존 시뮬레이터 보유종목 시작값을 TEST 원장 값으로 교체합니다. 실제 거래원장에는 반영되지 않습니다. 진행할까요?"))return;
+ if(!confirm("기존 시뮬레이터 보유종목을 TEST 원장 값으로 교체하고, 출처가 다른 기존 시작 현금은 0으로 초기화합니다. TEST 원장의 실제 현금잔고는 아직 확인되지 않았으므로 0은 미확인 임시값입니다. 기존 브라우저 전략·입력값을 백업했는지 확인하세요. 실제 거래원장은 변경되지 않습니다. 진행할까요?"))return;
  testOnlineBaseline=testHandoffPositions.map(x=>({ticker:x.ticker,quantity:x.quantity,averageCost:x.averageCost}));
  portfolioState.positions=testHandoffPositions.map(x=>({ticker:x.ticker,quantity:x.quantity,averageCost:x.averageCost}));
- testHandoffPositions=null;renderPortfolio();simulatorInputRevision++;invalidateCalculatedResults();scheduleWorkingDraft();
- byId("testOnlineSimulatorStatus").textContent="TEST 보유종목 시작값 적용 완료 · 실제 원장 변경 없음";
+ testHandoffPositions=null;
+ byId("cash").value="0"; // TEST ledger cash was not imported; do not mix previous browser cash.
+ renderPortfolio();simulatorInputRevision++;invalidateCalculatedResults();scheduleWorkingDraft();
+ byId("testOnlineSimulatorStatus").textContent="TEST 보유종목 적용 완료 · 기존 브라우저 현금 제외 · 시작 현금 0 USD는 미확인 임시값(실제 잔고 아님) · 실제 원장 변경 없음";
 });
 
 function portfolioJson(){
