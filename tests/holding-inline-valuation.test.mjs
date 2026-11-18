@@ -51,3 +51,11 @@ test('mobile missing-input actions have accessible touch targets and holdings ca
  assert.match(css,/\.missing-input-jump\{min-height:44px;flex:1 1 120px/);
  assert.match(css,/\.holding-table-scroll\{max-width:100%;overflow-x:auto/);
 });
+
+test('holdings numeric columns keep readable spacing and right-aligned editable prices',()=>{
+ const css=html.match(/<style>([\s\S]*?)<\/style>/)?.[1];
+ assert.ok(css);
+ assert.match(css,/\.holding-table-scroll input\[type=number\]\{min-width:92px;text-align:right/);
+ assert.match(css,/\.holding-table-scroll th:nth-child\(n\+3\),\.holding-table-scroll td:nth-child\(n\+3\)\{padding-inline:10px\}/);
+ assert.match(css,/\.holding-table-scroll th:nth-child\(2\),\.holding-table-scroll td:nth-child\(2\)\{position:sticky;left:48px/);
+});
