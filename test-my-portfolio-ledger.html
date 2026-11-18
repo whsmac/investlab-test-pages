@@ -124,11 +124,20 @@ function resetValuationSummary(note='사용자 가정주가 · 실시간 시세 
  for(const id of ['summary-market-value','summary-pnl','summary-rate']){const node=el(id);node.textContent='미계산';node.classList.remove('valuation-positive','valuation-negative');}
  el('summary-note').textContent=note;
 }
+function valuationMissingReason(result){
+ const rows=Array.isArray(result?.rows)?result.rows:[];
+ const missingPrice=rows.filter(row=>row.status==='PRICE_MISSING').map(row=>row.ticker);
+ const missingCost=rows.filter(row=>row.status==='COST_MISSING').map(row=>row.ticker);
+ const parts=[];
+ if(missingPrice.length)parts.push('주가 없음 '+missingPrice.length+'종목 ('+missingPrice.join(', ')+')');
+ if(missingCost.length)parts.push('매입단가 없음 '+missingCost.length+'종목 ('+missingCost.join(', ')+')');
+ return parts.length?'전체 합계 일부 미계산 · '+parts.join(' · '):'';
+}
 function renderValuationSummary(result){
  const money=value=>value===null?'미계산':'USD '+value.toLocaleString('en-US',{maximumFractionDigits:2});
  const fields=[['summary-market-value',result.totalMarketValueUsd,money],['summary-pnl',result.totalUnrealizedPnlUsd,money],['summary-rate',result.totalUnrealizedPnlRatePct,value=>value===null?'미계산':value.toLocaleString('en-US',{maximumFractionDigits:2})+'%']];
  for(const [id,value,format] of fields){const node=el(id);node.textContent=format(value);node.classList.remove('valuation-positive','valuation-negative');if(id!=='summary-market-value'&&value!==null&&value!==0)node.classList.add(value>0?'valuation-positive':'valuation-negative');}
- el('summary-note').textContent='사용자 가정주가 · 실시간 시세 아님 · 서버 미검증';
+ el('summary-note').textContent=[valuationMissingReason(result),'사용자 가정주가 · 실시간 시세 아님 · 서버 미검증'].filter(Boolean).join(' · ');
 }
 let lastPortfolioValuation=null;
 let lastYahooPriceDisplay=new Map();
@@ -309,7 +318,7 @@ el('yahoo-valuation-preview').addEventListener('click',async()=>{
   lastPortfolioValuation=result.latest;
   show();
   renderValuationSummary(result.latest);
-  el('summary-note').textContent='선택 주가 기준 · '+(result.priceMode==='latest-close'?'Yahoo 최신 종가 우선':'사용자 가정주가 우선')+' · 실시간 시세 아님 · 서버 미검증';
+  el('summary-note').textContent=[valuationMissingReason(result.latest),'선택 주가 기준 · '+(result.priceMode==='latest-close'?'Yahoo 최신 종가 우선':'사용자 가정주가 우선'),'실시간 시세 아님 · 서버 미검증'].filter(Boolean).join(' · ');
  }catch(error){if(revision===yahooComparisonRevision){
   output.textContent='최신 종가 기준 평가 미리보기 불가: '+error.message+' · 기존 입력값 유지';
   lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;
