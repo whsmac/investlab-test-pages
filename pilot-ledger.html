@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INVESTLAB | 통합원장 1단계</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#eaf0ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1200px;margin:auto;padding:20px 16px 60px}h1{font-size:clamp(23px,4vw,32px)}h2{font-size:19px}a{color:#a4c6ff}.panel{background:#161f32;border:1px solid #34405a;border-radius:14px;padding:17px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}label{font-size:13px;color:#b7c5dc;display:block}input,select,button{width:100%;padding:10px;border-radius:8px;background:#0b1424;color:#eef3ff;border:1px solid #43516a;font:inherit}button{background:#24395d;cursor:pointer}button:hover{background:#305184}button:disabled{opacity:.45}label>*{margin-top:5px}.wide{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions>*{width:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{border-bottom:1px solid #364159;padding:9px;text-align:right}td:first-child,th:first-child{text-align:left}.scroll{overflow-x:auto}.muted{color:#aab9d2;font-size:13px}.warn{color:#ffd48b}.stat{font-size:20px;font-weight:700}.stat small{display:block;font-size:12px;color:#aab9d2;font-weight:400}.hidden{display:none}#message{min-height:24px;color:#a9dfbf}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:span 2}.wrap{padding:14px 10px 40px}}@media(max-width:400px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style></head><body><main class="wrap">
+<a href="./index.html">← INVESTLAB 홈</a><h1>통합원장 · 1단계 실사용 화면</h1>
+<p class="warn">현재는 브라우저 임시 저장 버전입니다. 온라인 계정 동기화가 아직 없으므로 PC·모바일 데이터는 자동 공유되지 않습니다. 중요한 실거래 자료는 JSON 백업을 보관하세요.</p>
+<section class="panel"><h2>계좌 등록</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식, ISA, 연금"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><p id="accounts" class="muted"></p></section>
+<section class="panel"><h2>원장 입력</h2><form id="entryForm" class="grid">
+<label>계좌<select id="entryAccount" required></select></label><label>날짜<input id="entryDate" type="date" required></label><label>거래 종류<select id="entryType"><option value="OPEN">초기 보유 입력</option><option value="BUY">매수</option><option value="SELL">매도</option><option value="DEPOSIT">현금 입금</option><option value="WITHDRAW">현금 출금</option><option value="DIVIDEND">배당금 수령</option><option value="FX">환전 (통화 교환)</option></select></label><label>종목코드<input id="entrySymbol" placeholder="TSLA" maxlength="16"></label>
+<label>수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label><label>주당 단가<input id="entryPrice" type="number" min="0" step="any" placeholder="250"></label><label>통화<select id="entryCurrency"><option>USD</option><option>KRW</option></select></label><label>현금 금액<input id="entryAmount" type="number" min="0" step="any" placeholder="1000"></label><label>환전 후 통화<select id="entryToCurrency"><option>KRW</option><option>USD</option></select></label><label>환전 후 수령액<input id="entryToAmount" type="number" min="0" step="any" placeholder="1400000"></label><label class="wide">메모<input id="entryNote" maxlength="200" placeholder="선택 사항"></label><button type="submit">거래 기록</button>
+</form><p class="muted">초기 보유는 수량과 매입단가를 입력합니다. 초기 현금은 입금으로 기록하세요. 수수료·세금·환율별 취득원가 계산은 아직 포함되지 않았습니다.</p><p id="message" role="status"></p></section>
+<section class="panel"><h2>My Portfolio · 원장 기반 보유현황</h2><div class="grid"><label>계좌 선택<select id="viewAccount"><option value="ALL">전체 계좌</option></select></label><div class="stat"><small>보유 종목 수</small><span id="symbolCount">0</span></div><div class="stat"><small>USD 현금</small><span id="usdCash">0</span></div><div class="stat"><small>KRW 현금</small><span id="krwCash">0</span></div></div><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 USD</th><th>매입원가 USD</th></tr></thead><tbody id="holdings"></tbody></table></div><p class="muted">전체 계좌 평균단가는 보유수량을 가중치로 계산합니다. 현재 주가가 연결되지 않아 평가손익은 표시하지 않습니다.</p></section>
+<section class="panel"><h2>거래 내역</h2><div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>유형</th><th>종목</th><th>수량</th><th>단가</th><th>금액</th><th>통화</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
+<section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">JSON 복원은 현재 데이터를 교체합니다. 실사용 온라인 저장 기능이 구축되면 서버 기반으로 전환합니다.</p></section>
+</main><script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),KEY='investlab_pilot_ledger_local_v1';
+let db={version:1,accounts:[],entries:[]};
+try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.version===1&&Array.isArray(x.accounts)&&Array.isArray(x.entries))db=x;}catch{}
+const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
+const val=id=>$(id).value.trim(),num=id=>Number(val(id)),msg=s=>$('message').textContent=s;
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));render();};
+function render(){
+ const previous=val('entryAccount'),view=val('viewAccount');
+ $('entryAccount').replaceChildren();$('viewAccount').replaceChildren();
+ const all=document.createElement('option');all.value='ALL';all.textContent='전체 계좌';$('viewAccount').append(all);
+ for(const a of db.accounts){for(const id of ['entryAccount','viewAccount']){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';$(id).append(o);}}
+ $('entryAccount').value=db.accounts.some(a=>a.id===previous)?previous:(db.accounts[0]?.id||'');
+ $('viewAccount').value=db.accounts.some(a=>a.id===view)?view:'ALL';
+ $('accounts').textContent=db.accounts.length?db.accounts.map(a=>a.name+' ('+a.type+')').join(' · '):'등록된 계좌가 없습니다.';
+ const selected=val('viewAccount'),positions=new Map(),cash={USD:0,KRW:0};
+ for(const e of db.entries.filter(e=>selected==='ALL'||e.accountId===selected).sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)){
+  if(['OPEN','BUY','SELL'].includes(e.type)){
+   const key=e.symbol,old=positions.get(key)||{qty:0,cost:0};
+   if(e.type==='SELL'){const avg=old.qty>0?old.cost/old.qty:0;old.qty-=e.qty;old.cost-=avg*e.qty;cash[e.currency]+=(e.qty*e.price);}
+   else{old.qty+=e.qty;old.cost+=e.qty*e.price;if(e.type==='BUY')cash[e.currency]-=e.qty*e.price;}
+   positions.set(key,old);
+  }else if(e.type==='DEPOSIT'||e.type==='DIVIDEND')cash[e.currency]+=e.amount;
+  else if(e.type==='WITHDRAW')cash[e.currency]-=e.amount;
+  else if(e.type==='FX'){cash[e.currency]-=e.amount;cash[e.toCurrency]+=e.toAmount;}
+ }
+ const active=[...positions].filter(([,v])=>v.qty>0.00000001);
+ $('symbolCount').textContent=fmt(active.length,0);$('usdCash').textContent=fmt(cash.USD);$('krwCash').textContent=fmt(cash.KRW,0);
+ $('holdings').replaceChildren();
+ for(const [symbol,v] of active){const tr=document.createElement('tr');for(const s of [symbol,fmt(v.qty,6),fmt(v.cost/v.qty,4),fmt(v.cost)]){const td=document.createElement('td');td.textContent=s;tr.append(td);}$('holdings').append(tr);}
+ $('transactions').replaceChildren();
+ for(const e of [...db.entries].reverse()){const tr=document.createElement('tr'),name=db.accounts.find(a=>a.id===e.accountId)?.name||'미확인';
+  for(const s of [name+' / '+e.date,e.type,e.symbol||'—',e.qty?fmt(e.qty,6):'—',e.price?fmt(e.price,4):'—',e.amount?fmt(e.amount):'—',e.currency]){const td=document.createElement('td');td.textContent=s;tr.append(td);}
+  const td=document.createElement('td'),btn=document.createElement('button');btn.textContent='삭제';btn.onclick=()=>{if(confirm('이 거래 기록을 삭제하시겠습니까?')){db.entries=db.entries.filter(x=>x.id!==e.id);save();}};td.append(btn);tr.append(td);$('transactions').append(tr);
+ }
+}
+$('accountForm').onsubmit=e=>{e.preventDefault();const name=val('accountName');if(!name)return;if(db.accounts.some(a=>a.name===name)){msg('같은 이름의 계좌가 있습니다.');return;}db.accounts.push({id:crypto.randomUUID(),name,type:val('accountType')});save();$('accountName').value='';msg('계좌를 추가했습니다.');};
+$('entryForm').onsubmit=e=>{
+ e.preventDefault();const accountId=val('entryAccount'),date=val('entryDate'),type=val('entryType'),symbol=val('entrySymbol').toUpperCase(),qty=num('entryQty'),price=num('entryPrice'),currency=val('entryCurrency'),amount=num('entryAmount'),toCurrency=val('entryToCurrency'),toAmount=num('entryToAmount');
+ if(!db.accounts.some(a=>a.id===accountId)){msg('계좌를 먼저 등록하세요.');return;}
+ if(!date){msg('거래일을 입력하세요.');return;}
+ const stock=['OPEN','BUY','SELL'].includes(type),money=['DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(type);
+ if(stock&&(!/^[A-Z][A-Z0-9.\\-]{0,15}$/.test(symbol)||!(qty>0)||!(price>=0))){msg('종목코드·수량·단가를 확인하세요.');return;}
+ if(money&&!(amount>0)){msg('금액을 입력하세요.');return;}
+ if(type==='FX'&&(currency===toCurrency||!(toAmount>0))){msg('서로 다른 통화와 수령액을 입력하세요.');return;}
+ const existing=db.entries.filter(x=>x.accountId===accountId&&x.symbol===symbol&&['OPEN','BUY','SELL'].includes(x.type)&&x.date<=date).sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created);
+ if(type==='SELL'){let balance=0;for(const x of existing)balance+=x.type==='SELL'?-x.qty:x.qty;if(qty>balance+1e-8){msg('매도 수량이 해당 계좌의 보유수량을 초과합니다.');return;}}
+ if(!confirm('거래를 이 브라우저에 기록하시겠습니까? (서버 저장 아님)'))return;
+ db.entries.push({id:crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:Date.now()});
+ save();msg('브라우저에 기록했습니다. 온라인 동기화는 아직 지원하지 않습니다.');
+};
+$('viewAccount').onchange=render;
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='investlab-ledger-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const x=JSON.parse(await file.text());if(x.version!==1||!Array.isArray(x.accounts)||!Array.isArray(x.entries)||x.accounts.some(a=>!a.id||!a.name)||x.entries.some(t=>!t.id||!t.accountId||!t.date||!t.type))throw Error('지원하지 않는 데이터 형식');if(!confirm('현재 브라우저 원장 데이터를 백업 파일로 교체하시겠습니까?'))return;db=x;save();msg('복원 완료');}catch(err){msg('복원 실패: '+err.message);}finally{e.target.value='';}};
+$('clear').onclick=()=>{if(confirm('이 브라우저의 계좌와 모든 거래를 삭제하시겠습니까? 백업을 먼저 확인하세요.')){db={version:1,accounts:[],entries:[]};save();msg('초기화했습니다.');}};
+$('entryDate').value=new Date().toLocaleDateString('en-CA');render();
+})();
+</script></body></html>
