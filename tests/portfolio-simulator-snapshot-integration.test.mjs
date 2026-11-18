@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {readPortfolioSimulatorSnapshot,comparePortfolioSimulatorSnapshot} from '../src/simulator/portfolio-snapshot.mjs';
 
 function storageFor(holdings,watchlist=[],past=[]){
@@ -45,4 +46,20 @@ test('simulator detects changed portfolio positions and cash without modifying s
  assert.deepEqual(diff.changedPositions,['TSLA']);
  assert.equal(diff.cashChanged,true);
  assert.equal(diff.canPost,false);
+});
+
+test('simulator UI loads portfolio snapshot on startup and manual refresh without persisting',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/import \{readPortfolioSimulatorSnapshot\} from '\.\/src\/simulator\/portfolio-snapshot\.mjs'/);
+ const start=html.indexOf('function loadPortfolioPositions(){');
+ const end=html.indexOf('let selectedOpeningReview=null;',start);
+ assert.ok(start>=0&&end>start);
+ const handler=html.slice(start,end);
+ assert.match(handler,/readPortfolioSimulatorSnapshot\(window\.localStorage\)/);
+ assert.match(handler,/portfolioState\.positions=positions\.map\(p=>\(\{\.\.\.p\}\)\)/);
+ assert.match(handler,/if\(sourceCash!==null\)\{byId\('cash'\)\.value=String\(sourceCash\);\}/);
+ assert.match(handler,/const known=new Set\(portfolioState\.prices\.map/);
+ assert.match(handler,/if\(known\.has\(p\.ticker\)\)continue/);
+ assert.match(html,/byId\('loadPortfolioPositions'\)\.addEventListener\('click',loadPortfolioPositions\);\s*loadPortfolioPositions\(\)/);
+ assert.doesNotMatch(handler,/localStorage\.setItem|localStorage\.removeItem|supabase\.from\(/);
 });
