@@ -24,3 +24,13 @@ export function reviewPersonalStorageDuplicates(kind,payload){
  return {kind,kept,rejected,needsReview:rejected.length>0,canSave:false,canDelete:false,canMigrate:false,
   note:'제거 후보를 보고할 뿐 원본 데이터는 변경하지 않습니다. 기존 로컬 데이터나 서버 원장도 삭제하지 않습니다.'};
 }
+
+/**
+ * Prepare a future minimal personal settings payload. Fail closed rather than
+ * silently deleting unsupported existing fields. No network or local writes.
+ */
+export function prepareMinimalPersonalPayload(kind,payload){
+ const report=reviewPersonalStorageDuplicates(kind,payload);
+ if(report.rejected.length)throw Error('중복 또는 미확정 필드 '+report.rejected.map(x=>x.field).join(', ')+' · 원본 유지, 수동 검토 필요');
+ return {kind,payload:report.kept,canPost:false,source:'TEST_MINIMAL_PERSONAL_PAYLOAD_OFFLINE'};
+}
