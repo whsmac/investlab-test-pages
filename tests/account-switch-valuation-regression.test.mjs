@@ -153,3 +153,23 @@ test('per-ticker cost, market value, and P&L update consistently across account 
   assert.equal(valuation.totalUnrealizedPnlUsd,step.pnl);
  }
 });
+
+test('missing price after account switch cannot retain the previous complete valuation',()=>{
+ const accounts=[
+  {accountId:'a',name:'A',holdings:[{ticker:'TSLA',quantityDisplay:'3',averageCostUsd:'180'}]},
+  {accountId:'b',name:'B',holdings:[{ticker:'TSLA',quantityDisplay:'2',averageCostUsd:'210'}]}
+ ];
+ const complete=previewPortfolioValuation({holdings:[{ticker:'TSLA'}],accounts,prices:{TSLA:200}});
+ assert.equal(complete.status,'COMPLETE_HYPOTHETICAL');
+ assert.equal(complete.totalMarketValueUsd,1000);
+ const selected=previewPortfolioValuation({holdings:[{ticker:'TSLA'}],accounts:[accounts[1]],prices:{}});
+ assert.equal(selected.status,'PARTIAL_NOT_TOTALABLE');
+ assert.equal(selected.rows[0].status,'PRICE_MISSING');
+ assert.equal(selected.totalMarketValueUsd,null);
+ assert.equal(selected.totalUnrealizedPnlUsd,null);
+ assert.equal(selected.totalUnrealizedPnlRatePct,null);
+ assert.equal(selected.canPersist,false);
+ const recovered=previewPortfolioValuation({holdings:[{ticker:'TSLA'}],accounts,prices:{TSLA:200}});
+ assert.equal(recovered.totalMarketValueUsd,1000);
+ assert.equal(recovered.totalUnrealizedPnlUsd,40);
+});
