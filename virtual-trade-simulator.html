@@ -1051,6 +1051,9 @@ for(const id of ['priorTax','deduction']){
  });
 }
 async function refreshFxAndCalculate(){
+ // A new calculation attempt must not leave an obsolete failed-trade highlight.
+ // If this attempt fails on a trade, calculate() highlights the current failure.
+ clearTradeErrorHighlight();
  byId('recalcNotice').hidden=true;
  byId('quickResults').hidden=true;
  byId('quickMetrics').replaceChildren();
