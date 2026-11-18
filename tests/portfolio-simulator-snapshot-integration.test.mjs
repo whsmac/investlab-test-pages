@@ -184,3 +184,16 @@ test('retry and input edit clear obsolete trade error highlighting before new re
  assert.match(html.slice(retryStart,retryEnd),/clearTradeErrorHighlight\(\)/);
  assert.match(html,/if\(unavailable\)focusFailedTrade\(e\)/);
 });
+
+test('manual portfolio and account imports invalidate prior results and pending FX calculations',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ const manual=html.slice(html.indexOf("byId('loadPortfolioPositions').addEventListener('click'"),html.indexOf('loadPortfolioPositions();\n\nconst editor=',html.indexOf("byId('loadPortfolioPositions').addEventListener('click'")));
+ assert.match(manual,/simulatorInputRevision\+\+;\s*invalidateCalculatedResults\(\);\s*loadPortfolioPositions\(\)/);
+ const account=html.slice(html.indexOf("byId('loadAccountOpening').addEventListener('click'"),html.indexOf("byId('loadPortfolioPositions').addEventListener('click'"));
+ assert.match(account,/simulatorInputRevision\+\+;invalidateCalculatedResults\(\);portfolioState\.positions=opening\.positions/);
+ const invalidate=html.slice(html.indexOf('function invalidateCalculatedResults(){'),html.indexOf('function trackSimulatorEdit(',html.indexOf('function invalidateCalculatedResults(){')));
+ assert.match(invalidate,/byId\('resultHero'\)/);
+ assert.match(invalidate,/fxRateSnapshot=null/);
+ assert.match(invalidate,/byId\('status'\)\.textContent='입력값이 변경되었습니다/);
+ assert.match(html,/if\(simulatorInputRevision!==inputRevisionAtStart\)throw new Error/);
+});
