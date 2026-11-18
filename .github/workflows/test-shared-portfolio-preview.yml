@@ -41,7 +41,7 @@ jobs:
           test -f preview/src/sync/test-ledger-account-options.mjs
           test -f preview/src/sync/test-cash-reconciliation-preview.mjs
           test -f preview/src/sync/test-account-holdings.mjs
-          for module in test-personal-storage-dedup-policy.mjs test-scenario-storage-normalization.mjs test-legacy-simulator-preview.mjs; do
+          for module in personal-storage-dedup-policy.mjs test-scenario-storage-normalization.mjs test-legacy-simulator-preview.mjs; do
             if [ ! -f "preview/src/sync/$module" ]; then echo "ERROR: missing $module from preview package"; exit 1; fi
           done
       - uses: actions/upload-artifact@v4
