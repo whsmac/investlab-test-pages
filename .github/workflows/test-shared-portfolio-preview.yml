@@ -11,6 +11,10 @@ on:
       - 'tests/test-cash-*.test.mjs'
       - 'tests/test-ledger-account-options.test.mjs'
       - 'tests/test-unified-portfolio-view.test.mjs'
+      - 'tests/test-personal-document-read-probe.test.mjs'
+      - 'tests/test-personal-storage-dedup-policy.test.mjs'
+      - 'tests/test-scenario-storage-normalization.test.mjs'
+      - 'tests/test-legacy-simulator-preview.test.mjs'
       - '.github/workflows/test-shared-portfolio-preview.yml'
 permissions:
   contents: read
@@ -24,7 +28,7 @@ jobs:
           node-version: '22'
       - name: Validate TEST account and cash UI modules
         run: |
-          node --test tests/test-account-holdings.test.mjs tests/test-cash-movement-review.test.mjs tests/test-cash-ledger-completeness.test.mjs tests/test-cash-reconciliation-preview.test.mjs tests/test-ledger-account-options.test.mjs tests/test-unified-portfolio-view.test.mjs
+          node --test tests/test-account-holdings.test.mjs tests/test-cash-movement-review.test.mjs tests/test-cash-ledger-completeness.test.mjs tests/test-cash-reconciliation-preview.test.mjs tests/test-ledger-account-options.test.mjs tests/test-unified-portfolio-view.test.mjs tests/test-personal-document-read-probe.test.mjs tests/test-personal-storage-dedup-policy.test.mjs tests/test-scenario-storage-normalization.test.mjs tests/test-legacy-simulator-preview.test.mjs
       - name: Assemble offline TEST preview (no publish, no database writes)
         run: |
           mkdir -p preview
@@ -35,6 +39,9 @@ jobs:
           test -f preview/src/sync/test-ledger-account-options.mjs
           test -f preview/src/sync/test-cash-reconciliation-preview.mjs
           test -f preview/src/sync/test-account-holdings.mjs
+          test -f preview/src/sync/test-personal-storage-dedup-policy.mjs
+          test -f preview/src/sync/test-scenario-storage-normalization.mjs
+          test -f preview/src/sync/test-legacy-simulator-preview.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: investlab-test-shared-portfolio-preview
