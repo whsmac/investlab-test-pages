@@ -24,3 +24,33 @@ export function buildTestAccountHoldings(rows){
  return {accounts,unassignedTransactions:accounts.find(x=>x.accountId===null)?.transactionCount??0,
   accountCount:accounts.filter(x=>x.accountId!==null).length,cashVerified:false,canSync:false,canWrite:false};
 }
+
+export function summarizeTestAllAccounts(accountBreakdown){
+ if(!accountBreakdown||!Array.isArray(accountBreakdown.accounts))throw Error('계좌별 보유현황이 필요합니다');
+ const combined=new Map();
+ for(const account of accountBreakdown.accounts){
+  if(!Array.isArray(account.holdings))throw Error('계좌별 종목 정보 오류');
+  for(const holding of account.holdings){
+   const key=String(holding.currency||'USD')+'|'+String(holding.symbol||'');
+   const entry=combined.get(key)||{symbol:holding.symbol,currency:holding.currency||'USD',quantity:0,weightedCost:0,accountCount:0,reviewRequired:false,unassignedIncluded:false};
+   const quantity=Number(holding.quantity);
+   if(!Number.isFinite(quantity)||quantity<0||holding.reviewRequired||((quantity>0)&&(!Number.isFinite(Number(holding.averageCost))||holding.averageCost==null))){
+    entry.reviewRequired=true;
+   }else{
+    entry.quantity+=quantity;
+    if(quantity>0)entry.weightedCost+=quantity*Number(holding.averageCost);
+   }
+   if(quantity!==0)entry.accountCount++;
+   if(account.accountId==null&&quantity!==0)entry.unassignedIncluded=true;
+   combined.set(key,entry);
+  }
+ }
+ const holdings=[...combined.values()].sort((a,b)=>a.symbol.localeCompare(b.symbol)||a.currency.localeCompare(b.currency)).map(entry=>({
+  symbol:entry.symbol,currency:entry.currency,quantity:entry.reviewRequired?null:entry.quantity,
+  averageCost:entry.reviewRequired||entry.quantity<=0?null:entry.weightedCost/entry.quantity,
+  accountCount:entry.accountCount,reviewRequired:entry.reviewRequired,
+  unassignedIncluded:entry.unassignedIncluded,
+  cashBalance:null
+ }));
+ return {holdings,unassignedTransactions:accountBreakdown.unassignedTransactions??0,cashVerified:false,canWrite:false};
+}
