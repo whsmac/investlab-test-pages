@@ -60,7 +60,9 @@ test('simulator UI loads portfolio snapshot on startup and manual refresh withou
  assert.match(handler,/if\(sourceCash!==null\)\{byId\('cash'\)\.value=String\(sourceCash\);\}/);
  assert.match(handler,/const known=new Set\(portfolioState\.prices\.map/);
  assert.match(handler,/if\(known\.has\(p\.ticker\)\)continue/);
- assert.match(html,/byId\('loadPortfolioPositions'\)\.addEventListener\('click',loadPortfolioPositions\);\s*loadPortfolioPositions\(\)/);
+ assert.match(html,/byId\('loadPortfolioPositions'\)\.addEventListener\('click',\(\)=>\{\s*loadPortfolioPositions\(\);/);
+ assert.match(html,/const added=ensureTradePrices\(\)/);
+ assert.match(html,/\}\);\s*loadPortfolioPositions\(\);/);
  assert.doesNotMatch(handler,/localStorage\.setItem|localStorage\.removeItem|supabase\.from\(/);
 });
 
