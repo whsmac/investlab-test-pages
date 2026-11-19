@@ -65,7 +65,7 @@ async function diagnoseConnection(){
   lines.push('현재 계좌 보유종목: '+symbols.length+'개 · 기업 매칭: '+symbols.filter(s=>mapped.has(s)).length+'개');
   const first=(companies||[]).find(x=>symbols.includes(String(x.ticker).toUpperCase()));
   if(first){
-   const {data:rows,error:priceError}=await client.from('market_price_observations').select('trading_date,close_price,currency').eq('company_id',first.id).eq('currency','USD').order('trading_date',{ascending:false}).limit(1);
+   const {data:rows,error:priceError}=await client.from('market_price_observations').select('trading_date,close_price,currency').eq('company_id',first.id).eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:false}).limit(1);
    if(priceError)throw Error('주가 읽기 실패: '+priceError.message);
    lines.push('주가 읽기: '+(rows?.length?'성공 · 기준일 '+rows[0].trading_date:'해당 종목 USD 관측값 없음'));
   }else lines.push('주가 읽기: 일치하는 보유종목 없어 생략');
@@ -189,7 +189,7 @@ async function loadPrices(){
   // Fetch one latest USD observation per company; a global 1000-row limit can omit thinly traded symbols.
   const tickerById=new Map([...companyByTicker].map(([ticker,id])=>[id,ticker])),next=new Map();
   const results=await Promise.allSettled([...new Set(ids)].map(async id=>{
-   const {data:rows,error}=await client.from('market_price_observations').select('trading_date,close_price,currency,price_basis').eq('company_id',id).eq('currency','USD').order('trading_date',{ascending:false}).limit(1);
+   const {data:rows,error}=await client.from('market_price_observations').select('trading_date,close_price,currency,price_basis').eq('company_id',id).eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:false}).limit(1);
    if(error)throw Error(tickerById.get(id)+': '+error.message);return {id,row:rows?.[0]};
   }));
   const errors=[];
