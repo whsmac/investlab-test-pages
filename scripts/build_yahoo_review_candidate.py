@@ -36,6 +36,20 @@ def build_candidate(report, today=None):
                                            "close_price": str(price), "currency": "USD",
                                            "price_basis": "unadjusted_close"})
         result["symbols"][ticker] = {"count": len(rows), "latest_date": max(dates).isoformat()}
+    # Optional sixth company: do not fail the existing five if its source is unavailable.
+    optional = report.get("symbols", {}).get("SPCX", {})
+    if optional.get("status") == "ok" and optional.get("currency") == "USD" and optional.get("price_basis") == "unadjusted_close":
+        dates = set()
+        for row in optional.get("observations", []):
+            day = date.fromisoformat(row["trading_date"])
+            price = Decimal(str(row["close_price"]))
+            if day < date(2026, 6, 12) or day > today or day < today - timedelta(days=45) or not price.is_finite() or price <= 0 or day in dates:
+                raise ValueError("SPCX: invalid or duplicate public trading day")
+            dates.add(day)
+            result["observations"].append({"ticker":"SPCX","trading_date":day.isoformat(),
+                                            "close_price":str(price),"currency":"USD","price_basis":"unadjusted_close"})
+        if dates:
+            result["symbols"]["SPCX"]={"count":len(dates),"latest_date":max(dates).isoformat()}
     result["observations"].sort(key=lambda x: (x["ticker"], x["trading_date"]))
     return result
 
