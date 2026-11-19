@@ -102,9 +102,10 @@ let cloud=null,cloudUser=null,cloudKey=null;
 const cloudStatus=s=>$('cloudStatus').textContent=s;
 
 const cloudBaseKey=userId=>'investlab_pilot_ledger_cloud_base_v1:'+userId;
+const stableLedger=value=>JSON.stringify(value,(key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(name=>[name,item[name]])):item);
 let syncTimer=null,syncInFlight=false,syncAgain=false,cloudBaseline=null,cloudBaselineRevision=null;
 function recordCloudBaseline(userId,payload,revision){
- cloudBaseline=JSON.stringify(payload);cloudBaselineRevision=revision;
+ cloudBaseline=stableLedger(payload);cloudBaselineRevision=revision;
  try{localStorage.setItem(cloudBaseKey(userId),JSON.stringify({payload:cloudBaseline,revision}));}catch{}
 }
 function restoreCloudBaseline(userId){
@@ -124,13 +125,13 @@ async function automaticCloudSave(){
  if(!cloud||!cloudUser)return;
  syncInFlight=true;
  try{
-  const user=await requireCloud(),payload=JSON.parse(JSON.stringify(db)),serialized=JSON.stringify(payload);
+  const user=await requireCloud(),payload=JSON.parse(JSON.stringify(db)),serialized=stableLedger(payload);
   validateLedger(payload);
   if(serialized.length>700000)throw Error('TEST 원장 크기가 자동 저장 제한을 초과했습니다');
   const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',user).maybeSingle();
   if(error)throw error;
   if(remote){
-   const serverJson=JSON.stringify(remote.payload);
+   const serverJson=stableLedger(remote.payload);
    if(serverJson===serialized){
     recordCloudBaseline(user,payload,remote.updated_at);
     cloudStatus('TEST 서버와 최신 원장 동기화 완료');
@@ -169,7 +170,7 @@ async function connectAndLoadOnlineLedger(){
   restoreCloudBaseline(cloudUser);
   const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',cloudUser).maybeSingle();
   if(error)throw error;
-  const localJson=JSON.stringify(db);
+  const localJson=stableLedger(db);
   if(!remote){
    cloudBaseline=null;cloudBaselineRevision=null;
    if(!emptyLedger(db))queueAutomaticCloudSave();
