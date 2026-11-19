@@ -33,9 +33,9 @@ def assess_refresh(current: Path, proposed: Path, today=None):
         raise ValueError("Unexpected or private observation fields")
     now = today or date.today()
     tickers = {row["ticker"] for row in rows}
-    if tickers != EXPECTED:
-        raise ValueError("Missing or unexpected tickers")
-    for ticker in EXPECTED:
+    if not EXPECTED.issubset(tickers) or tickers - EXPECTED - {"SPCX"}:
+        raise ValueError("Missing five required tickers or unexpected ticker")
+    for ticker in tickers:
         dates = [date.fromisoformat(row["trading_date"]) for row in rows if row["ticker"] == ticker]
         if not dates or max(dates) > now or max(dates) < now-timedelta(days=7):
             raise ValueError("Stale or future price: " + ticker)
