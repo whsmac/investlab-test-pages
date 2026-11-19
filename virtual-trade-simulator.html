@@ -1114,7 +1114,7 @@ byId('saveScenario').addEventListener('click',async()=>{
    byId('scenarioStorageStatus').textContent='동일한 브라우저 전략 · TEST 서버 저장 상태 확인 중: '+name;
    updateStrategySaveState();
   }
-  if(!confirm('같은 이름의 저장된 전략을 변경된 내용으로 덮어쓰시겠습니까?'))return;
+  else if(!confirm('같은 이름의 저장된 전략을 변경된 내용으로 덮어쓰시겠습니까?'))return;
  }
  Object.defineProperty(saved,name,{value:strategies,enumerable:true,writable:true,configurable:true});
  localStorage.setItem(SCENARIO_STORAGE_KEY,JSON.stringify(saved));
