@@ -7,10 +7,10 @@
 <div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
 <div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
 <div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
-<div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div></div>
+<div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div><div class="metric"><span>누적 실현손익 (USD)</span><strong id="realized">USD 0</strong></div><div class="metric"><span>매도 거래 수</span><strong id="sales">0</strong></div></div>
 <h2>보유종목 현황</h2><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 (USD)</th><th>매입원가 (USD)</th></tr></thead><tbody id="holdings"></tbody></table></div>
 <p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 현재 시세·평가손익은 아직 연동되지 않았습니다.</p></section>
-<section class="panel"><h2>계좌별 요약</h2><div class="scroll"><table><thead><tr><th>계좌</th><th>종목 수</th><th>매입원가 USD</th><th>현금 USD</th><th>현금 KRW</th></tr></thead><tbody id="accounts"></tbody></table></div></section>
+<section class="panel"><h2>종목별 실현손익</h2><div class="scroll"><table><thead><tr><th>종목</th><th>매도 횟수</th><th>매도금액 USD</th><th>매도원가 USD</th><th>실현손익 USD</th></tr></thead><tbody id="realizedSymbols"></tbody></table></div><p class="muted">계좌별 평균원가를 적용한 USD 손익입니다. 수수료·세금·환율 및 세무상 취득원가는 반영하지 않았습니다.</p></section><section class="panel"><h2>계좌별 요약</h2><div class="scroll"><table><thead><tr><th>계좌</th><th>종목 수</th><th>매입원가 USD</th><th>현금 USD</th><th>현금 KRW</th><th>실현손익 USD</th></tr></thead><tbody id="accounts"></tbody></table></div></section>
 <p><a href="./pilot-ledger.html">통합원장에서 계좌·거래 입력하기</a></p>
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
@@ -19,9 +19,11 @@ let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorag
 const account=$('account');for(const a of data.accounts){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';account.append(o);}
 const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
 function render(){const selected=account.value,summary=projectLedger(data,selected);
+$('realized').textContent='USD '+fmt(summary.realizedUsd);$('sales').textContent=fmt(summary.sellCount,0);
 $('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
 $('holdings').replaceChildren();for(const h of summary.holdings){const tr=document.createElement('tr');for(const v of [h.symbol,fmt(h.qty,6),fmt(h.averageCost,4),fmt(h.cost)])cell(tr,v);$('holdings').append(tr);}
-$('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0)])cell(tr,v);$('accounts').append(tr);}
+$('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){const tr=document.createElement('tr');for(const v of [r.symbol,fmt(r.sellCount,0),fmt(r.proceedsUsd),fmt(r.disposedCostUsd),fmt(r.realizedUsd)])cell(tr,v);$('realizedSymbols').append(tr);}
+$('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
 $('status').textContent=data.accounts.length?'원장 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건을 기준으로 계산했습니다.':'등록된 계좌가 없습니다. 통합원장에서 계좌와 거래를 입력하세요.';
 }
 account.onchange=render;window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
