@@ -1,5 +1,5 @@
 // Browser-side, read-only TEST Yahoo review; no SQL, mutations, or service-role keys.
-const ALLOWED = ["MSFT", "GOOGL", "AMZN", "META", "TSLA"];
+const ALLOWED = ["MSFT", "GOOGL", "AMZN", "META", "TSLA", "SPCX"];
 export function reviewYahooCandidate(candidate, snapshot, companyMap) {
   if (candidate?.mode !== "REVIEW_ONLY" || candidate.database_insert_authorized !== false ||
       candidate.writes_performed !== 0 || candidate.source !== "Yahoo Finance") throw Error("Yahoo 검증 파일이 아닙니다.");
@@ -19,6 +19,7 @@ export function reviewYahooCandidate(candidate, snapshot, companyMap) {
     if (!ALLOWED.includes(row.ticker) || !Number.isSafeInteger(companyMap[row.ticker]) ||
         companyMap[row.ticker] <= 0) throw Error("등록되지 않은 TEST 기업 ID");
     const day = String(row.trading_date);
+    if(row.ticker==="SPCX" && day<"2026-06-12")throw Error("SPCX 상장 전 데이터 차단");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || new Date(day).toISOString().slice(0,10) !== day) throw Error("잘못된 거래일");
     const price = Number(row.close_price);
     if (!Number.isFinite(price) || price <= 0 || row.currency !== "USD" ||
