@@ -6,7 +6,8 @@ export function buildYahooChartSeries(snapshot,{limit=90}={}){
     !Array.isArray(snapshot.observations) || snapshot.row_count!==snapshot.observations.length)
    throw Error("Invalid read-only Yahoo chart source");
  if(!Number.isSafeInteger(limit)||limit<2||limit>365)throw Error("Invalid chart limit");
- const groups=Object.fromEntries(TICKERS.map(t=>[t,[]]));
+ const selected=snapshot.observations.some(r=>r.ticker==="SPCX")?[...TICKERS,"SPCX"]:TICKERS;
+ const groups=Object.fromEntries(selected.map(t=>[t,[]]));
  const seen=new Set();
  for(const row of snapshot.observations){
    if(!Object.hasOwn(groups,row.ticker))continue;
@@ -20,5 +21,5 @@ export function buildYahooChartSeries(snapshot,{limit=90}={}){
    seen.add(key);
    groups[row.ticker].push({date:row.trading_date,close:price});
  }
- return TICKERS.map(ticker=>({ticker,points:groups[ticker].sort((a,b)=>a.date.localeCompare(b.date)).slice(-limit)}));
+ return selected.map(ticker=>({ticker,points:groups[ticker].sort((a,b)=>a.date.localeCompare(b.date)).slice(-limit)}));
 }
