@@ -1111,8 +1111,8 @@ byId('saveScenario').addEventListener('click',async()=>{
  if(!Object.hasOwn(saved,name)&&Object.keys(saved).length>=30)throw Error('최대 30개까지 저장할 수 있습니다.');
  if(Object.hasOwn(saved,name)){
   if(JSON.stringify(saved[name])===JSON.stringify(strategies)){
-   byId('scenarioStorageStatus').textContent='이미 최신 상태로 저장되어 있습니다: '+name;
-   updateStrategySaveState();return;
+   byId('scenarioStorageStatus').textContent='동일한 브라우저 전략 · TEST 서버 저장 상태 확인 중: '+name;
+   updateStrategySaveState();
   }
   if(!confirm('같은 이름의 저장된 전략을 변경된 내용으로 덮어쓰시겠습니까?'))return;
  }
