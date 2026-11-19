@@ -46,11 +46,11 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <p class="muted">데이터는 저장된 일별 종가 기준이며 실시간 시세가 아닙니다. 배당수익은 포함하지 않습니다.</p>
 </section>
 <section class="panel">
-<h2 id="financeTitle">분기 매출·CAPEX</h2>
+<h2 id="financeTitle">분기 매출·CAPEX·영업이익</h2>
 <p id="financeStatus" class="muted" role="status">기업 분기 재무자료 조회 중…</p>
 <p class="muted">매출·CAPEX 변화는 위 통합 그래프에서 주가와 같은 날짜 축으로 표시합니다. 세 항목은 서로 다른 단위와 축척을 사용합니다.</p>
-<div class="scroll"><table><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>CAPEX 기준</th></tr></thead><tbody id="financeRows"></tbody></table></div>
-<p class="muted">분기 종료일 기준 자료입니다. 현재 분기 재무자료 출처는 Yahoo Finance 비공식 JSON 데이터이며 SEC 공식 공시 대조는 아직 완료되지 않았습니다. 자료가 없는 기간은 임의로 채우지 않습니다.</p>
+<div class="scroll"><table><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>영업이익 (십억 USD)</th><th>영업이익률 (%)</th></tr></thead><tbody id="financeRows"></tbody></table></div>
+<p class="muted">분기 종료일 기준입니다. 과거 재무자료는 Quotelinks의 SEC 공시 가공 데이터, 일부 최근 자료는 Yahoo Finance에서 수집했습니다. 영업이익률 = 영업이익 ÷ 매출액 × 100. 결측 수치는 임의로 채우지 않습니다.</p>
 </section>
 <p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
 </main>
@@ -216,7 +216,7 @@ function drawFinance(rows){
  const within=rows.filter(r=>r.period_end>=from);
  for(const r of within.slice().reverse()){
   const tr=document.createElement("tr");
-  for(const value of [r.fiscal_period,r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.capex_definition||"—"]){
+  for(const value of [r.fiscal_period,r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.operating_income_usd_bn==null?"—":fmt(r.operating_income_usd_bn),r.operating_margin_pct==null?"—":fmt(r.operating_margin_pct)+"%"]){
    const td=document.createElement("td");td.textContent=String(value);tr.append(td);
   }
   $("financeRows").append(tr);
@@ -234,14 +234,14 @@ async function connect(){
 }
 async function loadFinance(){
  const request=++latestRequest,name=companies.get(selected)?.company_name||selected;
- $("financeTitle").textContent=name+" · 분기 매출 및 CAPEX";
+ $("financeTitle").textContent=name+" · 분기 매출·CAPEX·영업이익";
  $("financeStatus").textContent="분기 재무자료 자동 조회 중…";
  try{
   if(!client)await connect();
   const id=companies.get(selected)?.id;
   if(!id)throw Error("기업 ID를 찾을 수 없습니다.");
   const {data,error}=await client.from("quarterly_financial_observations")
-   .select("fiscal_period,period_end,revenue_usd_bn,capex_usd_bn,capex_definition,source_url")
+   .select("fiscal_period,period_end,revenue_usd_bn,capex_usd_bn,operating_income_usd_bn,operating_margin_pct,source_url")
    .eq("company_id",id).eq("is_current",true)
    .order("fiscal_period",{ascending:true}).limit(100);
   if(error)throw Error(error.message);
@@ -251,7 +251,7 @@ async function loadFinance(){
   drawFinance(rows);
   const within=rows.filter(row=>row.period_end>=isoDate($("period").value));
   $("financeStatus").textContent=within.length
-   ?selected+" · 조회 기간 "+within.length+"개 분기 · 마지막 "+within.at(-1).fiscal_period+" · 출처: Yahoo Finance (공식 SEC 교차 검증 전)"
+   ?selected+" · 조회 기간 "+within.length+"개 분기 · 마지막 "+within.at(-1).fiscal_period+" · 출처: "+(within.some(r=>(r.source_url||"").includes("api.quotelinks.com"))?"Quotelinks SEC 공시 가공 자료":"Yahoo Finance")
    :selected+" · 현재 조회 기간에 수집된 분기 재무자료가 없습니다.";
  }catch(error){
   if(request!==latestRequest)return;
