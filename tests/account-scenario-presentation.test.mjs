@@ -64,7 +64,7 @@ test('TEST home exposes five primary menus and separates offline tools',()=>{
  for(const name of ['My Portfolio','Virtual Trade Simulator','Company Investment Analysis','Unified Ledger','Data Management'])assert.ok(main.includes(name));
  assert.match(html,/보조 검증 도구 펼치기/);
  assert.match(html,/서버 동기화 미검증/);
- assert.match(html,/계좌 배정 미완성/);
+ assert.match(html,/브라우저 임시 저장 · 온라인 동기화 개발 예정/);
 });
 
 test('legacy comparison rows without account IDs retain individual and combined labels',()=>{
