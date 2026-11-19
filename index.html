@@ -18,23 +18,13 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 <body><main class="wrap">
 <header><div class="brand">INVEST<span>LAB</span></div><div class="tag">TEST ONLY · GitHub Pages</div></header>
 <h1>투자 분석 대시보드</h1>
-<p>1단계 Pilot의 5개 주요 기능을 한곳에서 이용합니다. 현재 온라인 저장이 완료되지 않은 메뉴는 아래에 상태를 표시했습니다.</p>
+<p>1단계 Pilot의 5개 기능을 바로 이용합니다. TEST 서버의 개인 데이터와 공유 주가를 연결하며, 최종 PC·모바일 통합 검증은 남아 있습니다.</p>
 <section class="grid" aria-label="INVESTLAB 주요 메뉴">
-<a class="card" href="./my-portfolio.html"><h2>1. My Portfolio</h2><p>통합원장 기반 보유종목·계좌별 평균매입단가·현금잔고</p><span class="state pending">● 브라우저 원장 연동 · 서버 동기화 준비 중</span></a>
-<a class="card" href="./virtual-trade-simulator.html"><h2>2. Virtual Trade Simulator</h2><p>가상 매수·매도 전략과 계좌별 손익 비교</p><span class="state pending">● 브라우저 기반 · 서버 동기화 미검증</span></a>
-<a class="card" href="./shared-data.html"><h2>3. Company Investment Analysis</h2><p>6개 기업의 주가·분기 재무 관측값 조회</p><span class="state">● TEST 공유 데이터 조회 기능</span></a>
-<a class="card" href="./pilot-ledger.html"><h2>4. Unified Ledger</h2><p>계좌 등록·매수·매도·현금·배당·환전 입력과 보유현황</p><span class="state pending">● 브라우저 임시 저장 · 온라인 동기화 개발 예정</span></a>
-<a class="card" href="./data-management.html"><h2>5. Data Management</h2><p>통합원장·저장 전략·작업 초안 전체 백업 및 복원</p><span class="state pending">● 브라우저 데이터 관리 · 서버 동기화 준비 중</span></a>
+<a class="card" href="./my-portfolio.html"><h2>1. My Portfolio</h2><p>계좌별 보유·평균매입단가·현금·현재 종가 평가</p><span class="state">TEST 개인 원장·주가 자동 조회</span></a>
+<a class="card" href="./virtual-trade-simulator.html"><h2>2. Virtual Trade Simulator</h2><p>가상 매수·매도, 보유 현황 비교, 전략 저장·불러오기</p><span class="state">TEST 시나리오 온라인 저장</span></a>
+<a class="card" href="./company-investment-analysis.html"><h2>3. Company Investment Analysis</h2><p>6개 기업 일별 종가·상대지수와 분기 매출·CAPEX</p><span class="state pending">주가 자동 갱신 · 분기 재무자료 확보 중</span></a>
+<a class="card" href="./pilot-ledger.html"><h2>4. Unified Ledger</h2><p>계좌·거래·배당·환전·현금 입출금과 손익 관리</p><span class="state">TEST 원장 자동 저장·불러오기</span></a>
+<a class="card" href="./data-management.html"><h2>5. Data Management</h2><p>TEST 서버 원장·전략과 브라우저 초안 백업·복원</p><span class="state">TEST 온라인 데이터 백업·복원</span></a>
 </section>
-<p><a href="./pilot-readiness.html">5개 모듈 온라인 Pilot 준비 상태 점검 (TEST)</a></p>
-<p><a href="./shared-data.html#pilotAccountManager">계좌 등록·관리 (TEST)</a></p>
-<details style="margin-top:22px"><summary style="cursor:pointer;font-weight:700">개발·데이터 점검 링크 펼치기</summary><p><a href="./test-shared-price-chart.html">공통 주가 차트 TEST 미리보기 (CSV 없이 서버 조회)</a></p>
-<p><a href="./test-yahoo-price-review.html">Yahoo 주가와 TEST DB 실제 대조 (읽기 전용)</a></p>
-<p><a href="./test-yahoo-company-map.html">Yahoo Finance 연동용 TEST 기업 ID 조회 (읽기 전용)</a></p>
-<p><a href="./test-price-reconciliation.html">주가 수집 데이터와 TEST DB 대조 (읽기 전용)</a></p></details>
-<details style="margin-top:22px"><summary style="cursor:pointer;font-weight:700">보조 검증 도구 펼치기</summary><section class="grid" aria-label="보조 검증 도구">
-<a class="card" href="./test-portfolio-account-allocation.html"><h2>계좌별 초기잔고 배정</h2><p>보유종목과 USD·KRW 현금잔고를 계좌별로 검토</p><span class="state pending">● 오프라인 검증 전용</span></a>
-<a class="card" href="./test-portfolio-ledger-reconcile.html"><h2>원장 잔고 대조</h2><p>계좌별 포트폴리오와 원장 계산 결과를 비교하고 JSON 보고서 저장</p><span class="state pending">● 오프라인 검증 전용</span></a>
-</section></details>
-<div class="notice">안전 안내: 이 사이트는 TEST 전용입니다. 운영 데이터 변경이나 실제 주문 기능은 제공하지 않습니다. Supabase service_role 키 또는 비밀번호를 소스코드에 저장하지 마세요. 공유 데이터 CSV 가져오기 화면은 아직 배포되지 않았습니다.</div>
+<div class="notice">안전 안내: 이 사이트는 TEST 전용입니다. 운영 데이터 변경이나 실제 주문 기능은 제공하지 않습니다. Supabase service_role 키 또는 비밀번호를 소스코드에 저장하지 마세요. 기업 분기 재무자료는 확보 중이며, 검증되지 않은 수치는 표시하지 않습니다.</div>
 </main></body></html>
