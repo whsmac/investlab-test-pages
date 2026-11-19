@@ -46,7 +46,10 @@ jobs:
           INVESTLAB_SEC_USER_AGENT: ${{ secrets.INVESTLAB_SEC_USER_AGENT }}
         run: |
           if [ -n "$INVESTLAB_SEC_USER_AGENT" ]; then
-            python scripts/sec_quarterly_financials_test.py --output "${RUNNER_TEMP}/sec-quarterly-financials.json" || echo "::warning::SEC collection unavailable; continue with verified price data only"
+            if ! python scripts/sec_quarterly_financials_test.py --output "${RUNNER_TEMP}/sec-quarterly-financials.json"; then
+              rm -f "${RUNNER_TEMP}/sec-quarterly-financials.json"
+              echo "::warning::SEC collection unavailable; continue with verified price data only"
+            fi
           else
             echo "::notice::SEC contact identity is not configured; official financial collection skipped"
           fi
