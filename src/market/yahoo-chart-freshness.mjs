@@ -10,6 +10,7 @@ export function assessYahooChartFreshness(snapshot,{now=new Date(),maxAgeDays=7}
    throw Error("Invalid freshness parameters");
  const today=Date.UTC(current.getUTCFullYear(),current.getUTCMonth(),current.getUTCDate());
  const tickers=["MSFT","GOOGL","AMZN","META","TSLA"];
+ if(snapshot.observations.some(r=>r.ticker==="SPCX"))tickers.push("SPCX");
  const dates=Object.fromEntries(tickers.map(t=>[t,null]));
  for(const row of snapshot.observations){
   if(!Object.hasOwn(dates,row.ticker))continue;
