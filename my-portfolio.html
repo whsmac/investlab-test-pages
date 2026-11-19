@@ -15,6 +15,7 @@
 <p><a href="./pilot-ledger.html">통합원장에서 계좌·거래 입력하기</a></p>
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
+import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
 const account=$('account');for(const a of data.accounts){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';account.append(o);}
@@ -87,6 +88,7 @@ async function loadCloudLedgerSafely(){
   const ids=new Set(payload.accounts.map(a=>String(a.id)));
   if(payload.accounts.some(a=>!a||typeof a.id!=='string'||!a.id.trim()||typeof a.name!=='string'||!a.name.trim()))throw Error('서버 계좌에 필수 항목이 누락되었습니다');
   if(payload.entries.some(e=>!e||typeof e.id!=='string'||!e.id.trim()||!ids.has(String(e.accountId))||typeof e.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DIVIDEND','FX','DEPOSIT','WITHDRAW'].includes(e.type)))throw Error('서버 거래에 필수 항목, 날짜 또는 계좌 연결 오류가 있습니다');
+  validateLedger(payload);
   projectLedger(payload,'ALL');
   for(const a of payload.accounts)projectLedger(payload,a.id);
   const current=original===null?{version:1,accounts:[],entries:[]}:JSON.parse(original);
