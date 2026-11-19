@@ -10,7 +10,8 @@ import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-SYMBOLS = ("MSFT", "GOOGL", "AMZN", "META", "TSLA")
+CORE_SYMBOLS = ("MSFT", "GOOGL", "AMZN", "META", "TSLA")
+SYMBOLS = CORE_SYMBOLS + ("SPCX",)
 OUTPUT = Path(os.environ.get("INVESTLAB_YAHOO_REPORT", "yahoo-price-probe.json"))
 
 
@@ -94,9 +95,8 @@ def main():
                                           "message": str(exc)[:180]}
         save(report)
         print(ticker, report["symbols"][ticker]["status"], flush=True)
-    report["symbols"]["SPCX"] = {"status": "skipped", "reason": "Ticker not independently verified"}
-    save(report)
-    return 0 if all(report["symbols"][t]["status"] == "ok" for t in SYMBOLS) else 1
+    # SPCX started public trading on 2026-06-12; optional source failure must not halt five incumbent tickers.
+    return 0 if all(report["symbols"][t]["status"] == "ok" for t in CORE_SYMBOLS) else 1
 
 
 if __name__ == "__main__":
