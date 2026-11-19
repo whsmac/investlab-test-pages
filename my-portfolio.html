@@ -4,7 +4,7 @@
 <body><main class="wrap"><a href="./index.html">← 홈</a><h1>My Portfolio</h1>
 <p class="muted">통합원장과 같은 계좌·거래 데이터를 읽습니다. 보유종목을 다시 입력할 필요가 없습니다.</p>
 <p class="warn">현재는 동일 브라우저의 통합원장 임시 저장 데이터를 읽는 버전입니다. 다른 기기의 자료는 자동으로 표시되지 않습니다.</p>
-<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="loadPrices" type="button" style="padding:10px 15px;background:#274675;color:white;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 최신 주가 조회</button><label class="muted" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="autoPrices" checked> 페이지 열 때 자동 조회</label><button id="diagnose" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">연결 진단</button><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><p id="diagnostics" class="muted" role="status" style="white-space:pre-wrap"></p><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
+<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="loadPrices" type="button" style="padding:10px 15px;background:#274675;color:white;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 최신 주가 조회</button><label class="muted" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="autoPrices" checked> 페이지 열 때 자동 조회</label><button id="diagnose" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">연결 진단</button><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><p id="diagnostics" class="muted" role="status" style="white-space:pre-wrap"></p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button id="compareCloudLedger" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 원장 비교 (읽기 전용)</button><span id="cloudLedgerStatus" class="muted" role="status">서버 원장 미확인 · 현재 화면은 브라우저 원장 기준</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
 <div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
 <div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
 <div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
@@ -65,6 +65,33 @@ async function diagnoseConnection(){
  output.textContent=lines.join('\n');
 }
 $('diagnose').onclick=diagnoseConnection;
+async function compareCloudLedger(){
+ const output=$('cloudLedgerStatus'),button=$('compareCloudLedger');
+ button.disabled=true;output.textContent='TEST 서버 원장 확인 중…';
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('공유 데이터 페이지에서 TEST 공개용 연결 설정이 필요합니다');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리 로딩 실패');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await client.auth.getUser();
+  if(authError||!auth?.user?.id)throw Error('공유 데이터 페이지에서 TEST 계정 로그인이 필요합니다');
+  const userId=auth.user.id;
+  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',userId).maybeSingle();
+  if(error)throw Error('원장 테이블 읽기 실패 (미설치 또는 권한 확인 필요): '+error.message);
+  if(!remote){output.textContent='서버에 본인 원장이 없습니다 · 브라우저 원장 '+data.accounts.length+'계좌 / '+data.entries.length+'거래 · 변경 없음';return;}
+  const payload=remote.payload;
+  if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('서버 원장 형식이 올바르지 않습니다');
+  const {data:check,error:checkError}=await client.auth.getUser();
+  if(checkError||check?.user?.id!==userId)throw Error('조회 중 로그인 계정이 변경되었습니다');
+  const localIds=new Set(data.entries.map(e=>String(e.id))),remoteIds=new Set(payload.entries.map(e=>String(e.id)));
+  const onlyLocal=data.entries.filter(e=>!remoteIds.has(String(e.id))).length;
+  const onlyRemote=payload.entries.filter(e=>!localIds.has(String(e.id))).length;
+  output.textContent='브라우저 '+data.accounts.length+'계좌 / '+data.entries.length+'거래 · 서버 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래 · 거래 ID 기준 브라우저 전용 '+onlyLocal+'건 / 서버 전용 '+onlyRemote+'건 · 서버 수정 '+(remote.updated_at||'미확인')+' · 내용 동일 여부는 미검증 · 데이터 변경 없음';
+ }catch(error){output.textContent='서버 원장 비교 실패: '+error.message+' · 브라우저 원장 유지';}
+ finally{button.disabled=false;}
+}
+$('compareCloudLedger').onclick=compareCloudLedger;
 async function loadPrices(){
  if(priceLoading){pricePending=true;return;}
  const requestVersion=priceRequestVersion,selectedAccount=account.value;
