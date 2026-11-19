@@ -9,7 +9,7 @@ from datetime import datetime, timezone, date
 from decimal import Decimal
 from pathlib import Path
 
-ALLOWED = {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
+ALLOWED = {"MSFT", "GOOGL", "AMZN", "META", "TSLA", "SPCX"}
 
 
 def build_public_snapshot(candidate, now=None):
@@ -33,6 +33,8 @@ def build_public_snapshot(candidate, now=None):
             raise ValueError("Invalid close")
         if row.get("currency") != "USD" or row.get("price_basis") != "unadjusted_close":
             raise ValueError("Invalid currency or price basis")
+        if ticker == "SPCX" and day < "2026-06-12":
+            raise ValueError("SPCX price predates its listing")
         key = (ticker, day)
         if key in seen:
             raise ValueError("Duplicate observation")
