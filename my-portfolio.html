@@ -1,15 +1,16 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB | My Portfolio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#edf2ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1150px;margin:auto;padding:20px 16px 55px}a{color:#9fc4ff}h1{font-size:clamp(24px,4vw,34px)}.panel{background:#161f32;border:1px solid #35425c;border-radius:14px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{background:#0f192b;border:1px solid #34415b;border-radius:11px;padding:15px}.metric span{display:block;color:#b2c0d7;font-size:12px}.metric strong{display:block;margin-top:6px;font-size:21px}select{padding:10px;background:#101b2e;color:inherit;border:1px solid #4a5b78;border-radius:9px;min-width:190px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{text-align:right;padding:11px;border-bottom:1px solid #34415b}td:first-child,th:first-child{text-align:left}.muted{color:#adbad0;font-size:13px;line-height:1.6}.warn{color:#f4d18b}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:14px 10px 35px}td,th{padding:9px}}</style></head>
 <body><main class="wrap"><a href="./index.html">← 홈</a><h1>My Portfolio</h1>
 <p class="muted">통합원장과 같은 계좌·거래 데이터를 읽습니다. 보유종목을 다시 입력할 필요가 없습니다.</p>
 <p class="warn">현재는 동일 브라우저의 통합원장 임시 저장 데이터를 읽는 버전입니다. 다른 기기의 자료는 자동으로 표시되지 않습니다.</p>
-<section class="panel"><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
+<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="loadPrices" type="button" style="padding:10px 15px;background:#274675;color:white;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 최신 주가 조회</button><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
 <div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
 <div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
 <div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
-<div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div><div class="metric"><span>누적 실현손익 (USD)</span><strong id="realized">USD 0</strong></div><div class="metric"><span>매도 거래 수</span><strong id="sales">0</strong></div></div>
-<h2>보유종목 현황</h2><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 (USD)</th><th>매입원가 (USD)</th></tr></thead><tbody id="holdings"></tbody></table></div>
-<p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 현재 시세·평가손익은 아직 연동되지 않았습니다.</p></section>
+<div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div><div class="metric"><span>누적 실현손익 (USD)</span><strong id="realized">USD 0</strong></div><div class="metric"><span>매도 거래 수</span><strong id="sales">0</strong></div><div class="metric"><span>조회 가능 종목 평가금액</span><strong id="marketValue">USD —</strong></div><div class="metric"><span>조회 가능 종목 평가손익</span><strong id="unrealized">USD —</strong></div></div>
+<h2>보유종목 현황</h2><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 (USD)</th><th>매입원가 (USD)</th><th>기준일</th><th>종가 USD</th><th>평가금액 USD</th><th>평가손익 USD</th></tr></thead><tbody id="holdings"></tbody></table></div>
+<p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 시세는 TEST 서버에 등록된 마지막 거래일 종가이며 실시간 시세가 아닙니다. 가격이 없는 종목은 평가합계에서 제외합니다.</p></section>
 <section class="panel"><h2>종목별 실현손익</h2><div class="scroll"><table><thead><tr><th>종목</th><th>매도 횟수</th><th>매도금액 USD</th><th>매도원가 USD</th><th>실현손익 USD</th></tr></thead><tbody id="realizedSymbols"></tbody></table></div><p class="muted">계좌별 평균원가를 적용한 USD 손익입니다. 수수료·세금·환율 및 세무상 취득원가는 반영하지 않았습니다.</p></section><section class="panel"><h2>계좌별 요약</h2><div class="scroll"><table><thead><tr><th>계좌</th><th>종목 수</th><th>매입원가 USD</th><th>현금 USD</th><th>현금 KRW</th><th>실현손익 USD</th></tr></thead><tbody id="accounts"></tbody></table></div></section>
 <p><a href="./pilot-ledger.html">통합원장에서 계좌·거래 입력하기</a></p>
 </main><script type="module">
@@ -17,14 +18,41 @@ import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
 const account=$('account');for(const a of data.accounts){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';account.append(o);}
+let prices=new Map();
 const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
 function render(){const selected=account.value,summary=projectLedger(data,selected);
 $('realized').textContent='USD '+fmt(summary.realizedUsd);$('sales').textContent=fmt(summary.sellCount,0);
 $('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
-$('holdings').replaceChildren();for(const h of summary.holdings){const tr=document.createElement('tr');for(const v of [h.symbol,fmt(h.qty,6),fmt(h.averageCost,4),fmt(h.cost)])cell(tr,v);$('holdings').append(tr);}
+$('holdings').replaceChildren();let marketValue=0,marketCost=0,pricedCount=0;
+for(const h of summary.holdings){const tr=document.createElement('tr'),p=prices.get(h.symbol),available=p&&Number.isFinite(p.close)&&p.close>=0&&p.currency==='USD';if(available){marketValue+=h.qty*p.close;marketCost+=h.cost;pricedCount++;}
+for(const v of [h.symbol,fmt(h.qty,6),fmt(h.averageCost,4),fmt(h.cost),available?p.date:'—',available?fmt(p.close,4):'—',available?fmt(h.qty*p.close):'—',available?fmt(h.qty*p.close-h.cost):'—'])cell(tr,v);$('holdings').append(tr);}
+$('marketValue').textContent=pricedCount?'USD '+fmt(marketValue):'USD —';$('unrealized').textContent=pricedCount?'USD '+fmt(marketValue-marketCost):'USD —';
 $('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){const tr=document.createElement('tr');for(const v of [r.symbol,fmt(r.sellCount,0),fmt(r.proceedsUsd),fmt(r.disposedCostUsd),fmt(r.realizedUsd)])cell(tr,v);$('realizedSymbols').append(tr);}
 $('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
 $('status').textContent=data.accounts.length?'원장 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건을 기준으로 계산했습니다.':'등록된 계좌가 없습니다. 통합원장에서 계좌와 거래를 입력하세요.';
 }
+$('loadPrices').onclick=async()=>{
+ const status=$('priceStatus');status.textContent='TEST 서버 주가 조회 중…';
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('Company Investment Analysis에서 TEST 프로젝트 URL과 공개용 키를 먼저 설정하세요.');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다.');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:userResult,error:userError}=await client.auth.getUser();
+  if(userError||!userResult?.user?.id)throw Error('Company Investment Analysis에서 TEST 계정으로 로그인하세요.');
+  const {data:companies,error:companyError}=await client.from('companies').select('id,ticker').limit(100);
+  if(companyError)throw companyError;
+  const symbols=[...new Set(data.entries.filter(e=>['OPEN','BUY','SELL'].includes(e.type)).map(e=>e.symbol))];
+  const companyByTicker=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
+  const ids=symbols.map(s=>companyByTicker.get(s)).filter(Boolean);
+  if(!ids.length){prices=new Map();render();status.textContent='TEST 기업 목록에 일치하는 보유종목이 없습니다.';return;}
+  const {data:observations,error:priceError}=await client.from('market_price_observations').select('company_id,trading_date,close_price,currency,price_basis').in('company_id',ids).order('trading_date',{ascending:false}).limit(1000);
+  if(priceError)throw priceError;
+  const tickerById=new Map([...companyByTicker].map(([ticker,id])=>[id,ticker])),next=new Map();
+  for(const p of observations||[]){const ticker=tickerById.get(p.company_id),close=Number(p.close_price);if(ticker&&!next.has(ticker)&&p.currency==='USD'&&Number.isFinite(close)&&close>=0)next.set(ticker,{date:p.trading_date,close,currency:p.currency});}
+  prices=next;render();status.textContent='TEST 서버 종가 조회 완료 · '+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
+ }catch(error){status.textContent='조회 실패: '+error.message+' · 기존 조회 가격은 유지됩니다.';}
+};
 account.onchange=render;window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 </script></body></html>
