@@ -181,13 +181,31 @@ $('cloudLoad').onclick=async()=>{
 $('cloudSave').onclick=async()=>{
  try{
   const user=await requireCloud();
-  if(!confirm('현재 브라우저 원장으로 서버의 동일 계정 원장을 덮어씁니다. 다른 기기의 최근 변경사항이 사라질 수 있습니다. 계속하시겠습니까?'))return;
+  validateLedger(db);
   const payload=JSON.parse(JSON.stringify(db));
   if(JSON.stringify(payload).length>700000)throw Error('데이터 용량이 너무 큽니다. JSON 백업을 사용하세요');
-  const {error}=await cloud.from(TABLE).upsert({user_id:user,payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  if(error)throw error;
-  if(user!==cloudUser)throw Error('로그인 계정이 변경되었습니다. 저장 상태를 재조회하세요');
-  cloudStatus('서버 저장 요청 성공 · 다른 기기에서는 서버에서 불러오기를 실행하세요.');
+  const {data:remote,error:readError}=await cloud.from(TABLE).select('updated_at').eq('user_id',user).maybeSingle();
+  if(readError)throw Error('서버 저장 전 상태 조회 실패: '+readError.message);
+  if(user!==cloudUser)throw Error('조회 중 로그인 계정이 변경되었습니다');
+  if(remote){
+   cloudStatus('서버에 기존 원장이 있습니다. 덮어쓰기 위험을 확인하세요.');
+   if(!confirm('서버에 이미 원장이 존재합니다 (최종 수정: '+remote.updated_at+'). 이 작업은 기존 원장을 덮어쓸 수 있습니다. JSON 백업을 확보했는지 확인 후 계속하시겠습니까?'))return;
+   const {data:current,error:checkError}=await cloud.from(TABLE).select('updated_at').eq('user_id',user).maybeSingle();
+   if(checkError)throw checkError;
+   if(!current||current.updated_at!==remote.updated_at)throw Error('확인 도중 서버 원장이 변경되었습니다. 저장을 중단합니다. 서버 원장을 먼저 확인하세요');
+   if(user!==cloudUser)throw Error('저장 직전 로그인 계정이 변경되었습니다');
+   // Optimistic update: the server row must still match the reviewed timestamp.
+   const {data:updated,error:updateError}=await cloud.from(TABLE).update({payload,updated_at:new Date().toISOString()}).eq('user_id',user).eq('updated_at',remote.updated_at).select('updated_at');
+   if(updateError)throw updateError;
+   if(!updated?.length)throw Error('다른 기기에서 서버 원장이 변경되었거나 쓰기 권한이 없습니다. 덮어쓰지 않았습니다');
+  }else{
+   if(!confirm('서버에 원장이 없습니다. 현재 브라우저 원장을 새로 저장하시겠습니까?'))return;
+   if(user!==cloudUser)throw Error('저장 직전 로그인 계정이 변경되었습니다');
+   const {data:inserted,error:insertError}=await cloud.from(TABLE).insert({user_id:user,payload,updated_at:new Date().toISOString()}).select('updated_at');
+   if(insertError)throw insertError;
+   if(!inserted?.length)throw Error('서버 저장 결과를 확인하지 못했습니다');
+  }
+  cloudStatus('서버 저장 결과 확인 완료 · 다른 기기에서는 서버에서 불러오기를 실행하세요.');
  }catch(e){cloudStatus('서버 저장 실패: '+e.message+' · 브라우저 원장은 유지됩니다.');}
 };
 $('entryDate').value=new Date().toLocaleDateString('en-CA');render();
