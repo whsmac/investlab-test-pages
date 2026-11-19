@@ -118,7 +118,7 @@ const emptyLedger=payload=>!payload.accounts.length&&!payload.entries.length;
 function queueAutomaticCloudSave(){
  if(!cloud||!cloudUser)return;
  clearTimeout(syncTimer);
- syncTimer=setTimeout(()=>{void automaticCloudSave();},500);
+ syncTimer=setTimeout(()=>{syncTimer=null;void automaticCloudSave();},500);
 }
 async function automaticCloudSave(){
  if(syncInFlight){syncAgain=true;return;}
