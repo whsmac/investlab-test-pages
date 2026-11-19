@@ -104,8 +104,10 @@ const cloudStatus=s=>$('cloudStatus').textContent=s;
 const cloudBaseKey=userId=>'investlab_pilot_ledger_cloud_base_v1:'+userId;
 const stableLedger=value=>JSON.stringify(value,(key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(name=>[name,item[name]])):item);
 let syncTimer=null,syncInFlight=false,syncAgain=false,cloudBaseline=null,cloudBaselineRevision=null;
+const LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1';
 function recordCloudBaseline(userId,payload,revision){
  cloudBaseline=stableLedger(payload);cloudBaselineRevision=revision;
+ try{localStorage.setItem(LOCAL_OWNER_KEY,userId);}catch{}
  try{localStorage.setItem(cloudBaseKey(userId),JSON.stringify({payload:cloudBaseline,revision}));}catch{}
 }
 function restoreCloudBaseline(userId){
@@ -147,6 +149,8 @@ async function automaticCloudSave(){
    recordCloudBaseline(user,payload,updated[0].updated_at);
   }else{
    if(cloudBaselineRevision!==null)throw Error('서버 원장이 삭제되거나 변경되었습니다. 자동 재생성을 중지했습니다');
+   const localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
+   if(localOwner!==user)throw Error('이 브라우저 원장의 소유 계정을 자동 확인할 수 없습니다. 직접 서버 저장 여부를 선택하세요');
    const {data:created,error:createError}=await cloud.from(TABLE)
     .insert({user_id:user,payload,updated_at:new Date().toISOString()}).select('updated_at');
    if(createError)throw createError;
@@ -170,15 +174,20 @@ async function connectAndLoadOnlineLedger(){
   restoreCloudBaseline(cloudUser);
   const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',cloudUser).maybeSingle();
   if(error)throw error;
-  const localJson=stableLedger(db);
+  const localJson=stableLedger(db),localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
+  if(localOwner&&localOwner!==cloudUser&&!emptyLedger(db)){
+   cloudStatus('다른 TEST 계정에서 작성한 브라우저 원장이 감지되어 자동 전환을 중지했습니다. 브라우저 원장을 백업한 후 계정을 확인하세요');
+   return;
+  }
   if(!remote){
    cloudBaseline=null;cloudBaselineRevision=null;
-   if(!emptyLedger(db))queueAutomaticCloudSave();
-   else cloudStatus('TEST 계정 연결 · 새 원장 자동 저장 준비 완료');
+   if(emptyLedger(db)&&!localOwner)try{localStorage.setItem(LOCAL_OWNER_KEY,cloudUser);}catch{}
+   if(!emptyLedger(db)&&localOwner===cloudUser)queueAutomaticCloudSave();
+   else cloudStatus(emptyLedger(db)?'TEST 계정 연결 · 새 원장 자동 저장 준비 완료':'브라우저의 기존 원장이 발견되었습니다. 계정 연결 전 데이터이므로 수동 서버 저장으로 확인해 주세요');
    return;
   }
   validateLedger(remote.payload);
-  const serverJson=JSON.stringify(remote.payload);
+  const serverJson=stableLedger(remote.payload);
   if(localJson===serverJson||localJson===cloudBaseline||emptyLedger(db)){
    db=remote.payload;save(false);recordCloudBaseline(cloudUser,remote.payload,remote.updated_at);
    cloudStatus('TEST 서버 원장 자동 불러오기 완료 · '+db.accounts.length+'계좌 / '+db.entries.length+'거래');
