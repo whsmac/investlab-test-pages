@@ -31,7 +31,7 @@ let db={version:1,accounts:[],entries:[]};
 try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.version===1&&Array.isArray(x.accounts)&&Array.isArray(x.entries))db=x;}catch{}
 const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 const val=id=>$(id).value.trim(),num=id=>Number(val(id)),msg=s=>$('message').textContent=s;
-const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));render();};
+const save=(sync=true)=>{localStorage.setItem(KEY,JSON.stringify(db));render();if(sync)queueAutomaticCloudSave();};
 // Validate every account chronologically, including future effects of backdated edits.
 
 let editingId=null;
@@ -100,6 +100,91 @@ $('clear').onclick=()=>{if(confirm('이 브라우저의 계좌와 모든 거래�
 const TEST_URL='https://gopofxyezhwpfxbecrxd.supabase.co',TABLE='investlab_pilot_ledger_documents';
 let cloud=null,cloudUser=null,cloudKey=null;
 const cloudStatus=s=>$('cloudStatus').textContent=s;
+
+const cloudBaseKey=userId=>'investlab_pilot_ledger_cloud_base_v1:'+userId;
+let syncTimer=null,syncInFlight=false,syncAgain=false,cloudBaseline=null,cloudBaselineRevision=null;
+function recordCloudBaseline(userId,payload,revision){
+ cloudBaseline=JSON.stringify(payload);cloudBaselineRevision=revision;
+ try{localStorage.setItem(cloudBaseKey(userId),JSON.stringify({payload:cloudBaseline,revision}));}catch{}
+}
+function restoreCloudBaseline(userId){
+ try{const saved=JSON.parse(localStorage.getItem(cloudBaseKey(userId))||'null');
+  if(saved&&typeof saved.payload==='string'&&typeof saved.revision==='string'){cloudBaseline=saved.payload;cloudBaselineRevision=saved.revision;return;}
+ }catch{}
+ cloudBaseline=null;cloudBaselineRevision=null;
+}
+const emptyLedger=payload=>!payload.accounts.length&&!payload.entries.length;
+function queueAutomaticCloudSave(){
+ if(!cloud||!cloudUser)return;
+ clearTimeout(syncTimer);
+ syncTimer=setTimeout(()=>{void automaticCloudSave();},500);
+}
+async function automaticCloudSave(){
+ if(syncInFlight){syncAgain=true;return;}
+ if(!cloud||!cloudUser)return;
+ syncInFlight=true;
+ try{
+  const user=await requireCloud(),payload=JSON.parse(JSON.stringify(db)),serialized=JSON.stringify(payload);
+  validateLedger(payload);
+  if(serialized.length>700000)throw Error('TEST 원장 크기가 자동 저장 제한을 초과했습니다');
+  const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',user).maybeSingle();
+  if(error)throw error;
+  if(remote){
+   const serverJson=JSON.stringify(remote.payload);
+   if(serverJson===serialized){
+    recordCloudBaseline(user,payload,remote.updated_at);
+    cloudStatus('TEST 서버와 최신 원장 동기화 완료');
+    return;
+   }
+   if(cloudBaseline!==serverJson||cloudBaselineRevision!==remote.updated_at)
+    throw Error('다른 기기 또는 서버에서 원장이 변경되었습니다. 자동 덮어쓰기를 중지했습니다. 서버 원장을 확인하세요');
+   const {data:updated,error:updateError}=await cloud.from(TABLE)
+    .update({payload,updated_at:new Date().toISOString()})
+    .eq('user_id',user).eq('updated_at',cloudBaselineRevision).select('updated_at');
+   if(updateError)throw updateError;
+   if(!updated?.length)throw Error('다른 기기에서 원장이 먼저 변경되었습니다. 자동 덮어쓰기를 중지했습니다');
+   recordCloudBaseline(user,payload,updated[0].updated_at);
+  }else{
+   if(cloudBaselineRevision!==null)throw Error('서버 원장이 삭제되거나 변경되었습니다. 자동 재생성을 중지했습니다');
+   const {data:created,error:createError}=await cloud.from(TABLE)
+    .insert({user_id:user,payload,updated_at:new Date().toISOString()}).select('updated_at');
+   if(createError)throw createError;
+   if(!created?.length)throw Error('TEST 서버 저장 결과를 확인할 수 없습니다');
+   recordCloudBaseline(user,payload,created[0].updated_at);
+  }
+  cloudStatus('TEST 서버 자동 저장 완료 · 다른 기기와 동일한 원장 사용');
+ }catch(error){cloudStatus('브라우저 저장 완료 · TEST 서버 자동 저장 보류: '+error.message);}
+ finally{syncInFlight=false;if(syncAgain){syncAgain=false;queueAutomaticCloudSave();}}
+}
+async function connectAndLoadOnlineLedger(){
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  if(cfg.url!==TEST_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))return;
+  if(!window.supabase?.createClient)return;
+  const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await candidate.auth.getUser();
+  if(authError||!auth?.user?.id)return;
+  if(syncInFlight||syncTimer)return;
+  cloud=candidate;cloudUser=auth.user.id;cloudKey=cfg.key;
+  restoreCloudBaseline(cloudUser);
+  const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',cloudUser).maybeSingle();
+  if(error)throw error;
+  const localJson=JSON.stringify(db);
+  if(!remote){
+   cloudBaseline=null;cloudBaselineRevision=null;
+   if(!emptyLedger(db))queueAutomaticCloudSave();
+   else cloudStatus('TEST 계정 연결 · 새 원장 자동 저장 준비 완료');
+   return;
+  }
+  validateLedger(remote.payload);
+  const serverJson=JSON.stringify(remote.payload);
+  if(localJson===serverJson||localJson===cloudBaseline||emptyLedger(db)){
+   db=remote.payload;save(false);recordCloudBaseline(cloudUser,remote.payload,remote.updated_at);
+   cloudStatus('TEST 서버 원장 자동 불러오기 완료 · '+db.accounts.length+'계좌 / '+db.entries.length+'거래');
+  }else cloudStatus('로컬에 서버와 다른 미동기화 원장이 있습니다. 덮어쓰지 않았습니다. 데이터 백업 후 서버 원장 불러오기를 선택하세요');
+ }catch(error){cloudStatus('TEST 원장 자동 연결 실패: '+error.message+' · 브라우저 자료 보존');}
+}
+
 const requireCloud=async()=>{
  if(!cloud||!cloudUser)throw Error('먼저 TEST 계정으로 로그인하세요');
  const {data,error}=await cloud.auth.getUser();
@@ -114,7 +199,7 @@ $('cloudReuseLogin').onclick=async()=>{
   const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data,error}=await candidate.auth.getUser();
   if(error||!data?.user?.id)throw Error('공유 데이터 페이지에서 먼저 TEST 계정으로 로그인하세요');
-  cloud=candidate;cloudUser=data.user.id;cloudKey=cfg.key;
+  cloud=candidate;cloudUser=data.user.id;cloudKey=cfg.key;restoreCloudBaseline(cloudUser);
   cloudStatus('공유 데이터 TEST 계정 인증 재사용 완료 · 서버 원장 자동 저장/불러오기 없음');
  }catch(e){cloud=null;cloudUser=null;cloudStatus('공유 데이터 인증 재사용 실패: '+e.message);}
 };
@@ -127,7 +212,7 @@ $('cloudLogin').onclick=async()=>{
   cloudKey=key;cloudUser=null;
   const {data,error}=await cloud.auth.signInWithPassword({email,password});
   if(error||!data?.user?.id)throw error||Error('로그인 실패');
-  cloudUser=data.user.id;$('cloudPassword').value='';
+  cloudUser=data.user.id;restoreCloudBaseline(cloudUser);$('cloudPassword').value='';
   localStorage.setItem('investlab_shared_data_connection_v1',JSON.stringify({url:TEST_URL,key}));
   cloudStatus('TEST 계정 로그인 완료 · My Portfolio와 로그인 공유 · 서버 데이터 자동 불러오기 없음');
  }catch(e){cloudUser=null;cloudStatus('로그인 실패: '+e.message);}
@@ -156,7 +241,7 @@ $('cloudLoad').onclick=async()=>{
   validateLedger(payload);
   if(!confirm('서버 데이터를 불러오면 현재 브라우저 원장을 교체합니다. 먼저 JSON 백업을 권장합니다. 계속하시겠습니까?'))return;
   if(user!==cloudUser)throw Error('로그인 계정이 변경되었습니다');
-  db=payload;save();cloudStatus('서버 원장 불러오기 완료 · '+data.updated_at);
+  db=payload;save(false);recordCloudBaseline(user,payload,data.updated_at);cloudStatus('서버 원장 불러오기 완료 · '+data.updated_at);
  }catch(e){cloudStatus('서버 불러오기 실패: '+e.message+' · DB가 아직 설치되지 않았을 수 있습니다.');}
 };
 $('cloudSave').onclick=async()=>{
@@ -186,9 +271,12 @@ $('cloudSave').onclick=async()=>{
    if(insertError)throw insertError;
    if(!inserted?.length)throw Error('서버 저장 결과를 확인하지 못했습니다');
   }
-  cloudStatus('서버 저장 결과 확인 완료 · 다른 기기에서는 서버에서 불러오기를 실행하세요.');
+  await connectAndLoadOnlineLedger();
+  cloudStatus('서버 저장 완료 · 다른 기기에서는 원장이 자동으로 표시됩니다.');
  }catch(e){cloudStatus('서버 저장 실패: '+e.message+' · 브라우저 원장은 유지됩니다.');}
 };
 $('entryDate').value=new Date().toLocaleDateString('en-CA');render();
+window.addEventListener('pageshow',()=>{void connectAndLoadOnlineLedger();});
+setInterval(()=>{if(!document.hidden&&!syncInFlight&&!syncTimer)void connectAndLoadOnlineLedger();},15*60*1000);
 })();
 </script></body></html>
