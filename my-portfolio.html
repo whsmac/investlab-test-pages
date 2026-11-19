@@ -4,18 +4,20 @@
 <body><main class="wrap"><a href="./index.html">← 홈</a><h1>My Portfolio</h1>
 <p class="muted">통합원장과 같은 계좌·거래 데이터를 읽습니다. 보유종목을 다시 입력할 필요가 없습니다.</p>
 <p class="muted">TEST 서버에 로그인하면 사용자별 통합원장을 자동 조회합니다. 서버 원장이 없거나 접속할 수 없으면 이 기기에 저장된 자료를 표시합니다.</p>
-<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="diagnose" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">연결 진단</button><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><p id="diagnostics" class="muted" role="status" style="white-space:pre-wrap"></p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button id="loadCloudLedger" type="button" style="padding:9px 12px;background:#274675;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">서버 원장 안전 불러오기</button><button id="compareCloudLedger" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 원장 비교 (읽기 전용)</button><span id="cloudLedgerStatus" class="muted" role="status">서버 원장 미확인 · 현재 화면은 브라우저 원장 기준</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
+<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="diagnose" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">연결 진단</button><span id="priceStatus" class="muted" role="status">최근 종가 자동 조회 준비 중…</span></div><p id="diagnostics" class="muted" role="status" style="white-space:pre-wrap"></p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button id="loadCloudLedger" type="button" style="padding:9px 12px;background:#274675;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">서버 원장 안전 불러오기</button><button id="compareCloudLedger" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 원장 비교 (읽기 전용)</button><span id="cloudLedgerStatus" class="muted" role="status">서버 원장 미확인 · 현재 화면은 브라우저 원장 기준</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
 <div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
 <div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
 <div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
 <div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div><div class="metric"><span>누적 실현손익 (USD)</span><strong id="realized">USD 0</strong></div><div class="metric"><span>매도 거래 수</span><strong id="sales">0</strong></div><div class="metric"><span>조회 가능 종목 평가금액</span><strong id="marketValue">USD —</strong></div><div class="metric"><span>조회 가능 종목 평가손익</span><strong id="unrealized">USD —</strong></div></div><p id="coverage" class="muted" role="status">평가 데이터 미조회</p>
 <h2>보유종목 현황</h2><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 (USD)</th><th>매입원가 (USD)</th><th>기준일</th><th>자료 상태</th><th>종가 USD</th><th>평가금액 USD</th><th>평가손익 USD</th></tr></thead><tbody id="holdings"></tbody></table></div>
-<p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 시세는 TEST 서버에 등록된 마지막 거래일 종가이며 실시간 시세가 아닙니다. 가격이 없는 종목은 평가합계에서 제외합니다.</p></section>
+<p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 시세는 TEST 서버의 저장 종가와 TEST Pages의 자동수집 최근 종가 중 기준일이 최신인 값을 표시하며, 실시간 체결가는 아닙니다. 가격이 없는 종목은 평가합계에서 제외합니다.</p></section>
 <section class="panel"><h2>종목별 실현손익</h2><div class="scroll"><table><thead><tr><th>종목</th><th>매도 횟수</th><th>매도금액 USD</th><th>매도원가 USD</th><th>실현손익 USD</th></tr></thead><tbody id="realizedSymbols"></tbody></table></div><p class="muted">계좌별 평균원가를 적용한 USD 손익입니다. 수수료·세금·환율 및 세무상 취득원가는 반영하지 않았습니다.</p></section><section class="panel"><h2>계좌별 요약</h2><div class="scroll"><table><thead><tr><th>계좌</th><th>종목 수</th><th>매입원가 USD</th><th>현금 USD</th><th>현금 KRW</th><th>실현손익 USD</th></tr></thead><tbody id="accounts"></tbody></table></div></section>
 <p><a href="./pilot-ledger.html">통합원장에서 계좌·거래 입력하기</a></p>
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
+import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
+import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
 const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
 const account=$('account');
@@ -171,39 +173,57 @@ async function loadPrices(){
  if(priceLoading){pricePending=true;return;}
  const requestVersion=priceRequestVersion,selectedAccount=account.value;
  priceLoading=true;
- const status=$('priceStatus');status.textContent='TEST 서버 주가 조회 중…';
+ const status=$('priceStatus');status.textContent='최근 종가 자동 조회 중…';
+ const holdings=projectLedger(data,selectedAccount).holdings;
+ const tickers=new Set(holdings.map(h=>h.symbol));
+ const next=new Map();
+ let serverError='',feedError='',feedCount=0;
  try{
-  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
-  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
-  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('Company Investment Analysis에서 TEST 프로젝트 URL과 공개용 키를 먼저 설정하세요.');
-  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다.');
-  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
-  const {data:userResult,error:userError}=await client.auth.getUser();
-  if(userError||!userResult?.user?.id)throw Error('Company Investment Analysis에서 TEST 계정으로 로그인하세요.');
-  const {data:companies,error:companyError}=await client.from('companies').select('id,ticker').limit(100);
-  if(companyError)throw companyError;
-  const symbols=projectLedger(data,selectedAccount).holdings.map(h=>h.symbol);
-  const companyByTicker=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
-  const ids=symbols.map(s=>companyByTicker.get(s)).filter(Boolean);
-  if(!ids.length){if(requestVersion!==priceRequestVersion)return;prices=new Map();pricesLoaded=true;render();status.textContent='TEST 기업 목록에 일치하는 보유종목이 없습니다.';return;}
-  // Fetch one latest USD observation per company; a global 1000-row limit can omit thinly traded symbols.
-  const tickerById=new Map([...companyByTicker].map(([ticker,id])=>[id,ticker])),next=new Map();
-  const results=await Promise.allSettled([...new Set(ids)].map(async id=>{
-   const {data:rows,error}=await client.from('market_price_observations').select('trading_date,close_price,currency,price_basis').eq('company_id',id).eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:false}).limit(1);
-   if(error)throw Error(tickerById.get(id)+': '+error.message);return {id,row:rows?.[0]};
-  }));
-  const errors=[];
-  for(const result of results){if(result.status==='rejected'){errors.push(String(result.reason?.message||result.reason));continue;}const {id,row}=result.value;if(!row)continue;const ticker=tickerById.get(id),raw=row.close_price,close=Number(raw);
-   const date=String(row.trading_date||''),parsed=/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?new Date(date+'T00:00:00Z'):new Date(NaN);
-   const ageDays=(Date.now()-parsed.getTime())/86400000;
-   const basis=String(row.price_basis||'').trim().toLowerCase();
-   if(ticker&&raw!==null&&raw!==undefined&&raw!==''&&Number.isFinite(close)&&close>0&&Number.isFinite(ageDays)&&ageDays<=7&&ageDays>=-1&&(!basis||['raw','unadjusted','close','regular','official','actual'].includes(basis)))next.set(ticker,{date,close,currency:row.currency});
-   else if(ticker)errors.push(ticker+': 오래되었거나 검증되지 않은 종가 ('+date+', '+(basis||'기준 미기재')+')');}
-  if(errors.length===results.length)throw Error('모든 종목 조회 실패: '+errors.slice(0,3).join(' / '));
+  try{
+   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+   const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+   if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('TEST 서버 로그인 설정 없음');
+   if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다');
+   const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+   const {data:auth,error:authError}=await client.auth.getUser();
+   if(authError||!auth?.user?.id)throw Error('TEST 로그인 필요');
+   const {data:companies,error:companyError}=await client.from('companies').select('id,ticker').limit(100);
+   if(companyError)throw companyError;
+   const map=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
+   const result=await Promise.allSettled([...tickers].filter(t=>map.has(t)).map(async ticker=>{
+    const {data:rows,error}=await client.from('market_price_observations')
+     .select('trading_date,close_price,currency,price_basis')
+     .eq('company_id',map.get(ticker)).eq('currency','USD').eq('price_basis','raw')
+     .order('trading_date',{ascending:false}).limit(1);
+    if(error)throw Error(error.message);
+    return {ticker,row:rows?.[0]};
+   }));
+   for(const r of result){
+    if(r.status!=='fulfilled'||!r.value.row)continue;
+    const {ticker,row}=r.value,close=Number(row.close_price),date=String(row.trading_date||'');
+    const parsed=/^\d{4}-\d{2}-\d{2}$/.test(date)?Date.parse(date+'T00:00:00Z'):NaN;
+    const age=(Date.now()-parsed)/86400000;
+    if(Number.isFinite(close)&&close>0&&Number.isFinite(age)&&age>=-1&&age<=7)
+     next.set(ticker,{date,close,currency:'USD',source:'TEST_DB'});
+   }
+  }catch(error){serverError=error.message||String(error);}
+  try{
+   const review=await loadPublishedYahooReview({origin:location.href});
+   const latest=buildYahooLatestPrices(review,{maxAgeDays:7});
+   for(const row of latest.prices){
+    if(!tickers.has(row.ticker)||row.status!=='current'||!Number.isFinite(row.price)||row.price<=0||!row.tradingDate)continue;
+    const prev=next.get(row.ticker);
+    if(!prev||row.tradingDate>prev.date){next.set(row.ticker,{date:row.tradingDate,close:row.price,currency:'USD',source:'YAHOO_TEST'});feedCount++;}
+   }
+  }catch(error){feedError=error.message||String(error);}
   if(requestVersion!==priceRequestVersion)return;
-  prices=next;pricesLoaded=true;render();status.textContent=(errors.length?'일부 조회 실패('+errors.length+'개): '+errors.slice(0,2).join(' / ')+' · ':'TEST 서버 종가 조회 완료 · ')+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
- }catch(error){if(requestVersion===priceRequestVersion)status.textContent='조회 실패: '+error.message+' · 기존 조회 가격은 유지됩니다.';}
- finally{priceLoading=false;if(pricePending){pricePending=false;void loadPrices();}}
+  prices=next;pricesLoaded=true;render();
+  status.textContent='종가 확인 '+next.size+'/'+tickers.size+'종목'+(feedCount?' · TEST 자동수집 '+feedCount+'종목 반영':'')+
+   (serverError?' · DB: '+serverError:'')+(feedError?' · 자동수집: '+feedError:'')+' · 최근 거래일 종가(실시간 체결가 아님)';
+ }finally{
+  priceLoading=false;
+  if(pricePending){pricePending=false;void loadPrices();}
+ }
 }
 account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;render();$('priceStatus').textContent='계좌 변경 · 해당 계좌 가격 재조회 필요';void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 // Use the authenticated TEST ledger as the display source; never overwrite unsynced local entries.
@@ -252,7 +272,7 @@ setInterval(()=>{if(!document.hidden)void refreshOnlineLedgerDisplay();},15*60*1
 // Only read existing TEST auth/config; never create a session or write server data automatically.
 function refreshPortfolioQuotesIfConnected(){
  try{const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
- if(cfg.url==='https://gopofxyezhwpfxbecrxd.supabase.co'&&cfg.key&&data.accounts.length)void loadPrices();}catch{}
+ if(data.accounts.length)void loadPrices();}catch{}
 }
 window.addEventListener('pageshow',refreshPortfolioQuotesIfConnected);
 setInterval(()=>{if(!document.hidden)refreshPortfolioQuotesIfConnected();},15*60*1000);
