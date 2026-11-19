@@ -37,18 +37,22 @@ function render(){
  $('entryAccount').value=db.accounts.some(a=>a.id===previous)?previous:(db.accounts[0]?.id||'');
  $('viewAccount').value=db.accounts.some(a=>a.id===view)?view:'ALL';
  $('accounts').textContent=db.accounts.length?db.accounts.map(a=>a.name+' ('+a.type+')').join(' · '):'등록된 계좌가 없습니다.';
- const selected=val('viewAccount'),positions=new Map(),cash={USD:0,KRW:0};
- for(const e of db.entries.filter(e=>selected==='ALL'||e.accountId===selected).sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)){
+ const selected=val('viewAccount'),byAccount=new Map(),cash={USD:0,KRW:0};
+ for(const e of [...db.entries].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)){
+  if(selected!=='ALL'&&e.accountId!==selected)continue;
   if(['OPEN','BUY','SELL'].includes(e.type)){
-   const key=e.symbol,old=positions.get(key)||{qty:0,cost:0};
-   if(e.type==='SELL'){const avg=old.qty>0?old.cost/old.qty:0;old.qty-=e.qty;old.cost-=avg*e.qty;cash[e.currency]+=(e.qty*e.price);}
+   const key=e.accountId+'|'+e.symbol,old=byAccount.get(key)||{symbol:e.symbol,qty:0,cost:0};
+   if(e.type==='SELL'){const avg=old.qty>0?old.cost/old.qty:0;old.qty-=e.qty;old.cost-=avg*e.qty;cash[e.currency]+=e.qty*e.price;}
    else{old.qty+=e.qty;old.cost+=e.qty*e.price;if(e.type==='BUY')cash[e.currency]-=e.qty*e.price;}
-   positions.set(key,old);
+   if(Math.abs(old.qty)<1e-9){old.qty=0;old.cost=0;}
+   byAccount.set(key,old);
   }else if(e.type==='DEPOSIT'||e.type==='DIVIDEND')cash[e.currency]+=e.amount;
   else if(e.type==='WITHDRAW')cash[e.currency]-=e.amount;
   else if(e.type==='FX'){cash[e.currency]-=e.amount;cash[e.toCurrency]+=e.toAmount;}
  }
- const active=[...positions].filter(([,v])=>v.qty>0.00000001);
+ const positions=new Map();
+ for(const v of byAccount.values()){if(v.qty<=1e-9)continue;const total=positions.get(v.symbol)||{qty:0,cost:0};total.qty+=v.qty;total.cost+=v.cost;positions.set(v.symbol,total);}
+ const active=[...positions].sort(([a],[b])=>a.localeCompare(b));
  $('symbolCount').textContent=fmt(active.length,0);$('usdCash').textContent=fmt(cash.USD);$('krwCash').textContent=fmt(cash.KRW,0);
  $('holdings').replaceChildren();
  for(const [symbol,v] of active){const tr=document.createElement('tr');for(const s of [symbol,fmt(v.qty,6),fmt(v.cost/v.qty,4),fmt(v.cost)]){const td=document.createElement('td');td.textContent=s;tr.append(td);}$('holdings').append(tr);}
@@ -64,7 +68,7 @@ $('entryForm').onsubmit=e=>{
  if(!db.accounts.some(a=>a.id===accountId)){msg('계좌를 먼저 등록하세요.');return;}
  if(!date){msg('거래일을 입력하세요.');return;}
  const stock=['OPEN','BUY','SELL'].includes(type),money=['DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(type);
- if(stock&&(!/^[A-Z][A-Z0-9.\\-]{0,15}$/.test(symbol)||!(qty>0)||!(price>=0))){msg('종목코드·수량·단가를 확인하세요.');return;}
+ if(stock&&(!/^[A-Z][A-Z0-9.-]{0,15}$/.test(symbol)||!(qty>0)||!(price>=0))){msg('종목코드·수량·단가를 확인하세요.');return;}
  if(stock&&currency!=='USD'){msg('1단계에서는 주식 거래의 USD 단가만 지원합니다. KRW 거래원가는 온라인 원장 통합 시 추가합니다.');return;}
  if(money&&!(amount>0)){msg('금액을 입력하세요.');return;}
  if(type==='FX'&&(currency===toCurrency||!(toAmount>0))){msg('서로 다른 통화와 수령액을 입력하세요.');return;}
@@ -76,7 +80,7 @@ $('entryForm').onsubmit=e=>{
  db.entries.push({id:crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:Date.now()});
  save();msg('브라우저에 기록했습니다. 온라인 동기화는 아직 지원하지 않습니다.');
 };
-$('viewAccount').onchange=render;
+$('viewAccount').onchange=()=>{const selected=val('viewAccount');render();$('viewAccount').value=selected;};
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='investlab-ledger-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);};
 $('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const x=JSON.parse(await file.text());if(x.version!==1||!Array.isArray(x.accounts)||!Array.isArray(x.entries)||x.accounts.some(a=>!a.id||!a.name)||x.entries.some(t=>!t.id||!t.accountId||!t.date||!t.type))throw Error('지원하지 않는 데이터 형식');if(!confirm('현재 브라우저 원장 데이터를 백업 파일로 교체하시겠습니까?'))return;db=x;save();msg('복원 완료');}catch(err){msg('복원 실패: '+err.message);}finally{e.target.value='';}};
 $('clear').onclick=()=>{if(confirm('이 브라우저의 계좌와 모든 거래를 삭제하시겠습니까? 백업을 먼저 확인하세요.')){db={version:1,accounts:[],entries:[]};save();msg('초기화했습니다.');}};
