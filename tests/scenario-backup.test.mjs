@@ -91,9 +91,9 @@ test('backup import refreshes current editor save status on success and no-op',(
 test('save load and delete refresh editor saved status immediately',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  const cases=[
-  ["byId('saveScenario').addEventListener","byId('loadScenario').addEventListener",'전략을 이 브라우저에 저장했습니다'],
+  ["byId('saveScenario').addEventListener","byId('loadScenario').addEventListener",'브라우저 저장 완료'],
   ["byId('loadScenario').addEventListener","byId('appendScenario').addEventListener",'저장된 전략을 불러왔습니다'],
-  ["byId('deleteScenario').addEventListener",'storageAction(refreshSavedScenarioList)','저장된 전략을 삭제했습니다']
+  ["byId('deleteScenario').addEventListener",'storageAction(refreshSavedScenarioList)','브라우저 전략 삭제 완료']
  ];
  for(const [startMarker,endMarker,message] of cases){
   const section=html.slice(html.indexOf(startMarker),html.indexOf(endMarker,html.indexOf(startMarker)));
