@@ -87,7 +87,7 @@ async function loadCloudLedgerSafely(){
   // Projection is a display calculator, not a full ledger validator.
   const ids=new Set(payload.accounts.map(a=>String(a.id)));
   if(payload.accounts.some(a=>!a||typeof a.id!=='string'||!a.id.trim()||typeof a.name!=='string'||!a.name.trim()))throw Error('서버 계좌에 필수 항목이 누락되었습니다');
-  if(payload.entries.some(e=>!e||typeof e.id!=='string'||!e.id.trim()||!ids.has(String(e.accountId))||typeof e.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DIVIDEND','FX','DEPOSIT','WITHDRAW'].includes(e.type)))throw Error('서버 거래에 필수 항목, 날짜 또는 계좌 연결 오류가 있습니다');
+  if(payload.entries.some(e=>!e||typeof e.id!=='string'||!e.id.trim()||!ids.has(String(e.accountId))||typeof e.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DIVIDEND','FX','DEPOSIT','WITHDRAW'].includes(e.type)))throw Error('서버 거래에 필수 항목, 날짜 또는 계좌 연결 오류가 있습니다');
   validateLedger(payload);
   projectLedger(payload,'ALL');
   for(const a of payload.accounts)projectLedger(payload,a.id);
