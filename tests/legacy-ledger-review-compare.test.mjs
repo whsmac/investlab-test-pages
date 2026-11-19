@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {buildLegacyLedgerReviewReport} from '../src/ledger/legacy-ledger-review-report.mjs';
+import {compareSavedLegacyReviewReport as compare} from '../src/ledger/legacy-ledger-review-compare.mjs';
+const user='11111111-1111-4111-8111-111111111111',accountId='33333333-3333-4333-8333-333333333333';
+const base={sessionUserId:user,accountId,accounts:[{id:accountId,ownerId:user,name:'ISA'}],committedEvents:[{id:'open',accountId,requestId:'open',type:'opening',legs:[{assetType:'security',assetCode:'TSLA',delta:'3'}]}],exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'4',avg_cost:'200'}]}};
+test('unchanged report remains unverified',()=>{const savedReport=buildLegacyLedgerReviewReport(base);const result=compare({...base,savedReport});assert.equal(result.changedCount,0);assert.equal(result.canImport,false);});
+test('new ledger quantity creates review change',()=>{const savedReport=buildLegacyLedgerReviewReport(base);const result=compare({...base,savedReport,committedEvents:[{...base.committedEvents[0],legs:[{assetType:'security',assetCode:'TSLA',delta:'4'}]}]});assert.equal(result.changedCount,1);assert.equal(result.changes[0].kind,'QUANTITY_OR_STATUS_CHANGED');});
+test('tampered safety flags and other account rejected',()=>{const savedReport=buildLegacyLedgerReviewReport(base);assert.throws(()=>compare({...base,savedReport:{...savedReport,canImport:true}}),/unsafe/);assert.throws(()=>compare({...base,savedReport:{...savedReport,accountId:'44444444-4444-4444-8444-444444444444'}}),/account mismatch/);});

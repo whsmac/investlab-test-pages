@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {summarizeSplitLedgerDifferences as summarize} from '../src/ledger/split-ledger-difference-summary.mjs';
+const pair=(difference)=>({accountId:'33333333-3333-4333-8333-333333333333',accountName:'ISA',assignedQuantity:'100.00000000',ledgerQuantity:'80.00000000',difference});
+test('fully allocated but ledger mismatch is flagged',()=>{const s=summarize({rows:[{ticker:'TSLA',status:'FULLY_ALLOCATED',accounts:[pair('20.00000000')]}]});assert.equal(s.unassignedSymbols,0);assert.equal(s.unmatchedPairs,1);assert.equal(s.status,'LEDGER_DIFFERENCES_FOUND');assert.equal(s.canApprove,false);});
+test('equal ledger does not imply verified approval',()=>{const s=summarize({rows:[{ticker:'TSLA',status:'FULLY_ALLOCATED',accounts:[pair('0.00000000')]}]});assert.equal(s.matchedPairs,1);assert.equal(s.serverVerified,false);});
+test('partial allocation remains incomplete even when compared pairs match',()=>{const s=summarize({rows:[{ticker:'TSLA',status:'PARTIAL_OR_UNALLOCATED',accounts:[pair('0.00000000')]}]});assert.equal(s.status,'ALLOCATION_INCOMPLETE');});
+test('invalid differences are rejected',()=>{assert.throws(()=>summarize({rows:[{ticker:'TSLA',status:'FULLY_ALLOCATED',accounts:[pair('oops')]}]}),/invalid/);});

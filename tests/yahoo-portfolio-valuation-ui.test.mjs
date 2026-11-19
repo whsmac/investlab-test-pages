@@ -1,0 +1,50 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {spawnSync} from "node:child_process";
+
+const html=readFileSync(new URL("../test-my-portfolio-ledger.html",import.meta.url),"utf8");
+test("TEST portfolio exposes opt-in non-mutating Yahoo valuation preview",()=>{
+ assert.match(html,/id="yahoo-valuation-preview"/);
+ assert.match(html,/id="yahoo-valuation-price-mode"/);
+ assert.match(html,/value="fill-missing"/);
+ assert.match(html,/value="latest-close"/);
+ assert.match(html,/priceMode:el\("yahoo-valuation-price-mode"\)\.value/);
+ assert.match(html,/id="yahoo-valuation-preview-result"/);
+ assert.match(html,/id="yahoo-valuation-preview-table"/);
+ assert.match(html,/tableRoot\.replaceChildren\(table\)/);
+ assert.match(html,/평가금액 USD/);
+ assert.match(html,/평가손익 USD/);
+ assert.match(html,/import \{compareYahooPortfolioValuation\}/);
+ assert.match(html,/compareYahooPortfolioValuation\(\{/);
+ assert.match(html,/snapshot,holdings:currentView\.holdings,accounts:selectedValuationAccounts\(currentView\),assumedPrices/);
+ assert.match(html,/if\(current!==initialLedger\|\|el\('account'\)\.value!==initialAccount\)/);
+ assert.match(html,/원장·입력값·서버 저장 변경 없음/);
+ assert.match(html,/Yahoo 종가 적용/);
+ assert.match(html,/사용자 가정주가 유지/);
+ assert.match(html,/평가금액 차이/);
+ assert.match(html,/lastYahooPriceDisplay=new Map\(result\.rows\.map/);
+ assert.match(html,/className='holding-current-price'/);
+ assert.match(html,/최근 종가\/가정가 USD/);
+ assert.match(html,/가정 USD/);
+ assert.match(html,/lastPortfolioValuation=result\.latest/);
+ assert.match(html,/renderValuationSummary\(result\.latest\)/);
+ assert.match(html,/yahoo-valuation-price-mode\x27\)\.value=\x27latest-close\x27/);
+ assert.match(html,/function invalidateYahooComparison\(\)/);
+ assert.match(html,/yahooComparisonRevision\+\+/);
+ assert.match(html,/revision!==yahooComparisonRevision/);
+ assert.match(html,/yahoo-valuation-price-mode\x27\)\.addEventListener\(\x27change\x27,invalidateYahooComparison\)/);
+ assert.match(html,/cost-review-rows\x27\)\.addEventListener\(\x27input\x27,invalidateYahooComparison\)/);
+});
+test("portfolio embedded module syntax is valid",()=>{
+ const match=html.match(/<script type="module">([\s\S]*?)<\/script>/);
+ assert.ok(match);
+ const result=spawnSync(process.execPath,["--check","--input-type=module"],{input:match[1],encoding:"utf8"});
+ assert.equal(result.status,0,result.stderr);
+});
+
+test("Yahoo fetch failure clears stale displayed totals and remains visible outside advanced tools",()=>{
+ assert.match(html,/lastYahooPriceDisplay=new Map\(\);lastPortfolioValuation=null;\s*show\(\);resetValuationSummary\('최신 종가 조회 실패/);
+ assert.match(html,/평가금액 미계산 · 기존 가정주가 보존/);
+ assert.match(html,/id="summary-note"/);
+});

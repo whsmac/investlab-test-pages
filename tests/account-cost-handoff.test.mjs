@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const files=['test-my-portfolio-ledger.html','virtual-trade-simulator.html'].map(name=>readFileSync(new URL('../'+name,import.meta.url),'utf8'));
+test('module scripts parse',()=>{for(const html of files){const js=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(js);const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:js,encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});
+test('account costs transfer only with scoped account and holdings',()=>{assert.match(files[0],/scopedAccounts/);assert.match(files[0],/accountCostReport:scopedReport/);assert.match(files[1],/matchAccountCosts\(clean,payload.accountCostReport\)/);assert.match(files[1],/sessionStorage.removeItem\('investlab_portfolio_bulk_handoff_v1'\)/);});
+test('cost suggestions do not bypass explicit apply',()=>{assert.match(files[1],/portfolioBulkApply.*addEventListener\('click'/);assert.match(files[1],/if\(!rawCost\|\|!Number.isFinite\(cost\)/);});

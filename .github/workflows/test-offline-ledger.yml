@@ -1,0 +1,433 @@
+name: TEST offline ledger checks
+on:
+  pull_request:
+    paths:
+      - 'src/ledger/**'
+      - 'scripts/market_price_refresh_test.py'
+      - 'scripts/audit_price_source_test.py'
+      - 'scripts/reconcile_price_probe_test.py'
+      - 'scripts/summarize_price_probe_test.py'
+      - 'tests/test_price*.py'
+      - 'tests/test-price-snapshot.mjs'
+      - 'src/market/yahoo-latest-prices.mjs'
+      - 'src/ledger/yahoo-portfolio-price-fill.mjs'
+      - 'tests/yahoo-portfolio-price-fill.test.mjs'
+      - 'tests/yahoo-portfolio-ui.test.mjs'
+      - 'tests/yahoo-portfolio-valuation-ui.test.mjs'
+      - 'tests/yahoo-portfolio-valuation-comparison.test.mjs'
+      - 'src/ledger/yahoo-portfolio-valuation-comparison.mjs'
+      - 'src/ledger/yahoo-portfolio-valuation-preview.mjs'
+      - 'tests/yahoo-portfolio-valuation-preview.test.mjs'
+      - 'tests/test-yahoo-latest-prices.mjs'
+      - 'tests/yahoo-online-feed-status.test.mjs'
+      - 'tests/yahoo-axes-chart.test.mjs'
+      - 'src/market/yahoo-axes-chart.mjs'
+      - 'test-yahoo-price-review.html'
+      - 'src/market/load-published-yahoo-review.mjs'
+      - '.github/workflows/market-price-refresh-test.yml'
+      - 'tests/offline-ledger-check.test.mjs'
+      - 'tests/multi-user-ledger-isolation.test.mjs'
+      - 'tests/ledger-schema-contract-v2.test.mjs'
+      - 'tests/ledger-posting-batch-review.test.mjs'
+      - 'tests/ledger-rpc-security-contract.test.mjs'
+      - 'tests/ledger-onboarding-flow.test.mjs'
+      - 'tests/ledger-create-account-sql-review.test.mjs'
+      - 'tests/ledger-post-opening-sql-review.test.mjs'
+      - 'tests/ledger-payload-hash-amendment.test.mjs'
+      - 'tests/opening-payload-hash.test.mjs'
+      - 'tests/opening-rpc-hash-preview.test.mjs'
+      - 'tests/opening-rpc-contract-audit.test.mjs'
+      - 'tests/ledger-post-opening-v2-review.test.mjs'
+      - 'tests/opening-hash-collation-contract.test.mjs'
+      - 'tests/opening-hash-postgres-fixtures.test.mjs'
+      - 'tests/ledger-v2-catalog-preflight.test.mjs'
+      - 'tests/ledger-ab-anon-evidence.test.mjs'
+      - 'tests/ledger-staged-onboarding.test.mjs'
+      - 'tests/ledger-trade-cash-rpc-preview.test.mjs'
+      - 'tests/ledger-balance-projection.test.mjs'
+      - 'tests/ledger-portfolio-projection.test.mjs'
+      - 'tests/portfolio-ledger-view-model.test.mjs'
+      - 'tests/legacy-holdings-to-portfolio-preview.test.mjs'
+      - 'tests/legacy-ledger-reconciliation.test.mjs'
+      - 'tests/legacy-ledger-discrepancy-review.test.mjs'
+      - 'tests/legacy-ledger-review-report.test.mjs'
+      - 'tests/legacy-ledger-review-compare.test.mjs'
+      - 'tests/legacy-account-allocation-review.test.mjs'
+      - 'tests/legacy-split-account-allocation.test.mjs'
+      - 'tests/split-allocation-review-report.test.mjs'
+      - 'tests/split-ledger-difference-summary.test.mjs'
+      - 'tests/split-ledger-discrepancy-review.test.mjs'
+      - 'tests/split-discrepancy-notes-report.test.mjs'
+      - 'tests/split-final-review-summary.test.mjs'
+      - 'tests/portfolio-review-mobile-layout.test.mjs'
+      - 'tests/holdings-filter-sort.test.mjs'
+      - 'tests/holding-detail.test.mjs'
+      - 'tests/portfolio-simulator-handoff.test.mjs'
+      - 'tests/portfolio-bulk-handoff.test.mjs'
+      - 'tests/legacy-cost-suggestions.test.mjs'
+      - 'tests/account-cost-basis-review.test.mjs'
+      - 'tests/account-cost-basis-report.test.mjs'
+      - 'tests/account-cost-suggestions.test.mjs'
+      - 'tests/account-cost-handoff.test.mjs'
+      - 'tests/account-cost-browser-cache.test.mjs'
+      - 'tests/account-cost-rebuild.test.mjs'
+      - 'tests/holding-cost-detail.test.mjs'
+      - 'tests/holding-valuation-preview.test.mjs'
+      - 'tests/portfolio-valuation-preview.test.mjs'
+      - 'tests/portfolio-summary-ui.test.mjs'
+      - 'tests/assumed-price-sync.test.mjs'
+      - 'tests/assumed-price-auto-rows.test.mjs'
+      - 'tests/holding-inline-price.test.mjs'
+      - 'tests/holding-inline-valuation.test.mjs'
+      - 'tests/portfolio-return-rate.test.mjs'
+      - 'tests/holding-mobile-return-style.test.mjs'
+      - 'tests/holding-mobile-sticky-ticker.test.mjs'
+      - 'tests/portfolio-summary-responsive.test.mjs'
+      - 'tests/valuation-holdings-sort.test.mjs'
+      - 'tests/valuation-rank-status.test.mjs'
+      - 'tests/mobile-valuation-action.test.mjs'
+      - 'tests/valuation-completion-summary.test.mjs'
+      - 'tests/valuation-missing-jump.test.mjs'
+      - 'tests/holding-recalculate-flow.test.mjs'
+      - 'tests/valuation-completion-feedback.test.mjs'
+      - 'tests/portfolio-price-handoff.test.mjs'
+      - 'tests/simulator-bulk-review-table.test.mjs'
+      - 'tests/simulator-bulk-cost-validation.test.mjs'
+      - 'tests/simulator-bulk-valuation.test.mjs'
+      - 'tests/simulator-bulk-live-valuation.test.mjs'
+      - 'tests/simulator-bulk-price-edit.test.mjs'
+      - 'tests/simulator-bulk-price-difference.test.mjs'
+      - 'tests/simulator-bulk-price-impact.test.mjs'
+      - 'tests/simulator-mobile-impact-summary.test.mjs'
+      - 'tests/simulator-bulk-impact-sort.test.mjs'
+      - 'tests/simulator-bulk-impact-top-movers.test.mjs'
+      - 'tests/simulator-impact-mover-navigation.test.mjs'
+      - 'tests/simulator-impact-selection-persistence.test.mjs'
+      - 'tests/simulator-price-details-collapse.test.mjs'
+      - 'tests/simulator-apply-review-panel.test.mjs'
+      - 'tests/simulator-mobile-review-cards.test.mjs'
+      - 'tests/simulator-review-card-selection.test.mjs'
+      - 'tests/simulator-card-validation-status.test.mjs'
+      - 'tests/simulator-missing-cost-shortcuts.test.mjs'
+      - 'tests/simulator-review-dedup-ticker.test.mjs'
+      - 'tests/simulator-review-flow-regression.test.mjs'
+      - 'tests/simulator-staged-switch-regression.test.mjs'
+      - 'tests/simulator-step-overview.test.mjs'
+      - 'tests/simulator-step-deltas.test.mjs'
+      - 'tests/simulator-trade-outcome-summary.test.mjs'
+      - 'tests/simulator-multi-strategy-outcome.test.mjs'
+      - 'tests/simulator-strategy-outcome-ranking.test.mjs'
+      - 'src/simulator/bulk-impact-top-movers.mjs'
+      - 'src/simulator/bulk-impact-sort.mjs'
+      - 'src/simulator/bulk-price-impact.mjs'
+      - 'src/simulator/bulk-price-difference.mjs'
+      - 'src/simulator/bulk-import-valuation.mjs'
+      - 'src/ledger/valuation-completion-summary.mjs'
+      - 'src/ledger/valuation-holdings-sort.mjs'
+      - 'test-my-portfolio-ledger.html'
+      - 'sql/test-ledger-v2-catalog-preflight-REVIEW-DO-NOT-RUN.sql'
+      - 'sql/test-opening-hash-postgres-parity-REVIEW-DO-NOT-RUN.sql'
+      - 'sql/test-ledger-post-opening-v2-REVIEW-DO-NOT-RUN.sql'
+      - 'sql/test-ledger-v2-payload-hash-amendment-REVIEW-DO-NOT-RUN.sql'
+      - 'sql/test-ledger-post-opening-v1-REVIEW-DO-NOT-RUN.sql'
+      - 'sql/test-ledger-create-account-v1-REVIEW-DO-NOT-RUN.sql'
+      - 'tests/trade-rpc-preview.test.mjs'
+      - 'tests/portfolio-migration-assessment.test.mjs'
+      - 'tests/opening-snapshot-preview.test.mjs'
+      - 'tests/legacy-holdings-map.test.mjs'
+      - 'tests/legacy-file-import.test.mjs'
+      - 'tests/legacy-holdings-export.test.mjs'
+      - 'tests/original-dashboard-schema.test.mjs'
+      - 'tests/usd-equity-vs-cash.test.mjs'
+      - 'tests/holdings-reconciliation.test.mjs'
+      - 'tests/opening-snapshot-compare.test.mjs'
+      - 'tests/opening-draft-transfer.test.mjs'
+      - 'tests/opening-migration-gate.test.mjs'
+      - 'tests/opening-review-report.test.mjs'
+      - 'tests/test-migration-preflight.test.mjs'
+      - 'tests/ledger-security-audit-review.test.mjs'
+      - 'tests/standard-security-audit.test.mjs'
+      - 'tests/preflight-catalog-integration.test.mjs'
+      - 'tests/isolation-evidence-review.test.mjs'
+      - 'tests/combined-migration-review.test.mjs'
+      - 'tests/isolation-review-import.test.mjs'
+      - 'tests/isolation-evidence-template.test.mjs'
+      - 'tests/isolation-evidence-assessment.test.mjs'
+      - 'tests/isolation-import-unified.test.mjs'
+      - 'tests/readiness-report-validator.test.mjs'
+      - 'tests/sql-contract-review.test.mjs'
+      - 'tests/sql-contract-files.test.mjs'
+      - 'tests/opening-account-plan.test.mjs'
+      - 'tests/account-opening-rpc-contract.test.mjs'
+      - 'tests/ledger-v2-schema-review.test.mjs'
+      - 'tests/offline-event-ledger.test.mjs'
+      - 'tests/portfolio-ledger-reconcile.test.mjs'
+      - 'tests/portfolio-reconcile-import.test.mjs'
+      - 'tests/portfolio-account-allocation.test.mjs'
+      - 'tests/opening-ledger-handoff.test.mjs'
+      - 'tests/opening-allocation-form.test.mjs'
+      - 'tests/opening-form-flow.test.mjs'
+      - 'tests/opening-review-page-contract.test.mjs'
+      - 'tests/opening-review-summary.test.mjs'
+      - 'tests/opening-review-export.test.mjs'
+      - 'tests/opening-review-compare.test.mjs'
+      - 'tests/opening-input-guidance.test.mjs'
+      - 'tests/opening-allocation-quantities.test.mjs'
+      - 'tests/opening-allocation-gate.test.mjs'
+      - 'tests/opening-account-readiness.test.mjs'
+      - 'tests/opening-final-review.test.mjs'
+      - 'tests/opening-final-review-file.test.mjs'
+      - 'tests/one-click-review-guidance.test.mjs'
+      - 'tests/browser-smoke-report.test.mjs'
+      - 'tests/browser-smoke-compare.test.mjs'
+      - 'tests/test-evidence-summary.test.mjs'
+      - 'tests/test-evidence-file.test.mjs'
+      - 'tests/test-evidence-compare.test.mjs'
+      - 'tests/test-readiness-summary.test.mjs'
+      - 'tests/review-target-link.test.mjs'
+      - 'tests/review-pair-browser.test.mjs'
+      - 'tests/test-final-report.test.mjs'
+      - 'tests/test-final-report-compare.test.mjs'
+      - 'tests/scenario-backup.test.mjs'
+      - 'tests/portfolio-positions.test.mjs'
+      - 'src/simulator/portfolio-positions.mjs'
+      - 'src/simulator/portfolio-snapshot.mjs'
+      - 'tests/portfolio-snapshot.test.mjs'
+      - 'tests/portfolio-account-bridge.test.mjs'
+      - 'tests/simulator-account-opening.test.mjs'
+      - 'tests/simulator-account-comparison.test.mjs'
+      - 'tests/account-scenario-comparison.test.mjs'
+      - 'tests/account-scenario-presentation.test.mjs'
+      - 'tests/account-scenario-csv.test.mjs'
+      - 'tests/scenario-failure-diagnostic.test.mjs'
+      - 'tests/scenario-trade-adjustment.test.mjs'
+      - 'tests/scenario-adjustment-preview.test.mjs'
+      - 'virtual-trade-simulator.html'
+      - '.github/workflows/test-offline-ledger.yml'
+  workflow_dispatch:
+jobs:
+  yahoo-pages-live-source-audit:
+    name: TEST Pages live evidence (read-only, non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect actual TEST Pages source
+        run: python -m scripts.audit_yahoo_test_pages_source --output pages-source.json
+      - name: Inspect live Yahoo TEST file
+        run: python -m scripts.verify_yahoo_test_pages_live --report-only --output pages-live.json
+      - name: Inspect TEST branch assets
+        run: python -m scripts.audit_yahoo_test_pages_branch --output pages-branches.json
+      - name: Summarize online state
+        run: |
+          python -m scripts.report_yahoo_online_readiness \
+            --branch-audit pages-branches.json \
+            --pages-source pages-source.json \
+            --live-check pages-live.json \
+            --output pages-readiness.json
+      - name: Report actual blockers to TEST online Yahoo activation
+        run: |
+          python -m scripts.report_yahoo_test_activation_blockers \
+            --pages-source pages-source.json \
+            --online-readiness pages-readiness.json \
+            --output pages-activation-blockers.json
+      - name: Preserve read-only audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-pages-live-source-evidence
+          path: |
+            pages-source.json
+            pages-live.json
+            pages-branches.json
+            pages-readiness.json
+            pages-activation-blockers.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  ledger-unit-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate TEST price source pipeline offline
+        run: python -m unittest discover -s tests -p 'test_price*.py' -v
+      - name: Validate TEST shared price snapshot (mocked)
+        run: node --test tests/weighted-average-cost.test.mjs tests/yahoo-portfolio-valuation-comparison.test.mjs tests/yahoo-portfolio-valuation-ui.test.mjs tests/yahoo-axes-chart.test.mjs tests/test-price-snapshot.mjs
+      - name: Validate read-only latest Yahoo prices and stale blocking
+        run: node --test tests/yahoo-online-feed-status.test.mjs
+          node --test tests/test-yahoo-latest-prices.mjs
+      - name: Validate Yahoo-to-portfolio price fill preserves user inputs
+        run: node --test tests/yahoo-portfolio-price-fill.test.mjs
+      - name: Validate Yahoo portfolio UI wiring and module syntax
+        run: node --test tests/yahoo-portfolio-ui.test.mjs
+      - name: Validate offline Yahoo-to-portfolio valuation integration
+        run: node --test tests/yahoo-portfolio-valuation-preview.test.mjs
+      - name: Validate TEST Yahoo company mapping (mocked)
+        run: node --test tests/test-yahoo-test-company-map.mjs
+      - name: Validate TEST Yahoo browser comparison (mocked)
+        run: node --test tests/test-yahoo-test-browser-review.mjs
+      - name: Validate Yahoo artifact discovery (mocked)
+        run: node --test tests/test-yahoo-artifact-discovery.mjs
+      - name: Validate published Yahoo JSON loader (mocked)
+        run: node --test tests/test-yahoo-published-loader.mjs
+      - name: Validate TEST Yahoo Pages no-deploy workflow
+        run: node --test tests/test-yahoo-pages-review-workflow.mjs
+      - name: Validate Yahoo browser page source precedence
+        run: node --test tests/test-yahoo-browser-page-contract.mjs
+      - name: Validate read-only TEST Supabase schema diagnostics
+        run: node --test tests/test-yahoo-schema-diagnostic.mjs
+      - name: Validate safe TEST schema diagnostic export
+        run: node --test tests/test-yahoo-schema-report.mjs
+      - name: Validate automatic Yahoo review mini chart series
+        run: node --test tests/test-yahoo-review-chart-series.mjs
+      - name: Validate Yahoo chart data freshness
+        run: node --test tests/test-yahoo-chart-freshness.mjs
+      - name: Probe Yahoo Finance first (read-only, non-blocking)
+        continue-on-error: true
+        timeout-minutes: 2
+        run: python -u scripts/yahoo_price_probe_test.py
+      - name: Validate Yahoo data for review-only candidate
+        if: always()
+        continue-on-error: true
+        run: python scripts/build_yahoo_review_candidate.py
+      - name: Upload Yahoo review-only candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-review-candidate
+          path: yahoo-price-review-candidate.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Check Yahoo publication readiness (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-price-review-candidate.json ]; then
+            python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
+          fi
+      - name: Upload Yahoo publication readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-publication-preflight
+          path: yahoo-publication-preflight.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Build public-safe Yahoo browser snapshot (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-price-review-candidate.json ]; then
+            python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+          fi
+      - name: Upload browser-ready Yahoo JSON (not published)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-browser-json
+          path: yahoo-public-review.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Stage Yahoo JSON for future TEST Pages review (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-public-review.json ]; then
+            python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-test-pages-staging
+          fi
+      - name: Upload TEST Pages staging package (not published)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-staging
+          path: yahoo-test-pages-staging/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Assemble complete TEST site preview (no deployment)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f yahoo-test-pages-staging/manifest.json ]; then
+            python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-test-pages-staging --output /tmp/investlab-yahoo-site-preview
+          fi
+      - name: Validate complete TEST site preview assets and imports
+        if: always()
+        run: |
+          if [ -f /tmp/investlab-yahoo-site-preview/data/yahoo-public-review.json ]; then
+            python -m scripts.validate_yahoo_test_site_preview --site /tmp/investlab-yahoo-site-preview
+          fi
+      - name: Report complete TEST site readiness (no deployment)
+        if: always()
+        run: python -m scripts.report_yahoo_test_bundle_readiness --site /tmp/investlab-yahoo-site-preview --output yahoo-test-site-readiness.json
+      - name: Check TEST Pages manual publication handoff (NO DEPLOY)
+        if: always()
+        run: |
+          if [ -f /tmp/investlab-yahoo-site-preview/data/yahoo-public-review.json ]; then
+            python -m scripts.check_yahoo_test_pages_handoff --readiness yahoo-test-site-readiness.json --site /tmp/investlab-yahoo-site-preview --reviewed-commit "${{ github.sha }}" --output yahoo-test-pages-handoff.json
+          fi
+      - name: Upload TEST Pages manual handoff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-handoff
+          path: yahoo-test-pages-handoff.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload TEST site readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-site-readiness
+          path: yahoo-test-site-readiness.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload complete TEST site preview (not published)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-complete-site-preview
+          path: /tmp/investlab-yahoo-site-preview/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload Yahoo trial diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-probe
+          path: yahoo-price-probe.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Probe live free price source (read-only, non-blocking)
+        id: live_price_probe
+        continue-on-error: true
+        timeout-minutes: 3
+        run: python scripts/market_price_refresh_test.py
+      - name: Summarize free price source diagnostics
+        if: always()
+        run: python scripts/summarize_price_probe_test.py
+      - name: Upload price-source trial report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-price-probe
+          path: price-source-probe.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Check offline ledger invariants and RPC preview
+        run: node --test tests/simulator-strategy-outcome-ranking.test.mjs tests/simulator-multi-strategy-outcome.test.mjs tests/simulator-trade-outcome-summary.test.mjs tests/simulator-step-deltas.test.mjs tests/simulator-step-overview.test.mjs tests/simulator-staged-switch-regression.test.mjs tests/simulator-review-flow-regression.test.mjs tests/simulator-review-dedup-ticker.test.mjs tests/simulator-missing-cost-shortcuts.test.mjs tests/simulator-card-validation-status.test.mjs tests/simulator-review-card-selection.test.mjs tests/simulator-mobile-review-cards.test.mjs tests/simulator-apply-review-panel.test.mjs tests/simulator-price-details-collapse.test.mjs tests/simulator-impact-selection-persistence.test.mjs tests/simulator-impact-mover-navigation.test.mjs tests/simulator-bulk-impact-top-movers.test.mjs tests/simulator-bulk-impact-sort.test.mjs tests/simulator-mobile-impact-summary.test.mjs tests/simulator-bulk-price-impact.test.mjs tests/simulator-bulk-price-difference.test.mjs tests/simulator-bulk-price-edit.test.mjs tests/simulator-bulk-live-valuation.test.mjs tests/simulator-bulk-valuation.test.mjs tests/simulator-bulk-cost-validation.test.mjs tests/simulator-bulk-review-table.test.mjs tests/portfolio-price-handoff.test.mjs tests/valuation-completion-feedback.test.mjs tests/holding-recalculate-flow.test.mjs tests/valuation-missing-jump.test.mjs tests/valuation-completion-summary.test.mjs tests/mobile-valuation-action.test.mjs tests/valuation-rank-status.test.mjs tests/valuation-holdings-sort.test.mjs tests/portfolio-summary-responsive.test.mjs tests/holding-mobile-sticky-ticker.test.mjs tests/holding-mobile-return-style.test.mjs tests/portfolio-return-rate.test.mjs tests/holding-inline-valuation.test.mjs tests/holding-inline-price.test.mjs tests/assumed-price-auto-rows.test.mjs tests/assumed-price-sync.test.mjs tests/portfolio-summary-ui.test.mjs tests/portfolio-valuation-preview.test.mjs tests/holding-valuation-preview.test.mjs tests/holding-cost-detail.test.mjs tests/account-cost-rebuild.test.mjs tests/account-cost-browser-cache.test.mjs tests/account-cost-handoff.test.mjs tests/account-cost-suggestions.test.mjs tests/account-cost-basis-report.test.mjs tests/account-cost-basis-review.test.mjs tests/legacy-cost-suggestions.test.mjs tests/portfolio-bulk-handoff.test.mjs tests/portfolio-simulator-handoff.test.mjs tests/holding-detail.test.mjs tests/holdings-filter-sort.test.mjs tests/portfolio-review-mobile-layout.test.mjs tests/split-final-review-summary.test.mjs tests/split-discrepancy-notes-report.test.mjs tests/split-ledger-discrepancy-review.test.mjs tests/split-ledger-difference-summary.test.mjs tests/split-allocation-review-report.test.mjs tests/legacy-split-account-allocation.test.mjs tests/legacy-account-allocation-review.test.mjs tests/legacy-ledger-review-compare.test.mjs tests/legacy-ledger-review-report.test.mjs tests/legacy-ledger-discrepancy-review.test.mjs tests/legacy-ledger-reconciliation.test.mjs tests/legacy-holdings-to-portfolio-preview.test.mjs tests/portfolio-ledger-view-model.test.mjs tests/ledger-portfolio-projection.test.mjs tests/ledger-balance-projection.test.mjs tests/ledger-trade-cash-rpc-preview.test.mjs tests/ledger-staged-onboarding.test.mjs tests/ledger-ab-anon-evidence.test.mjs tests/ledger-v2-catalog-preflight.test.mjs tests/opening-hash-postgres-fixtures.test.mjs tests/opening-hash-collation-contract.test.mjs tests/ledger-post-opening-v2-review.test.mjs tests/opening-rpc-contract-audit.test.mjs tests/opening-rpc-hash-preview.test.mjs tests/opening-payload-hash.test.mjs tests/ledger-payload-hash-amendment.test.mjs tests/ledger-post-opening-sql-review.test.mjs tests/ledger-create-account-sql-review.test.mjs tests/ledger-onboarding-flow.test.mjs tests/ledger-rpc-security-contract.test.mjs tests/ledger-posting-batch-review.test.mjs tests/ledger-schema-contract-v2.test.mjs tests/multi-user-ledger-isolation.test.mjs tests/offline-ledger-check.test.mjs tests/trade-rpc-preview.test.mjs tests/portfolio-migration-assessment.test.mjs tests/opening-snapshot-preview.test.mjs tests/legacy-holdings-map.test.mjs tests/legacy-file-import.test.mjs tests/legacy-holdings-export.test.mjs tests/original-dashboard-schema.test.mjs tests/usd-equity-vs-cash.test.mjs tests/holdings-reconciliation.test.mjs tests/opening-snapshot-compare.test.mjs tests/opening-draft-transfer.test.mjs tests/opening-migration-gate.test.mjs tests/opening-review-report.test.mjs tests/test-migration-preflight.test.mjs tests/ledger-security-audit-review.test.mjs tests/standard-security-audit.test.mjs tests/preflight-catalog-integration.test.mjs tests/isolation-evidence-review.test.mjs tests/combined-migration-review.test.mjs tests/isolation-review-import.test.mjs tests/isolation-evidence-template.test.mjs tests/isolation-evidence-assessment.test.mjs tests/isolation-import-unified.test.mjs tests/readiness-report-validator.test.mjs tests/sql-contract-review.test.mjs tests/sql-contract-files.test.mjs tests/opening-account-plan.test.mjs tests/account-opening-rpc-contract.test.mjs tests/ledger-v2-schema-review.test.mjs tests/offline-event-ledger.test.mjs tests/portfolio-ledger-reconcile.test.mjs tests/portfolio-reconcile-import.test.mjs tests/portfolio-account-allocation.test.mjs tests/opening-ledger-handoff.test.mjs tests/opening-allocation-form.test.mjs tests/opening-form-flow.test.mjs tests/opening-review-page-contract.test.mjs tests/opening-review-summary.test.mjs tests/opening-review-export.test.mjs tests/opening-review-compare.test.mjs tests/opening-input-guidance.test.mjs tests/opening-allocation-quantities.test.mjs tests/opening-allocation-gate.test.mjs tests/opening-account-readiness.test.mjs tests/opening-final-review.test.mjs tests/opening-final-review-file.test.mjs tests/one-click-review-guidance.test.mjs tests/browser-smoke-report.test.mjs tests/browser-smoke-compare.test.mjs tests/test-evidence-summary.test.mjs tests/test-evidence-file.test.mjs tests/test-evidence-compare.test.mjs tests/test-readiness-summary.test.mjs tests/review-target-link.test.mjs tests/review-pair-browser.test.mjs tests/test-final-report.test.mjs tests/test-final-report-compare.test.mjs tests/scenario-backup.test.mjs tests/portfolio-positions.test.mjs tests/portfolio-snapshot.test.mjs tests/portfolio-account-bridge.test.mjs tests/simulator-account-opening.test.mjs tests/simulator-account-comparison.test.mjs tests/account-scenario-comparison.test.mjs tests/account-scenario-presentation.test.mjs tests/account-scenario-csv.test.mjs tests/scenario-failure-diagnostic.test.mjs tests/scenario-trade-adjustment.test.mjs tests/scenario-adjustment-preview.test.mjs

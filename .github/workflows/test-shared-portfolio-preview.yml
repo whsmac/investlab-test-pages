@@ -1,0 +1,62 @@
+name: TEST shared portfolio preview package (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'shared-data.html'
+      - 'virtual-trade-simulator.html'
+      - 'src/sync/**'
+      - 'src/simulator/**'
+      - 'src/ledger/**'
+      - 'tests/test-account-holdings.test.mjs'
+      - 'tests/test-cash-*.test.mjs'
+      - 'tests/test-ledger-account-options.test.mjs'
+      - 'tests/test-unified-portfolio-view.test.mjs'
+      - 'tests/test-personal-document-read-probe.test.mjs'
+      - 'tests/test-personal-storage-dedup-policy.test.mjs'
+      - 'tests/test-scenario-storage-normalization.test.mjs'
+      - 'tests/test-legacy-simulator-preview.test.mjs'
+      - 'tests/test-scenario-rotation-offline.test.mjs'
+      - 'tests/test-local-scenario-save-gate.test.mjs'
+      - 'tests/test-scenario-storage-location.test.mjs'
+      - 'tests/test-scenario-rls-proposal.test.mjs'
+      - 'tests/test-online-scenario-validation.test.mjs'
+      - 'tests/test-scenario-rls-two-user-oracle.test.mjs'
+      - 'tests/test-scenario-readonly-preflight.test.mjs'
+      - 'tests/test-scenario-write-guards.test.mjs'
+      - 'tests/test-scenario-sql-v2-review.test.mjs'
+      - 'tests/test-scenario-validator-v3-review.test.mjs'
+      - '.github/workflows/test-shared-portfolio-preview.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate TEST account and cash UI modules
+        run: |
+          node --test tests/test-account-holdings.test.mjs tests/test-cash-movement-review.test.mjs tests/test-cash-ledger-completeness.test.mjs tests/test-cash-reconciliation-preview.test.mjs tests/test-ledger-account-options.test.mjs tests/test-unified-portfolio-view.test.mjs tests/test-personal-document-read-probe.test.mjs tests/test-personal-storage-dedup-policy.test.mjs tests/test-scenario-storage-normalization.test.mjs tests/test-legacy-simulator-preview.test.mjs tests/test-scenario-rotation-offline.test.mjs tests/test-local-scenario-save-gate.test.mjs tests/test-scenario-storage-location.test.mjs tests/test-scenario-rls-proposal.test.mjs tests/test-online-scenario-validation.test.mjs tests/test-scenario-rls-two-user-oracle.test.mjs tests/test-scenario-readonly-preflight.test.mjs tests/test-scenario-write-guards.test.mjs tests/test-scenario-sql-v2-review.test.mjs tests/test-scenario-validator-v3-review.test.mjs
+      - name: Assemble offline TEST preview (no publish, no database writes)
+        run: |
+          mkdir -p preview
+          cp shared-data.html virtual-trade-simulator.html preview/
+          cp -R src preview/src
+          printf '%s\n' 'INVESTLAB TEST branch preview — local only.' 'Unzip, open a terminal in this folder, and run: python3 -m http.server 8765' 'Open http://127.0.0.1:8765/shared-data.html' 'This package does not publish to GitHub Pages or change Supabase.' 'Only use the TEST Supabase project with its publishable key; never use a service-role key.' > preview/README.txt
+          test -f preview/shared-data.html
+          echo 'Preview sync module inventory:'
+          ls -la preview/src/sync
+          test -f preview/src/sync/test-ledger-account-options.mjs
+          test -f preview/src/sync/test-cash-reconciliation-preview.mjs
+          test -f preview/src/sync/test-account-holdings.mjs
+          for module in personal-storage-dedup-policy.mjs test-scenario-storage-normalization.mjs test-legacy-simulator-preview.mjs test-local-scenario-save-gate.mjs; do
+            if [ ! -f "preview/src/sync/$module" ]; then echo "ERROR: missing $module from preview package"; exit 1; fi
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-shared-portfolio-preview
+          path: preview/
+          retention-days: 7
+          if-no-files-found: error

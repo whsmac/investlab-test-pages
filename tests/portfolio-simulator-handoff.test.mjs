@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const base=new URL('../',import.meta.url);
+const portfolio=readFileSync(new URL('test-my-portfolio-ledger.html',base),'utf8');
+const simulator=readFileSync(new URL('virtual-trade-simulator.html',base),'utf8');
+test('portfolio sends only selected symbol and quantity',()=>{assert.match(portfolio,/source:'portfolio-review',ticker:data.ticker,quantity:data.totalQuantityDisplay/);assert.match(portfolio,/holding-simulator-link/);});
+test('simulator requires manually supplied cost basis and user action',()=>{assert.match(simulator,/portfolioHandoffCost/);assert.match(simulator,/portfolioHandoffApply.*addEventListener\('click'/);assert.match(simulator,/if\(!rawCost/);assert.match(simulator,/restoreWorkingDraft\(\);\s*function initializePortfolioHandoff/);});
+test('both inline browser modules parse',()=>{for(const html of [portfolio,simulator]){const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert.ok(script);const result=spawnSync(process.execPath,['--check','--input-type=module'],{input:script,encoding:'utf8'});assert.equal(result.status,0,result.stderr);}});

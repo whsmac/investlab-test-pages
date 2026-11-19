@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {buildIsolationEvidenceTemplate,reviewIsolationEvidenceTemplate} from '../src/ledger/isolation-evidence-template.mjs';
+test('template has eight TEST-only cases with no observations',()=>{const x=buildIsolationEvidenceTemplate();assert.equal(x.cases.length,8);assert.equal(x.projectId,'gopofxyezhwpfxbecrxd');assert.equal(reviewIsolationEvidenceTemplate(x).missing.length,8)});
+test('evidence reference and method required for observed outcomes',()=>{const x=buildIsolationEvidenceTemplate();x.cases[0].observed='ALLOW';const r=reviewIsolationEvidenceTemplate(x);assert.equal(r.issues.length,1);assert.equal(r.canMigrate,false)});
+test('complete manual references never imply verified server state',()=>{const x=buildIsolationEvidenceTemplate();for(const c of x.cases){c.observed=c.expected;c.method='CLIENT_SESSION';c.evidenceReference='TEST-log-'+c.id}const r=reviewIsolationEvidenceTemplate(x);assert.equal(r.status,'MANUAL_EVIDENCE_RECORDED');assert.equal(r.issues.length,0);assert.equal(r.serverVerified,false)});
+test('wrong project rejected',()=>{const x=buildIsolationEvidenceTemplate();x.projectId='production';assert.throws(()=>reviewIsolationEvidenceTemplate(x))});
+test('duplicate case rejected',()=>{const x=buildIsolationEvidenceTemplate();x.cases[1].id=x.cases[0].id;assert.throws(()=>reviewIsolationEvidenceTemplate(x))});

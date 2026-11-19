@@ -1,0 +1,100 @@
+import unittest
+from scripts.report_yahoo_online_readiness import summarize_online_readiness
+
+
+def branch_audit(present=False):
+    return {
+        "mode": "TEST_PAGES_BRANCH_READ_ONLY_AUDIT",
+        "branches": {name: {"exists": True, "asset_present": present} for name in
+                     ("main", "gh-pages", "feature/test-navigation-20261112")},
+        "pages_source_confirmed": False,
+        "database_writes": 0, "deployment_performed": False,
+    }
+
+
+def live_check(reachable=False, fresh=False):
+    return {"mode": "TEST_PAGES_LIVE_READ_ONLY_CHECK",
+            "reachable": reachable, "fresh": fresh,
+            "database_writes": 0, "deployment_performed": False}
+
+
+class OnlineReadinessTests(unittest.TestCase):
+    def test_missing_online_asset_is_not_ready(self):
+        result = summarize_online_readiness(branch_audit(), live_check())
+        self.assertEqual(result["status"], "NOT_ONLINE")
+        self.assertFalse(result["online_ready"])
+        self.assertFalse(result["deployment_authorized"])
+
+    def test_branch_asset_does_not_prove_live_publication(self):
+        result = summarize_online_readiness(branch_audit(True), live_check())
+        self.assertFalse(result["online_ready"])
+
+    def test_stale_live_asset_is_not_ready(self):
+        result = summarize_online_readiness(branch_audit(), live_check(True, False))
+        self.assertEqual(result["status"], "ONLINE_STALE")
+        self.assertFalse(result["online_ready"])
+
+    def test_fresh_live_asset_is_ready_for_read_only_browser_check(self):
+        result = summarize_online_readiness(branch_audit(), live_check(True, True))
+        self.assertEqual(result["status"], "ONLINE_FRESH")
+        self.assertEqual(result["next_action"], "VERIFY_BROWSER_READ_ONLY")
+        self.assertFalse(result["deployment_performed"])
+
+    def test_missing_json_404_is_not_confused_with_server_failure(self):
+        report = live_check()
+        report["error_kind"] = "NOT_PUBLISHED"
+        result = summarize_online_readiness(branch_audit(), report)
+        self.assertEqual(result["status"], "NOT_PUBLISHED")
+        self.assertEqual(result["next_action"], "REVIEW_PAGES_SOURCE_AND_PUBLICATION_SEPARATELY")
+
+    def test_network_and_invalid_json_are_diagnostic_failures(self):
+        for kind in ("NETWORK_ERROR", "HTTP_ERROR", "INVALID_CONTENT"):
+            with self.subTest(kind=kind):
+                report = live_check()
+                report["error_kind"] = kind
+                result = summarize_online_readiness(branch_audit(), report)
+                self.assertEqual(result["status"], "LIVE_CHECK_FAILED")
+                self.assertEqual(result["next_action"], "INVESTIGATE_LIVE_CHECK_NO_PUBLISH")
+                self.assertFalse(result["online_ready"])
+
+    def test_pages_source_audit_controls_publication_planning(self):
+        live = live_check()
+        live["error_kind"] = "NOT_PUBLISHED"
+        source = {"mode": "TEST_PAGES_SOURCE_READ_ONLY_AUDIT",
+                  "status": "SOURCE_CONFIRMED", "source_confirmed": True,
+                  "branch": "gh-pages", "deployment_performed": False, "database_writes": 0}
+        ready = summarize_online_readiness(branch_audit(), live, source)
+        self.assertTrue(ready["pages_source_confirmed"])
+        self.assertTrue(ready["publication_planning_ready"])
+        self.assertFalse(ready["deployment_authorized"])
+        source["source_confirmed"] = False
+        blocked = summarize_online_readiness(branch_audit(), live, source)
+        self.assertFalse(blocked["publication_planning_ready"])
+
+    def test_unsafe_pages_source_audit_rejected(self):
+        source = {"mode": "TEST_PAGES_SOURCE_READ_ONLY_AUDIT",
+                  "source_confirmed": True, "deployment_performed": True, "database_writes": 0}
+        with self.assertRaisesRegex(ValueError, "unsafe"):
+            summarize_online_readiness(branch_audit(), live_check(), source)
+
+    def test_unrecognized_error_kind_rejected(self):
+        report = live_check()
+        report["error_kind"] = "SUCCESS"
+        with self.assertRaisesRegex(ValueError, "Invalid live error"):
+            summarize_online_readiness(branch_audit(), report)
+
+    def test_unsafe_report_rejected(self):
+        report = live_check()
+        report["database_writes"] = 1
+        with self.assertRaisesRegex(ValueError, "Unsafe"):
+            summarize_online_readiness(branch_audit(), report)
+
+    def test_incomplete_branch_report_rejected(self):
+        report = branch_audit()
+        del report["branches"]["gh-pages"]
+        with self.assertRaisesRegex(ValueError, "Incomplete"):
+            summarize_online_readiness(report, live_check())
+
+
+if __name__ == "__main__":
+    unittest.main()

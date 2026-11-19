@@ -1,0 +1,108 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST · Yahoo 주가 대조</title>
+<style>:root{color-scheme:dark;font:16px system-ui;background:#0b1020;color:#edf2ff}body{margin:0}.wrap{max-width:900px;margin:auto;padding:24px 16px}a{color:#a9c5ff}.panel{background:#141b2d;border:1px solid #2a3550;border-radius:12px;padding:20px;margin-top:20px}button,input{font:inherit;background:#233657;color:#fff;border:1px solid #566789;padding:10px;border-radius:8px}button{cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}</style></head>
+<body><main class="wrap"><a href="./index.html">← TEST 홈</a><h1>Yahoo 주가 · TEST DB 대조</h1><p>먼저 게시된 Yahoo 주가 JSON을 자동으로 읽어보세요. 게시되지 않았다면 GitHub Actions에서 생성된 <code>yahoo-price-review-candidate.json</code> 파일을 선택하세요. 로그인된 TEST DB의 기업 ID와 주가를 읽어 비교합니다. DB 저장·수정은 하지 않습니다.</p>
+<section class="panel"><p><button id="schema">TEST DB 구조 진단 (읽기 전용)</button> <button id="schemaDownload" disabled>진단 결과 JSON 저장</button></p><pre id="schemaResult"></pre><p><button id="auto">게시된 최신 JSON 자동 읽기</button></p><p id="autoStatus">자동 게시 설정 전에는 JSON이 없을 수 있습니다.</p><p id="freshness" role="status">주가 기준일 확인 전</p><div id="chart" aria-label="자동 수집 Yahoo 주가 추세 미리보기"></div><p><button id="find">최신 Yahoo 수집 결과 찾기</button></p><p id="artifact"></p><label>Yahoo 검증 파일 <input type="file" id="file" accept=".json,application/json"></label><p><button id="preview">주가 차트만 미리보기</button> <button id="run">읽기 전용 대조 실행</button> <button id="download" disabled>결과 JSON 저장</button></p><p id="status" role="status">대기 중</p><pre id="result"></pre></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script type="module">
+import {diagnoseYahooTestSchema} from "./src/market/diagnose-yahoo-test-schema.mjs";
+import {buildSafeYahooSchemaReport} from "./src/market/export-yahoo-schema-report.mjs";
+import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review.mjs";
+import {buildYahooChartSeries} from "./src/market/yahoo-review-chart-series.mjs";
+import {renderYahooAxesChart} from "./src/market/yahoo-axes-chart.mjs";
+import {assessYahooChartFreshness} from "./src/market/yahoo-chart-freshness.mjs";
+import {findLatestYahooArtifact} from "./src/market/find-latest-yahoo-artifact.mjs";
+import {readYahooTestCompanyMap} from "./src/market/read-yahoo-test-company-map.mjs";
+import {readTestPriceSnapshot} from "./src/market/read-test-price-snapshot.mjs";
+import {reviewYahooCandidate} from "./src/market/review-yahoo-test-browser.mjs";
+const TARGET="https://gopofxyezhwpfxbecrxd.supabase.co", $=id=>document.getElementById(id);let last=null;let published=null;let sourceMode="none";let schemaReport=null;let sourceRevision=0;
+function renderReviewCharts(snapshot){
+ const target=$("chart");target.replaceChildren();
+ const freshness=assessYahooChartFreshness(snapshot);
+ $("freshness").textContent=(freshness.status==="current"?"최근 거래일 데이터":"주의: 주가 데이터 갱신 확인 필요")+" · "+freshness.details.map(x=>x.ticker+" "+(x.lastTradingDate||"없음")+(x.ageDays===null?"":" ("+x.ageDays+"일 전)")).join(" / ")+" · 실시간 시세 아님";
+ for(const series of buildYahooChartSeries(snapshot)){
+  const section=document.createElement("section"),heading=document.createElement("p");
+  heading.textContent=series.ticker+" · 최근 "+series.points.length+"거래일 · USD";
+  section.append(heading);
+  if(series.points.length<2){section.append(document.createTextNode("표시할 데이터 부족"));target.append(section);continue;}
+  section.append(renderYahooAxesChart(document,series.points,series.ticker));
+  const caption=document.createElement("small");
+  caption.textContent=series.points[0].date+" ~ "+series.points.at(-1).date+" · 최근 종가 USD "+series.points.at(-1).close.toLocaleString("en-US");
+  section.append(caption);target.append(section);
+ }
+}
+function getTestClient(){
+ let config;try{config=JSON.parse(localStorage.getItem("investlab_shared_data_connection_v1")||"{}")}catch{throw Error("TEST 연결 설정이 손상되었습니다. 공유 데이터 화면에서 다시 저장하세요.")}
+ if(config.url!==TARGET||!config.key)throw Error("공유 데이터 화면에서 TEST 서버 연결·로그인을 먼저 완료하세요.");
+ if(!window.supabase?.createClient)throw Error("Supabase 라이브러리 로드 실패");
+ return window.supabase.createClient(TARGET,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"investlab_shared_data_auth_v1"}});
+}
+$("schema").addEventListener("click",async()=>{
+ $("schema").disabled=true;$("schemaDownload").disabled=true;schemaReport=null;$("schemaResult").textContent="TEST DB 구조 확인 중…";
+ try{const diagnostic=await diagnoseYahooTestSchema(getTestClient());schemaReport=buildSafeYahooSchemaReport(diagnostic);$("schemaResult").textContent=JSON.stringify(schemaReport,null,2);$("schemaDownload").disabled=false}
+ catch(error){$("schemaResult").textContent="진단 실패: "+error.message}
+ finally{$("schema").disabled=false}
+});
+$("schemaDownload").addEventListener("click",()=>{
+ if(!schemaReport)return;
+ const blob=new Blob([JSON.stringify(schemaReport,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="investlab-test-schema-diagnostic.json";a.click();URL.revokeObjectURL(url);
+});
+async function autoLoadYahooReview(){
+ const revision=++sourceRevision;
+ $("auto").disabled=true;
+ try{
+  const incoming=await loadPublishedYahooReview({origin:location.href});
+  if(revision!==sourceRevision)return;
+  published=incoming;renderReviewCharts(published);sourceMode="published";$("file").value="";
+  $("autoStatus").textContent="공개 JSON 읽기 성공: "+published.row_count+"건. 아래 '읽기 전용 대조 실행'을 누르세요.";
+ }catch(error){if(revision!==sourceRevision)return;published=null;sourceMode="none";$("chart").replaceChildren();$("freshness").textContent="주가 기준일 확인 전";$("autoStatus").textContent="자동 읽기 불가: "+error.message+" · GitHub 파일 다운로드 방식 이용 가능";}
+ finally{$("auto").disabled=false}
+}
+$("auto").addEventListener("click",autoLoadYahooReview);
+// Automatically try the public read-only JSON on page load; no Supabase login or DB calls.
+void autoLoadYahooReview();
+$("file").addEventListener("change",()=>{sourceRevision++;published=null;$("chart").replaceChildren();$("freshness").textContent="선택한 파일 미리보기 전";sourceMode="file";$("autoStatus").textContent="수동 JSON 선택됨 · 자동 게시 데이터 대신 선택 파일을 대조합니다.";});
+$("find").addEventListener("click",async()=>{
+ $("find").disabled=true;$("artifact").textContent="GitHub Actions 조회 중…";
+ try{
+  const item=await findLatestYahooArtifact();
+  const a=document.createElement("a");a.href=item.artifact_url;a.target="_blank";a.rel="noopener noreferrer";
+  a.textContent="최신 Yahoo 검증 파일 다운로드 (GitHub ZIP)";
+  $("artifact").replaceChildren(a,document.createTextNode(" · 다운로드한 ZIP에서 JSON을 꺼내 아래에서 선택하세요. GitHub 로그인이 필요할 수 있습니다."));
+ }catch(error){$("artifact").textContent="조회 실패: "+error.message}
+ finally{$("find").disabled=false}
+});
+async function selectedYahooSource(){
+ const file=sourceMode==="published"?null:$("file").files?.[0];
+ if(!file&&!published)throw Error("게시 JSON을 불러오거나 Yahoo 검증 파일을 선택하세요.");
+ if(file&&file.size>3000000)throw Error("파일 용량 3MB 초과");
+ return file?JSON.parse(await file.text()):published;
+}
+$("preview").addEventListener("click",async()=>{
+ $("preview").disabled=true;
+ try{
+  const source=await selectedYahooSource();
+  renderReviewCharts(source);
+  $("status").textContent="주가 차트 미리보기 완료 · TEST DB 로그인 불필요 · DB 변경 0건";
+ }catch(error){$("chart").replaceChildren();$("status").textContent="차트 미리보기 실패: "+error.message}
+ finally{$("preview").disabled=false}
+});
+$("run").addEventListener("click",async()=>{
+ $("run").disabled=true;$("download").disabled=true;last=null;$("result").textContent="";
+ try{
+  const candidate=await selectedYahooSource();
+  renderReviewCharts(candidate);
+  const client=getTestClient();
+  $("status").textContent="TEST 기업 ID 및 주가를 조회하는 중…";
+  const companyMap=await readYahooTestCompanyMap(client);
+  const snapshot=await readTestPriceSnapshot(client);
+  last=reviewYahooCandidate(candidate,snapshot,companyMap);
+  $("result").textContent=JSON.stringify({db_visible_rows:snapshot.coverage.rows,counts:last.counts,
+    blocking_reasons:last.blocking_reasons,missing_preview:last.candidates.slice(0,15),
+    conflicts_preview:last.conflicts.slice(0,15)},null,2);
+  $("status").textContent="대조 완료 · DB 변경 0건";$("download").disabled=false;
+ }catch(error){$("status").textContent="대조 실패: "+error.message}
+ finally{$("run").disabled=false}
+});
+$("download").addEventListener("click",()=>{if(!last)return;const blob=new Blob([JSON.stringify(last,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="investlab-test-yahoo-review.json";a.click();URL.revokeObjectURL(url)});
+</script></body></html>

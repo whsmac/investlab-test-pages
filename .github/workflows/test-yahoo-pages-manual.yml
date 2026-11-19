@@ -1,0 +1,114 @@
+name: TEST Yahoo Pages bundle review (manual, NO DEPLOY)
+# Safety: does not deploy Pages, alter branch contents, or access Supabase.
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: 'Successful TEST Yahoo daily review run ID containing staging artifact'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  review-test-yahoo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TEST feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - name: Retrieve staged Yahoo review artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-staging
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+          path: ./yahoo-staged
+      - name: Validate TEST data package
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('yahoo-staged/manifest.json').read_text())
+          data=json.loads(Path('yahoo-staged/data/yahoo-public-review.json').read_text())
+          assert manifest['mode']=='TEST_PAGES_STAGING_ONLY'
+          assert manifest['published'] is False and manifest['database_writes']==0
+          assert manifest['target_path']=='data/yahoo-public-review.json'
+          assert data['mode']=='REVIEW_ONLY' and data['source']=='Yahoo Finance'
+          assert data['database_insert_authorized'] is False and data['writes_performed']==0
+          assert data['row_count']==len(data['observations']) and data['row_count']>0
+          print('TEST review rows:',data['row_count'])
+          PY
+      - name: Prepare full TEST site bundle (NO DEPLOY)
+        run: |
+          python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-staged --output "${RUNNER_TEMP}/investlab-test-site-review"
+          python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-site-review"
+      - name: Record verified TEST bundle checksum (NO DEPLOY)
+        run: |
+          python -m scripts.report_yahoo_test_bundle_readiness --site "${RUNNER_TEMP}/investlab-test-site-review" --output "${RUNNER_TEMP}/yahoo-manual-review-readiness.json"
+      - name: Verify fresh reviewed commit and JSON for manual handoff (NO DEPLOY)
+        run: |
+          REVIEWED_SHA="$(git rev-parse HEAD)"
+          python -m scripts.check_yahoo_test_pages_handoff \
+            --readiness "${RUNNER_TEMP}/yahoo-manual-review-readiness.json" \
+            --site "${RUNNER_TEMP}/investlab-test-site-review" \
+            --reviewed-commit "$REVIEWED_SHA" \
+            --output "${RUNNER_TEMP}/yahoo-manual-review-handoff.json"
+      - name: Audit TEST Pages source and live state (read-only, NO DEPLOY)
+        continue-on-error: true
+        run: |
+          python -m scripts.audit_yahoo_test_pages_branch --output "${RUNNER_TEMP}/yahoo-branch-audit.json"
+          python -m scripts.audit_yahoo_test_pages_source --output "${RUNNER_TEMP}/yahoo-pages-source-audit.json"
+          python -m scripts.verify_yahoo_test_pages_live --report-only --output "${RUNNER_TEMP}/yahoo-live-check.json"
+      - name: Assess first TEST publication readiness (NO DEPLOY)
+        continue-on-error: true
+        run: |
+          if [ ! -f "${RUNNER_TEMP}/yahoo-branch-audit.json" ] || [ ! -f "${RUNNER_TEMP}/yahoo-pages-source-audit.json" ] || [ ! -f "${RUNNER_TEMP}/yahoo-live-check.json" ]; then
+            echo "::notice::Read-only audit evidence incomplete; first-publication review not evaluated."
+            exit 0
+          fi
+          python -m scripts.report_yahoo_online_readiness \
+            --branch-audit "${RUNNER_TEMP}/yahoo-branch-audit.json" \
+            --pages-source "${RUNNER_TEMP}/yahoo-pages-source-audit.json" \
+            --live-check "${RUNNER_TEMP}/yahoo-live-check.json" \
+            --output "${RUNNER_TEMP}/yahoo-online-readiness.json"
+          python -m scripts.report_yahoo_first_publication_gate \
+            --pages-source "${RUNNER_TEMP}/yahoo-pages-source-audit.json" \
+            --handoff "${RUNNER_TEMP}/yahoo-manual-review-handoff.json" \
+            --online-readiness "${RUNNER_TEMP}/yahoo-online-readiness.json" \
+            --output "${RUNNER_TEMP}/yahoo-first-publication-gate.json"
+      - name: Upload first-publication review evidence (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-first-publication-review
+          path: |
+            ${{ runner.temp }}/yahoo-branch-audit.json
+            ${{ runner.temp }}/yahoo-pages-source-audit.json
+            ${{ runner.temp }}/yahoo-live-check.json
+            ${{ runner.temp }}/yahoo-online-readiness.json
+            ${{ runner.temp }}/yahoo-first-publication-gate.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload manual handoff verification (NO DEPLOY)
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-manual-handoff
+          path: ${{ runner.temp }}/yahoo-manual-review-handoff.json
+          retention-days: 7
+      - name: Upload verified TEST bundle readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-manual-review-readiness
+          path: ${{ runner.temp }}/yahoo-manual-review-readiness.json
+          retention-days: 7
+      - name: Upload offline TEST site preview only
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-bundle-review
+          path: ${{ runner.temp }}/investlab-test-site-review/
+          retention-days: 7

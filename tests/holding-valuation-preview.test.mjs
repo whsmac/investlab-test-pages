@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {previewHoldingValuation} from '../src/ledger/holding-valuation-preview.mjs';
+const accounts=[{accountId:'a',accountName:'A',quantityDisplay:'3',averageCostUsd:'180'},{accountId:'b',accountName:'B',quantityDisplay:'2',averageCostUsd:'210'}];
+test('calculates per-account hypothetical value and unrealized P&L',()=>{const r=previewHoldingValuation({ticker:'TSLA',accounts,assumedPriceUsd:'200'});assert.equal(r.totalMarketValueUsd,1000);assert.equal(r.totalUnrealizedPnlUsd,40);assert.equal(r.priceSource,'USER_ASSUMPTION_NOT_LIVE');assert.equal(r.canPersist,false);});
+test('missing cost never produces total unrealized P&L',()=>{const r=previewHoldingValuation({ticker:'TSLA',accounts:[accounts[0],{...accounts[1],averageCostUsd:null}],assumedPriceUsd:'200'});assert.equal(r.rows[1].unrealizedPnlUsd,null);assert.equal(r.totalUnrealizedPnlUsd,null);});
+test('invalid or absent assumed price rejected',()=>{for(const assumedPriceUsd of ['', '-1', '1e4','abc'])assert.throws(()=>previewHoldingValuation({ticker:'TSLA',accounts,assumedPriceUsd}));});

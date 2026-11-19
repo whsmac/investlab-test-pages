@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {assessTestMigrationPreflight,TEST_PREFLIGHT_CHECKS} from '../src/ledger/test-migration-preflight.mjs';
+test('empty evidence blocks all migration actions',()=>{const r=assessTestMigrationPreflight();assert.equal(r.status,'BLOCKED');assert.equal(r.blockers.length,TEST_PREFLIGHT_CHECKS.length);assert.equal(r.canExecuteSql,false)});
+test('manual checks alone never unlock migration',()=>{const r=assessTestMigrationPreflight({reviewReport:true,targetVerified:true,schemaReviewed:true});assert.equal(r.status,'BLOCKED');assert.ok(r.blockers.includes('rlsIsolationVerified'))});
+test('failed test remains blocked',()=>{const evidence=Object.fromEntries(TEST_PREFLIGHT_CHECKS.map(c=>[c.id,true]));evidence.atomicityVerified=false;const r=assessTestMigrationPreflight(evidence);assert.equal(r.status,'BLOCKED');assert.ok(r.blockers.includes('atomicityVerified'))});
+test('even all verified only requests separate approval',()=>{const evidence=Object.fromEntries(TEST_PREFLIGHT_CHECKS.map(c=>[c.id,true]));const r=assessTestMigrationPreflight(evidence);assert.equal(r.status,'READY_FOR_SEPARATE_APPROVAL');assert.equal(r.canUpload,false);assert.equal(r.canMerge,false);assert.equal(r.authorization,'NONE')});

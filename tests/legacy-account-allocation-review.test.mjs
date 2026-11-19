@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {reviewLegacyAccountAllocation as review} from '../src/ledger/legacy-account-allocation-review.mjs';
+const user='11111111-1111-4111-8111-111111111111',a='33333333-3333-4333-8333-333333333333',b='44444444-4444-4444-8444-444444444444';
+const base={sessionUserId:user,accounts:[{id:a,ownerId:user,name:'ISA'},{id:b,ownerId:user,name:'Pension'}],exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'3',avg_cost:'200'},{symbol:'SOXL',shares:'2',avg_cost:'10'}]}};
+test('unassigned holdings remain review-only',()=>{const r=review(base);assert.equal(r.pendingCount,2);assert.equal(r.canImport,false);});
+test('explicit allocation across accounts remains read-only',()=>{const r=review({...base,allocations:[{ticker:'TSLA',accountId:a},{ticker:'SOXL',accountId:b}]});assert.equal(r.assignedCount,2);assert.equal(r.rows[1].accountId,b);assert.equal(r.canPersist,false);});
+test('reject other owner and duplicate assignment',()=>{assert.throws(()=>review({...base,allocations:[{ticker:'TSLA',accountId:'55555555-5555-4555-8555-555555555555'}]}),/not owned/);assert.throws(()=>review({...base,allocations:[{ticker:'TSLA',accountId:a},{ticker:'TSLA',accountId:b}]}),/duplicate/);});

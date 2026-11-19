@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {assessCombinedMigrationReview} from '../src/ledger/combined-migration-review.mjs';
+import {TEST_PREFLIGHT_CHECKS} from '../src/ledger/test-migration-preflight.mjs';
+import {ISOLATION_CASES} from '../src/ledger/isolation-evidence-review.mjs';
+const manual=Object.fromEntries(TEST_PREFLIGHT_CHECKS.map(c=>[c.id,true]));
+const isolation=Object.fromEntries(ISOLATION_CASES.map(c=>[c.id,c.expected]));
+const names=['investlab_accounts','investlab_ledger_events','investlab_ledger_legs','investlab_personal_symbols','investlab_personal_scenarios_v2'];
+const catalog={format:'INVESTLAB_LEDGER_SECURITY_AUDIT_V1',version:1,scope:'TEST_READ_ONLY_CATALOG',tables:names.map(table_name=>({table_name,exists:true,rls_enabled:true,anon_select:false,auth_insert:false,auth_update:false,auth_delete:false,policy_count:1})),functions:[{function_name:'investlab_post_trade_v0',security_definer:true,anon_execute:false,authenticated_execute:true}]};
+test('missing isolation evidence blocks complete catalog checklist',()=>{const r=assessCombinedMigrationReview(manual,catalog);assert.equal(r.status,'BLOCKED');assert.equal(r.isolationBlockers.length,8)});
+test('failed cross-user read blocks complete manual checklist',()=>{const r=assessCombinedMigrationReview(manual,catalog,{...isolation,b_other_read:'ALLOW'});assert.equal(r.status,'BLOCKED');assert.ok(r.isolationBlockers.includes('b_other_read'))});
+test('missing catalog blocks complete isolation observations',()=>{const r=assessCombinedMigrationReview(manual,null,isolation);assert.equal(r.status,'BLOCKED')});
+test('even all manual inputs cannot authorize database operations',()=>{const r=assessCombinedMigrationReview(manual,catalog,isolation);assert.equal(r.status,'MANUAL_REVIEW_COMPLETE_NOT_SERVER_VERIFIED');assert.equal(r.serverVerified,false);assert.equal(r.canMigrate,false);assert.equal(r.authorization,'NONE')});

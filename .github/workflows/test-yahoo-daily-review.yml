@@ -1,0 +1,172 @@
+name: TEST Yahoo daily review candidate (NO DEPLOY)
+# Inert on feature branch. GitHub schedules execute from the default branch only.
+# UTC Monday-Friday 23:35 = Korea Tuesday-Saturday 08:35 (KST).
+# US Monday-Friday close is reviewed on the following KST morning; holidays may have no new close.
+# This workflow must not be enabled/published without a separate approval.
+on:
+  schedule:
+    - cron: '35 23 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: investlab-test-yahoo-review-only
+  cancel-in-progress: false
+
+jobs:
+  prepare-test-yahoo-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/test-navigation-20261112
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Collect Yahoo 5-ticker observations (read-only)
+        id: probe
+        continue-on-error: true
+        run: python scripts/yahoo_price_probe_test.py
+      - name: Validate and sanitize review-only candidate
+        if: steps.probe.outcome == 'success'
+        id: candidate
+        continue-on-error: true
+        run: |
+          python -m scripts.build_yahoo_review_candidate --input yahoo-price-probe.json --output yahoo-price-review-candidate.json
+          python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
+          python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+      - name: Summarize ticker coverage and freshness (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        run: |
+          python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
+      - name: Stage validated Yahoo JSON for offline TEST site review (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        id: staging
+        continue-on-error: true
+        run: |
+          python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-staged
+      - name: Upload validated Yahoo staging artifact (NO DEPLOY)
+        if: steps.staging.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-pages-staging
+          path: yahoo-staged/
+          retention-days: 7
+      - name: Audit actual Pages publishing source via GitHub API (NO DEPLOY)
+        if: steps.candidate.outcome == 'success'
+        run: python -m scripts.audit_yahoo_test_pages_source --output yahoo-pages-source-audit.json
+      - name: Confirm actual TEST Pages source before branch-specific review
+        if: steps.candidate.outcome == 'success'
+        id: pages_source
+        env:
+          CONFIRMED_PAGES_SOURCE: ${{ vars.INVESTLAB_TEST_PAGES_SOURCE }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          audit = json.loads(Path("yahoo-pages-source-audit.json").read_text(encoding="utf-8"))
+          confirmed = (audit.get("source_confirmed") is True
+                       and audit.get("branch") == "gh-pages"
+                       and os.environ.get("CONFIRMED_PAGES_SOURCE") == "gh-pages")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("confirmed=" + str(confirmed).lower() + "\n")
+          if confirmed:
+              print("Verified TEST Pages API and explicit gh-pages source setting.")
+          else:
+              print("Pages API and explicit source setting are not both confirmed; branch comparison blocked.")
+          PY
+      - name: Checkout current TEST Pages branch into read-only comparison directory
+        if: steps.pages_source.outputs.confirmed == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: test-pages-current
+          persist-credentials: false
+      - name: Compare proposed JSON against current TEST Pages (NO DEPLOY)
+        if: steps.pages_source.outputs.confirmed == 'true'
+        id: comparison
+        continue-on-error: true
+        run: |
+          python -m scripts.review_yahoo_test_pages_refresh --current-site test-pages-current --proposed-json yahoo-public-review.json --output yahoo-pages-refresh-review.json
+      - name: Prepare pinned single-file publication plan (NO DEPLOY)
+        if: steps.comparison.outcome == 'success'
+        id: plan
+        continue-on-error: true
+        run: |
+          BRANCH_SHA="$(git -C test-pages-current rev-parse HEAD)"
+          python -m scripts.plan_yahoo_test_pages_publication --review yahoo-pages-refresh-review.json --branch-sha "$BRANCH_SHA" --output yahoo-pages-publication-plan.json
+      - name: Verify branch and file have not changed since review (NO DEPLOY)
+        if: steps.plan.outcome == 'success'
+        id: prewrite
+        continue-on-error: true
+        run: |
+          BRANCH_SHA="$(git -C test-pages-current rev-parse HEAD)"
+          python -m scripts.verify_yahoo_test_pages_prewrite --plan yahoo-pages-publication-plan.json --current-branch-sha "$BRANCH_SHA" --current-site test-pages-current --proposed-json yahoo-public-review.json --output yahoo-pages-prewrite-check.json
+      - name: Preserve previous JSON and rollback manifest (NO DEPLOY)
+        if: steps.prewrite.outcome == 'success'
+        id: backup
+        continue-on-error: true
+        run: |
+          python -m scripts.backup_yahoo_test_pages_asset --plan yahoo-pages-publication-plan.json --current-site test-pages-current --output-dir yahoo-pages-rollback
+      - name: Upload rollback package for review only (NO DEPLOY)
+        if: steps.backup.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-rollback-review
+          path: yahoo-pages-rollback/
+          retention-days: 7
+      - name: Summarize price observation change (NO DEPLOY)
+        if: steps.prewrite.outcome == 'success'
+        id: decision
+        continue-on-error: true
+        run: |
+          python -m scripts.summarize_yahoo_test_refresh_decision --plan yahoo-pages-publication-plan.json --prewrite yahoo-pages-prewrite-check.json --output yahoo-pages-refresh-decision.json
+      - name: Upload review-only diagnostic and candidate (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-yahoo-daily-review
+          path: |
+            yahoo-price-probe.json
+            yahoo-price-review-candidate.json
+            yahoo-publication-preflight.json
+            yahoo-feed-coverage.json
+            yahoo-pages-source-audit.json
+            yahoo-public-review.json
+            yahoo-pages-refresh-review.json
+            yahoo-pages-publication-plan.json
+            yahoo-pages-prewrite-check.json
+            yahoo-pages-refresh-decision.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Fail when collection or validation was blocked
+        if: always()
+        env:
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
+          CANDIDATE_OUTCOME: ${{ steps.candidate.outcome }}
+          STAGING_OUTCOME: ${{ steps.staging.outcome }}
+          COMPARISON_OUTCOME: ${{ steps.comparison.outcome }}
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          PREWRITE_OUTCOME: ${{ steps.prewrite.outcome }}
+          BACKUP_OUTCOME: ${{ steps.backup.outcome }}
+          DECISION_OUTCOME: ${{ steps.decision.outcome }}
+          PAGES_SOURCE_CONFIRMED: ${{ steps.pages_source.outputs.confirmed }}
+        run: |
+          if [ "$PROBE_OUTCOME" != success ] || [ "$CANDIDATE_OUTCOME" != success ] || [ "$STAGING_OUTCOME" != success ]; then
+            echo "::error::Yahoo collection or validation failed; no data was published."
+            exit 1
+          fi
+          if [ "$PAGES_SOURCE_CONFIRMED" != true ]; then
+            echo "::notice::Review-only Yahoo collection succeeded; Pages comparison intentionally skipped pending source confirmation."
+            exit 0
+          fi
+          if [ "$COMPARISON_OUTCOME" != success ] || [ "$PLAN_OUTCOME" != success ] || [ "$PREWRITE_OUTCOME" != success ] || [ "$BACKUP_OUTCOME" != success ] || [ "$DECISION_OUTCOME" != success ]; then
+            echo "::error::Yahoo review failed; no data was published or written."
+            exit 1
+          fi
+          echo "Review-only artifact prepared; no deployment or database writes."

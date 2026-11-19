@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INVESTLAB | 통합원장 1단계</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#eaf0ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1200px;margin:auto;padding:20px 16px 60px}h1{font-size:clamp(23px,4vw,32px)}h2{font-size:19px}a{color:#a4c6ff}.panel{background:#161f32;border:1px solid #34405a;border-radius:14px;padding:17px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}label{font-size:13px;color:#b7c5dc;display:block}input,select,button{width:100%;padding:10px;border-radius:8px;background:#0b1424;color:#eef3ff;border:1px solid #43516a;font:inherit}button{background:#24395d;cursor:pointer}button:hover{background:#305184}button:disabled{opacity:.45}label>*{margin-top:5px}.wide{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions>*{width:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{border-bottom:1px solid #364159;padding:9px;text-align:right}td:first-child,th:first-child{text-align:left}.scroll{overflow-x:auto}.muted{color:#aab9d2;font-size:13px}.warn{color:#ffd48b}.stat{font-size:20px;font-weight:700}.stat small{display:block;font-size:12px;color:#aab9d2;font-weight:400}.hidden{display:none}#message{min-height:24px;color:#a9dfbf}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:span 2}.wrap{padding:14px 10px 40px}}@media(max-width:400px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style></head><body><main class="wrap">
+<a href="./index.html">← INVESTLAB 홈</a><h1>통합원장 · 1단계 실사용 화면</h1>
+<p class="warn">TEST 계정 로그인 시 계좌와 거래를 자동으로 서버와 동기화합니다. 접속이 끊기면 브라우저에 기록을 보존하며 서버 변경 충돌은 자동 덮어쓰기하지 않습니다.</p>
+<section class="panel" id="onlineSync"><h2>온라인 저장 · TEST Supabase</h2>
+<p class="muted">로그인하면 서버 원장을 자동으로 불러오고, 거래 변경 시 자동 저장합니다. 아래 수동 저장·불러오기는 동기화 충돌 해결 시 사용합니다.</p>
+<div class="grid"><label class="wide">TEST 공개용 Supabase anon / publishable key<input id="cloudKey" type="password" autocomplete="off" placeholder="TEST 프로젝트 공개 키"></label>
+<label>이메일<input id="cloudEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="cloudPassword" type="password" autocomplete="current-password"></label></div>
+<div class="actions" style="margin-top:12px"><button type="button" id="cloudReuseLogin">공유 데이터 로그인 사용</button><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
+<p id="cloudStatus" class="muted" role="status">서버 연결 전 · 브라우저 임시 저장만 사용 중</p></section>
+<section class="panel"><h2>계좌 등록</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식, ISA, 연금"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><p id="accounts" class="muted"></p></section>
+<section class="panel"><h2>원장 입력</h2><form id="entryForm" class="grid">
+<label>계좌<select id="entryAccount" required></select></label><label>날짜<input id="entryDate" type="date" required></label><label>거래 종류<select id="entryType"><option value="OPEN">초기 보유 입력</option><option value="BUY">매수</option><option value="SELL">매도</option><option value="DEPOSIT">현금 입금</option><option value="WITHDRAW">현금 출금</option><option value="DIVIDEND">배당금 수령</option><option value="FX">환전 (통화 교환)</option></select></label><label class="stockField">종목코드<input id="entrySymbol" placeholder="TSLA" maxlength="16"></label>
+<label class="stockField">수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label><label class="stockField">주당 단가<input id="entryPrice" type="number" min="0" step="any" placeholder="250"></label><label>통화<select id="entryCurrency"><option>USD</option><option>KRW</option></select></label><label class="moneyField">현금 금액<input id="entryAmount" type="number" min="0" step="any" placeholder="1000"></label><label class="fxField">환전 후 통화<select id="entryToCurrency"><option>KRW</option><option>USD</option></select></label><label class="fxField">환전 후 수령액<input id="entryToAmount" type="number" min="0" step="any" placeholder="1400000"></label><label class="wide">메모<input id="entryNote" maxlength="200" placeholder="선택 사항"></label><button id="submitEntry" type="submit">거래 기록</button>
+</form><p class="muted">초기 보유는 수량과 매입단가를 입력합니다. 초기 현금은 입금으로 기록하세요. 수수료·세금·환율별 취득원가 계산은 아직 포함되지 않았습니다.</p><p id="message" role="status"></p></section>
+<section class="panel"><h2>My Portfolio · 원장 기반 보유현황</h2><div class="grid"><label>계좌 선택<select id="viewAccount"><option value="ALL">전체 계좌</option></select></label><div class="stat"><small>보유 종목 수</small><span id="symbolCount">0</span></div><div class="stat"><small>USD 현금</small><span id="usdCash">0</span></div><div class="stat"><small>KRW 현금</small><span id="krwCash">0</span></div></div><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 USD</th><th>매입원가 USD</th></tr></thead><tbody id="holdings"></tbody></table></div><p class="muted">전체 계좌 평균단가는 보유수량을 가중치로 계산합니다. 현재 주가가 연결되지 않아 평가손익은 표시하지 않습니다.</p></section>
+<section class="panel"><h2>실현손익 (USD · 평균원가 기준)</h2><div class="grid"><div class="stat"><small>선택 계좌 누적 실현손익</small><span id="realizedTotal">USD 0</span></div><div class="stat"><small>매도 거래 수</small><span id="sellCount">0</span></div></div><p class="muted">매도금액 − 매도 직전 계좌별 평균매입단가 × 매도수량. 수수료·세금·환율·원화 취득원가는 미반영이며 세무신고용 금액이 아닙니다.</p></section>
+<section class="panel"><h2>거래 수정</h2><p id="editStatus" class="muted">거래 내역에서 수정 버튼을 누르면 아래 입력창에 해당 거래가 표시됩니다.</p><div class="actions"><button id="cancelEdit" type="button" class="hidden">수정 취소</button></div></section>
+<section class="panel"><h2>거래 내역</h2><div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>유형</th><th>종목</th><th>수량</th><th>단가</th><th>금액</th><th>통화</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
+<section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">브라우저 복원 후 TEST 로그인 상태에서는 서버 동기화를 시도합니다. 서버에 다른 내용이 있으면 덮어쓰지 않습니다.</p></section>
+</main><script type="module">
+import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),KEY='investlab_pilot_ledger_local_v1';
+let db={version:1,accounts:[],entries:[]};
+try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.version===1&&Array.isArray(x.accounts)&&Array.isArray(x.entries))db=x;}catch{}
+const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
+const val=id=>$(id).value.trim(),num=id=>Number(val(id)),msg=s=>$('message').textContent=s;
+const save=(sync=true)=>{localStorage.setItem(KEY,JSON.stringify(db));render();if(sync)queueAutomaticCloudSave();};
+// Validate every account chronologically, including future effects of backdated edits.
+
+let editingId=null;
+function stopEditing(){editingId=null;$('submitEntry').textContent='거래 기록';$('cancelEdit').classList.add('hidden');$('editStatus').textContent='거래 내역에서 수정 버튼을 눌러주세요.';}
+$('cancelEdit').onclick=stopEditing;
+function render(){
+ const previous=val('entryAccount'),view=val('viewAccount');
+ $('entryAccount').replaceChildren();$('viewAccount').replaceChildren();
+ const all=document.createElement('option');all.value='ALL';all.textContent='전체 계좌';$('viewAccount').append(all);
+ for(const a of db.accounts){for(const id of ['entryAccount','viewAccount']){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';$(id).append(o);}}
+ $('entryAccount').value=db.accounts.some(a=>a.id===previous)?previous:(db.accounts[0]?.id||'');
+ $('viewAccount').value=db.accounts.some(a=>a.id===view)?view:'ALL';
+ $('accounts').textContent=db.accounts.length?db.accounts.map(a=>a.name+' ('+a.type+')').join(' · '):'등록된 계좌가 없습니다.';
+ const selected=val('viewAccount'),byAccount=new Map(),cash={USD:0,KRW:0};let realized=0,sellCount=0;
+ for(const e of [...db.entries].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)){
+  if(selected!=='ALL'&&e.accountId!==selected)continue;
+  if(['OPEN','BUY','SELL'].includes(e.type)){
+   const key=e.accountId+'|'+e.symbol,old=byAccount.get(key)||{symbol:e.symbol,qty:0,cost:0};
+   if(e.type==='SELL'){const avg=old.qty>0?old.cost/old.qty:0;realized+=e.qty*(e.price-avg);sellCount++;old.qty-=e.qty;old.cost-=avg*e.qty;cash[e.currency]+=e.qty*e.price;}
+   else{old.qty+=e.qty;old.cost+=e.qty*e.price;if(e.type==='BUY')cash[e.currency]-=e.qty*e.price;}
+   if(Math.abs(old.qty)<1e-9){old.qty=0;old.cost=0;}
+   byAccount.set(key,old);
+  }else if(e.type==='DEPOSIT'||e.type==='DIVIDEND')cash[e.currency]+=e.amount;
+  else if(e.type==='WITHDRAW')cash[e.currency]-=e.amount;
+  else if(e.type==='FX'){cash[e.currency]-=e.amount;cash[e.toCurrency]+=e.toAmount;}
+ }
+ const positions=new Map();
+ for(const v of byAccount.values()){if(v.qty<=1e-9)continue;const total=positions.get(v.symbol)||{qty:0,cost:0};total.qty+=v.qty;total.cost+=v.cost;positions.set(v.symbol,total);}
+ const active=[...positions].sort(([a],[b])=>a.localeCompare(b));
+ $('realizedTotal').textContent='USD '+fmt(realized);$('sellCount').textContent=fmt(sellCount,0);
+ $('symbolCount').textContent=fmt(active.length,0);$('usdCash').textContent=fmt(cash.USD);$('krwCash').textContent=fmt(cash.KRW,0);
+ $('holdings').replaceChildren();
+ for(const [symbol,v] of active){const tr=document.createElement('tr');for(const s of [symbol,fmt(v.qty,6),fmt(v.cost/v.qty,4),fmt(v.cost)]){const td=document.createElement('td');td.textContent=s;tr.append(td);}$('holdings').append(tr);}
+ $('transactions').replaceChildren();
+ for(const e of [...db.entries].filter(e=>selected==='ALL'||e.accountId===selected).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)){const tr=document.createElement('tr'),name=db.accounts.find(a=>a.id===e.accountId)?.name||'미확인';
+  for(const s of [name+' / '+e.date,e.type,e.symbol||'—',e.qty?fmt(e.qty,6):'—',e.price?fmt(e.price,4):'—',e.amount?fmt(e.amount):'—',e.currency]){const td=document.createElement('td');td.textContent=s;tr.append(td);}
+  const td=document.createElement('td'),edit=document.createElement('button');edit.textContent='수정';edit.style.width='auto';edit.style.marginRight='6px';edit.onclick=()=>{
+  editingId=e.id;$('entryAccount').value=e.accountId;$('entryDate').value=e.date;$('entryType').value=e.type;$('entrySymbol').value=e.symbol||'';$('entryQty').value=e.qty||'';$('entryPrice').value=e.price??'';$('entryCurrency').value=e.currency;$('entryAmount').value=e.amount||'';$('entryToCurrency').value=e.toCurrency||'KRW';$('entryToAmount').value=e.toAmount||'';$('entryNote').value=e.note||'';updateEntryFields();$('submitEntry').textContent='거래 수정 저장';$('cancelEdit').classList.remove('hidden');$('editStatus').textContent='선택한 거래 '+e.date+' / '+e.type+' 수정 중. 입력창에서 변경 후 저장하세요.';$('entryForm').scrollIntoView({behavior:'smooth',block:'center'});
+ };td.append(edit);const btn=document.createElement('button');btn.textContent='삭제';btn.style.width='auto';btn.onclick=()=>{if(!confirm('이 거래 기록을 삭제하시겠습니까?'))return;const next={...db,entries:db.entries.filter(x=>x.id!==e.id)};try{validateLedger(next);db=next;if(editingId===e.id)stopEditing();save();msg('거래를 삭제했습니다.');}catch(error){msg('삭제 불가: '+error.message+' · 이후 거래에 영향을 주므로 원장을 먼저 수정하세요.');}};td.append(btn);tr.append(td);$('transactions').append(tr);
+ }
+}
+$('accountForm').onsubmit=e=>{e.preventDefault();const name=val('accountName');if(!name)return;if(db.accounts.some(a=>a.name===name)){msg('같은 이름의 계좌가 있습니다.');return;}db.accounts.push({id:crypto.randomUUID(),name,type:val('accountType')});save();$('accountName').value='';msg('계좌를 추가했습니다.');};
+$('entryForm').onsubmit=e=>{
+ e.preventDefault();const accountId=val('entryAccount'),date=val('entryDate'),type=val('entryType'),symbol=val('entrySymbol').toUpperCase(),qty=num('entryQty'),price=num('entryPrice'),currency=val('entryCurrency'),amount=num('entryAmount'),toCurrency=val('entryToCurrency'),toAmount=num('entryToAmount');
+ if(!db.accounts.some(a=>a.id===accountId)){msg('계좌를 먼저 등록하세요.');return;}
+ if(!date){msg('거래일을 입력하세요.');return;}
+ const stock=['OPEN','BUY','SELL'].includes(type),money=['DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(type);
+ if(stock&&(!/^[A-Z][A-Z0-9.-]{0,15}$/.test(symbol)||!(qty>0)||!(price>=0))){msg('종목코드·수량·단가를 확인하세요.');return;}
+ if(stock&&currency!=='USD'){msg('1단계에서는 주식 거래의 USD 단가만 지원합니다. KRW 거래원가는 온라인 원장 통합 시 추가합니다.');return;}
+ if(money&&!(amount>0)){msg('금액을 입력하세요.');return;}
+ if(type==='FX'&&(currency===toCurrency||!(toAmount>0))){msg('서로 다른 통화와 수령액을 입력하세요.');return;}
+ const previousEntry=editingId?db.entries.find(x=>x.id===editingId):null;
+ if(editingId&&!previousEntry){msg('수정할 거래를 찾을 수 없습니다. 다시 선택하세요.');return;}
+ const changed={id:previousEntry?.id||crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:previousEntry?.created||Date.now()};
+ const next={...db,entries:previousEntry?db.entries.map(x=>x.id===editingId?changed:x):[...db.entries,changed]};
+ try{validateLedger(next);}catch(error){msg('거래 기록 불가: '+error.message);return;}
+ if(!confirm(editingId?'이 거래를 수정하시겠습니까? 이후 잔고까지 다시 계산됩니다.':'거래를 기록하시겠습니까? TEST 로그인 상태에서는 서버에도 자동 저장됩니다.'))return;
+ db=next;stopEditing();save();msg('거래를 기록했습니다. TEST 로그인 상태에서는 서버 자동 저장을 진행합니다.');
+};
+const updateEntryFields=()=>{const type=val('entryType'),stock=['OPEN','BUY','SELL'].includes(type),fx=type==='FX';document.querySelectorAll('.stockField').forEach(el=>el.classList.toggle('hidden',!stock));document.querySelectorAll('.moneyField').forEach(el=>el.classList.toggle('hidden',stock));document.querySelectorAll('.fxField').forEach(el=>el.classList.toggle('hidden',!fx));};
+$('entryType').onchange=updateEntryFields;updateEntryFields();
+$('viewAccount').onchange=()=>{const selected=val('viewAccount');render();$('viewAccount').value=selected;};
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='investlab-ledger-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const x=JSON.parse(await file.text());if(x.version!==1||!Array.isArray(x.accounts)||!Array.isArray(x.entries)||x.accounts.some(a=>!a.id||!a.name)||x.entries.some(t=>!t.id||!t.accountId||!t.date||!t.type))throw Error('지원하지 않는 데이터 형식');validateLedger(x);if(!confirm('현재 브라우저 원장 데이터를 백업 파일로 교체하시겠습니까?'))return;db=x;save();msg('복원 완료');}catch(err){msg('복원 실패: '+err.message);}finally{e.target.value='';}};
+$('clear').onclick=()=>{if(confirm('이 브라우저의 계좌와 모든 거래를 삭제하시겠습니까? 백업을 먼저 확인하세요.')){db={version:1,accounts:[],entries:[]};save();msg('초기화했습니다.');}};
+const TEST_URL='https://gopofxyezhwpfxbecrxd.supabase.co',TABLE='investlab_pilot_ledger_documents';
+let cloud=null,cloudUser=null,cloudKey=null;
+const cloudStatus=s=>$('cloudStatus').textContent=s;
+
+const cloudBaseKey=userId=>'investlab_pilot_ledger_cloud_base_v1:'+userId;
+const stableLedger=value=>JSON.stringify(value,(key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(name=>[name,item[name]])):item);
+let syncTimer=null,syncInFlight=false,syncAgain=false,cloudBaseline=null,cloudBaselineRevision=null;
+const LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1';
+function recordCloudBaseline(userId,payload,revision){
+ cloudBaseline=stableLedger(payload);cloudBaselineRevision=revision;
+ try{localStorage.setItem(LOCAL_OWNER_KEY,userId);}catch{}
+ try{localStorage.setItem(cloudBaseKey(userId),JSON.stringify({payload:cloudBaseline,revision}));}catch{}
+}
+function restoreCloudBaseline(userId){
+ try{const saved=JSON.parse(localStorage.getItem(cloudBaseKey(userId))||'null');
+  if(saved&&typeof saved.payload==='string'&&typeof saved.revision==='string'){cloudBaseline=saved.payload;cloudBaselineRevision=saved.revision;return;}
+ }catch{}
+ cloudBaseline=null;cloudBaselineRevision=null;
+}
+const emptyLedger=payload=>!payload.accounts.length&&!payload.entries.length;
+function queueAutomaticCloudSave(){
+ if(!cloud||!cloudUser)return;
+ clearTimeout(syncTimer);
+ syncTimer=setTimeout(()=>{syncTimer=null;void automaticCloudSave();},500);
+}
+async function automaticCloudSave(){
+ if(syncInFlight){syncAgain=true;return;}
+ if(!cloud||!cloudUser)return;
+ syncInFlight=true;
+ try{
+  const user=await requireCloud(),payload=JSON.parse(JSON.stringify(db)),serialized=stableLedger(payload);
+  validateLedger(payload);
+  if(serialized.length>700000)throw Error('TEST 원장 크기가 자동 저장 제한을 초과했습니다');
+  const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',user).maybeSingle();
+  if(error)throw error;
+  if(remote){
+   const serverJson=stableLedger(remote.payload);
+   if(serverJson===serialized){
+    recordCloudBaseline(user,payload,remote.updated_at);
+    cloudStatus('TEST 서버와 최신 원장 동기화 완료');
+    return;
+   }
+   if(cloudBaseline!==serverJson||cloudBaselineRevision!==remote.updated_at)
+    throw Error('다른 기기 또는 서버에서 원장이 변경되었습니다. 자동 덮어쓰기를 중지했습니다. 서버 원장을 확인하세요');
+   const {data:updated,error:updateError}=await cloud.from(TABLE)
+    .update({payload,updated_at:new Date().toISOString()})
+    .eq('user_id',user).eq('updated_at',cloudBaselineRevision).select('updated_at');
+   if(updateError)throw updateError;
+   if(!updated?.length)throw Error('다른 기기에서 원장이 먼저 변경되었습니다. 자동 덮어쓰기를 중지했습니다');
+   recordCloudBaseline(user,payload,updated[0].updated_at);
+  }else{
+   if(cloudBaselineRevision!==null)throw Error('서버 원장이 삭제되거나 변경되었습니다. 자동 재생성을 중지했습니다');
+   const localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
+   if(localOwner!==user)throw Error('이 브라우저 원장의 소유 계정을 자동 확인할 수 없습니다. 직접 서버 저장 여부를 선택하세요');
+   const {data:created,error:createError}=await cloud.from(TABLE)
+    .insert({user_id:user,payload,updated_at:new Date().toISOString()}).select('updated_at');
+   if(createError)throw createError;
+   if(!created?.length)throw Error('TEST 서버 저장 결과를 확인할 수 없습니다');
+   recordCloudBaseline(user,payload,created[0].updated_at);
+  }
+  cloudStatus('TEST 서버 자동 저장 완료 · 다른 기기와 동일한 원장 사용');
+ }catch(error){cloudStatus('브라우저 저장 완료 · TEST 서버 자동 저장 보류: '+error.message);}
+ finally{syncInFlight=false;if(syncAgain){syncAgain=false;queueAutomaticCloudSave();}}
+}
+async function connectAndLoadOnlineLedger(){
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  if(cfg.url!==TEST_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))return;
+  if(!window.supabase?.createClient)return;
+  const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await candidate.auth.getUser();
+  if(authError||!auth?.user?.id)return;
+  if(syncInFlight||syncTimer)return;
+  cloud=candidate;cloudUser=auth.user.id;cloudKey=cfg.key;
+  restoreCloudBaseline(cloudUser);
+  const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',cloudUser).maybeSingle();
+  if(error)throw error;
+  const localJson=stableLedger(db),localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
+  if(localOwner&&localOwner!==cloudUser&&!emptyLedger(db)){
+   cloudStatus('다른 TEST 계정에서 작성한 브라우저 원장이 감지되어 자동 전환을 중지했습니다. 브라우저 원장을 백업한 후 계정을 확인하세요');
+   return;
+  }
+  if(!remote){
+   cloudBaseline=null;cloudBaselineRevision=null;
+   if(emptyLedger(db)&&!localOwner)try{localStorage.setItem(LOCAL_OWNER_KEY,cloudUser);}catch{}
+   if(!emptyLedger(db)&&localOwner===cloudUser)queueAutomaticCloudSave();
+   else cloudStatus(emptyLedger(db)?'TEST 계정 연결 · 새 원장 자동 저장 준비 완료':'브라우저의 기존 원장이 발견되었습니다. 계정 연결 전 데이터이므로 수동 서버 저장으로 확인해 주세요');
+   return;
+  }
+  validateLedger(remote.payload);
+  const serverJson=stableLedger(remote.payload);
+  if(localJson===serverJson||localJson===cloudBaseline||emptyLedger(db)){
+   db=remote.payload;save(false);recordCloudBaseline(cloudUser,remote.payload,remote.updated_at);
+   cloudStatus('TEST 서버 원장 자동 불러오기 완료 · '+db.accounts.length+'계좌 / '+db.entries.length+'거래');
+  }else cloudStatus('로컬에 서버와 다른 미동기화 원장이 있습니다. 덮어쓰지 않았습니다. 데이터 백업 후 서버 원장 불러오기를 선택하세요');
+ }catch(error){cloudStatus('TEST 원장 자동 연결 실패: '+error.message+' · 브라우저 자료 보존');}
+}
+
+const requireCloud=async()=>{
+ if(!cloud||!cloudUser)throw Error('먼저 TEST 계정으로 로그인하세요');
+ const {data,error}=await cloud.auth.getUser();
+ if(error||data?.user?.id!==cloudUser)throw Error('서버 인증이 만료되었거나 계정이 변경되었습니다');
+ return cloudUser;
+};
+$('cloudReuseLogin').onclick=async()=>{
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  if(cfg.url!==TEST_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('공유 데이터 페이지의 TEST 공개용 연결 설정이 필요합니다');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다');
+  const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data,error}=await candidate.auth.getUser();
+  if(error||!data?.user?.id)throw Error('공유 데이터 페이지에서 먼저 TEST 계정으로 로그인하세요');
+  cloud=candidate;cloudUser=data.user.id;cloudKey=cfg.key;restoreCloudBaseline(cloudUser);
+  cloudStatus('공유 데이터 TEST 계정 인증 재사용 완료');await connectAndLoadOnlineLedger();
+ }catch(e){cloud=null;cloudUser=null;cloudStatus('공유 데이터 인증 재사용 실패: '+e.message);}
+};
+$('cloudLogin').onclick=async()=>{
+ try{
+  const key=val('cloudKey'),email=val('cloudEmail'),password=val('cloudPassword');
+  if(!key||!email||!password||key.startsWith('sb_secret_')||key.toLowerCase().includes('service_role'))throw Error('TEST 공개용 키·이메일·비밀번호를 입력하세요. 비밀 키는 사용할 수 없습니다.');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다');
+  cloud=window.supabase.createClient(TEST_URL,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  cloudKey=key;cloudUser=null;
+  const {data,error}=await cloud.auth.signInWithPassword({email,password});
+  if(error||!data?.user?.id)throw error||Error('로그인 실패');
+  cloudUser=data.user.id;restoreCloudBaseline(cloudUser);$('cloudPassword').value='';
+  localStorage.setItem('investlab_shared_data_connection_v1',JSON.stringify({url:TEST_URL,key}));
+  cloudStatus('TEST 계정 로그인 완료 · My Portfolio와 로그인 공유');await connectAndLoadOnlineLedger();
+ }catch(e){cloudUser=null;cloudStatus('로그인 실패: '+e.message);}
+};
+$('cloudLogout').onclick=async()=>{if(cloud)await cloud.auth.signOut();cloud=null;cloudUser=null;cloudKey=null;cloudStatus('로그아웃 · 현재 브라우저 원장은 그대로 유지됩니다.');};
+$('cloudPreflight').onclick=async()=>{
+ try{
+  const user=await requireCloud();
+  const {data,error}=await cloud.from(TABLE).select('user_id,updated_at').eq('user_id',user).limit(1);
+  if(error){
+   const missing=error.code==='42P01'||error.code==='PGRST205'||error.code==='PGRST204';
+   throw Error((missing?'TEST 서버에 제안 테이블이 설치되지 않았거나 API에서 접근할 수 없습니다: ':'읽기 권한 또는 연결 확인 필요: ')+error.message);
+  }
+  if(user!==cloudUser)throw Error('점검 중 로그인 계정이 변경되었습니다');
+  cloudStatus(data?.length?'사전점검: 사용자 본인 원장 1건 조회 성공 · 최종 수정 '+(data[0].updated_at||'미확인')+' · 저장/수정 없음':'사전점검: TEST 테이블 읽기 성공 · 본인 원장 없음 · 저장/수정 없음');
+ }catch(e){cloudStatus('사전점검 실패: '+e.message+' · 서버 데이터 변경 없음');}
+};
+$('cloudLoad').onclick=async()=>{
+ try{
+  const user=await requireCloud();
+  const {data,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',user).maybeSingle();
+  if(error)throw error;
+  if(!data){cloudStatus('온라인 원장이 비어 있습니다. 현재 브라우저 데이터를 저장하려면 서버에 저장을 선택하세요.');return;}
+  const payload=data.payload;
+  if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('서버 원장 형식이 올바르지 않습니다');
+  validateLedger(payload);
+  if(!confirm('서버 데이터를 불러오면 현재 브라우저 원장을 교체합니다. 먼저 JSON 백업을 권장합니다. 계속하시겠습니까?'))return;
+  if(user!==cloudUser)throw Error('로그인 계정이 변경되었습니다');
+  db=payload;save(false);recordCloudBaseline(user,payload,data.updated_at);cloudStatus('서버 원장 불러오기 완료 · '+data.updated_at);
+ }catch(e){cloudStatus('서버 불러오기 실패: '+e.message+' · DB가 아직 설치되지 않았을 수 있습니다.');}
+};
+$('cloudSave').onclick=async()=>{
+ try{
+  const user=await requireCloud();
+  validateLedger(db);
+  const payload=JSON.parse(JSON.stringify(db));
+  if(JSON.stringify(payload).length>700000)throw Error('데이터 용량이 너무 큽니다. JSON 백업을 사용하세요');
+  const {data:remote,error:readError}=await cloud.from(TABLE).select('updated_at').eq('user_id',user).maybeSingle();
+  if(readError)throw Error('서버 저장 전 상태 조회 실패: '+readError.message);
+  if(user!==cloudUser)throw Error('조회 중 로그인 계정이 변경되었습니다');
+  if(remote){
+   cloudStatus('서버에 기존 원장이 있습니다. 덮어쓰기 위험을 확인하세요.');
+   if(!confirm('서버에 이미 원장이 존재합니다 (최종 수정: '+remote.updated_at+'). 이 작업은 기존 원장을 덮어쓸 수 있습니다. JSON 백업을 확보했는지 확인 후 계속하시겠습니까?'))return;
+   const {data:current,error:checkError}=await cloud.from(TABLE).select('updated_at').eq('user_id',user).maybeSingle();
+   if(checkError)throw checkError;
+   if(!current||current.updated_at!==remote.updated_at)throw Error('확인 도중 서버 원장이 변경되었습니다. 저장을 중단합니다. 서버 원장을 먼저 확인하세요');
+   if(user!==cloudUser)throw Error('저장 직전 로그인 계정이 변경되었습니다');
+   // Optimistic update: the server row must still match the reviewed timestamp.
+   const {data:updated,error:updateError}=await cloud.from(TABLE).update({payload,updated_at:new Date().toISOString()}).eq('user_id',user).eq('updated_at',remote.updated_at).select('updated_at');
+   if(updateError)throw updateError;
+   if(!updated?.length)throw Error('다른 기기에서 서버 원장이 변경되었거나 쓰기 권한이 없습니다. 덮어쓰지 않았습니다');
+  }else{
+   if(!confirm('서버에 원장이 없습니다. 현재 브라우저 원장을 새로 저장하시겠습니까?'))return;
+   if(user!==cloudUser)throw Error('저장 직전 로그인 계정이 변경되었습니다');
+   const {data:inserted,error:insertError}=await cloud.from(TABLE).insert({user_id:user,payload,updated_at:new Date().toISOString()}).select('updated_at');
+   if(insertError)throw insertError;
+   if(!inserted?.length)throw Error('서버 저장 결과를 확인하지 못했습니다');
+  }
+  await connectAndLoadOnlineLedger();
+  cloudStatus('서버 저장 완료 · 다른 기기에서는 원장이 자동으로 표시됩니다.');
+ }catch(e){cloudStatus('서버 저장 실패: '+e.message+' · 브라우저 원장은 유지됩니다.');}
+};
+$('entryDate').value=new Date().toLocaleDateString('en-CA');render();
+window.addEventListener('pageshow',()=>{void connectAndLoadOnlineLedger();});
+setInterval(()=>{if(!document.hidden&&!syncInFlight&&!syncTimer)void connectAndLoadOnlineLedger();},15*60*1000);
+})();
+</script></body></html>

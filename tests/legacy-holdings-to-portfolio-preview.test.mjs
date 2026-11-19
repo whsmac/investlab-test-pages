@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {previewLegacyHoldingsForAccount as preview} from '../src/ledger/legacy-holdings-to-portfolio-preview.mjs';
+const accountId='33333333-3333-4333-8333-333333333333';
+test('legacy export requires review and never posts opening',()=>{const p=preview({accountId,exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'3',avg_cost:'200'}]}});assert.equal(p.canCommit,false);assert.equal(p.canPersist,false);assert.equal(p.positions.length,1);});
+test('invalid file and account are rejected',()=>{assert.throws(()=>preview({accountId,exportData:{format:'wrong',version:1,holdings:[]}}),/unsupported/);assert.throws(()=>preview({accountId:'not-uuid',exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[]}}),/account/);});

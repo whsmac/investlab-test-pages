@@ -1,0 +1,12 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {reviewYahooCandidate} from "../src/market/review-yahoo-test-browser.mjs";
+const row={ticker:"TSLA",trading_date:"2026-11-13",close_price:"250.50",currency:"USD",price_basis:"unadjusted_close"};
+const candidate=()=>({mode:"REVIEW_ONLY",source:"Yahoo Finance",database_insert_authorized:false,writes_performed:0,observations:[{...row}]});
+const snapshot=(observations=[])=>({mode:"READ_ONLY_SNAPSHOT",coverage:{complete:true,scope:"authenticated_RLS_visible_rows_only"},observations});
+const map={TSLA:5};
+test("missing row becomes no-write candidate",()=>{const result=reviewYahooCandidate(candidate(),snapshot(),map);assert.equal(result.counts.missing,1);assert.equal(result.writes_performed,0);assert.equal(result.database_insert_authorized,false)});
+test("same row not duplicated",()=>{const result=reviewYahooCandidate(candidate(),snapshot([{...row,close_price:"250.5"}]),map);assert.equal(result.counts.same,1);assert.equal(result.candidates.length,0)});
+test("conflicting price flagged",()=>{const result=reviewYahooCandidate(candidate(),snapshot([{...row,close_price:"251"}]),map);assert.equal(result.counts.conflicts,1)});
+test("wrong price basis rejected",()=>{const bad=candidate();bad.observations[0].price_basis="adjusted_close";assert.throws(()=>reviewYahooCandidate(bad,snapshot(),map),/기준/)});
+test("incomplete snapshot rejected",()=>{const bad=snapshot();bad.coverage.complete=false;assert.throws(()=>reviewYahooCandidate(candidate(),bad,map),/불완전/)});

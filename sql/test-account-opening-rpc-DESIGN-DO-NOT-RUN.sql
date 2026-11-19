@@ -1,0 +1,35 @@
+-- INVESTLAB TEST ONLY. DESIGN SKETCH. DO NOT EXECUTE.
+-- Not executable against current five-table candidate: opening event/leg schema and
+-- onboarding idempotency constraints must be redesigned and reviewed first.
+-- This file deliberately contains NO CREATE FUNCTION / DDL / DML.
+--
+-- Proposed RPC 1: investlab_create_account_v1(
+--   p_request_id text, p_name text
+-- ) RETURNS uuid
+-- SECURITY DEFINER; SET search_path = '';
+-- Owner MUST be derived exclusively from auth.uid(); never accept user_id.
+-- Validate auth.uid() non-null, normalized name 1..100, request ID 1..120.
+-- Under an owner-scoped lock, enforce UNIQUE(user_id,request_id) in a separately
+-- reviewed onboarding request table. Identical retries return same account UUID;
+-- changed payload with same request ID raises conflict.
+-- Do not grant client INSERT/UPDATE/DELETE on investlab_accounts.
+-- Revoke default PUBLIC EXECUTE; grant authenticated only after A/B testing.
+--
+-- Proposed RPC 2: investlab_post_opening_v1(
+--   p_account_id uuid, p_request_id text, p_snapshot jsonb
+-- ) RETURNS uuid
+-- Requires separately reviewed immutable opening-event schema. Current events
+-- CHECK(event_type IN ('buy','sell')) DOES NOT support opening events.
+-- Current ledger_legs unique(event_id,asset_type) forbids multi-symbol opening.
+-- Never use buy/sell RPC for opening balances.
+-- Must lock owned account, verify request idempotency and reject duplicate opening.
+-- Validate every snapshot row (max 10000; 8 decimal places), distinct asset codes,
+-- positive position quantities, nonnegative USD/KRW cash, and verified cost basis.
+-- Validate all rows before writing. Atomic insert of event plus every leg; failure
+-- rolls back all rows. Never accept caller-supplied user_id or trust client totals.
+-- Historical cost basis must be stored separately from the current leg schema.
+-- Deny unauthorized accounts, anonymous calls and cross-user request replays.
+--
+-- Deployment gates: user approval; TEST project check; independent security review;
+-- live A/B/anon tests; idempotency, rollback, concurrency and reconciliation tests.
+-- NO SQL IS EXECUTED BY THIS DOCUMENT.

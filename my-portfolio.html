@@ -1,0 +1,259 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB | My Portfolio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#edf2ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1150px;margin:auto;padding:20px 16px 55px}a{color:#9fc4ff}h1{font-size:clamp(24px,4vw,34px)}.panel{background:#161f32;border:1px solid #35425c;border-radius:14px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{background:#0f192b;border:1px solid #34415b;border-radius:11px;padding:15px}.metric span{display:block;color:#b2c0d7;font-size:12px}.metric strong{display:block;margin-top:6px;font-size:21px}select{padding:10px;background:#101b2e;color:inherit;border:1px solid #4a5b78;border-radius:9px;min-width:190px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{text-align:right;padding:11px;border-bottom:1px solid #34415b}td:first-child,th:first-child{text-align:left}.muted{color:#adbad0;font-size:13px;line-height:1.6}.warn{color:#f4d18b}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:14px 10px 35px}td,th{padding:9px}}</style></head>
+<body><main class="wrap"><a href="./index.html">← 홈</a><h1>My Portfolio</h1>
+<p class="muted">통합원장과 같은 계좌·거래 데이터를 읽습니다. 보유종목을 다시 입력할 필요가 없습니다.</p>
+<p class="muted">TEST 서버에 로그인하면 사용자별 통합원장을 자동 조회합니다. 서버 원장이 없거나 접속할 수 없으면 이 기기에 저장된 자료를 표시합니다.</p>
+<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="diagnose" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">연결 진단</button><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><p id="diagnostics" class="muted" role="status" style="white-space:pre-wrap"></p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button id="loadCloudLedger" type="button" style="padding:9px 12px;background:#274675;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">서버 원장 안전 불러오기</button><button id="compareCloudLedger" type="button" style="padding:9px 12px;background:#1a2943;color:#edf2ff;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 원장 비교 (읽기 전용)</button><span id="cloudLedgerStatus" class="muted" role="status">서버 원장 미확인 · 현재 화면은 브라우저 원장 기준</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
+<div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
+<div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
+<div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
+<div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div><div class="metric"><span>누적 실현손익 (USD)</span><strong id="realized">USD 0</strong></div><div class="metric"><span>매도 거래 수</span><strong id="sales">0</strong></div><div class="metric"><span>조회 가능 종목 평가금액</span><strong id="marketValue">USD —</strong></div><div class="metric"><span>조회 가능 종목 평가손익</span><strong id="unrealized">USD —</strong></div></div><p id="coverage" class="muted" role="status">평가 데이터 미조회</p>
+<h2>보유종목 현황</h2><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 (USD)</th><th>매입원가 (USD)</th><th>기준일</th><th>자료 상태</th><th>종가 USD</th><th>평가금액 USD</th><th>평가손익 USD</th></tr></thead><tbody id="holdings"></tbody></table></div>
+<p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 시세는 TEST 서버에 등록된 마지막 거래일 종가이며 실시간 시세가 아닙니다. 가격이 없는 종목은 평가합계에서 제외합니다.</p></section>
+<section class="panel"><h2>종목별 실현손익</h2><div class="scroll"><table><thead><tr><th>종목</th><th>매도 횟수</th><th>매도금액 USD</th><th>매도원가 USD</th><th>실현손익 USD</th></tr></thead><tbody id="realizedSymbols"></tbody></table></div><p class="muted">계좌별 평균원가를 적용한 USD 손익입니다. 수수료·세금·환율 및 세무상 취득원가는 반영하지 않았습니다.</p></section><section class="panel"><h2>계좌별 요약</h2><div class="scroll"><table><thead><tr><th>계좌</th><th>종목 수</th><th>매입원가 USD</th><th>현금 USD</th><th>현금 KRW</th><th>실현손익 USD</th></tr></thead><tbody id="accounts"></tbody></table></div></section>
+<p><a href="./pilot-ledger.html">통합원장에서 계좌·거래 입력하기</a></p>
+</main><script type="module">
+import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
+import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
+const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
+let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
+const account=$('account');
+function refreshAccountOptions(){
+ const current=account.value;
+ account.replaceChildren();
+ const all=document.createElement('option');all.value='ALL';all.textContent='전체 계좌';account.append(all);
+ for(const a of data.accounts){const option=document.createElement('option');option.value=a.id;option.textContent=a.name+' ('+(a.type||'계좌')+')';account.append(option);}
+ account.value=[...account.options].some(o=>o.value===current)?current:'ALL';
+}
+refreshAccountOptions();
+let prices=new Map(),pricesLoaded=false,priceLoading=false,priceRequestVersion=0,pricePending=false;
+const todayIso=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
+const ageDays=date=>{const parsed=Date.parse(date+'T00:00:00Z');return Number.isFinite(parsed)?Math.max(0,Math.floor((Date.parse(todayIso()+'T00:00:00Z')-parsed)/86400000)):null;};
+const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
+function render(){const selected=account.value,summary=projectLedger(data,selected);
+$('realized').textContent='USD '+fmt(summary.realizedUsd);$('sales').textContent=fmt(summary.sellCount,0);
+$('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
+$('holdings').replaceChildren();let marketValue=0,marketCost=0,pricedCount=0,staleCount=0;const missing=[];
+for(const h of summary.holdings){const tr=document.createElement('tr'),p=prices.get(h.symbol),available=p&&Number.isFinite(p.close)&&p.close>=0&&p.currency==='USD';if(available){marketValue+=h.qty*p.close;marketCost+=h.cost;pricedCount++;if(ageDays(p.date)>7)staleCount++;}else missing.push(h.symbol);
+for(const v of [h.symbol,fmt(h.qty,6),fmt(h.averageCost,4),fmt(h.cost),available?p.date:'—',available?(ageDays(p.date)===null?'날짜 확인 필요':ageDays(p.date)>7?'7일 초과':ageDays(p.date)>3?'3일 초과':'최근 3일 이내'):'미조회',available?fmt(p.close,4):'—',available?fmt(h.qty*p.close):'—',available?fmt(h.qty*p.close-h.cost):'—'])cell(tr,v);$('holdings').append(tr);}
+$('marketValue').textContent=pricedCount?'USD '+fmt(marketValue):'USD —';$('unrealized').textContent=pricedCount?'USD '+fmt(marketValue-marketCost):'USD —';
+const complete=pricesLoaded&&summary.holdings.length>0&&pricedCount===summary.holdings.length;
+$('coverage').textContent=!pricesLoaded?'주가를 조회해야 평가액을 계산할 수 있습니다.':!summary.holdings.length?'보유종목이 없습니다.':(complete?'전체 평가 가능':'부분 평가 · 전체 평가액 아님')+' · '+pricedCount+'/'+summary.holdings.length+'종목 · '+(missing.length?'미조회: '+missing.join(', ')+' · ':'')+(staleCount?'7일 초과 자료 '+staleCount+'종목 · ':'')+'기준일은 종목별로 다를 수 있습니다.';
+$('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){const tr=document.createElement('tr');for(const v of [r.symbol,fmt(r.sellCount,0),fmt(r.proceedsUsd),fmt(r.disposedCostUsd),fmt(r.realizedUsd)])cell(tr,v);$('realizedSymbols').append(tr);}
+$('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
+$('status').textContent=data.accounts.length?'원장 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건을 기준으로 계산했습니다.':'등록된 계좌가 없습니다. 통합원장에서 계좌와 거래를 입력하세요.';
+}
+async function diagnoseConnection(){
+ const output=$('diagnostics'),lines=['TEST 연결 진단 (읽기 전용)'];
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  lines.push('원장: '+data.accounts.length+'계좌 / '+data.entries.length+'거래 (현재 브라우저)');
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('TEST 공개용 연결 설정 없음 또는 부적합');
+  lines.push('TEST URL: 일치 · 공개용 키: 설정됨 (값 비표시)');
+  if(!window.supabase?.createClient)throw Error('Supabase JS 로딩 실패');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await client.auth.getUser();
+  if(authError||!auth?.user)throw Error('로그인 확인 실패 · 공유 데이터 페이지에서 로그인 필요');
+  lines.push('로그인: 확인됨 (사용자 식별정보 비표시)');
+  const {data:companies,error:companyError}=await client.from('companies').select('id,ticker').limit(100);
+  if(companyError)throw Error('companies 조회 실패: '+companyError.message);
+  lines.push('기업 목록: '+(companies?.length||0)+'개 조회');
+  const symbols=projectLedger(data,account.value).holdings.map(h=>h.symbol);
+  const mapped=new Set((companies||[]).map(x=>String(x.ticker).toUpperCase()));
+  lines.push('현재 계좌 보유종목: '+symbols.length+'개 · 기업 매칭: '+symbols.filter(s=>mapped.has(s)).length+'개');
+  const first=(companies||[]).find(x=>symbols.includes(String(x.ticker).toUpperCase()));
+  if(first){
+   const {data:rows,error:priceError}=await client.from('market_price_observations').select('trading_date,close_price,currency').eq('company_id',first.id).eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:false}).limit(1);
+   if(priceError)throw Error('주가 읽기 실패: '+priceError.message);
+   lines.push('주가 읽기: '+(rows?.length?'성공 · 기준일 '+rows[0].trading_date:'해당 종목 USD 관측값 없음'));
+  }else lines.push('주가 읽기: 일치하는 보유종목 없어 생략');
+  lines.push('진단 완료 · 데이터 변경 없음');
+ }catch(error){lines.push('진단 중단: '+error.message);}
+ output.textContent=lines.join('\n');
+}
+$('diagnose').onclick=diagnoseConnection;
+async function loadCloudLedgerSafely(){
+ const button=$('loadCloudLedger'),output=$('cloudLedgerStatus');
+ button.disabled=true;output.textContent='TEST 서버 원장 확인 중…';
+ try{
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('TEST 공개용 연결 설정이 필요합니다');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리 로딩 실패');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await client.auth.getUser();
+  if(authError||!auth?.user?.id)throw Error('TEST 계정 로그인이 필요합니다');
+  const userId=auth.user.id,original=localStorage.getItem(KEY);
+  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',userId).maybeSingle();
+  if(error)throw Error('서버 원장 조회 실패: '+error.message);
+  if(!remote)throw Error('서버에 저장된 본인 원장이 없습니다');
+  const payload=remote.payload;
+  if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('서버 원장 형식 오류');
+  if(payload.accounts.length!==new Set(payload.accounts.map(a=>a.id)).size||payload.entries.length!==new Set(payload.entries.map(e=>e.id)).size)throw Error('서버 원장에 중복 ID가 있습니다');
+  // Projection is a display calculator, not a full ledger validator.
+  const ids=new Set(payload.accounts.map(a=>String(a.id)));
+  if(payload.accounts.some(a=>!a||typeof a.id!=='string'||!a.id.trim()||typeof a.name!=='string'||!a.name.trim()))throw Error('서버 계좌에 필수 항목이 누락되었습니다');
+  if(payload.entries.some(e=>!e||typeof e.id!=='string'||!e.id.trim()||!ids.has(String(e.accountId))||typeof e.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DIVIDEND','FX','DEPOSIT','WITHDRAW'].includes(e.type)))throw Error('서버 거래에 필수 항목, 날짜 또는 계좌 연결 오류가 있습니다');
+  validateLedger(payload);
+  projectLedger(payload,'ALL');
+  for(const a of payload.accounts)projectLedger(payload,a.id);
+  const current=original===null?{version:1,accounts:[],entries:[]}:JSON.parse(original);
+  if(current?.version!==1||!Array.isArray(current.accounts)||!Array.isArray(current.entries))throw Error('브라우저 원장 형식 오류 · 먼저 수동 백업이 필요합니다');
+  const remoteIds=new Set(payload.entries.map(e=>String(e.id)));
+  const localOnly=current.entries.filter(e=>!remoteIds.has(String(e.id))).length;
+  const canonical=value=>JSON.stringify(value,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(key=>[key,v[key]])):v);
+  const remoteMap=new Map(payload.entries.map(e=>[String(e.id),e]));
+  const changed=current.entries.filter(e=>remoteMap.has(String(e.id))&&canonical(e)!==canonical(remoteMap.get(String(e.id)))).length;
+  if(!confirm('서버 원장 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래를 불러옵니다. 브라우저에만 있는 거래 '+localOnly+'건, 같은 ID의 내용이 다른 거래 '+changed+'건이 교체될 수 있습니다. 현재 브라우저 원장을 JSON 파일로 백업하시겠습니까?'))return;
+  const backup=original===null?JSON.stringify({version:1,accounts:[],entries:[]}):original;
+  const blob=new Blob([backup],{type:'application/json;charset=utf-8'}),href=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=href;link.download='investlab-before-cloud-load-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(href),30000);
+  if(!confirm('백업 파일이 저장되었는지 확인하세요. 확인을 누르면 브라우저 원장을 서버 자료로 교체합니다. 계속하시겠습니까?'))return;
+  const {data:check,error:checkError}=await client.auth.getUser();
+  if(checkError||check?.user?.id!==userId)throw Error('계정이 변경되었습니다');
+  const {data:latest,error:latestError}=await client.from('investlab_pilot_ledger_documents').select('updated_at').eq('user_id',userId).maybeSingle();
+  if(latestError||!latest||latest.updated_at!==remote.updated_at)throw Error('확인 중 서버 원장이 변경되었습니다. 다시 시도하세요');
+  if(localStorage.getItem(KEY)!==original)throw Error('확인 중 브라우저 원장이 변경되었습니다. 다시 시도하세요');
+  const serialized=JSON.stringify(payload);
+  try{
+   localStorage.setItem(KEY,serialized);
+   if(localStorage.getItem(KEY)!==serialized)throw Error('브라우저 저장 결과가 일치하지 않습니다');
+  }catch(writeError){
+   try{if(original===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,original);}catch{}
+   throw Error('브라우저 저장 실패 또는 검증 실패: '+writeError.message);
+  }
+  output.textContent='서버 원장 불러오기 및 브라우저 저장 검증 완료 · 백업 파일 보관 권장 · 화면 갱신 중';
+  location.reload();
+ }catch(error){output.textContent='안전 불러오기 중단: '+error.message+' · 서버 데이터 변경 없음';}
+ finally{button.disabled=false;}
+}
+$('loadCloudLedger').onclick=loadCloudLedgerSafely;
+async function compareCloudLedger(){
+ const output=$('cloudLedgerStatus'),button=$('compareCloudLedger');
+ button.disabled=true;output.textContent='TEST 서버 원장 확인 중…';
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('공유 데이터 페이지에서 TEST 공개용 연결 설정이 필요합니다');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리 로딩 실패');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await client.auth.getUser();
+  if(authError||!auth?.user?.id)throw Error('공유 데이터 페이지에서 TEST 계정 로그인이 필요합니다');
+  const userId=auth.user.id;
+  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',userId).maybeSingle();
+  if(error)throw Error('원장 테이블 읽기 실패 (미설치 또는 권한 확인 필요): '+error.message);
+  if(!remote){output.textContent='서버에 본인 원장이 없습니다 · 브라우저 원장 '+data.accounts.length+'계좌 / '+data.entries.length+'거래 · 변경 없음';return;}
+  const payload=remote.payload;
+  if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('서버 원장 형식이 올바르지 않습니다');
+  const {data:check,error:checkError}=await client.auth.getUser();
+  if(checkError||check?.user?.id!==userId)throw Error('조회 중 로그인 계정이 변경되었습니다');
+  const canonical=value=>JSON.stringify(value,(key,val)=>val&&typeof val==='object'&&!Array.isArray(val)?Object.fromEntries(Object.keys(val).sort().map(k=>[k,val[k]])):val);
+  const compare=(local,server)=>{
+   const toMap=items=>new Map(items.map(item=>[String(item.id),item]));
+   const l=toMap(local),s=toMap(server);
+   const onlyLocal=[...l.keys()].filter(id=>!s.has(id)),onlyRemote=[...s.keys()].filter(id=>!l.has(id));
+   const changed=[...l.keys()].filter(id=>s.has(id)&&canonical(l.get(id))!==canonical(s.get(id)));
+   const duplicates=items=>items.length-new Set(items.map(item=>String(item.id))).size;
+   return {onlyLocal,onlyRemote,changed,duplicateLocal:duplicates(local),duplicateServer:duplicates(server)};
+  };
+  const accounts=compare(data.accounts,payload.accounts),entries=compare(data.entries,payload.entries);
+  const line=(name,r)=>name+': 브라우저 전용 '+r.onlyLocal.length+'건 / 서버 전용 '+r.onlyRemote.length+'건 / 동일 ID 내용 불일치 '+r.changed.length+'건'+(r.duplicateLocal||r.duplicateServer?' / 중복 ID(브라우저 '+r.duplicateLocal+', 서버 '+r.duplicateServer+')':'');
+  const sample=(name,r)=>{const examples=[...r.onlyLocal,...r.onlyRemote,...r.changed].slice(0,5);return examples.length?name+' 관련 ID 일부: '+examples.join(', '):'';};
+  const identical=[accounts,entries].every(r=>!r.onlyLocal.length&&!r.onlyRemote.length&&!r.changed.length&&!r.duplicateLocal&&!r.duplicateServer);
+  output.textContent=['브라우저 '+data.accounts.length+'계좌 / '+data.entries.length+'거래 · 서버 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래',line('계좌',accounts),line('거래',entries),sample('계좌',accounts),sample('거래',entries),identical?'계좌·거래 내용 일치 (ID 및 필드 비교)':'계좌·거래 불일치 감지 · 자동 병합하지 않음','서버 수정 '+(remote.updated_at||'미확인')+' · 데이터 변경 없음'].filter(Boolean).join('\n');
+ }catch(error){output.textContent='서버 원장 비교 실패: '+error.message+' · 브라우저 원장 유지';}
+ finally{button.disabled=false;}
+}
+$('compareCloudLedger').onclick=compareCloudLedger;
+async function loadPrices(){
+ if(priceLoading){pricePending=true;return;}
+ const requestVersion=priceRequestVersion,selectedAccount=account.value;
+ priceLoading=true;
+ const status=$('priceStatus');status.textContent='TEST 서버 주가 조회 중…';
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('Company Investment Analysis에서 TEST 프로젝트 URL과 공개용 키를 먼저 설정하세요.');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다.');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:userResult,error:userError}=await client.auth.getUser();
+  if(userError||!userResult?.user?.id)throw Error('Company Investment Analysis에서 TEST 계정으로 로그인하세요.');
+  const {data:companies,error:companyError}=await client.from('companies').select('id,ticker').limit(100);
+  if(companyError)throw companyError;
+  const symbols=projectLedger(data,selectedAccount).holdings.map(h=>h.symbol);
+  const companyByTicker=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
+  const ids=symbols.map(s=>companyByTicker.get(s)).filter(Boolean);
+  if(!ids.length){if(requestVersion!==priceRequestVersion)return;prices=new Map();pricesLoaded=true;render();status.textContent='TEST 기업 목록에 일치하는 보유종목이 없습니다.';return;}
+  // Fetch one latest USD observation per company; a global 1000-row limit can omit thinly traded symbols.
+  const tickerById=new Map([...companyByTicker].map(([ticker,id])=>[id,ticker])),next=new Map();
+  const results=await Promise.allSettled([...new Set(ids)].map(async id=>{
+   const {data:rows,error}=await client.from('market_price_observations').select('trading_date,close_price,currency,price_basis').eq('company_id',id).eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:false}).limit(1);
+   if(error)throw Error(tickerById.get(id)+': '+error.message);return {id,row:rows?.[0]};
+  }));
+  const errors=[];
+  for(const result of results){if(result.status==='rejected'){errors.push(String(result.reason?.message||result.reason));continue;}const {id,row}=result.value;if(!row)continue;const ticker=tickerById.get(id),raw=row.close_price,close=Number(raw);
+   const date=String(row.trading_date||''),parsed=/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?new Date(date+'T00:00:00Z'):new Date(NaN);
+   const ageDays=(Date.now()-parsed.getTime())/86400000;
+   const basis=String(row.price_basis||'').trim().toLowerCase();
+   if(ticker&&raw!==null&&raw!==undefined&&raw!==''&&Number.isFinite(close)&&close>0&&Number.isFinite(ageDays)&&ageDays<=7&&ageDays>=-1&&(!basis||['raw','unadjusted','close','regular','official','actual'].includes(basis)))next.set(ticker,{date,close,currency:row.currency});
+   else if(ticker)errors.push(ticker+': 오래되었거나 검증되지 않은 종가 ('+date+', '+(basis||'기준 미기재')+')');}
+  if(errors.length===results.length)throw Error('모든 종목 조회 실패: '+errors.slice(0,3).join(' / '));
+  if(requestVersion!==priceRequestVersion)return;
+  prices=next;pricesLoaded=true;render();status.textContent=(errors.length?'일부 조회 실패('+errors.length+'개): '+errors.slice(0,2).join(' / ')+' · ':'TEST 서버 종가 조회 완료 · ')+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
+ }catch(error){if(requestVersion===priceRequestVersion)status.textContent='조회 실패: '+error.message+' · 기존 조회 가격은 유지됩니다.';}
+ finally{priceLoading=false;if(pricePending){pricePending=false;void loadPrices();}}
+}
+account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;render();$('priceStatus').textContent='계좌 변경 · 해당 계좌 가격 재조회 필요';void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
+// Use the authenticated TEST ledger as the display source; never overwrite unsynced local entries.
+let displayedCloudLedgerRevision=null;
+let cloudLedgerBusy=false;
+async function refreshOnlineLedgerDisplay(){
+ if(cloudLedgerBusy)return;
+ cloudLedgerBusy=true;
+ const status=$('cloudLedgerStatus');
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
+  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role')){
+   if(displayedCloudLedgerRevision===null)status.textContent='브라우저 원장 표시 중 · TEST 로그인 시 온라인 원장 자동 조회';
+   return;
+  }
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리 로딩 실패');
+  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data:auth,error:authError}=await client.auth.getUser();
+  if(authError||!auth?.user?.id){
+   if(displayedCloudLedgerRevision===null)status.textContent='브라우저 원장 표시 중 · TEST 계정 로그인이 필요합니다';
+   return;
+  }
+  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',auth.user.id).maybeSingle();
+  if(error)throw Error(error.message);
+  if(!remote){if(displayedCloudLedgerRevision===null)status.textContent='TEST 서버에 저장된 원장이 없어 브라우저 자료 표시 중';return;}
+  const payload=remote.payload;
+  if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('원장 형식 오류');
+  validateLedger(payload);
+  projectLedger(payload,'ALL');
+  for(const a of payload.accounts)projectLedger(payload,a.id);
+  const revision=auth.user.id+':'+remote.updated_at;
+  if(displayedCloudLedgerRevision!==revision){
+   data=payload;
+   displayedCloudLedgerRevision=revision;
+   priceRequestVersion++;prices=new Map();pricesLoaded=false;
+   refreshAccountOptions();render();void loadPrices();
+  }
+  status.textContent='TEST 서버 원장 자동 연결 · '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래 · '+(remote.updated_at||'갱신 시각 미확인')+' · 브라우저 원장 변경 없음';
+ }catch(error){
+  status.textContent='TEST 서버 원장 조회 실패: '+error.message+' · '+(displayedCloudLedgerRevision===null?'브라우저 자료 표시':'마지막 서버 조회 자료 유지');
+ }finally{cloudLedgerBusy=false;}
+}
+window.addEventListener('pageshow',()=>{void refreshOnlineLedgerDisplay();});
+setInterval(()=>{if(!document.hidden)void refreshOnlineLedgerDisplay();},15*60*1000);
+// Only read existing TEST auth/config; never create a session or write server data automatically.
+function refreshPortfolioQuotesIfConnected(){
+ try{const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+ if(cfg.url==='https://gopofxyezhwpfxbecrxd.supabase.co'&&cfg.key&&data.accounts.length)void loadPrices();}catch{}
+}
+window.addEventListener('pageshow',refreshPortfolioQuotesIfConnected);
+setInterval(()=>{if(!document.hidden)refreshPortfolioQuotesIfConnected();},15*60*1000);
+</script></body></html>

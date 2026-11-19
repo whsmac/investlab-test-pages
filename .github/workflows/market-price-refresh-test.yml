@@ -1,0 +1,87 @@
+name: INVESTLAB TEST price source dry-run
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/test-navigation-20261112
+    paths:
+      - 'scripts/market_price_refresh_test.py'
+      - 'scripts/audit_price_source_test.py'
+      - 'scripts/reconcile_price_probe_test.py'
+      - 'scripts/summarize_price_probe_test.py'
+      - 'src/market/read-test-price-snapshot.mjs'
+      - 'tests/test_price*.py'
+      - 'tests/test-price-snapshot.mjs'
+      - '.github/workflows/market-price-refresh-test.yml'
+
+concurrency:
+  group: investlab-test-price-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate price pipeline offline
+        id: python_tests
+        continue-on-error: true
+        run: python -m unittest discover -s tests -p 'test_price*.py' -v
+      - name: Test read-only Supabase snapshot pagination (mocked)
+        id: node_tests
+        continue-on-error: true
+        run: node --test tests/test-price-snapshot.mjs
+      - name: Probe free price source (no database writes)
+        id: live_probe
+        continue-on-error: true
+        run: python scripts/market_price_refresh_test.py
+      - name: Summarize test and source status
+        if: always()
+        env:
+          PYTHON_RESULT: ${{ steps.python_tests.outcome }}
+          NODE_RESULT: ${{ steps.node_tests.outcome }}
+          SOURCE_RESULT: ${{ steps.live_probe.outcome }}
+        run: |
+          {
+            echo "## INVESTLAB TEST · price source dry-run"
+            echo ""
+            echo "| Check | Outcome |"
+            echo "|---|---|"
+            echo "| Offline Python tests | $PYTHON_RESULT |"
+            echo "| Mocked Supabase pagination tests | $NODE_RESULT |"
+            echo "| Live free-source probe | $SOURCE_RESULT |"
+            echo ""
+            echo "No Supabase write operation is performed by this workflow."
+            echo "A successful source probe does not verify price adjustment basis or currency."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Summarize per-ticker source quality
+        if: always()
+        run: python scripts/summarize_price_probe_test.py
+      - name: Upload dry-run report even if source fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-price-source-report
+          path: price-source-probe.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Fail job when any verification failed
+        if: always()
+        env:
+          PYTHON_RESULT: ${{ steps.python_tests.outcome }}
+          NODE_RESULT: ${{ steps.node_tests.outcome }}
+          SOURCE_RESULT: ${{ steps.live_probe.outcome }}
+        run: |
+          test "$PYTHON_RESULT" = success &&
+          test "$NODE_RESULT" = success &&
+          test "$SOURCE_RESULT" = success

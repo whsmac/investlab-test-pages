@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {matchAccountCosts} from '../src/simulator/account-cost-suggestions.mjs';
+const report={format:'INVESTLAB_ACCOUNT_COST_BASIS_REVIEW',version:1,canPersist:false,serverVerified:false,rows:[{accountId:'a',ticker:'TSLA',quantity:'3',averageCostUsd:'180'},{accountId:'b',ticker:'TSLA',quantity:'2',averageCostUsd:'210'}]};
+test('quantity-weighted cost across accounts',()=>{const r=matchAccountCosts([{ticker:'TSLA',quantity:5}],report);assert.equal(r[0].suggestedCost,192);assert.equal(r[0].accountCount,2);});
+test('incomplete or drifted report does not suggest a cost',()=>{assert.equal(matchAccountCosts([{ticker:'TSLA',quantity:6}],report)[0].suggestedCost,null);assert.equal(matchAccountCosts([{ticker:'TSLA',quantity:5}],{...report,rows:[{...report.rows[0],averageCostUsd:null},report.rows[1]]})[0].suggestedCost,null);});
+test('duplicate account ticker rejected',()=>assert.throws(()=>matchAccountCosts([{ticker:'TSLA',quantity:6}],{...report,rows:[report.rows[0],report.rows[0]]})));

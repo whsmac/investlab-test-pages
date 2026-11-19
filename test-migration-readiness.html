@@ -1,0 +1,32 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST 이전 준비 현황</title><style>:root{color-scheme:dark;font:16px system-ui;background:#0b1020;color:#edf2ff}body{margin:0}main{max-width:940px;margin:auto;padding:24px 16px}a{color:#a9c5ff}p{line-height:1.6;color:#bac7dc}section{border:1px solid #34445e;border-radius:14px;background:#151d30;padding:18px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.tile{border:1px solid #455875;border-radius:10px;padding:14px}.tile b{display:block;margin-bottom:8px}.bad{color:#fca5a5}.muted{color:#bac7dc}button{background:#31538a;border:1px solid #6787b7;color:white;padding:12px 16px;border-radius:8px;cursor:pointer}input{max-width:100%}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><main><a href="./test-migration-preflight.html">← 이전 사전점검</a><h1>TEST 데이터 이전 준비 현황</h1><p>이전 사전점검에서 저장한 통합 JSON 보고서를 선택하세요. 모든 판정은 로컬에서만 수행되며 파일의 자체 주장만으로 서버 검증을 인정하지 않습니다.</p><section><label for="file">통합 점검 결과 JSON</label> <input id="file" type="file" accept=".json,application/json"><p id="status" role="status" class="bad">보고서 미입력 · 이전 불가</p><div class="grid"><div class="tile"><b>DB 보안 점검</b><span id="catalog">미검증</span></div><div class="tile"><b>A/B 사용자 격리</b><span id="isolation">미검증</span></div><div class="tile"><b>이전 사전점검</b><span id="preflight">미검증</span></div><div class="tile"><b>실제 서버 검증 및 승인</b><span id="approval">미완료 · 승인 없음</span></div></div></section><section><h2>차단 사유</h2><pre id="blockers">검증 자료가 없습니다.</pre><button id="download" disabled>요약 보고서 JSON 저장</button></section><p class="bad">이 화면은 SQL 실행, DB 쓰기, 사용자 인증, 실제 이전, PR 병합을 수행하지 않습니다.</p></main><script type="module">
+import {validateReadinessReport} from './src/ledger/readiness-report-validator.mjs';
+const $=id=>document.getElementById(id);let report=null;
+$('file').onchange=async e=>{
+ report=null;$('download').disabled=true;
+ for(const id of ['catalog','isolation','preflight'])$(id).textContent='미검증';
+ $('blockers').textContent='검증 자료가 없습니다.';
+ const file=e.target.files?.[0];if(!file)return;
+ try{
+  if(file.size>1024*1024)throw Error('1MiB 초과');
+  report=validateReadinessReport(await file.text());
+  $('catalog').textContent='원본 증거 재검증 불가 · 차단 '+report.catalogBlockers.length+'건';
+  $('isolation').textContent='미검증/실패 '+report.isolationBlockers.length+'건 · 서버 검증 미완료';
+  $('preflight').textContent='미충족 '+report.preflightBlockers.length+'건';
+  $('blockers').textContent=[
+   ...report.catalogBlockers.map(x=>'DB: '+x),
+   ...report.preflightBlockers.map(x=>'사전점검: '+x),
+   ...report.isolationBlockers.map(x=>'격리: '+x),
+   '카탈로그 원본 데이터 및 서버 실측 결과는 별도 확인 필요',
+   '별도 승인 전까지 이전 불가'
+  ].join('\n');
+  $('status').textContent='구조 검증 완료 · 실제 서버 검증 미완료 · 이전 차단';
+  $('download').disabled=false;
+ }catch(err){$('status').textContent='보고서 검증 실패 · 이전 차단: '+err.message}
+};
+$('download').onclick=()=>{
+ if(!report)return;
+ const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='investlab-test-readiness-summary.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+</script></body></html>

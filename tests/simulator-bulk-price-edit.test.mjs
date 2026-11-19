@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+test('review table accepts hypothetical price edits and missing values',()=>{assert.match(html,/가정주가 USD 검토표 입력/);assert.match(html,/priceInput\.addEventListener\('input'/);assert.match(html,/assumedPrices\[ticker\]=Number\(raw\)/);assert.match(html,/delete assumedPrices\[ticker\]/);});
+test('price edit refreshes totals but opt-in remains required',()=>{assert.match(html,/priceCell\.append\(priceInput\)/);assert.match(html,/updateBulkReviewNumbers\(\)/);assert.match(html,/if\(byId\('portfolioBulkPricesApply'\)\.checked\)/);});
+test('simulator browser module parses',()=>{const scripts=[...html.matchAll(/<script[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/g)];assert.ok(scripts.length);for(const m of scripts){if(!m[1].trim())continue;const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});

@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {reviewAccountCostBasis} from '../src/ledger/account-cost-basis-review.mjs';
+const accounts=[{accountId:'a',name:'ISA'},{accountId:'b',name:'Pension'}];
+test('same ticker keeps separate account cost basis',()=>{const r=reviewAccountCostBasis({accounts,entries:[{accountId:'a',ticker:'TSLA',quantity:'3',averageCostUsd:'180'},{accountId:'b',ticker:'TSLA',quantity:'2',averageCostUsd:'210'}]});assert.deepEqual(r.rows.map(x=>x.averageCostUsd),['180','210']);assert.equal(r.canPersist,false);});
+test('missing cost is not inferred',()=>{const r=reviewAccountCostBasis({accounts,entries:[{accountId:'a',ticker:'TSLA',quantity:'3',averageCostUsd:null}]});assert.equal(r.missingCount,1);assert.equal(r.rows[0].averageCostUsd,null);});
+test('unknown account and duplicate pair rejected',()=>{assert.throws(()=>reviewAccountCostBasis({accounts,entries:[{accountId:'x',ticker:'TSLA',quantity:'1'}]}));assert.throws(()=>reviewAccountCostBasis({accounts,entries:[{accountId:'a',ticker:'TSLA',quantity:'1'},{accountId:'a',ticker:'TSLA',quantity:'2'}]}));});

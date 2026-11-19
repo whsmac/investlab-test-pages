@@ -1,0 +1,21 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST · 이전 자료 비교</title><style>:root{color-scheme:dark;font:16px system-ui;background:#0b1020;color:#edf2ff}body{margin:0}main{max-width:1050px;margin:auto;padding:24px 16px}a{color:#a9c5ff}section{border:1px solid #34445e;border-radius:14px;background:#151d30;padding:18px;margin:16px 0}p{line-height:1.65;color:#bac7dc}button{background:#31538a;border:1px solid #6787b7;color:white;padding:12px 16px;border-radius:8px;cursor:pointer}input{padding:10px;max-width:100%}table{width:100%;border-collapse:collapse;min-width:690px}th,td{padding:10px;border-bottom:1px solid #33445d;text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}.scroll{overflow:auto}.ok{color:#86efac}.bad{color:#fca5a5}.warn{color:#f5d18a}</style></head><body><main><a href="./opening-snapshot-guided.html">← 기초잔고 입력</a><h1>보유종목 이전 전후 비교</h1><p>원본 포트폴리오 JSON 파일을 브라우저에서만 읽어 검증합니다. 이전 전후의 종목 수량·평균취득단가를 비교하며 서버로 전송하지 않습니다.</p><section><label>원본 JSON 파일 <input id="file" type="file" accept=".json,application/json"></label> <button id="check">파일 검증 및 비교</button><p id="status" role="status">파일을 선택하세요.</p></section><section><h2>검증 결과</h2><div class="scroll"><table><thead><tr><th>종목</th><th>원본 수량</th><th>가져오기 수량</th><th>원본 평균단가(USD)</th><th>가져오기 평균단가(USD)</th><th>결과</th></tr></thead><tbody id="rows"><tr><td colspan="6">검증 전</td></tr></tbody></table></div><p class="warn">계좌 구분이 없는 원본 데이터는 계좌를 추정하지 않습니다. 계좌별 잔고 확인은 별도 단계에서 진행해야 합니다.</p></section></main><script type="module">
+import {buildLegacyHoldingsExport} from './src/ledger/legacy-holdings-export.mjs';
+import {parseLegacyHoldingsFile,MAX_IMPORT_BYTES} from './src/ledger/legacy-file-import.mjs';
+const $=id=>document.getElementById(id);
+const accountId='123e4567-e89b-12d3-a456-426614174000';
+const fmt=v=>new Intl.NumberFormat('en-US',{maximumFractionDigits:8}).format(Number(v));
+const eq=(a,b)=>{const parse=v=>{const [w,f='']=String(v).split('.');return BigInt(w)*100000000n+BigInt(f.padEnd(8,'0'));};return parse(a)===parse(b);};
+$('check').onclick=async()=>{const tbody=$('rows');tbody.replaceChildren();try{
+ const file=$('file').files?.[0];if(!file)throw Error('JSON 파일을 선택하세요');if(file.size>MAX_IMPORT_BYTES)throw Error('파일 크기가 1MiB를 초과합니다');
+ const raw=JSON.parse(await file.text());const holdings=Array.isArray(raw)?raw:raw?.holdings;
+ if(!Array.isArray(holdings))throw Error('지원하지 않는 파일 형식입니다');
+ const exported=buildLegacyHoldingsExport(holdings);const mapped=parseLegacyHoldingsFile(JSON.stringify(exported),accountId);
+ if(mapped.status!=='PREVIEW_ONLY_NOT_UPLOADED')throw Error('가져오기 검증이 완료되지 않았습니다');
+ const originals=new Map(exported.holdings.map(h=>[h.symbol,h]));let ok=0;
+ for(const p of mapped.positions){const h=originals.get(p.ticker);const good=!!h&&eq(h.shares,p.quantity)&&eq(h.avg_cost,p.averageCostUsd);if(good)ok++;
+ const tr=document.createElement('tr');for(const val of [p.ticker,fmt(h.shares),fmt(p.quantity),fmt(h.avg_cost),fmt(p.averageCostUsd),good?'일치':'불일치']){const td=document.createElement('td');td.textContent=val;tr.append(td)}tr.lastChild.className=good?'ok':'bad';tbody.append(tr);}
+ const valid=ok===holdings.length&&mapped.positions.length===holdings.length;
+ $('status').textContent=(valid?'전체 일치':'불일치 발견')+' · 원본 '+holdings.length+'종목 / 가져오기 '+mapped.positions.length+'종목 / 일치 '+ok+'종목 · 업로드 없음';
+ $('status').className=valid?'ok':'bad';
+ }catch(e){tbody.replaceChildren();$('status').textContent='검증 중단: '+e.message;$('status').className='bad';}};
+</script></body></html>

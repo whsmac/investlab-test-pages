@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validateLedger} from '../src/ledger/pilot-ledger-validation.mjs';
+const account={id:'acc-1',name:'Test',type:'일반'};
+const entry=(id,date,type,extra={})=>({id,accountId:'acc-1',date,type,currency:'USD',created:Date.parse(date),...extra});
+const base=()=>({version:1,accounts:[account],entries:[entry('d','2026-01-01','DEPOSIT',{amount:1000}),entry('b','2026-01-02','BUY',{symbol:'TSLA',qty:2,price:100}),entry('s','2026-01-03','SELL',{symbol:'TSLA',qty:1,price:120})]});
+test('valid deposit buy sell ledger',()=>assert.equal(validateLedger(base()),true));
+test('reject duplicate transaction id',()=>{const d=base();d.entries[2].id='b';assert.throws(()=>validateLedger(d),/중복 ID/)});
+test('reject missing account reference',()=>{const d=base();d.entries[1].accountId='missing';assert.throws(()=>validateLedger(d),/잘못된 계좌/)});
+test('reject oversell',()=>{const d=base();d.entries[2].qty=3;assert.throws(()=>validateLedger(d),/매도수량/)});
+test('reject insufficient cash on buy',()=>{const d=base();d.entries[1].price=600;assert.throws(()=>validateLedger(d),/현금잔고/)});
+test('reject invalid FX destination',()=>{const d=base();d.entries.push(entry('f','2026-01-04','FX',{amount:100,toCurrency:'USD',toAmount:130}));assert.throws(()=>validateLedger(d),/환전 통화/)});
+test('reject negative cash after withdrawal',()=>{const d=base();d.entries.push(entry('w','2026-01-04','WITHDRAW',{amount:2000}));assert.throws(()=>validateLedger(d),/현금잔고/)});

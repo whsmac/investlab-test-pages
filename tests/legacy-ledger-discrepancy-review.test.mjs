@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {reviewLegacyLedgerDiscrepancies as review} from '../src/ledger/legacy-ledger-discrepancy-review.mjs';
+const user='11111111-1111-4111-8111-111111111111',accountId='33333333-3333-4333-8333-333333333333';
+const base={sessionUserId:user,accountId,accounts:[{id:accountId,ownerId:user,name:'ISA'}],committedEvents:[{id:'open',accountId,requestId:'open',type:'opening',legs:[{assetType:'security',assetCode:'TSLA',delta:'3'}]}],exportData:{format:'INVESTLAB_LEGACY_HOLDINGS_JSON',version:1,holdings:[{symbol:'TSLA',shares:'4',avg_cost:'200'}]}};
+test('unreviewed mismatch remains blocked',()=>{const r=review(base);assert.equal(r.status,'REVIEW_INCOMPLETE');assert.equal(r.pendingCount,1);assert.equal(r.canConfirmOpening,false);});
+test('review note does not approve data migration',()=>{const r=review({...base,decisions:[{ticker:'TSLA',reason:'CHECK_TRADE_HISTORY',note:'Review trade history before reconciling'}]});assert.equal(r.status,'REVIEW_NOTES_COMPLETE_NOT_VERIFIED');assert.equal(r.pendingCount,0);assert.equal(r.canImport,false);});
+test('invalid notes, duplicate decisions and unknown ticker rejected',()=>{assert.throws(()=>review({...base,decisions:[{ticker:'TSLA',reason:'CHECK_TRADE_HISTORY',note:'x'}]}),/review note/);assert.throws(()=>review({...base,decisions:[{ticker:'SOXL',reason:'CHECK_TRADE_HISTORY',note:'Review history'}]}),/mismatched ticker/);});

@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+test('review table directly edits average cost',()=>{assert.match(html,/평균취득단가 USD 검토표 입력/);assert.match(html,/sourceInput\.value=costInput\.value/);assert.match(html,/costInput\.addEventListener\('input'/);assert.match(html,/updateBulkReviewNumbers\(\)/);});
+test('bulk import disabled until selected cost inputs are complete',()=>{assert.match(html,/apply\.disabled=!selected\.length\|\|missing\.length>0/);assert.match(html,/평균단가 입력 필요/);assert.match(html,/입력 확인 필요/);assert.match(html,/portfolioBulkMissingShortcuts/);assert.match(html,/portfolioBulkApply:disabled/);});
+test('simulator browser script parses',()=>{const scripts=[...html.matchAll(/<script[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/g)];assert.ok(scripts.length);for(const m of scripts){if(!m[1].trim())continue;const r=spawnSync(process.execPath,['--check','--input-type=module'],{input:m[1],encoding:'utf8'});assert.equal(r.status,0,r.stderr);}});

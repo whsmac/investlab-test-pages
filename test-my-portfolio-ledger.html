@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB TEST | My Portfolio 원장 연결</title>
+<style>:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#0b1020;color:#edf2ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1440px;margin:auto;padding:24px 16px 64px}a{color:#9cbcff}h1{font-size:clamp(23px,5vw,32px)}p{color:#bac7dd;line-height:1.6}.warn{padding:14px;border:1px solid #866c37;background:#2b2519;border-radius:10px;color:#ffdb91}.panel{background:#151d30;border:1px solid #30405e;border-radius:14px;padding:18px;margin:18px 0}textarea,select,button{font:inherit;color:inherit;border-radius:9px;border:1px solid #566681;background:#0d1527;padding:10px}textarea{width:100%;min-height:170px;resize:vertical;font-family:ui-monospace,monospace;font-size:12px}button{background:#3058a1;cursor:pointer}button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #8db5ff}label{display:block;margin:12px 0 8px}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #32415b;text-align:left}th:last-child,td:last-child{text-align:right}.action-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.action-row button{margin:0}.review-details{margin:12px 0;border-top:1px solid #30405e;padding-top:12px}.review-details summary{cursor:pointer;color:#bcd0ff;padding:8px 0}.table-scroll{overflow-x:auto;max-width:100%}.holding-detail{margin-top:14px;padding:12px;border:1px solid #425b83;border-radius:10px;background:#111c32}.holding-detail h3{margin:0 0 8px}.holding-detail p{margin:6px 0}.holding-detail button{padding:6px 10px}.holding-pick{border:0;background:none;color:#a7c8ff;text-decoration:underline;padding:3px 0}.holding-controls{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}.holding-controls label{margin:4px 0}.holding-controls input,.holding-controls select{width:100%;min-width:0;padding:10px;border:1px solid #566681;border-radius:9px;background:#0d1527;color:inherit}.holding-controls label:first-child{grid-column:1}.holding-controls #holding-search{grid-column:1}.holding-controls label[for="holding-sort"]{grid-column:2;grid-row:1}.holding-controls #holding-sort{grid-column:2;grid-row:2}@media(max-width:640px){.holding-controls{grid-template-columns:1fr}.holding-controls label[for="holding-sort"],.holding-controls #holding-sort,.holding-controls label:first-child,.holding-controls #holding-search{grid-column:1;grid-row:auto}}.portfolio-counts{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 16px}.portfolio-counts span{background:#203050;border:1px solid #3a5276;border-radius:9px;padding:10px 14px;font-size:.92rem}.portfolio-counts strong{font-variant-numeric:tabular-nums}.split td:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}.split table{table-layout:fixed}.split td:first-child{overflow-wrap:anywhere}.portfolio-nav{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.portfolio-nav a{border:1px solid #425b83;border-radius:10px;padding:10px 14px;text-decoration:none}.portfolio-tools{margin:16px 0}.portfolio-tools>summary{cursor:pointer;padding:15px;border:1px solid #425b83;border-radius:12px;background:#1c2943;font-weight:600}.portfolio-tools[open]>summary{margin-bottom:12px}#portfolio-holdings{scroll-margin-top:12px}.table-scroll table{min-width:420px}@media(max-width:640px){.wrap{padding:14px 10px 40px}.panel{padding:14px;margin:12px 0}.action-row button{flex:1 1 170px}input[type=file]{max-width:100%}h2{font-size:1.2rem}}#status{white-space:pre-wrap;color:#ffd08a}small{color:#a9b9d5}.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:14px}.split>section{min-width:0}.split>section:first-child{grid-row:span 2}@media(max-width:900px){.split{grid-template-columns:minmax(0,1fr)}.split>section:first-child{grid-row:auto}th,td{padding:8px 5px}}.holding-table-scroll{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;position:relative}.holding-table-scroll th:nth-child(2),.holding-table-scroll td:nth-child(2){position:sticky;left:48px;z-index:2;background:#17243b;box-shadow:2px 0 5px rgba(0,0,0,.25);min-width:104px;width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis}.holding-table-scroll th:nth-child(2){z-index:3}.holding-table-scroll th:first-child,.holding-table-scroll td:first-child{position:sticky;left:0;z-index:2;background:#17243b;min-width:48px;width:48px}.holding-table-scroll th:first-child{z-index:3}.holding-table-scroll th,.holding-table-scroll td{white-space:nowrap;font-variant-numeric:tabular-nums}.holding-table-scroll th{font-size:clamp(11px,1.4vw,13px);line-height:1.35}.holding-table-scroll td{font-size:clamp(12px,1.5vw,14px)}.holding-table-scroll td:nth-child(n+3){font-feature-settings:"tnum"}.holding-table-scroll th:nth-child(n+3),.holding-table-scroll td:nth-child(n+3){text-align:right}.holding-table-scroll th:nth-child(2),.holding-table-scroll td:nth-child(2){text-align:left}.holding-table-scroll input[type=number]{min-width:92px;text-align:right;font-variant-numeric:tabular-nums}.holding-table-scroll th:nth-child(n+3),.holding-table-scroll td:nth-child(n+3){padding-inline:10px}.holding-table-scroll td:nth-child(n+3){font-variant-numeric:tabular-nums}.holding-table-scroll:focus-visible{outline:2px solid #7fb6ff;outline-offset:2px}.holding-table-scroll table{min-width:1080px}.valuation-positive{color:#63d9a0;font-weight:700}.valuation-negative{color:#ff9292;font-weight:700}.valuation-neutral{color:inherit}@media(max-width:640px){.holding-table-scroll table{min-width:1080px}.holding-table-scroll input[type=number]{width:100px;max-width:100px}}.valuation-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}.valuation-metric{display:flex;flex-direction:column;gap:7px;padding:14px;border:1px solid #344562;border-radius:12px;background:#1b2841;min-width:0}.valuation-metric span{font-size:13px;color:#bac7dd}.valuation-metric strong{font-size:clamp(16px,2.8vw,22px);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}#summary-note{grid-column:1/-1;font-size:12px;margin:0}@media(max-width:640px){.valuation-summary{grid-template-columns:1fr 1fr}.valuation-metric:last-of-type{grid-column:1/-1}.valuation-metric{padding:11px}}@media(max-width:360px){.valuation-summary{grid-template-columns:1fr}.valuation-metric:last-of-type{grid-column:auto}}.holding-scroll-hint{font-size:12px;margin:6px 0;color:#bac7dd}@media(min-width:641px){.holding-scroll-hint{display:none}}.holding-table-scroll{overscroll-behavior-x:contain;scrollbar-gutter:stable}.holding-table-scroll .holding-pick{min-height:36px;min-width:48px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.valuation-calc-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 6px}.valuation-calc-actions button{min-height:44px;font-weight:700}.valuation-calc-actions span{font-size:12px;color:#bac7dd}@media(max-width:640px){.valuation-calc-actions{position:sticky;bottom:8px;z-index:5;background:#151d30;padding:8px;border:1px solid #344562;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.35)}.valuation-calc-actions button{width:100%}.valuation-calc-actions span{width:100%}}.valuation-completion-status{flex-basis:100%;font-size:13px;line-height:1.5;color:#d9e5fc;overflow-wrap:anywhere}.missing-input-actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0}.missing-input-jump{font-size:13px;min-height:36px;padding:6px 10px;border:1px solid #7188aa;border-radius:8px;background:#253857;color:#edf2ff}.missing-input-jump:focus-visible{outline:2px solid #9cbcff;outline-offset:2px}.valuation-completion-status p{margin:0 0 6px}.holding-recalculate-all{min-height:44px;margin:10px 0;padding:10px 14px;font-weight:700;border:1px solid #7188aa;background:#253857;color:#edf2ff;border-radius:9px}.holding-recalculate-all:focus-visible{outline:2px solid #9cbcff;outline-offset:2px}@media(max-width:640px){.holding-recalculate-all{width:100%}.missing-input-actions{align-items:stretch;gap:8px}.missing-input-actions>span{flex-basis:100%;line-height:1.5}.missing-input-jump{min-height:44px;flex:1 1 120px;max-width:100%;overflow-wrap:anywhere}.holding-table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}}.valuation-completion-headline{font-weight:700}.valuation-completion-note{font-size:12px;color:#b9c9df}.valuation-completion-status[data-state=complete] .valuation-completion-headline{color:#9ce3bc}.valuation-completion-status[data-state=partial] .valuation-completion-headline{color:#f1d18b}.valuation-completion-status[data-state=error]{color:#f6a8a8}.portfolio-advanced-valuation{margin:12px 0;border:1px solid #344562;border-radius:10px;padding:10px 12px;background:#111b30}.portfolio-advanced-valuation>summary{cursor:pointer;font-weight:600;color:#a9c6ff;min-height:30px}.portfolio-advanced-valuation .advanced-note{font-size:12px;margin:8px 0;color:#bac7dd}.portfolio-advanced-valuation .valuation-calc-actions{position:static;box-shadow:none;border:0;padding:0;background:transparent}.portfolio-legacy-results[hidden]{display:none!important}@media(max-width:640px){.portfolio-advanced-valuation .valuation-calc-actions button{width:100%}}.holding-current-price{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}.holding-assumed-price-input{display:none}@media(max-width:640px){.holding-current-price{font-size:13px}}</style></head>
+<body><main class="wrap"><p><a href="./index.html">← TEST 홈</a></p><h1>My Portfolio</h1><p class="warn">TEST 예시 데이터 · 실제 자산 및 실시간 시세가 아닙니다. 서버 저장·거래 기능 없음</p>
+<nav class="portfolio-nav" aria-label="포트폴리오 화면 이동"><a href="#portfolio-holdings">보유현황</a><a href="#portfolio-tools">데이터 연결·검토</a></nav>
+<section class="panel" id="portfolio-holdings"><h2>보유현황</h2><label for="account">표시 계좌</label><select id="account"><option value="">전체 계좌</option></select><p id="source-note">조회 전</p><div id="portfolio-counts" class="portfolio-counts" aria-live="polite"><span>보유종목 <strong id="holding-count">0</strong>개</span><span>현금 통화 <strong id="currency-count">0</strong>개</span></div><div id="portfolio-valuation-summary" class="valuation-summary" aria-live="polite"><div class="valuation-metric"><span>보유종목 평가금액 합계</span><strong id="summary-market-value">미계산</strong></div><div class="valuation-metric"><span>평가손익 (USD)</span><strong id="summary-pnl">미계산</strong></div><div class="valuation-metric"><span>수익률</span><strong id="summary-rate">미계산</strong></div><p id="summary-note">사용자 가정주가 · 실시간 시세 아님</p></div><div class="split"><section><h2>보유종목</h2><div class="holding-controls"><label for="holding-search">종목코드 검색</label><input id="holding-search" type="search" placeholder="예: TSLA" maxlength="100"><label for="holding-sort">정렬 기준</label><select id="holding-sort"><option value="symbol-asc">종목코드 오름차순</option><option value="symbol-desc">종목코드 내림차순</option><option value="quantity-desc">보유수량 많은 순</option><option value="quantity-asc">보유수량 적은 순</option><option value="pnl-desc">가정 평가손익 높은 순</option><option value="pnl-asc">가정 평가손익 낮은 순</option><option value="rate-desc">가정 수익률 높은 순</option><option value="rate-asc">가정 수익률 낮은 순</option></select></div><p id="holding-filter-status" aria-live="polite"></p><div class="action-row"><button id="bulk-simulator" type="button">현재 계좌 보유종목 일괄 가져오기</button></div><p id="bulk-simulator-status" role="status"></p><p class="holding-scroll-hint">모바일에서는 표를 좌우로 밀어 평가손익·수익률을 확인하세요. 순위와 종목명은 고정됩니다.</p><div class="holding-table-scroll" role="region" aria-label="보유종목 평가 표" tabindex="0"><table><thead><tr><th scope="col">순위</th><th>종목</th><th>수량</th><th>평균 매입단가 USD</th><th>최근 종가/가정가 USD</th><th>평가금액 USD</th><th>평가손익 USD</th><th>수익률</th></tr></thead><tbody id="holdings"></tbody></table></div><details class="portfolio-advanced-valuation"><summary>가정주가·평가 기준 및 검증 도구</summary><p class="advanced-note">기본 화면은 Yahoo 최신 종가를 자동 적용합니다. 가정주가와 수동 계산은 검증할 때만 사용하세요.</p><div class="valuation-calc-actions"><button id="portfolio-price-calc" type="button">전체 가정 평가 계산</button><button id="yahoo-price-fill" type="button">최신 종가 가져오기 (빈칸만)</button><label for="yahoo-valuation-price-mode">평가 주가 기준</label><select id="yahoo-valuation-price-mode"><option value="fill-missing">사용자 가정주가 우선 (빈칸만 Yahoo)</option><option value="latest-close">Yahoo 최신 종가 우선 (미리보기만)</option></select><button id="yahoo-valuation-preview" type="button">선택 기준 평가 미리보기</button><div id="yahoo-valuation-preview-result" role="status" aria-live="polite" style="flex-basis:100%;white-space:pre-wrap"></div><div id="yahoo-valuation-preview-table" class="table-scroll" style="flex-basis:100%" aria-label="선택 주가 기준 종목별 평가 비교"></div><span id="yahoo-price-fill-status" role="status" aria-live="polite">TEST 공개 JSON · 수동 실행 · 실시간 시세 아님</span><span>현재 계좌의 가정주가·취득단가로 계산합니다.</span><div id="valuation-completion-status" class="valuation-completion-status" role="status" aria-live="polite">가정 평가 전 · 입력한 주가와 취득단가를 확인하세요.</div></div></details><section id="holding-detail" class="holding-detail" aria-live="polite" hidden><h3 id="holding-detail-title">종목 상세</h3><p id="holding-detail-total"></p><div id="holding-detail-accounts"></div><div id="holding-detail-costs"></div><button id="holding-recalculate-all" type="button" class="holding-recalculate-all">수정한 값으로 전체 가정 평가 재계산</button><div class="simple-row"><label for="holding-assumed-price">가정주가 USD (실시간 시세 아님)</label><input id="holding-assumed-price" type="number" min="0" step="any"><button id="holding-value-calculate" type="button">종목 가정손익 계산</button></div><div id="holding-valuation-results" role="status"></div><p id="holding-detail-cost-status" role="status"></p><p><a id="holding-simulator-link" href="./virtual-trade-simulator.html" hidden>가상거래 시뮬레이터에서 검토</a></p><p class="detail-note">계좌별 단가와 사용자 가정주가에 따른 추정 평가손익을 표시합니다. 실시간 시세·서버 검증은 제공되지 않습니다.</p></section></section><section class="portfolio-legacy-results" hidden aria-label="기존 평가 계산 결과 보존"><div id="portfolio-price-rows" hidden></div><div id="portfolio-price-results" role="status"></div></section><section><h2>현금잔고</h2><table><thead><tr><th>통화</th><th>잔고</th></tr></thead><tbody id="cash"></tbody></table></section></div></section>
+<details class="portfolio-tools" id="portfolio-tools"><summary>데이터 연결·검토 도구 펼치기</summary><section class="panel"><h2>계좌별 평균취득단가 검토</h2><p>현재 원장의 계좌·종목별 보유수량을 기준으로 평균취득단가(USD)를 별도로 입력합니다. 동일 종목이라도 계좌가 다르면 독립적으로 관리하며, 실제 원장에는 반영하지 않습니다.</p><button id="cost-review-build" type="button">계좌별 단가 입력표 만들기</button><div id="cost-review-rows"></div><button id="cost-review-check" type="button">입력 단가 검토</button><div class="action-row"><button id="cost-review-browser-save" type="button">이 브라우저에 단가 보관</button><button id="cost-review-browser-load" type="button">보관 단가 불러오기</button><button id="cost-review-browser-clear" type="button">보관 단가 삭제</button></div><p>브라우저 저장은 이 기기에만 적용됩니다. 공유 기기에서는 사용하지 마세요. 원장·수량이 변경되면 복원을 차단합니다.</p><button id="cost-review-transfer" type="button">단가와 보유종목을 시뮬레이터로 전달</button><div class="action-row"><button id="cost-review-save" type="button">단가 검토 보고서 저장</button><label for="cost-review-file">이전 보고서 JSON</label><input id="cost-review-file" type="file" accept=".json,application/json"><button id="cost-review-restore" type="button">이전 단가 복원</button></div><p id="cost-review-status" role="status"></p></section>
+<section class="panel"><h2>원장 데이터 불러오기</h2><p>기본값은 예시 데이터입니다. 검증용 원장 JSON 파일을 선택하면 화면에 계좌와 보유현황을 표시합니다. 서버에 업로드하지 않습니다.</p><label for="ledger-file">검증용 원장 JSON 파일</label><input id="ledger-file" type="file" accept=".json,application/json"><button id="ledger-load" type="button">원장 파일 불러오기</button><details><summary>고급: 원장 JSON 직접 편집</summary><p>민감정보나 로그인 토큰은 입력하지 마세요.</p><label for="source">계좌와 거래 이벤트</label><textarea id="source" spellcheck="false"></textarea><p><button id="render" type="button">원장 기준 보유현황 계산</button></p></details><p id="status" role="status" aria-live="polite"></p></section>
+<section class="panel"><h2>원장 동기화 형식 검사 (오프라인)</h2><p>현재 화면에 불러온 원장 JSON을 공통 동기화 문서 형식으로 변환할 수 있는지 확인합니다. TEST 가상 사용자 ID만 사용하며 서버에 저장하지 않습니다.</p><button id="ledger-sync-preview" type="button">원장 변환 가능 여부 확인</button><button id="ledger-shape-preview" type="button">원장 필드 구조 분석</button><label for="ledger-columns-file">DB 컬럼 조회 결과 JSON (선택 사항, 로컬 분석만)</label><input id="ledger-columns-file" type="file" accept=".json,application/json"><button id="ledger-column-preview" type="button">DB 컬럼 매핑 미리보기</button><button id="ledger-value-preflight" type="button">거래 값 형식 검사</button><button id="ledger-readiness-review" type="button">서버 저장 준비 상태 종합 점검</button><button id="ledger-guidance-review" type="button">오류별 수정 안내</button><p id="ledger-guidance-status" role="status">수정 안내 대기 · 원본 변경 없음</p><div id="ledger-guidance-results"></div><p id="ledger-readiness-status" role="status">종합 점검 대기 · 서버 저장 차단</p><div id="ledger-readiness-results"></div><p id="ledger-value-status" role="status">검사 대기 · 필수 DB 컬럼 미확인 · 서버 저장 차단</p><div id="ledger-value-results"></div><p id="ledger-column-status" role="status">DB 컬럼 파일 대기 · 서버 저장 차단</p><div id="ledger-column-results"></div><p id="ledger-shape-status" role="status">구조 분석 대기 · DB 컬럼 미확인 · 서버 저장 차단</p><div id="ledger-shape-results"></div><p id="ledger-sync-status" role="status">검사 대기 · 실제 계정 인증 없음 · 서버 저장 차단</p></section>
+<section class="panel"><h2>기존 포트폴리오 파일 미리보기</h2><p>① 아래 계좌 선택 → ② JSON 파일 선택 → ③ 기존 보유종목 확인 순서로 진행하세요.</p><label for="legacy-account">대상 계좌</label><select id="legacy-account"><option value="">계좌를 선택하세요</option></select><p>기존 TEST 사이트에서 내보낸 JSON 파일을 선택하면 보유종목과 선택한 계좌의 원장 잔고를 비교합니다. 실제 원장에는 반영하지 않습니다.</p><p><button id="legacy-local" type="button">이 사이트의 보유종목 가져오기</button></p><p><small>같은 주소의 브라우저 저장소만 읽습니다. 다른 주소의 기존 포트폴리오 데이터는 자동 접근할 수 없습니다.</small></p><input id="legacy-file" type="file" accept=".json,application/json"><button id="legacy-review" type="button">선택한 파일 확인</button><p id="legacy-status" role="status"></p><div id="legacy-rows"></div></section>
+<section class="panel"><h2>계좌별 종목 배정 검토</h2><p>보유종목마다 소속 계좌를 직접 선택합니다. 선택 결과는 화면에서만 검토하며 실제 원장이나 서버에 저장하지 않습니다.</p><div id="allocation-rows"></div><button id="allocation-check" type="button">계좌 배정 검토</button><p id="allocation-status" role="status"></p><details><summary>고급: 동일 종목을 여러 계좌로 나누기</summary><p>종목별 계좌·수량을 입력해 배분 합계와 원장 수량을 대조합니다. 배분 합계는 원본 수량을 초과할 수 없습니다.</p><div id="split-rows"></div><div class="action-row"><button id="split-check" type="button">분할 배정 수량 검토</button></div><p id="split-status" role="status"></p><div id="split-final-summary" aria-live="polite"></div><div id="split-summary" aria-live="polite"></div><div id="split-discrepancies"></div><details class="review-details"><summary>검토 보고서 저장·불러오기</summary><div class="action-row"><button id="split-save" type="button" disabled>배정 보고서 저장</button><button id="split-notes-save" type="button">불일치 메모 저장</button></div><label for="split-previous">이전 배정 보고서</label><input id="split-previous" type="file" accept=".json,application/json"><div class="action-row"><button id="split-restore" type="button">배정 수량 복원</button><button id="split-compare" type="button">이전 배정과 비교</button></div><p id="split-compare-status" role="status"></p><div id="split-compare-result"></div><div id="split-notes-controls"><label for="split-notes-file">이전 불일치 메모 보고서</label><input id="split-notes-file" type="file" accept=".json,application/json"><div class="action-row"><button id="split-notes-restore" type="button">검토 메모 복원</button></div><p id="split-notes-status" role="status"></p></div></details><details class="review-details"><summary>계좌별 수량 비교 상세표</summary><div class="table-scroll" id="split-result"></div></details></details></section>
+<section class="panel"><h2>이전 검토 보고서 비교</h2><p>이전에 저장한 검토 보고서 JSON을 불러와 현재 선택한 계좌와 기존 보유종목 파일의 최신 비교 결과를 확인합니다. 기존 메모를 자동 적용하지 않습니다.</p><input id="previous-report" type="file" accept=".json,application/json"><button id="compare-report" type="button">이전 보고서와 비교</button><p id="report-compare-status" role="status"></p><div id="report-compare-results"></div></section>
+</details>
+<p><small>단일 데이터 원천: Unified Ledger 이벤트. 평가금액·취득단가·실현손익은 이 화면에서 계산하지 않습니다.</small></p></main>
+<script type="module">
+import {buildPortfolioLedgerView} from './src/ledger/portfolio-ledger-view-model.mjs';
+import {weightedAverageAcquisitionCost} from './src/ledger/weighted-average-cost.mjs';
+import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
+import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
+import {previewYahooPortfolioPriceFill} from './src/ledger/yahoo-portfolio-price-fill.mjs';
+import {compareYahooPortfolioValuation} from './src/ledger/yahoo-portfolio-valuation-comparison.mjs';
+import {buildLedgerSyncEnvelope,previewPersonalSyncEnvelope} from './src/sync/personal-sync-adapters.mjs';
+import {inspectLedgerShape} from './src/sync/ledger-shape-inventory.mjs';
+import {previewLedgerColumnMapping} from './src/sync/ledger-column-mapping.mjs';
+import {inspectLedgerTransactionValues} from './src/sync/ledger-value-preflight.mjs';
+import {reviewLedgerReadiness} from './src/sync/ledger-readiness-review.mjs';
+import {reviewLedgerWithGuidance} from './src/sync/ledger-readiness-guidance.mjs';
+import {filterAndSortHoldings} from './src/ledger/holdings-filter-sort.mjs';
+import {sortHoldingsByValuation} from './src/ledger/valuation-holdings-sort.mjs';
+import {buildHoldingDetail} from './src/ledger/holding-detail.mjs';
+import {previewHoldingValuation} from './src/ledger/holding-valuation-preview.mjs';
+import {previewPortfolioValuation} from './src/ledger/portfolio-valuation-preview.mjs';
+import {summarizeValuationCompletion} from './src/ledger/valuation-completion-summary.mjs';
+import {reviewAccountCostBasis} from './src/ledger/account-cost-basis-review.mjs';
+import {buildAccountCostReport,restoreAccountCostReport} from './src/ledger/account-cost-basis-report.mjs';
+import {previewLegacyHoldingsForAccount} from './src/ledger/legacy-holdings-to-portfolio-preview.mjs';
+import {reconcileLegacyExportWithLedger} from './src/ledger/legacy-ledger-reconciliation.mjs';
+import {reviewLegacyLedgerDiscrepancies} from './src/ledger/legacy-ledger-discrepancy-review.mjs';
+import {serializeLegacyLedgerReviewReport} from './src/ledger/legacy-ledger-review-report.mjs';
+import {compareSavedLegacyReviewReport} from './src/ledger/legacy-ledger-review-compare.mjs';
+import {buildLegacyHoldingsExport} from './src/ledger/legacy-holdings-export.mjs';
+import {reviewLegacyAccountAllocation} from './src/ledger/legacy-account-allocation-review.mjs';
+import {previewSplitAccountAllocation} from './src/ledger/legacy-split-account-allocation.mjs';
+import {summarizeSplitLedgerDifferences} from './src/ledger/split-ledger-difference-summary.mjs';
+import {reviewSplitLedgerDiscrepancies} from './src/ledger/split-ledger-discrepancy-review.mjs';
+import {buildSplitDiscrepancyNotesReport,restoreSplitDiscrepancyNotesReport} from './src/ledger/split-discrepancy-notes-report.mjs';
+import {buildSplitFinalReviewSummary} from './src/ledger/split-final-review-summary.mjs';
+import {serializeSplitAllocationReport,compareSplitAllocationReport,restoreSplitAllocationReport} from './src/ledger/split-allocation-review-report.mjs';
+const A='11111111-1111-4111-8111-111111111111',X='33333333-3333-4333-8333-333333333333',Y='44444444-4444-4444-8444-444444444444';
+const example={sessionUserId:A,accounts:[{id:X,ownerId:A,name:'ISA (예시)'},{id:Y,ownerId:A,name:'퇴직연금 (예시)'}],committedEvents:[{id:'opening-isa',accountId:X,requestId:'opening-isa',type:'opening',legs:[{assetType:'cash',assetCode:'USD',delta:'1000'},{assetType:'security',assetCode:'TSLA',delta:'3'}]},{id:'opening-pension',accountId:Y,requestId:'opening-pension',type:'opening',legs:[{assetType:'cash',assetCode:'KRW',delta:'10000'},{assetType:'security',assetCode:'TSLA',delta:'2'}]}]};
+const el=id=>document.getElementById(id);el('source').value=JSON.stringify(example,null,2);
+let current=null;let latestExport=null;let splitInput=null;
+function collectSplitInput(){if(!latestExport||!current)throw Error('먼저 보유종목을 확인하세요');const allocations=[];for(const row of document.querySelectorAll('.split-entry'))for(const input of row.querySelectorAll('input')){const quantity=input.value.trim().replace(/,/g,'');if(quantity&&quantity!=='0')allocations.push({ticker:row.dataset.ticker,accountId:input.dataset.accountId,quantity});}return {...current,exportData:latestExport,allocations};}
+
+function clearAllocation(){el('split-final-summary').replaceChildren();el('split-notes-status').textContent='';el('split-discrepancies').replaceChildren();el('split-summary').replaceChildren();splitInput=null;el('split-save').disabled=true;el('split-compare-result').replaceChildren();el('split-compare-status').textContent='';el('split-rows').replaceChildren();el('split-result').replaceChildren();el('split-status').textContent='';el('allocation-rows').replaceChildren();el('allocation-status').textContent='보유종목을 확인한 뒤 계좌를 배정하세요.';}
+function showAllocation(){clearAllocation();if(!latestExport||!current)return;const view=buildPortfolioLedgerView(current);for(const holding of latestExport.holdings){const line=document.createElement('label');line.textContent=holding.symbol+' · '+holding.shares+'주 ';const select=document.createElement('select');select.className='allocation-account';select.dataset.ticker=holding.symbol;const blank=document.createElement('option');blank.value='';blank.textContent='미배정';select.append(blank);for(const account of view.accounts){const option=document.createElement('option');option.value=account.accountId;option.textContent=account.name;select.append(option);}line.append(select);el('allocation-rows').append(line);const split=document.createElement('div');split.className='split-entry';split.dataset.ticker=holding.symbol;const heading=document.createElement('strong');heading.textContent=holding.symbol+' (원본 '+holding.shares+'주)';split.append(heading);for(let i=0;i<view.accounts.length;i++){const label=document.createElement('label');label.textContent=view.accounts[i].name+' 배분 수량 ';const input=document.createElement('input');input.type='text';input.inputMode='decimal';input.placeholder='0';input.dataset.accountId=view.accounts[i].accountId;input.style.cssText='width:120px;margin-left:8px';label.append(input);split.append(label);}el('split-rows').append(split);}}
+
+function formatDecimal(value){const [whole,fraction='']=String(value).split('.');const grouped=whole.replace(/\B(?=(\d{3})+(?!\d))/g,',');const decimals=fraction.replace(/0+$/,'');return grouped+(decimals?'.'+decimals:'');}
+function table(id,rows,first,second){const target=el(id);target.replaceChildren();if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=id==='holdings'?8:2;td.textContent='항목 없음';tr.append(td);target.append(tr);return;}for(const row of rows){const tr=document.createElement('tr');for(const key of [first,second]){const td=document.createElement('td');td.textContent=key==='quantityDisplay'?formatDecimal(row.quantityDisplay):key==='balance'?formatDecimal(row.balance):row[key];tr.append(td);}target.append(tr);}}
+function showHoldingDetail(ticker){const target=el('holding-detail');try{const data=buildHoldingDetail({...current,selectedAccountId:el('account').value||null},ticker);target.hidden=false;target.dataset.ticker=data.ticker;el('holding-assumed-price').value=getAssumedPrice(data.ticker);el('holding-valuation-results').textContent='';const handoff=el('holding-simulator-link');const params=new URLSearchParams({source:'portfolio-review',ticker:data.ticker,quantity:data.totalQuantityDisplay});handoff.href='./virtual-trade-simulator.html?'+params.toString();handoff.hidden=false;el('holding-detail-title').textContent=data.ticker+' · 종목 상세';el('holding-detail-total').textContent='보유수량 '+formatDecimal(data.totalQuantityDisplay)+'주 · '+data.accountCount+'개 계좌';const list=el('holding-detail-accounts');list.replaceChildren();for(const account of data.accounts){const p=document.createElement('p');p.textContent=account.accountName+' · '+formatDecimal(account.quantityDisplay)+'주';list.append(p);}renderHoldingCostEditor(data);}catch(e){target.hidden=true;target.dataset.ticker='';}}
+function renderHoldingCostEditor(data){
+ const root=el('holding-detail-costs');root.replaceChildren();
+ try{
+  const source=el('cost-review-rows');
+  if(!source.children.length)rebuildCostReviewRows({restoreBrowser:true});
+  const matches=[...source.children].filter(row=>row.dataset.ticker===data.ticker&&data.accounts.some(a=>a.accountId===row.dataset.accountId));
+  if(!matches.length){el('holding-detail-cost-status').textContent='해당 종목의 계좌별 단가 입력 항목이 없습니다.';return;}
+  for(const row of matches){
+   const wrap=document.createElement('div');wrap.className='simple-row';
+   const label=document.createElement('label');label.textContent=data.ticker+' · '+data.accounts.find(a=>a.accountId===row.dataset.accountId).accountName+' · 평균취득단가 USD';
+   const input=document.createElement('input');input.type='number';input.min='0';input.step='any';input.placeholder='평균취득단가 USD';input.value=row.querySelector('input').value;
+   input.setAttribute('aria-label',label.textContent);
+   input.addEventListener('input',()=>{row.querySelector('input').value=input.value;markValuationStale();el('holding-detail-cost-status').textContent='화면 입력값 변경 · 브라우저에 보관하려면 아래 저장 버튼을 사용하세요.';});
+   wrap.append(label,input);root.append(wrap);
+  }
+  el('holding-detail-cost-status').textContent='계좌별 단가 '+matches.length+'건 · 입력값은 검토용이며 자동 저장되지 않습니다.';
+ }catch(e){el('holding-detail-cost-status').textContent='단가 표시 실패: '+e.message;}
+}
+function show(){if(!current)return;try{const v=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});const chosenSort=el('holding-sort').value;const valuationSort=/^(pnl|rate)-(asc|desc)$/.test(chosenSort);const filteredBase=filterAndSortHoldings(v.holdings,{query:el('holding-search').value,sort:valuationSort?'symbol-asc':chosenSort});const filtered=valuationSort&&lastPortfolioValuation?sortHoldingsByValuation(filteredBase,lastPortfolioValuation,chosenSort):filteredBase;table('holdings',filtered,'ticker','quantityDisplay');for(const row of el('holdings').rows){const cell=row.cells[0];if(!cell||!filtered.some(h=>h.ticker===cell.textContent))continue;const rankCell=document.createElement('td');rankCell.textContent=valuationSort&&lastPortfolioValuation?String([...el('holdings').rows].indexOf(row)+1):'—';rankCell.setAttribute('aria-label',rankCell.textContent==='—'?'순위 미적용':'정렬 순위 '+rankCell.textContent);row.insertBefore(rankCell,cell);const ticker=cell.textContent;const button=document.createElement('button');button.type='button';button.className='holding-pick';button.textContent=ticker;button.setAttribute('aria-label',ticker+' 종목 상세 보기');button.addEventListener('click',()=>showHoldingDetail(ticker));cell.replaceChildren(button);
+ const costCell=document.createElement('td');
+ const cost=weightedAverageAcquisitionCost(ticker,selectedValuationAccounts(v).filter(a=>!v.selectedAccountId||a.accountId===v.selectedAccountId));
+ costCell.textContent=cost.complete?'USD '+cost.averageCostUsd.toLocaleString('en-US',{maximumFractionDigits:2}):'단가 미입력';
+ costCell.setAttribute('aria-label',ticker+' '+(cost.complete?'수량 가중평균 매입단가':'매입단가 미입력'));
+ row.append(costCell);
+ const priceCell=document.createElement('td');const quote=lastYahooPriceDisplay.get(ticker);const priceDisplay=document.createElement('span');priceDisplay.className='holding-current-price';priceDisplay.textContent=quote?(quote.source==='YAHOO_LATEST_CLOSE'?'USD '+quote.price.toLocaleString('en-US',{maximumFractionDigits:2}):'가정 USD '+quote.price.toLocaleString('en-US',{maximumFractionDigits:2})):'종가 없음';priceDisplay.title=quote?(quote.source==='YAHOO_LATEST_CLOSE'?'Yahoo 종가 '+(quote.date??''):'Yahoo 종가 없음 · 사용자 가정주가로 평가'):'가격 미확인';priceCell.append(priceDisplay);const priceInput=document.createElement('input');priceInput.type='number';priceInput.min='0';priceInput.step='any';priceInput.value=getAssumedPrice(ticker);priceInput.setAttribute('aria-label',ticker+' 가정주가 USD');priceInput.dataset.ticker=ticker;priceInput.addEventListener('input',()=>{setAssumedPrice(ticker,priceInput.value);markValuationStale();});priceInput.className='holding-assumed-price-input';priceCell.append(priceInput);row.append(priceCell);
+ const value=lastPortfolioValuation?.rows.find(item=>item.ticker===ticker);
+ const missingPrice=value?.status==='PRICE_MISSING'||(value?.marketValueUsd==null&&!quote);
+ const marketText=value?.marketValueUsd==null?(missingPrice?'종가 없음 · 미계산':'평가 대기'):'USD '+value.marketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2});
+ const pnlText=value?.unrealizedPnlUsd==null?(missingPrice?'종가 없음 · 미계산':value?.status==='COST_MISSING'||!cost.complete?'매입단가 없음 · 미계산':'미계산'):'USD '+value.unrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2});
+ for(const [amount,display] of [[value?.marketValueUsd,marketText],[value?.unrealizedPnlUsd,pnlText]]){
+  const td=document.createElement('td');td.textContent=display;
+  if(amount===value?.unrealizedPnlUsd&&amount!=null)td.classList.add(amount>0?'valuation-positive':amount<0?'valuation-negative':'valuation-neutral');
+  row.append(td);
+ }
+ const rateCell=document.createElement('td');
+ rateCell.textContent=value?.unrealizedPnlRatePct==null?(missingPrice?'종가 없음':value?.status==='COST_MISSING'||!cost.complete?'매입단가 없음':'미계산'):value.unrealizedPnlRatePct.toLocaleString('en-US',{maximumFractionDigits:2})+'%';
+ if(value?.unrealizedPnlRatePct!=null)rateCell.classList.add(value.unrealizedPnlRatePct>0?'valuation-positive':value.unrealizedPnlRatePct<0?'valuation-negative':'valuation-neutral');
+ row.append(rateCell);
+ }const detailTicker=el('holding-detail').dataset.ticker;if(detailTicker&&filtered.some(h=>h.ticker===detailTicker))showHoldingDetail(detailTicker);else{el('holding-detail').hidden=true;el('holding-detail').dataset.ticker='';}el('holding-filter-status').textContent='표시 '+filtered.length+' / 전체 '+v.holdings.length+'종목'+(valuationSort?(lastPortfolioValuation?' · 가정 '+(chosenSort.startsWith('pnl')?'평가손익':'수익률')+' '+(chosenSort.endsWith('desc')?'높은':'낮은')+' 순 · 미계산 종목은 뒤쪽':' · 정렬 대기: 가정 평가 계산 후 적용'):' · 기본 정렬 · 순위 미적용');table('cash',v.cash,'currency','balance');el('holding-count').textContent=String(v.holdings.length);el('currency-count').textContent=String(v.cash.length);const chosen=el('account').selectedOptions[0]?.textContent??'전체 계좌';el('source-note').textContent=chosen+' · 총 '+v.totalAccountCount+'개 계좌 · 서버 미검증 · 화면 미저장';el('status').textContent='오프라인 계산 완료';}catch(e){el('status').textContent='검증 실패: '+e.message;table('holdings',[]);table('cash',[]);el('holding-count').textContent='0';el('currency-count').textContent='0';el('holding-filter-status').textContent='조회 실패';el('holding-detail').hidden=true;el('holding-detail').dataset.ticker='';}}
+function selectedValuationAccounts(view){
+ const source=[...el('cost-review-rows').children];
+ return view.accounts.filter(a=>!view.selectedAccountId||a.accountId===view.selectedAccountId).map(a=>({...a,holdings:a.holdings.map(h=>{const row=source.find(r=>r.dataset.accountId===a.accountId&&r.dataset.ticker===h.ticker&&r.dataset.quantity===h.quantityDisplay);return {...h,averageCostUsd:row?(row.querySelector('input').value.trim()||null):null};})}));
+}
+el('holding-value-calculate').addEventListener('click',()=>{try{
+ const ticker=el('holding-detail').dataset.ticker;if(!ticker)throw Error('종목을 먼저 선택하세요');
+ const view=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});
+ const accounts=selectedValuationAccounts(view).flatMap(a=>a.holdings.filter(h=>h.ticker===ticker).map(h=>({accountId:a.accountId,accountName:a.name,quantityDisplay:h.quantityDisplay,averageCostUsd:h.averageCostUsd})));
+ const result=previewHoldingValuation({ticker,accounts,assumedPriceUsd:el('holding-assumed-price').value.trim()});
+ el('holding-valuation-results').textContent='가정 평가금액 $'+result.totalMarketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2})+' · '+(result.totalUnrealizedPnlUsd===null?'단가 누락 · 손익 미표시':'가정 평가손익 $'+result.totalUnrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2}));
+ }catch(e){el('holding-valuation-results').textContent='계산 실패: '+e.message;}
+});
+const assumedPriceDraft=new Map();
+function getAssumedPrice(ticker){
+ const row=[...el('portfolio-price-rows').children].find(r=>r.dataset.ticker===ticker);
+ return row?row.querySelector('input').value:assumedPriceDraft.get(ticker)??'';
+}
+function setAssumedPrice(ticker,value){
+ assumedPriceDraft.set(ticker,value);
+ const row=[...el('portfolio-price-rows').children].find(r=>r.dataset.ticker===ticker);
+ if(row)row.querySelector('input').value=value;
+ const inline=[...el('holdings').querySelectorAll('input[data-ticker]')].find(input=>input.dataset.ticker===ticker);if(inline&&inline.value!==value)inline.value=value;
+}
+function resetValuationSummary(note='사용자 가정주가 · 실시간 시세 아님'){
+ for(const id of ['summary-market-value','summary-pnl','summary-rate']){const node=el(id);node.textContent='미계산';node.classList.remove('valuation-positive','valuation-negative');}
+ el('summary-note').textContent=note;
+}
+function valuationMissingReason(result){
+ const rows=Array.isArray(result?.rows)?result.rows:[];
+ const missingPrice=rows.filter(row=>row.status==='PRICE_MISSING').map(row=>row.ticker);
+ const missingCost=rows.filter(row=>row.status==='COST_MISSING').map(row=>row.ticker);
+ const parts=[];
+ if(missingPrice.length)parts.push('주가 없음 '+missingPrice.length+'종목 ('+missingPrice.join(', ')+')');
+ if(missingCost.length)parts.push('매입단가 없음 '+missingCost.length+'종목 ('+missingCost.join(', ')+')');
+ return parts.length?'전체 합계 일부 미계산 · '+parts.join(' · '):'';
+}
+function renderValuationSummary(result){
+ const money=value=>value===null?'미계산':'USD '+value.toLocaleString('en-US',{maximumFractionDigits:2});
+ const fields=[['summary-market-value',result.totalMarketValueUsd,money],['summary-pnl',result.totalUnrealizedPnlUsd,money],['summary-rate',result.totalUnrealizedPnlRatePct,value=>value===null?'미계산':value.toLocaleString('en-US',{maximumFractionDigits:2})+'%']];
+ for(const [id,value,format] of fields){const node=el(id);node.textContent=format(value);node.classList.remove('valuation-positive','valuation-negative');if(id!=='summary-market-value'&&value!==null&&value!==0)node.classList.add(value>0?'valuation-positive':'valuation-negative');}
+ el('summary-note').textContent=[valuationMissingReason(result),'사용자 가정주가 · 실시간 시세 아님 · 서버 미검증'].filter(Boolean).join(' · ');
+}
+let lastPortfolioValuation=null;
+let lastYahooPriceDisplay=new Map();
+function markValuationStale(){
+ // Invalidate any in-flight Yahoo preview before it can overwrite edited costs or prices.
+ if(typeof invalidateYahooComparison==='function')invalidateYahooComparison();
+ el('yahoo-valuation-preview').disabled=false;
+ lastPortfolioValuation=null;
+ lastYahooPriceDisplay=new Map();
+ for(const row of el('holdings').rows){if(row.cells[0])row.cells[0].textContent='—';for(const cell of [...row.cells].slice(5))cell.textContent='미계산';}
+ resetValuationSummary('입력 변경 · 전체 가정 평가를 다시 계산하세요.');
+ el('valuation-completion-status').dataset.state='stale';
+ el('valuation-completion-status').textContent='입력 변경 · 전체 가정 평가를 다시 계산하세요.';
+ el('portfolio-price-results').textContent='입력 변경 · 재계산 필요';
+ el('holding-valuation-results').textContent='입력 변경 · 종목 가정손익을 다시 계산하세요.';
+}
+el('holding-assumed-price').addEventListener('input',()=>{
+ const ticker=el('holding-detail').dataset.ticker;
+ if(ticker){setAssumedPrice(ticker,el('holding-assumed-price').value);markValuationStale();}
+});
+el('portfolio-price-rows').addEventListener('input',event=>{
+ const row=event.target.closest('[data-ticker]');
+ if(row){assumedPriceDraft.set(row.dataset.ticker,row.querySelector('input').value);
+  if(el('holding-detail').dataset.ticker===row.dataset.ticker)el('holding-assumed-price').value=row.querySelector('input').value;}
+ markValuationStale();
+});
+function rebuildAssumedPriceRows(){
+ const root=el('portfolio-price-rows');
+ for(const row of root.children)assumedPriceDraft.set(row.dataset.ticker,row.querySelector('input').value);
+ root.replaceChildren();
+ if(!current)return;
+ const view=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});
+ for(const h of view.holdings){
+  const row=document.createElement('div');row.className='simple-row';row.dataset.ticker=h.ticker;
+  const label=document.createElement('label');label.textContent=h.ticker+' · '+formatDecimal(h.quantityDisplay)+'주 · 가정주가 USD';
+  const input=document.createElement('input');input.type='number';input.min='0';input.step='any';input.value=getAssumedPrice(h.ticker);
+  input.setAttribute('aria-label',h.ticker+' 가정주가 USD');row.append(label,input);root.append(row);
+ }
+ show();markValuationStale();
+}
+function renderMissingInputActions(completion){
+ const root=el('valuation-completion-status');root.replaceChildren();
+ root.dataset.state=completion.fullyCalculated?'complete':completion.total===0?'empty':'partial';
+ const message=document.createElement('p');
+ message.className='valuation-completion-headline';
+ message.textContent=completion.fullyCalculated?'✓ 누락 항목 없음 · '+completion.completeCount+'/'+completion.total+'종목 가정 평가 완료':completion.total===0?'평가할 보유종목이 없습니다.':'입력 확인 필요 · '+completion.completeCount+'/'+completion.total+'종목 완료 · '+(completion.missingPrice.length+completion.missingCost.length)+'건 누락';
+ root.append(message);
+ const note=document.createElement('p');note.className='valuation-completion-note';
+ note.textContent=completion.fullyCalculated?'모든 종목의 가정주가·취득단가 입력이 확인되었습니다. 실시간 시세·서버 검증 결과는 아닙니다.':'전체 평가손익·수익률은 모든 입력이 완료되기 전까지 미확정입니다.';
+ root.append(note);
+ for(const [tickers,kind] of [[completion.missingPrice,'price'],[completion.missingCost,'cost']]){
+  if(!tickers.length)continue;
+  const group=document.createElement('div');group.className='missing-input-actions';
+  const label=document.createElement('span');label.textContent=(kind==='price'?'가정주가':'취득단가')+' 누락 '+tickers.length+'개: ';group.append(label);
+  for(const ticker of tickers){
+   const button=document.createElement('button');button.type='button';button.className='missing-input-jump';button.textContent=ticker+' 입력';
+   button.setAttribute('aria-label',ticker+' '+(kind==='price'?'가정주가':'취득단가')+' 입력 위치로 이동');
+   button.addEventListener('click',()=>{
+    if(kind==='price'){
+     const inline=[...el('holdings').querySelectorAll('input[data-ticker]')].find(input=>input.dataset.ticker===ticker);
+     if(inline){inline.scrollIntoView({behavior:'smooth',block:'center'});inline.focus();return;}
+    }
+    showHoldingDetail(ticker);
+    const costInputs=[...el('holding-detail-costs').querySelectorAll('input')];const target=kind==='price'?el('holding-assumed-price'):(costInputs.find(input=>input.value.trim()==='')||costInputs[0]);
+    if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.focus();}
+   });
+   group.append(button);
+  }
+  root.append(group);
+ }
+}
+el('holding-recalculate-all').addEventListener('click',()=>{el('portfolio-price-calc').click();el('valuation-completion-status').scrollIntoView({behavior:'smooth',block:'center'});});
+// Read-only source availability check on page load. Never fills or overwrites user prices.
+async function checkYahooPublishedFeedOnLoad(){
+ const status=el('yahoo-price-fill-status');
+ if(location.protocol!=='https:'||location.hostname!=='whsmac.github.io'||
+    !location.pathname.startsWith('/investlab-test-pages/'))return;
+ try{
+  const snapshot=await loadPublishedYahooReview({origin:location.href});
+  const latestByTicker=new Map();
+  for(const row of snapshot.observations){
+   if(!latestByTicker.has(row.ticker)||row.trading_date>latestByTicker.get(row.ticker))
+    latestByTicker.set(row.ticker,row.trading_date);
+  }
+  const feed=buildYahooLatestPrices(snapshot);
+  const fresh=feed.prices.filter(row=>row.price!==null);
+  const unavailable=feed.prices.filter(row=>row.price===null);
+  const newest=fresh.map(row=>row.tradingDate).sort().at(-1);
+  // A manual button click may complete while the startup check is still pending.
+  if(el('yahoo-price-fill').disabled)return;
+  status.textContent=fresh.length
+    ? '온라인 종가 확인 · 사용 가능 '+fresh.length+'개 · 최근 거래일 '+newest+
+      (unavailable.length?' · 최신성 미확인 '+unavailable.map(row=>row.ticker).join(', '):'')+
+      ' · 수동 적용 대기 · 실시간 시세 아님'
+    : '온라인 종가 파일 확인 · 최신 종가 사용 불가 · 기존 입력 유지 · 실시간 시세 아님';
+ }catch(error){
+  if(!el('yahoo-price-fill').disabled)
+   status.textContent='온라인 종가 확인: '+error.message;
+ }
+}
+void checkYahooPublishedFeedOnLoad();
+// Clear outdated Yahoo comparison results whenever its inputs change.
+let yahooComparisonRevision=0;
+function invalidateYahooComparison(){
+ yahooComparisonRevision++;
+ el('yahoo-valuation-preview-result').textContent='평가 조건 변경 · 선택 기준 평가 미리보기를 다시 실행하세요.';
+ el('yahoo-valuation-preview-table').replaceChildren();
+}
+el('yahoo-valuation-price-mode').addEventListener('change',invalidateYahooComparison);
+el('portfolio-price-rows').addEventListener('input',invalidateYahooComparison);
+el('holdings').addEventListener('input',invalidateYahooComparison);
+el('holding-assumed-price').addEventListener('input',invalidateYahooComparison);
+el('cost-review-rows').addEventListener('input',invalidateYahooComparison);
+// Non-mutating online-price valuation preview; preserves all user-entered assumptions.
+el('yahoo-valuation-preview').addEventListener('click',async()=>{
+ const button=el('yahoo-valuation-preview'),output=el('yahoo-valuation-preview-result');
+ el('yahoo-valuation-preview-table').replaceChildren();
+ const revision=++yahooComparisonRevision;
+ button.disabled=true;output.textContent='공개 종가 조회 및 평가 미리보기 계산 중…';
+ try{
+  if(!current)throw Error('먼저 보유종목을 조회하세요.');
+  const initialLedger=current,initialAccount=el('account').value;
+  const view=buildPortfolioLedgerView({...initialLedger,selectedAccountId:initialAccount||null});
+  if(!view.holdings.length)throw Error('현재 계좌에 보유종목이 없습니다.');
+  const snapshot=await loadPublishedYahooReview({origin:location.href});
+  if(revision!==yahooComparisonRevision||current!==initialLedger||el('account').value!==initialAccount)
+   throw Error('조회 중 평가 조건·계좌·원장이 변경되었습니다. 다시 시도하세요.');
+  const currentView=buildPortfolioLedgerView({...current,selectedAccountId:initialAccount||null});
+  if(currentView.holdings.map(h=>h.ticker).join('|')!==view.holdings.map(h=>h.ticker).join('|'))
+   throw Error('조회 중 보유종목이 변경되었습니다. 다시 시도하세요.');
+  const assumedPrices=Object.fromEntries(currentView.holdings.map(h=>[h.ticker,getAssumedPrice(h.ticker)]));
+  const result=compareYahooPortfolioValuation({
+   snapshot,holdings:currentView.holdings,accounts:selectedValuationAccounts(currentView),assumedPrices,
+   priceMode:el("yahoo-valuation-price-mode").value
+  });
+  const money=value=>value===null?'미계산':'USD '+value.toLocaleString('en-US',{maximumFractionDigits:2});
+  const lines=['TEST 종가·가정주가 비교 · 실시간 시세 아님',
+   '선택 기준 '+(result.priceMode==='latest-close'?'Yahoo 최신 종가 우선':'사용자 가정주가 우선'),
+   '기존 입력 기준 평가금액 '+money(result.existing.totalMarketValueUsd),
+   '선택 기준 평가금액 '+money(result.latest.totalMarketValueUsd),
+   '평가금액 차이 '+money(result.totalDifferenceUsd)+' (양쪽 합계가 모두 계산된 경우만)',
+   '평가손익 합계 '+money(result.latest.totalUnrealizedPnlUsd),
+   'Yahoo 종가 적용 '+Object.keys(result.fill.updates).length+'개 · 사용자 가정주가 유지 '+result.fill.skipped.filter(x=>x.reason==='USER_PRICE_PRESERVED').length+'개'];
+  for(const row of result.rows){
+   const label=row.source==='YAHOO_LATEST_CLOSE'?'Yahoo 종가 '+row.tradingDate:
+    row.source==='USER_ASSUMPTION'?'사용자 가정주가 유지':'가격 없음';
+   lines.push(row.ticker+' · '+label+' · 평가금액 '+money(row.marketValueUsd));
+  }
+  lines.push('원장·입력값·서버 저장 변경 없음');
+  if(revision!==yahooComparisonRevision)throw Error('평가 조건이 변경되었습니다. 다시 시도하세요.');
+  output.textContent=lines.join(String.fromCharCode(10));
+  const tableRoot=el('yahoo-valuation-preview-table');
+  const table=document.createElement('table');
+  const thead=document.createElement('thead'),header=document.createElement('tr');
+  for(const label of ['종목','평가 기준','종가 기준일','평가금액 USD','평가손익 USD']){
+   const th=document.createElement('th');th.scope='col';th.textContent=label;header.append(th);
+  }
+  thead.append(header);table.append(thead);
+  const tbody=document.createElement('tbody');
+  for(const row of result.rows){
+   const tr=document.createElement('tr');
+   const source=row.source==='YAHOO_LATEST_CLOSE'?'Yahoo 종가':row.source==='USER_ASSUMPTION'?'사용자 가정주가':'가격 없음';
+   for(const value of [row.ticker,source,row.tradingDate??'—',money(row.marketValueUsd),money(row.unrealizedPnlUsd)]){
+    const td=document.createElement('td');td.textContent=value;tr.append(td);
+   }
+   tbody.append(tr);
+  }
+  table.append(tbody);tableRoot.replaceChildren(table);
+  // Show the same read-only result in the primary holdings table and summary.
+  // The source ledger, price drafts and account cost inputs remain unchanged.
+  lastYahooPriceDisplay=new Map(result.rows.map(row=>{
+   const yahoo=result.fill.updates[row.ticker];
+   const assumption=Number(assumedPrices[row.ticker]);
+   const hasAssumption=assumedPrices[row.ticker]!==undefined&&String(assumedPrices[row.ticker]).trim()!==''&&Number.isFinite(assumption)&&assumption>0;
+   const price=row.source==='YAHOO_LATEST_CLOSE'?Number(yahoo):row.source==='USER_ASSUMPTION'&&hasAssumption?assumption:null;
+   return [row.ticker,price===null||!Number.isFinite(price)?null:{price,source:row.source,date:row.tradingDate}];
+  }).filter(([,quote])=>quote));
+  lastPortfolioValuation=result.latest;
+  show();
+  renderValuationSummary(result.latest);
+  el('summary-note').textContent=[valuationMissingReason(result.latest),'선택 주가 기준 · '+(result.priceMode==='latest-close'?'Yahoo 최신 종가 우선':'사용자 가정주가 우선'),'실시간 시세 아님 · 서버 미검증'].filter(Boolean).join(' · ');
+ }catch(error){if(revision===yahooComparisonRevision){
+  output.textContent='최신 종가 기준 평가 미리보기 불가: '+error.message+' · 기존 입력값 유지';
+  lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;
+  show();resetValuationSummary('최신 종가 조회 실패 · 평가금액 미계산 · 기존 가정주가 보존 · 실시간 시세 아님');
+  el('valuation-completion-status').dataset.state='error';
+  el('valuation-completion-status').textContent='최신 종가 조회 실패 · 선택 계좌 평가 미계산';
+ }}
+ finally{if(revision===yahooComparisonRevision)button.disabled=false;}
+});
+el('yahoo-price-fill').addEventListener('click',async()=>{
+ const button=el('yahoo-price-fill'),status=el('yahoo-price-fill-status');
+ button.disabled=true;
+ try{
+  if(!current)throw Error('먼저 보유종목을 조회하세요.');
+  const initialLedger=current,initialAccount=el('account').value;
+  const initialView=buildPortfolioLedgerView({...initialLedger,selectedAccountId:initialAccount||null});
+  if(!initialView.holdings.length)throw Error('현재 계좌에 보유종목이 없습니다.');
+  const initialTickers=initialView.holdings.map(h=>h.ticker).join('|');
+  const snapshot=await loadPublishedYahooReview({origin:location.href});
+  if(current!==initialLedger||el('account').value!==initialAccount)
+    throw Error('조회 중 계좌 또는 원장이 변경되었습니다. 다시 시도하세요.');
+  const view=buildPortfolioLedgerView({...current,selectedAccountId:initialAccount||null});
+  if(view.holdings.map(h=>h.ticker).join('|')!==initialTickers)
+    throw Error('조회 중 보유종목이 변경되었습니다. 다시 시도하세요.');
+  const priceRows=[...el('portfolio-price-rows').children];
+  if(priceRows.length!==view.holdings.length||priceRows.some((r,i)=>r.dataset.ticker!==view.holdings[i].ticker))
+    throw Error('현재 계좌 기준 주가 입력표가 준비되지 않았습니다.');
+  const prices=Object.fromEntries(view.holdings.map(h=>[h.ticker,getAssumedPrice(h.ticker)]));
+  const result=previewYahooPortfolioPriceFill(snapshot,view.holdings,prices);
+  const updates=Object.entries(result.updates);
+  if(updates.length)invalidateYahooComparison();
+  for(const [ticker,price] of updates)setAssumedPrice(ticker,String(price));
+  if(updates.length){
+   const selected=el('holding-detail').dataset.ticker;
+   if(selected&&Object.hasOwn(result.updates,selected))el('holding-assumed-price').value=String(result.updates[selected]);
+   markValuationStale();
+   el('portfolio-price-calc').click();
+   if(el('valuation-completion-status').dataset.state==='error')
+     throw Error('종가는 입력되었지만 평가금액 재계산에 실패했습니다: '+el('valuation-completion-status').textContent);
+  }
+  const preserved=result.skipped.filter(item=>item.reason==='USER_PRICE_PRESERVED').length;
+  const unavailable=result.skipped.filter(item=>item.reason==='PRICE_UNAVAILABLE').length;
+  const unsupported=result.skipped.filter(item=>item.reason==='UNSUPPORTED_TICKER').length;
+  const appliedDates=Object.values(result.updateDates);
+  const dateLabel=appliedDates.length
+    ? (new Set(appliedDates).size===1?'적용 종가 기준일 '+appliedDates[0]
+      :'적용 종가 기준일 '+appliedDates.slice().sort()[0]+' ~ '+appliedDates.slice().sort().at(-1))
+    : '새로 적용한 종가 없음';
+  const perTickerDates=Object.entries(result.updateDates)
+    .map(([ticker,day])=>ticker+' '+day).join(' · ');
+  status.textContent=dateLabel+(perTickerDates?' ('+perTickerDates+')':'')+' · '+updates.length+'개 종목 종가 입력 · 기존 입력 '+preserved+'개 유지 · 갱신 불가 '+unavailable+'개 · 미지원 '+unsupported+'개 · 실시간 시세 아님';
+ }catch(error){status.textContent='종가 가져오기 확인 필요: '+error.message+' · 입력된 값이 있다면 재계산 상태를 확인하세요';}
+ finally{button.disabled=false;}
+});
+el('portfolio-price-calc').addEventListener('click',()=>{try{
+ const view=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});
+ const priceRows=[...el('portfolio-price-rows').children];if(priceRows.length!==view.holdings.length||priceRows.some((r,i)=>r.dataset.ticker!==view.holdings[i].ticker))throw Error('현재 계좌 기준으로 입력표를 다시 준비하세요');
+ const prices=Object.fromEntries(priceRows.map(r=>[r.dataset.ticker,r.querySelector('input').value.trim()]));
+ const result=previewPortfolioValuation({holdings:view.holdings,accounts:selectedValuationAccounts(view),prices});
+ lastPortfolioValuation=result;show();
+ renderValuationSummary(result);
+ const completion=summarizeValuationCompletion(result);
+ renderMissingInputActions(completion);
+ const root=el('portfolio-price-results');root.replaceChildren();
+ for(const row of result.rows){const p=document.createElement('p');p.textContent=row.ticker+' · '+(row.marketValueUsd===null?'주가 미입력':'가정 평가금액 $'+row.marketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2}))+' · '+(row.unrealizedPnlUsd===null?'손익 미계산':'가정 손익 $'+row.unrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2}));root.append(p);}
+ const total=document.createElement('p');total.textContent='전체 가정 평가금액 '+(result.totalMarketValueUsd===null?'미표시':'$'+result.totalMarketValueUsd.toLocaleString('en-US',{maximumFractionDigits:2}))+' · 전체 가정손익 '+(result.totalUnrealizedPnlUsd===null?'미표시 (주가·단가 누락)':'$'+result.totalUnrealizedPnlUsd.toLocaleString('en-US',{maximumFractionDigits:2}));root.append(total);
+ }catch(e){el('valuation-completion-status').dataset.state='error';el('valuation-completion-status').textContent='계산 실패 · '+e.message;el('portfolio-price-results').textContent='계산 실패: '+e.message;}
+});
+el('render').addEventListener('click',()=>{invalidateYahooComparison();lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;resetValuationSummary('원장 변경 · 평가금액 재계산 필요');el('valuation-completion-status').dataset.state='stale';el('valuation-completion-status').textContent='원장 변경 · 평가 재계산 필요';latestExport=null;clearAllocation();el('legacy-rows').replaceChildren();el('legacy-status').textContent='원장 데이터가 변경되었습니다. 기존 보유종목 파일을 다시 검토하세요.';el('report-compare-results').replaceChildren();el('report-compare-status').textContent='원장 데이터가 변경되었습니다. 이전 보고서를 다시 비교하세요.';try{const parsed=JSON.parse(el('source').value);const v=buildPortfolioLedgerView(parsed);current=parsed;const select=el('account');select.replaceChildren();const all=document.createElement('option');all.value='';all.textContent='전체 계좌';select.append(all);const legacySelect=el('legacy-account');legacySelect.replaceChildren();const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='계좌를 선택하세요';legacySelect.append(placeholder);for(const a of v.accounts){const opt=document.createElement('option');opt.value=a.accountId;opt.textContent=a.name;select.append(opt);const legacyOption=document.createElement('option');legacyOption.value=a.accountId;legacyOption.textContent=a.name;legacySelect.append(legacyOption);}if(v.accounts.length===1)legacySelect.value=v.accounts[0].accountId;lastPortfolioValuation=null;show();rebuildAssumedPriceRows();el('yahoo-valuation-preview').disabled=false;el('yahoo-valuation-preview').click();}catch(e){current=null;lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;resetValuationSummary('원장 입력 오류 · 평가금액 미계산');el('status').textContent='입력 오류: '+e.message;table('holdings',[]);table('cash',[]);}});
+el('ledger-load').addEventListener('click',async()=>{const file=el('ledger-file').files?.[0];if(!file){el('status').textContent='원장 JSON 파일을 선택하세요.';return;}if(file.size>1048576){el('status').textContent='1MB 이하 파일만 허용합니다.';return;}try{const data=JSON.parse(await file.text());buildPortfolioLedgerView(data);el('source').value=JSON.stringify(data,null,2);el('render').click();el('status').textContent='원장 파일 불러오기 완료 · 서버 미전송 · 오프라인 미리보기';}catch(error){el('status').textContent='원장 파일 오류: '+error.message;}});
+function displayLegacy(data){latestExport=null;clearAllocation();el('report-compare-results').replaceChildren();const status=el('legacy-status'),rows=el('legacy-rows');rows.replaceChildren();try{const accountId=el('legacy-account').value;if(!accountId){status.textContent='대상 계좌를 선택하세요.';return;}const result=previewLegacyHoldingsForAccount({exportData:data,accountId});const comparison=reconcileLegacyExportWithLedger({...current,exportData:data,accountId});latestExport=data;showAllocation();const accountName=buildPortfolioLedgerView({...current,selectedAccountId:accountId}).accounts.find(a=>a.accountId===accountId)?.name??accountId;status.textContent='대상 계좌: '+accountName+' · '+comparison.status+' · 일치 '+comparison.matchedCount+'건 / 차이 '+comparison.mismatchCount+'건 · 서버 미전송 · 실제 보유현황 미변경';const table=document.createElement('table');const head=table.createTHead().insertRow();for(const title of ['종목','수량','평균취득단가(USD)']){const th=document.createElement('th');th.textContent=title;head.append(th);}for(const position of result.positions){const row=table.insertRow();for(const value of [position.ticker,position.quantity,position.averageCostUsd]){const td=row.insertCell();td.textContent=String(value??'');}}rows.append(table);const compareTitle=document.createElement('h3');compareTitle.textContent='현재 원장과 비교';rows.append(compareTitle);const compareTable=document.createElement('table');const compareHead=compareTable.createTHead().insertRow();for(const label of ['종목','파일 수량','원장 수량','차이(파일−원장)','판정']){const th=document.createElement('th');th.textContent=label;compareHead.append(th);}for(const item of comparison.rows){const row=compareTable.insertRow();for(const value of [item.ticker,item.legacyQuantity,item.ledgerQuantity,item.difference,item.status]){const td=row.insertCell();td.textContent=String(value);}}rows.append(compareTable);const note=document.createElement('p');note.textContent='주의: 파일에 계좌 구분이 없는 경우 선택한 계좌와의 가상 대조일 뿐입니다. 다른 계좌에 속한 종목이 포함되어 있을 수 있으므로 수량 일치만으로 초기잔고를 확정하지 마세요.';note.className='warn';rows.append(note);if(comparison.mismatchCount){const h=document.createElement('h3');h.textContent='불일치 원인 검토 (서버 저장 없음)';rows.append(h);for(const item of comparison.rows.filter(x=>x.status!=='ALREADY_PRESENT')){const section=document.createElement('div');section.style.margin='12px 0';const label=document.createElement('label');label.textContent=item.ticker+' · '+item.status;const choice=document.createElement('select');choice.dataset.ticker=item.ticker;choice.className='review-reason';for(const [value,text] of [['','검토 사유 선택'],['CHECK_ACCOUNT','계좌 배정 확인'],['CHECK_TRADE_HISTORY','거래내역 확인'],['CHECK_EXPORT_DATE','파일 기준일 확인'],['ACCEPT_LEDGER_AS_REFERENCE','원장 수량을 기준으로 검토']]){const option=document.createElement('option');option.value=value;option.textContent=text;choice.append(option);}const note=document.createElement('textarea');note.className='review-note';note.placeholder='검토 근거 (3~500자)';note.rows=2;section.append(label,choice,note);rows.append(section);}const button=document.createElement('button');button.type='button';button.textContent='검토 메모 확인';button.addEventListener('click',()=>{try{const decisions=[...rows.querySelectorAll('.review-reason')].filter(e=>e.value).map(e=>({ticker:e.dataset.ticker,reason:e.value,note:e.parentElement.querySelector('.review-note').value}));const review=reviewLegacyLedgerDiscrepancies({...current,exportData:latestExport,accountId,decisions});status.textContent=review.status+' · 검토 '+review.reviewedCount+'/'+review.discrepancyCount+'건 · 데이터 확정·저장 불가';}catch(error){status.textContent='검토 오류: '+error.message;}});rows.append(button);}const exportButton=document.createElement('button');exportButton.type='button';exportButton.textContent='검토 보고서 JSON 저장';exportButton.style.marginLeft='8px';exportButton.addEventListener('click',()=>{try{const decisions=[...rows.querySelectorAll('.review-reason')].filter(e=>e.value).map(e=>({ticker:e.dataset.ticker,reason:e.value,note:e.parentElement.querySelector('.review-note').value}));const content=serializeLegacyLedgerReviewReport({...current,exportData:latestExport,accountId,decisions});const blob=new Blob([content],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='investlab-ledger-review-'+accountId.slice(0,8)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='검토 보고서 다운로드 요청 완료 · 초기잔고 미확정 · 서버 미전송';}catch(error){status.textContent='보고서 생성 오류: '+error.message;}});rows.append(exportButton);if(result.warnings.length){const p=document.createElement('p');p.textContent=result.warnings.join(' / ');rows.append(p);}}catch(e){latestExport=null;status.textContent='검토 불가: '+e.message;}}
+el('legacy-review').addEventListener('click',async()=>{const file=el('legacy-file').files?.[0];if(!file){el('legacy-status').textContent='JSON 파일을 선택하세요.';return;}if(file.size>1048576){el('legacy-status').textContent='1MB 이하 파일만 허용합니다.';return;}try{displayLegacy(JSON.parse(await file.text()));}catch(e){el('legacy-status').textContent='파일 읽기 오류: '+e.message;}});
+el('legacy-local').addEventListener('click',()=>{try{const holdings=JSON.parse(localStorage.getItem('investlab_holdings')||'[]');displayLegacy(buildLegacyHoldingsExport(holdings));}catch(e){latestExport=null;el('legacy-rows').replaceChildren();el('legacy-status').textContent='같은 사이트 보유종목 가져오기 실패: '+e.message;}});
+el('legacy-file').addEventListener('change',()=>{latestExport=null;clearAllocation();el('legacy-rows').replaceChildren();el('legacy-status').textContent='새 파일을 선택했습니다. 기존 보유종목 확인을 다시 실행하세요.';el('report-compare-results').replaceChildren();});
+function updateSplitFinalSummary(){const target=el('split-final-summary');target.replaceChildren();try{if(!splitInput)return;const summary=buildSplitFinalReviewSummary({...collectSplitInput(),decisions:collectSplitDecisions()});const heading=document.createElement('h3');heading.textContent='최종 검토 현황 (오프라인)';target.append(heading);const table=document.createElement('table');const header=table.createTHead().insertRow();for(const title of ['검토 항목','진행','상태']){const th=document.createElement('th');th.textContent=title;header.append(th);}const names={COMPLETE:'배정 완료',INCOMPLETE:'배정 미완료',MATCHED:'수량 일치',DIFFERENCES_FOUND:'원장 차이 있음',NOTED:'메모 작성 완료',PENDING:'메모 미완료'};for(const item of summary.items){const row=table.insertRow();for(const value of [item.label,item.completed+' / '+item.total,names[item.status]??item.status]){const td=row.insertCell();td.textContent=value;}}target.append(table);const note=document.createElement('p');note.textContent='배정 '+(summary.unassignedSymbols?'미완료 '+summary.unassignedSymbols+'종목':'완료')+' · 원장 차이 '+summary.ledgerDifferenceCount+'건 · 메모 미작성 '+summary.pendingNotes+'건 · 승인/실제 반영 불가';target.append(note);}catch(e){const error=document.createElement('p');error.textContent='최종 검토 계산 오류: '+e.message;target.append(error);}}
+el('split-check').addEventListener('click',()=>{splitInput=null;el('split-save').disabled=true;const target=el('split-result');target.replaceChildren();el('split-discrepancies').replaceChildren();try{if(!latestExport||!current)throw Error('먼저 보유종목을 확인하세요');const input=collectSplitInput();const result=previewSplitAccountAllocation(input);splitInput=input;el('split-save').disabled=false;updateSplitFinalSummary();el('split-status').textContent=result.status+' · 서버 미반영';const summary=el('split-summary');summary.replaceChildren();const total=document.createElement('p');total.textContent='전체 '+result.rows.length+'종목 · 배정 완료 '+(result.rows.length-result.remainingCount)+'종목 · 미배정/부분배정 '+result.remainingCount+'종목';summary.append(total);const audit=summarizeSplitLedgerDifferences(result);const auditLine=document.createElement('p');auditLine.textContent='배정 계좌별 원장 비교 '+audit.comparedPairs+'건 · 일치 '+audit.matchedPairs+'건 · 차이 '+audit.unmatchedPairs+'건';summary.append(auditLine);for(const item of audit.details.filter(x=>x.status==='LEDGER_DIFFERENCE')){const line=document.createElement('p');line.textContent='원장 차이 확인: '+item.ticker+' / '+item.accountName+' · 배정 '+formatDecimal(item.assignedQuantity)+'주 · 원장 '+formatDecimal(item.ledgerQuantity)+'주 · 차이 '+formatDecimal(item.difference)+'주';summary.append(line);}const scope=document.createElement('p');scope.textContent='주의: 수량 대조는 배정한 종목·계좌 조합만 확인합니다. 미배정 계좌의 보유종목, 취득단가, 서버 원장은 검증하지 않습니다.';summary.append(scope);const discrepancyBox=el('split-discrepancies');discrepancyBox.replaceChildren();if(audit.unmatchedPairs){const heading=document.createElement('h3');heading.textContent='원장 수량 불일치 검토 ('+audit.unmatchedPairs+'건)';discrepancyBox.append(heading);for(const item of audit.details.filter(x=>x.status==='LEDGER_DIFFERENCE')){const wrapper=document.createElement('div');wrapper.className='split-discrepancy';wrapper.dataset.ticker=item.ticker;wrapper.dataset.accountId=item.accountId;const label=document.createElement('label');label.textContent=item.ticker+' / '+item.accountName+' · 차이 '+formatDecimal(item.difference)+'주';const select=document.createElement('select');select.className='split-reason';for(const [value,title] of [['','검토 사유 선택'],['CHECK_ACCOUNT','계좌 배정 확인'],['CHECK_TRADE_HISTORY','거래내역 확인'],['CHECK_EXPORT_DATE','파일 기준일 확인'],['CHECK_LEDGER_EVENTS','원장 이벤트 확인'],['ACCEPT_LEDGER_AS_REFERENCE','원장 수량을 기준으로 검토']]){const option=document.createElement('option');option.value=value;option.textContent=title;select.append(option);}const note=document.createElement('textarea');note.className='split-note';note.rows=2;note.placeholder='검토 근거 3~500자';wrapper.append(label,select,note);discrepancyBox.append(wrapper);}const button=document.createElement('button');button.type='button';button.textContent='불일치 검토 메모 확인';button.addEventListener('click',()=>{try{const decisions=[...discrepancyBox.querySelectorAll('.split-discrepancy')].filter(row=>row.querySelector('.split-reason').value).map(row=>({ticker:row.dataset.ticker,accountId:row.dataset.accountId,reason:row.querySelector('.split-reason').value,note:row.querySelector('.split-note').value}));const review=reviewSplitLedgerDiscrepancies({...collectSplitInput(),decisions});el('split-status').textContent=review.status+' · 검토 '+review.reviewedCount+'/'+review.discrepancyCount+'건 · 실제 원장 변경 없음';updateSplitFinalSummary();}catch(error){el('split-status').textContent='불일치 검토 오류: '+error.message;}});discrepancyBox.append(button);}for(const item of result.rows.filter(r=>r.status!=='FULLY_ALLOCATED')){const line=document.createElement('p');line.textContent=item.ticker+' · 원본 '+formatDecimal(item.sourceQuantity)+'주 / 배정 '+formatDecimal(item.allocatedQuantity)+'주 / 남은 수량 '+formatDecimal(item.remainingQuantity)+'주';summary.append(line);}if(!result.remainingCount){const line=document.createElement('p');line.textContent='모든 종목의 수량 배정 완료 · 계좌 소유·취득단가·원장 일치 여부는 별도 확인 필요';summary.append(line);}const table=document.createElement('table');const head=table.createTHead().insertRow();for(const title of ['종목','원본','배분','미배분','계좌별 원장 대조']){const th=document.createElement('th');th.textContent=title;head.append(th);}for(const item of result.rows){const row=table.insertRow();for(const value of [item.ticker,item.sourceQuantity,item.allocatedQuantity,item.remainingQuantity,item.accounts.map(a=>a.accountName+': 배분 '+a.assignedQuantity+' / 원장 '+a.ledgerQuantity+' / 차이 '+a.difference).join(' | ')||'미배분']){const td=row.insertCell();td.textContent=value;}}target.append(table);}catch(e){el('split-status').textContent='검토 오류: '+e.message;}});
+el('split-rows').addEventListener('input',()=>{el('split-final-summary').replaceChildren();el('split-summary').replaceChildren();el('split-result').replaceChildren();el('split-discrepancies').replaceChildren();splitInput=null;el('split-save').disabled=true;el('split-status').textContent='수량이 변경되었습니다. 다시 검토하세요.';});
+el('split-save').addEventListener('click',()=>{try{if(!splitInput)throw Error('먼저 수량을 검토하세요');const data=serializeSplitAllocationReport(splitInput);const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='investlab-split-allocation-review.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);}catch(e){el('split-status').textContent='저장 오류: '+e.message;}});
+el('split-restore').addEventListener('click',async()=>{try{const file=el('split-previous').files?.[0];if(!file||file.size>1048576)throw Error('1MB 이하 보고서 JSON을 선택하세요');if(!latestExport||!current)throw Error('먼저 기존 보유종목을 확인하세요');const savedReport=JSON.parse(await file.text());const restored=restoreSplitAllocationReport({...current,exportData:latestExport,savedReport});for(const row of document.querySelectorAll('.split-entry'))for(const input of row.querySelectorAll('input')){const item=restored.allocations.find(a=>a.ticker===row.dataset.ticker&&a.accountId===input.dataset.accountId);input.value=item?.quantity??'';}splitInput=null;el('split-save').disabled=true;el('split-final-summary').replaceChildren();el('split-summary').replaceChildren();el('split-discrepancies').replaceChildren();el('split-result').replaceChildren();el('split-compare-result').replaceChildren();el('split-status').textContent='입력 복원 완료 · 배분 수량을 다시 검토하세요 · 저장/서버 반영 없음';}catch(e){el('split-status').textContent='복원 중단: '+e.message;}});
+el('split-compare').addEventListener('click',async()=>{const target=el('split-compare-result');target.replaceChildren();try{const file=el('split-previous').files?.[0];if(!file||file.size>1048576)throw Error('1MB 이하 이전 보고서 JSON을 선택하세요');const savedReport=JSON.parse(await file.text());const result=compareSplitAllocationReport({...collectSplitInput(),savedReport});el('split-compare-status').textContent=result.status+' · 변경 '+result.changedCount+'건 · 서버 미검증';const table=document.createElement('table');const head=table.createTHead().insertRow();for(const label of ['종목','계좌 ID','변경 유형']){const th=document.createElement('th');th.textContent=label;head.append(th);}for(const change of result.changes){const row=table.insertRow();for(const value of [change.ticker,change.accountId??'전체',change.kind]){const td=row.insertCell();td.textContent=value;}}target.append(table);}catch(e){el('split-compare-status').textContent='비교 오류: '+e.message;}});
+function collectSplitDecisions(){return [...el('split-discrepancies').querySelectorAll('.split-discrepancy')].filter(row=>row.querySelector('.split-reason').value).map(row=>({ticker:row.dataset.ticker,accountId:row.dataset.accountId,reason:row.querySelector('.split-reason').value,note:row.querySelector('.split-note').value}));}
+function saveOfflineJson(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+el('split-notes-save').addEventListener('click',()=>{try{const input=collectSplitInput();const report=buildSplitDiscrepancyNotesReport({...input,decisions:collectSplitDecisions()});saveOfflineJson(report,'investlab-split-discrepancy-notes.json');el('split-notes-status').textContent='검토 메모 보고서 저장 요청 완료 · 서버 저장 없음';}catch(e){el('split-notes-status').textContent='저장 불가: '+e.message;}});
+el('split-notes-restore').addEventListener('click',async()=>{try{const file=el('split-notes-file').files?.[0];if(!file||file.size>1048576)throw Error('1MB 이하 메모 보고서 JSON을 선택하세요');const savedReport=JSON.parse(await file.text());const restored=restoreSplitDiscrepancyNotesReport({...collectSplitInput(),savedReport});const target=el('split-discrepancies');const rows=[...target.querySelectorAll('.split-discrepancy')];if(rows.length!==restored.decisions.length+restored.pendingCount)throw Error('현재 불일치 목록을 먼저 다시 검토하세요');for(const row of rows){const decision=restored.decisions.find(d=>d.ticker===row.dataset.ticker&&d.accountId===row.dataset.accountId);row.querySelector('.split-reason').value=decision?.reason??'';row.querySelector('.split-note').value=decision?.note??'';}el('split-notes-status').textContent='검토 메모 복원 '+restored.reviewedCount+'건 · 실제 원장 변경 없음';updateSplitFinalSummary();}catch(e){el('split-notes-status').textContent='복원 중단: '+e.message;}});
+el('allocation-check').addEventListener('click',()=>{try{if(!latestExport||!current)throw Error('먼저 기존 보유종목을 확인하세요');const allocations=[...document.querySelectorAll('.allocation-account')].filter(e=>e.value).map(e=>({ticker:e.dataset.ticker,accountId:e.value}));const result=reviewLegacyAccountAllocation({...current,exportData:latestExport,allocations});el('allocation-status').textContent=result.status+' · 배정 '+result.assignedCount+'/'+result.rows.length+'개 · 실제 계좌 반영 없음';}catch(e){el('allocation-status').textContent='검토 오류: '+e.message;}});
+el('compare-report').addEventListener('click',async()=>{const file=el('previous-report').files?.[0],status=el('report-compare-status'),target=el('report-compare-results');target.replaceChildren();if(!file||!latestExport||!current||!el('legacy-account').value){status.textContent='이전 보고서 파일, 기존 보유종목 파일, 대상 계좌가 필요합니다.';return;}if(file.size>1048576){status.textContent='1MB 이하 파일만 허용합니다.';return;}try{const savedReport=JSON.parse(await file.text());const result=compareSavedLegacyReviewReport({...current,exportData:latestExport,accountId:el('legacy-account').value,savedReport});status.textContent=result.status+' · 변경 '+result.changedCount+'건 · 서버 미검증';const t=document.createElement('table');const head=t.createTHead().insertRow();for(const name of ['종목','변경 유형','이전 파일 수량','현재 파일 수량','이전 원장 수량','현재 원장 수량']){const th=document.createElement('th');th.textContent=name;head.append(th);}for(const change of result.changes){const row=t.insertRow();for(const value of [change.ticker,change.kind,change.previous?.legacyQuantity??'—',change.current?.legacyQuantity??'—',change.previous?.ledgerQuantity??'—',change.current?.ledgerQuantity??'—']){const td=row.insertCell();td.textContent=value;}}target.append(t);}catch(error){status.textContent='비교 불가: '+error.message;}});
+el('legacy-account').addEventListener('change',()=>{latestExport=null;clearAllocation();el('legacy-rows').replaceChildren();el('legacy-status').textContent='대상 계좌가 변경되었습니다. 기존 보유종목 파일을 다시 검토하세요.';el('report-compare-status').textContent='대상 계좌가 변경되었습니다. 보고서를 다시 비교하세요.';el('report-compare-results').replaceChildren();});
+function rebuildCostReviewRows({restoreBrowser=false}={}){
+ if(!current)throw Error('원장 데이터를 먼저 불러오세요');
+ const v=buildPortfolioLedgerView(current),root=el('cost-review-rows');
+ const previous=new Map([...root.children].map(row=>[row.dataset.accountId+'|'+row.dataset.ticker,{quantity:row.dataset.quantity,cost:row.querySelector('input').value}]));
+ root.replaceChildren();
+ for(const account of v.accounts){for(const holding of account.holdings){
+  const row=document.createElement('div');row.className='simple-row';row.dataset.accountId=account.accountId;row.dataset.ticker=holding.ticker;row.dataset.quantity=holding.quantityDisplay;
+  const label=document.createElement('label');label.textContent=account.name+' · '+holding.ticker+' · '+formatDecimal(holding.quantityDisplay)+'주';
+  const cost=document.createElement('input');cost.type='number';cost.min='0';cost.step='any';cost.placeholder='평균단가 USD';cost.setAttribute('aria-label',account.name+' '+holding.ticker+' 평균취득단가');
+  const prior=previous.get(account.accountId+'|'+holding.ticker);if(prior&&prior.quantity===holding.quantityDisplay)cost.value=prior.cost;
+  row.append(label,cost);root.append(row);
+ }}
+ let message=root.children.length+'개 계좌·종목 입력표 준비';
+ if(restoreBrowser){
+  const raw=localStorage.getItem('investlab_test_account_cost_review_v1');
+  if(raw){try{if(raw.length>1048576)throw Error('저장 용량 초과');const entries=[...root.children].map(row=>({accountId:row.dataset.accountId,ticker:row.dataset.ticker,quantity:row.dataset.quantity,averageCostUsd:null}));const restored=restoreAccountCostReport({accounts:v.accounts,entries,savedReport:JSON.parse(raw)});applyCostReviewRows(restored);message+=' · 보관 단가 '+restored.rows.length+'건 복원 (재확인 필요)';}catch(e){message+=' · 기존 보관 단가 불일치: '+e.message+' (미적용)';}}
+ }
+ el('cost-review-status').textContent=message+' · 서버 저장 없음';
+}
+el('cost-review-build').addEventListener('click',()=>{try{rebuildCostReviewRows({restoreBrowser:true});}catch(e){el('cost-review-status').textContent='입력표 생성 실패: '+e.message;}});
+el('cost-review-rows').addEventListener('input',()=>{const ticker=el('holding-detail').dataset.ticker;if(ticker&&current)showHoldingDetail(ticker);});
+el('cost-review-check').addEventListener('click',()=>{try{if(!current)throw Error('원장 데이터를 먼저 불러오세요');const v=buildPortfolioLedgerView(current);const entries=[...el('cost-review-rows').children].map(row=>({accountId:row.dataset.accountId,ticker:row.dataset.ticker,quantity:row.dataset.quantity,averageCostUsd:row.querySelector('input').value.trim()||null}));if(!entries.length)throw Error('입력표를 먼저 만드세요');const review=reviewAccountCostBasis({accounts:v.accounts,entries});el('cost-review-status').textContent='검토 '+review.rows.length+'건 · 미입력 '+review.missingCount+'건 · 서버 저장 없음';}catch(e){el('cost-review-status').textContent='검토 실패: '+e.message;}});
+function costReviewInput(){if(!current)throw Error('원장 데이터를 먼저 불러오세요');const view=buildPortfolioLedgerView(current);const entries=[...el('cost-review-rows').children].map(row=>({accountId:row.dataset.accountId,ticker:row.dataset.ticker,quantity:row.dataset.quantity,averageCostUsd:row.querySelector('input').value.trim()||null}));if(!entries.length)throw Error('계좌별 단가 입력표를 먼저 만드세요');return {accounts:view.accounts,entries};}
+el('cost-review-transfer').addEventListener('click',()=>{try{
+ const input=costReviewInput(),report=buildAccountCostReport(input);
+ const view=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});
+ const rows=view.holdings.map(h=>({ticker:h.ticker,quantity:h.quantityDisplay}));
+ if(!rows.length||rows.length>100)throw Error('전달할 종목은 1~100개여야 합니다');
+ const scopedAccounts=new Set(el('account').value?[el('account').value]:view.accounts.map(a=>a.accountId));
+ const scopedReport={...report,rows:report.rows.filter(r=>scopedAccounts.has(r.accountId))};
+ const assumedPrices=Object.fromEntries(rows.filter(h=>getAssumedPrice(h.ticker)!==''&&Number.isFinite(Number(getAssumedPrice(h.ticker)))&&Number(getAssumedPrice(h.ticker))>=0).map(h=>[h.ticker,Number(getAssumedPrice(h.ticker))]));
+ sessionStorage.setItem('investlab_portfolio_bulk_handoff_v1',JSON.stringify({version:1,rows,accountCostReport:scopedReport,assumedPrices}));
+ location.href='./virtual-trade-simulator.html?source=portfolio-bulk-review';
+ }catch(e){el('cost-review-status').textContent='전달 실패: '+e.message;}});
+const ACCOUNT_COST_BROWSER_KEY='investlab_test_account_cost_review_v1';
+function applyCostReviewRows(restored){for(const item of restored.rows){const row=[...el('cost-review-rows').children].find(r=>r.dataset.accountId===item.accountId&&r.dataset.ticker===item.ticker);row.querySelector('input').value=item.averageCostUsd??'';}}
+el('cost-review-browser-save').addEventListener('click',()=>{try{const report=buildAccountCostReport(costReviewInput());localStorage.setItem(ACCOUNT_COST_BROWSER_KEY,JSON.stringify(report));el('cost-review-status').textContent='이 브라우저에 검토 단가 보관 완료 · 서버 저장 없음';}catch(e){el('cost-review-status').textContent='브라우저 보관 실패: '+e.message;}});
+el('cost-review-browser-load').addEventListener('click',()=>{try{const raw=localStorage.getItem(ACCOUNT_COST_BROWSER_KEY);if(!raw||raw.length>1048576)throw Error('보관된 검토 단가가 없거나 너무 큽니다');const restored=restoreAccountCostReport({...costReviewInput(),savedReport:JSON.parse(raw)});applyCostReviewRows(restored);el('cost-review-status').textContent='보관 단가 '+restored.rows.length+'건 불러옴 · 미입력 '+restored.missingCount+'건 · 재검토 후 사용하세요';}catch(e){el('cost-review-status').textContent='보관 단가 불러오기 실패: '+e.message;}});
+el('cost-review-browser-clear').addEventListener('click',()=>{if(!confirm('이 브라우저에 보관된 계좌별 단가 검토 자료를 삭제하시겠습니까?'))return;localStorage.removeItem(ACCOUNT_COST_BROWSER_KEY);el('cost-review-status').textContent='브라우저에 보관된 단가 자료 삭제 완료 · 화면 입력값은 유지';});
+el('cost-review-save').addEventListener('click',()=>{try{const report=buildAccountCostReport(costReviewInput());saveOfflineJson(report,'investlab-account-cost-review.json');el('cost-review-status').textContent='계좌별 단가 검토 보고서 저장 요청 완료 · 서버 저장 없음';}catch(e){el('cost-review-status').textContent='저장 실패: '+e.message;}});
+el('cost-review-restore').addEventListener('click',async()=>{try{const file=el('cost-review-file').files?.[0];if(!file||file.size>1048576)throw Error('1MB 이하 보고서 JSON을 선택하세요');const restored=restoreAccountCostReport({...costReviewInput(),savedReport:JSON.parse(await file.text())});for(const item of restored.rows){const row=[...el('cost-review-rows').children].find(r=>r.dataset.accountId===item.accountId&&r.dataset.ticker===item.ticker);row.querySelector('input').value=item.averageCostUsd??'';}el('cost-review-status').textContent='계좌별 단가 '+restored.rows.length+'건 복원 · 미입력 '+restored.missingCount+'건 · 서버 저장 없음';}catch(e){el('cost-review-status').textContent='복원 실패: '+e.message;}});
+el('bulk-simulator').addEventListener('click',()=>{try{if(!current)throw Error('원장 데이터를 먼저 불러오세요');const view=buildPortfolioLedgerView({...current,selectedAccountId:el('account').value||null});if(!view.holdings.length)throw Error('가져올 보유종목이 없습니다');if(view.holdings.length>100)throw Error('한 번에 최대 100종목만 검토할 수 있습니다');const rows=view.holdings.map(h=>({ticker:h.ticker,quantity:h.quantityDisplay}));sessionStorage.setItem('investlab_portfolio_bulk_handoff_v1',JSON.stringify({version:1,rows}));location.href='./virtual-trade-simulator.html?source=portfolio-bulk-review';}catch(e){el('bulk-simulator-status').textContent='이동 불가: '+e.message;}});
+el('ledger-guidance-review').addEventListener('click',async()=>{
+ const target=el('ledger-guidance-status'),output=el('ledger-guidance-results');output.replaceChildren();
+ try{
+  if(!current)throw Error('먼저 원장 데이터를 불러오세요');
+  const section=Array.isArray(current.transactions)?'transactions':Object.keys(current).find(k=>Array.isArray(current[k]))||'transactions';
+  let columns=null;const file=el('ledger-columns-file').files?.[0];
+  if(file){if(file.size>1048576)throw Error('컬럼 JSON 파일이 1MiB를 초과합니다');columns=JSON.parse(await file.text());}
+  const result=reviewLedgerWithGuidance(current,{columns,section});
+  const list=document.createElement('ul');
+  for(const item of result.actions){const li=document.createElement('li');li.textContent=item.name+' · '+item.status+' · '+item.action;list.append(li);}
+  for(const issue of result.examples){const li=document.createElement('li');li.textContent=issue.row+'행 '+issue.field+' · '+issue.reason+' · '+issue.action;list.append(li);}
+  output.append(list);target.textContent='수정 안내 '+result.actions.length+'개 · 오류 예시 '+result.examples.length+'건 · 원본 변경 없음 · 서버 저장 차단';
+ }catch(error){target.textContent='수정 안내 실패 · '+error.message+' · 서버 저장 차단';}
+});
+el('ledger-readiness-review').addEventListener('click',async()=>{
+ const target=el('ledger-readiness-status'),output=el('ledger-readiness-results');output.replaceChildren();
+ try{
+  if(!current)throw Error('먼저 원장 데이터를 불러오세요');
+  const section=Array.isArray(current.transactions)?'transactions':Object.keys(current).find(k=>Array.isArray(current[k]))||'transactions';
+  let columns=null;const file=el('ledger-columns-file').files?.[0];
+  if(file){if(file.size>1048576)throw Error('컬럼 JSON 파일이 1MiB를 초과합니다');columns=JSON.parse(await file.text());}
+  const result=reviewLedgerReadiness(current,{columns,section});
+  const list=document.createElement('ul');
+  for(const check of result.checks){const li=document.createElement('li');li.textContent=check.name+' · '+check.status+' · '+check.detail;list.append(li);}output.append(list);
+  target.textContent='종합 점검 완료 · 서버 저장 준비 미완료 · DB 실측 및 사용자 격리 미검증 · 서버 저장 차단';
+ }catch(error){target.textContent='종합 점검 실패 · '+error.message+' · 서버 저장 차단';}
+});
+el('ledger-value-preflight').addEventListener('click',()=>{
+ const target=el('ledger-value-status'),output=el('ledger-value-results');output.replaceChildren();
+ try{
+  if(!current)throw Error('먼저 원장 데이터를 불러오세요');
+  const section=Array.isArray(current.transactions)?'transactions':Object.keys(current).find(k=>Array.isArray(current[k]));
+  if(!section)throw Error('거래 배열 섹션이 없습니다');
+  const result=inspectLedgerTransactionValues(current,{section});
+  target.textContent='검사 '+result.rows+'건 · 형식 확인 필요 '+result.issueCount+'건 · 알려진 필드만 검사 · 필수 DB 컬럼 미확인 · 서버 저장 차단';
+  const list=document.createElement('ul');
+  for(const issue of result.issues){const li=document.createElement('li');li.textContent=issue.row+'행 · '+issue.field+' · '+issue.reason;list.append(li);}output.append(list);
+ }catch(error){target.textContent='형식 검사 실패 · '+error.message+' · 서버 저장 차단';}
+});
+el('ledger-column-preview').addEventListener('click',async()=>{
+ const target=el('ledger-column-status'),output=el('ledger-column-results');output.replaceChildren();
+ try{
+  if(!current)throw Error('먼저 원장 데이터를 불러오세요');
+  const file=el('ledger-columns-file').files?.[0];if(!file||file.size>1048576)throw Error('1MiB 이하 DB 컬럼 JSON 파일을 선택하세요');
+  const columns=JSON.parse(await file.text());
+  const section=Array.isArray(current.transactions)?'transactions':Object.keys(current).find(k=>Array.isArray(current[k]));
+  if(!section)throw Error('원장 배열 섹션이 없습니다');
+  const result=previewLedgerColumnMapping(current,columns,{section});
+  target.textContent='오프라인 매핑 후보 '+result.mapped.length+'개 · 자동 매칭은 이름 일치만 · DB 실시간 검증 아님 · 서버 저장 차단';
+  const list=document.createElement('ul');
+  for(const item of result.mapped){const li=document.createElement('li');li.textContent=item.column+' ('+item.type+') ← '+(item.sourceField||'미매칭 · 검토 필요');list.append(li);}output.append(list);
+ }catch(error){target.textContent='매핑 검사 실패 · '+error.message+' · 서버 저장 차단';}
+});
+el('ledger-shape-preview').addEventListener('click',()=>{
+ const target=el('ledger-shape-status'), output=el('ledger-shape-results');output.replaceChildren();
+ try{
+  if(!current)throw Error('먼저 원장 데이터를 불러오세요');
+  const result=inspectLedgerShape(current);
+  target.textContent='오프라인 구조 분석 완료 · 배열 항목 '+result.sourceRows+'건 · DB 컬럼 미확인 · 서버 저장 차단';
+  const list=document.createElement('ul');
+  for(const section of result.sections){
+   const li=document.createElement('li');
+   li.textContent=section.name+' · '+section.type+(section.count===null?'':' · '+section.count+'건')+' · 필드: '+(section.fields.join(', ')||'없음');
+   list.append(li);
+  }
+  output.append(list);
+ }catch(error){target.textContent='구조 분석 실패 · '+error.message+' · 원장 데이터 변경 없음';}
+});
+el('ledger-sync-preview').addEventListener('click',()=>{
+ const target=el('ledger-sync-status');
+ try{
+  if(!current)throw Error('먼저 원장 데이터를 불러오세요');
+  const authenticatedUserId='11111111-1111-4111-8111-111111111111'; // TEST fixture, never real auth
+  const envelope=buildLedgerSyncEnvelope(current,{authenticatedUserId,documentId:'33333333-3333-4333-8333-333333333333',revision:0,updatedAt:new Date().toISOString()});
+  const result=previewPersonalSyncEnvelope(envelope,{authenticatedUserId});
+  target.textContent='원장 변환 검사 성공 · 형식 '+envelope.format+' · 원장 문서 확인 · TEST 가상 ID · 실제 로그인 인증 아님 · 서버 저장 차단: '+(!result.canPost?'예':'아니오');
+ }catch(error){target.textContent='원장 변환 검사 실패 · '+error.message+' · 원장 데이터는 변경하지 않았습니다.';}
+});
+el('account').addEventListener('change',()=>{invalidateYahooComparison();lastYahooPriceDisplay=new Map();lastPortfolioValuation=null;resetValuationSummary('계좌 변경 · 선택 계좌 평가를 다시 계산 중입니다.');el('valuation-completion-status').dataset.state='stale';el('valuation-completion-status').textContent='계좌 변경 · 평가 재계산 중';el('yahoo-valuation-preview').disabled=false;show();rebuildAssumedPriceRows();el('yahoo-valuation-preview').click();});el('cost-review-rows').addEventListener('input',markValuationStale);el('holding-search').addEventListener('input',show);el('holding-sort').addEventListener('change',show);el('yahoo-valuation-price-mode').value='latest-close';
+el('render').click();
+</script></body></html>
