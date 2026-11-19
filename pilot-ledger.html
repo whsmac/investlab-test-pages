@@ -15,9 +15,11 @@
 <section class="panel"><h2>계좌 등록</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식, ISA, 연금"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><p id="accounts" class="muted"></p></section>
 <section class="panel"><h2>원장 입력</h2><form id="entryForm" class="grid">
 <label>계좌<select id="entryAccount" required></select></label><label>날짜<input id="entryDate" type="date" required></label><label>거래 종류<select id="entryType"><option value="OPEN">초기 보유 입력</option><option value="BUY">매수</option><option value="SELL">매도</option><option value="DEPOSIT">현금 입금</option><option value="WITHDRAW">현금 출금</option><option value="DIVIDEND">배당금 수령</option><option value="FX">환전 (통화 교환)</option></select></label><label class="stockField">종목코드<input id="entrySymbol" placeholder="TSLA" maxlength="16"></label>
-<label class="stockField">수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label><label class="stockField">주당 단가<input id="entryPrice" type="number" min="0" step="any" placeholder="250"></label><label>통화<select id="entryCurrency"><option>USD</option><option>KRW</option></select></label><label class="moneyField">현금 금액<input id="entryAmount" type="number" min="0" step="any" placeholder="1000"></label><label class="fxField">환전 후 통화<select id="entryToCurrency"><option>KRW</option><option>USD</option></select></label><label class="fxField">환전 후 수령액<input id="entryToAmount" type="number" min="0" step="any" placeholder="1400000"></label><label class="wide">메모<input id="entryNote" maxlength="200" placeholder="선택 사항"></label><button type="submit">거래 기록</button>
+<label class="stockField">수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label><label class="stockField">주당 단가<input id="entryPrice" type="number" min="0" step="any" placeholder="250"></label><label>통화<select id="entryCurrency"><option>USD</option><option>KRW</option></select></label><label class="moneyField">현금 금액<input id="entryAmount" type="number" min="0" step="any" placeholder="1000"></label><label class="fxField">환전 후 통화<select id="entryToCurrency"><option>KRW</option><option>USD</option></select></label><label class="fxField">환전 후 수령액<input id="entryToAmount" type="number" min="0" step="any" placeholder="1400000"></label><label class="wide">메모<input id="entryNote" maxlength="200" placeholder="선택 사항"></label><button id="submitEntry" type="submit">거래 기록</button>
 </form><p class="muted">초기 보유는 수량과 매입단가를 입력합니다. 초기 현금은 입금으로 기록하세요. 수수료·세금·환율별 취득원가 계산은 아직 포함되지 않았습니다.</p><p id="message" role="status"></p></section>
 <section class="panel"><h2>My Portfolio · 원장 기반 보유현황</h2><div class="grid"><label>계좌 선택<select id="viewAccount"><option value="ALL">전체 계좌</option></select></label><div class="stat"><small>보유 종목 수</small><span id="symbolCount">0</span></div><div class="stat"><small>USD 현금</small><span id="usdCash">0</span></div><div class="stat"><small>KRW 현금</small><span id="krwCash">0</span></div></div><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 USD</th><th>매입원가 USD</th></tr></thead><tbody id="holdings"></tbody></table></div><p class="muted">전체 계좌 평균단가는 보유수량을 가중치로 계산합니다. 현재 주가가 연결되지 않아 평가손익은 표시하지 않습니다.</p></section>
+<section class="panel"><h2>실현손익 (USD · 평균원가 기준)</h2><div class="grid"><div class="stat"><small>선택 계좌 누적 실현손익</small><span id="realizedTotal">USD 0</span></div><div class="stat"><small>매도 거래 수</small><span id="sellCount">0</span></div></div><p class="muted">매도금액 − 매도 직전 계좌별 평균매입단가 × 매도수량. 수수료·세금·환율·원화 취득원가는 미반영이며 세무신고용 금액이 아닙니다.</p></section>
+<section class="panel"><h2>거래 수정</h2><p id="editStatus" class="muted">거래 내역에서 수정 버튼을 누르면 아래 입력창에 해당 거래가 표시됩니다.</p><div class="actions"><button id="cancelEdit" type="button" class="hidden">수정 취소</button></div></section>
 <section class="panel"><h2>거래 내역</h2><div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>유형</th><th>종목</th><th>수량</th><th>단가</th><th>금액</th><th>통화</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
 <section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">JSON 복원은 현재 데이터를 교체합니다. 실사용 온라인 저장 기능이 구축되면 서버 기반으로 전환합니다.</p></section>
 </main><script>
@@ -64,6 +66,9 @@ function validateLedger(candidate){
  }
  return true;
 }
+let editingId=null;
+function stopEditing(){editingId=null;$('submitEntry').textContent='거래 기록';$('cancelEdit').classList.add('hidden');$('editStatus').textContent='거래 내역에서 수정 버튼을 눌러주세요.';}
+$('cancelEdit').onclick=stopEditing;
 function render(){
  const previous=val('entryAccount'),view=val('viewAccount');
  $('entryAccount').replaceChildren();$('viewAccount').replaceChildren();
@@ -72,12 +77,12 @@ function render(){
  $('entryAccount').value=db.accounts.some(a=>a.id===previous)?previous:(db.accounts[0]?.id||'');
  $('viewAccount').value=db.accounts.some(a=>a.id===view)?view:'ALL';
  $('accounts').textContent=db.accounts.length?db.accounts.map(a=>a.name+' ('+a.type+')').join(' · '):'등록된 계좌가 없습니다.';
- const selected=val('viewAccount'),byAccount=new Map(),cash={USD:0,KRW:0};
+ const selected=val('viewAccount'),byAccount=new Map(),cash={USD:0,KRW:0};let realized=0,sellCount=0;
  for(const e of [...db.entries].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)){
   if(selected!=='ALL'&&e.accountId!==selected)continue;
   if(['OPEN','BUY','SELL'].includes(e.type)){
    const key=e.accountId+'|'+e.symbol,old=byAccount.get(key)||{symbol:e.symbol,qty:0,cost:0};
-   if(e.type==='SELL'){const avg=old.qty>0?old.cost/old.qty:0;old.qty-=e.qty;old.cost-=avg*e.qty;cash[e.currency]+=e.qty*e.price;}
+   if(e.type==='SELL'){const avg=old.qty>0?old.cost/old.qty:0;realized+=e.qty*(e.price-avg);sellCount++;old.qty-=e.qty;old.cost-=avg*e.qty;cash[e.currency]+=e.qty*e.price;}
    else{old.qty+=e.qty;old.cost+=e.qty*e.price;if(e.type==='BUY')cash[e.currency]-=e.qty*e.price;}
    if(Math.abs(old.qty)<1e-9){old.qty=0;old.cost=0;}
    byAccount.set(key,old);
@@ -88,13 +93,16 @@ function render(){
  const positions=new Map();
  for(const v of byAccount.values()){if(v.qty<=1e-9)continue;const total=positions.get(v.symbol)||{qty:0,cost:0};total.qty+=v.qty;total.cost+=v.cost;positions.set(v.symbol,total);}
  const active=[...positions].sort(([a],[b])=>a.localeCompare(b));
+ $('realizedTotal').textContent='USD '+fmt(realized);$('sellCount').textContent=fmt(sellCount,0);
  $('symbolCount').textContent=fmt(active.length,0);$('usdCash').textContent=fmt(cash.USD);$('krwCash').textContent=fmt(cash.KRW,0);
  $('holdings').replaceChildren();
  for(const [symbol,v] of active){const tr=document.createElement('tr');for(const s of [symbol,fmt(v.qty,6),fmt(v.cost/v.qty,4),fmt(v.cost)]){const td=document.createElement('td');td.textContent=s;tr.append(td);}$('holdings').append(tr);}
  $('transactions').replaceChildren();
  for(const e of [...db.entries].filter(e=>selected==='ALL'||e.accountId===selected).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)){const tr=document.createElement('tr'),name=db.accounts.find(a=>a.id===e.accountId)?.name||'미확인';
   for(const s of [name+' / '+e.date,e.type,e.symbol||'—',e.qty?fmt(e.qty,6):'—',e.price?fmt(e.price,4):'—',e.amount?fmt(e.amount):'—',e.currency]){const td=document.createElement('td');td.textContent=s;tr.append(td);}
-  const td=document.createElement('td'),btn=document.createElement('button');btn.textContent='삭제';btn.onclick=()=>{if(!confirm('이 거래 기록을 삭제하시겠습니까?'))return;const next={...db,entries:db.entries.filter(x=>x.id!==e.id)};try{validateLedger(next);db=next;save();msg('거래를 삭제했습니다.');}catch(error){msg('삭제 불가: '+error.message+' · 이후 거래에 영향을 주므로 원장을 먼저 수정하세요.');}};td.append(btn);tr.append(td);$('transactions').append(tr);
+  const td=document.createElement('td'),edit=document.createElement('button');edit.textContent='수정';edit.style.width='auto';edit.style.marginRight='6px';edit.onclick=()=>{
+  editingId=e.id;$('entryAccount').value=e.accountId;$('entryDate').value=e.date;$('entryType').value=e.type;$('entrySymbol').value=e.symbol||'';$('entryQty').value=e.qty||'';$('entryPrice').value=e.price??'';$('entryCurrency').value=e.currency;$('entryAmount').value=e.amount||'';$('entryToCurrency').value=e.toCurrency||'KRW';$('entryToAmount').value=e.toAmount||'';$('entryNote').value=e.note||'';updateEntryFields();$('submitEntry').textContent='거래 수정 저장';$('cancelEdit').classList.remove('hidden');$('editStatus').textContent='선택한 거래 '+e.date+' / '+e.type+' 수정 중. 입력창에서 변경 후 저장하세요.';$('entryForm').scrollIntoView({behavior:'smooth',block:'center'});
+ };td.append(edit);const btn=document.createElement('button');btn.textContent='삭제';btn.style.width='auto';btn.onclick=()=>{if(!confirm('이 거래 기록을 삭제하시겠습니까?'))return;const next={...db,entries:db.entries.filter(x=>x.id!==e.id)};try{validateLedger(next);db=next;if(editingId===e.id)stopEditing();save();msg('거래를 삭제했습니다.');}catch(error){msg('삭제 불가: '+error.message+' · 이후 거래에 영향을 주므로 원장을 먼저 수정하세요.');}};td.append(btn);tr.append(td);$('transactions').append(tr);
  }
 }
 $('accountForm').onsubmit=e=>{e.preventDefault();const name=val('accountName');if(!name)return;if(db.accounts.some(a=>a.name===name)){msg('같은 이름의 계좌가 있습니다.');return;}db.accounts.push({id:crypto.randomUUID(),name,type:val('accountType')});save();$('accountName').value='';msg('계좌를 추가했습니다.');};
@@ -111,10 +119,13 @@ $('entryForm').onsubmit=e=>{
  if(type==='SELL'){let balance=0;for(const x of existing)balance+=x.type==='SELL'?-x.qty:x.qty;if(qty>balance+1e-8){msg('매도 수량이 해당 계좌의 보유수량을 초과합니다.');return;}}
  const timeline=[...db.entries.filter(x=>x.accountId===accountId&&x.symbol===symbol&&['OPEN','BUY','SELL'].includes(x.type)),{date,type,qty,created:Date.now()+1}].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created);
  if(stock){let balance=0;for(const t of timeline){balance+=t.type==='SELL'?-t.qty:t.qty;if(balance< -1e-8){msg('해당 날짜의 거래를 기록하면 이후 보유수량이 음수가 됩니다. 날짜 또는 수량을 확인하세요.');return;}}}
- const next={...db,entries:[...db.entries,{id:crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:Date.now()}]};
+ const previousEntry=editingId?db.entries.find(x=>x.id===editingId):null;
+ if(editingId&&!previousEntry){msg('수정할 거래를 찾을 수 없습니다. 다시 선택하세요.');return;}
+ const changed={id:previousEntry?.id||crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:previousEntry?.created||Date.now()};
+ const next={...db,entries:previousEntry?db.entries.map(x=>x.id===editingId?changed:x):[...db.entries,changed]};
  try{validateLedger(next);}catch(error){msg('거래 기록 불가: '+error.message);return;}
- if(!confirm('거래를 이 브라우저에 기록하시겠습니까? (서버 저장 아님)'))return;
- db=next;save();msg('브라우저에 기록했습니다. 온라인 동기화는 아직 지원하지 않습니다.');
+ if(!confirm(editingId?'이 거래를 수정하시겠습니까? 이후 잔고까지 다시 계산됩니다.':'거래를 이 브라우저에 기록하시겠습니까? (서버 저장 아님)'))return;
+ db=next;stopEditing();save();msg('브라우저 원장에 반영했습니다. 서버 저장은 별도로 진행해야 합니다.');
 };
 const updateEntryFields=()=>{const type=val('entryType'),stock=['OPEN','BUY','SELL'].includes(type),fx=type==='FX';document.querySelectorAll('.stockField').forEach(el=>el.classList.toggle('hidden',!stock));document.querySelectorAll('.moneyField').forEach(el=>el.classList.toggle('hidden',stock));document.querySelectorAll('.fxField').forEach(el=>el.classList.toggle('hidden',!fx));};
 $('entryType').onchange=updateEntryFields;updateEntryFields();
