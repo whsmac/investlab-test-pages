@@ -49,23 +49,25 @@ async function loadPrices(){
   if(userError||!userResult?.user?.id)throw Error('Company Investment Analysis에서 TEST 계정으로 로그인하세요.');
   const {data:companies,error:companyError}=await client.from('companies').select('id,ticker').limit(100);
   if(companyError)throw companyError;
-  const symbols=[...new Set(data.entries.filter(e=>['OPEN','BUY','SELL'].includes(e.type)).map(e=>e.symbol))];
+  const symbols=projectLedger(data,account.value).holdings.map(h=>h.symbol);
   const companyByTicker=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
   const ids=symbols.map(s=>companyByTicker.get(s)).filter(Boolean);
   if(!ids.length){prices=new Map();pricesLoaded=true;render();status.textContent='TEST 기업 목록에 일치하는 보유종목이 없습니다.';return;}
   // Fetch one latest USD observation per company; a global 1000-row limit can omit thinly traded symbols.
   const tickerById=new Map([...companyByTicker].map(([ticker,id])=>[id,ticker])),next=new Map();
-  const results=await Promise.all([...new Set(ids)].map(async id=>{
+  const results=await Promise.allSettled([...new Set(ids)].map(async id=>{
    const {data:rows,error}=await client.from('market_price_observations').select('trading_date,close_price,currency,price_basis').eq('company_id',id).eq('currency','USD').order('trading_date',{ascending:false}).limit(1);
-   if(error)throw error;return {id,row:rows?.[0]};
+   if(error)throw Error(tickerById.get(id)+': '+error.message);return {id,row:rows?.[0]};
   }));
-  for(const {id,row} of results){if(!row)continue;const ticker=tickerById.get(id),close=Number(row.close_price);if(ticker&&Number.isFinite(close)&&close>=0)next.set(ticker,{date:row.trading_date,close,currency:row.currency});}
-  prices=next;pricesLoaded=true;render();status.textContent='TEST 서버 종가 조회 완료 · '+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
+  const errors=[];
+  for(const result of results){if(result.status==='rejected'){errors.push(String(result.reason?.message||result.reason));continue;}const {id,row}=result.value;if(!row)continue;const ticker=tickerById.get(id),close=Number(row.close_price);if(ticker&&Number.isFinite(close)&&close>=0)next.set(ticker,{date:row.trading_date,close,currency:row.currency});}
+  if(errors.length===results.length)throw Error('모든 종목 조회 실패: '+errors.slice(0,3).join(' / '));
+  prices=next;pricesLoaded=true;render();status.textContent=(errors.length?'일부 조회 실패('+errors.length+'개): '+errors.slice(0,2).join(' / ')+' · ':'TEST 서버 종가 조회 완료 · ')+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
  }catch(error){status.textContent='조회 실패: '+error.message+' · 기존 조회 가격은 유지됩니다.';}
  finally{priceLoading=false;$('loadPrices').disabled=false;}
 }
 $('loadPrices').onclick=loadPrices;
-account.onchange=render;window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
+account.onchange=()=>{render();if($('autoPrices').checked)void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 // Only read existing TEST auth/config; never create a session or write server data automatically.
 const AUTO_KEY='investlab_pilot_auto_prices_v1';
 try{$('autoPrices').checked=localStorage.getItem(AUTO_KEY)!=='off';}catch{}
