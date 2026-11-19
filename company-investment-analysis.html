@@ -32,7 +32,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <body><main class="wrap">
 <a href="./index.html">← INVESTLAB 홈</a>
 <h1>Company Investment Analysis</h1>
-<p class="muted">6개 기업의 일별 종가와 분기 매출·설비투자를 비교합니다. 데이터는 TEST Supabase에서 자동 조회하며, 실시간 체결가격이 아닌 미국 증시의 저장 종가입니다.</p>
+<p class="muted">6개 기업의 일별 종가와 분기 매출·설비투자를 비교합니다. TEST 서버 이력에 GitHub Pages의 자동수집 최근 종가를 연결합니다. 실시간 체결가격이 아닌 최근 거래일 종가입니다.</p>
 <section class="panel">
 <p class="muted" style="margin:0 0 9px">종목 버튼을 눌러 여러 기업을 선택하거나 제외할 수 있습니다. 최소 1개 종목은 유지됩니다.</p>
 <div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div>
@@ -56,6 +56,8 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 </main>
 <script type="module">
 import {readSharedPriceSeries} from "./src/market/read-shared-price-series.mjs";
+import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review.mjs";
+import {mergeTestDailyPrices} from "./src/market/merge-test-daily-prices.mjs";
 const TEST_URL="https://gopofxyezhwpfxbecrxd.supabase.co";
 const SYMBOLS=["MSFT","GOOGL","AMZN","META","TSLA","SPCX"];
 const COLORS=["#79b5ff","#efb76a","#a7dd9c","#d79cf2","#f6818b","#7dddd0"];
@@ -259,30 +261,49 @@ async function loadFinance(){
  }
 }
 async function loadAll(){
- if(busy)return;busy=true;$("status").textContent="TEST 공통 주가 자동 조회 중…";
+ if(busy)return;
+ busy=true;
+ const from=isoDate($("period").value),next=new Map(),failures=[];
+ let serverConnected=false,serverError="",feedError="",feedResult=null;
+ $("status").textContent="TEST 저장 주가 및 자동수집 종가를 조회 중…";
  try{
-  const c=await connect();
-  const {data,error}=await c.from("companies").select("id,ticker,company_name").in("ticker",SYMBOLS);
-  if(error)throw Error(error.message);
-  companies=new Map((data||[]).map(v=>[v.ticker,v]));
-  renderSymbols();
-  const from=isoDate($("period").value);
-  const result=await Promise.allSettled(SYMBOLS.map(ticker=>readSharedPriceSeries(c,{ticker,from})));
-  const next=new Map(),failures=[];
-  result.forEach((r,i)=>{
-   const ticker=SYMBOLS[i];
-   if(r.status==="fulfilled")next.set(ticker,r.value.points);
-   else{next.set(ticker,[]);failures.push(ticker);}
-  });
-  series=next;renderPrices();
+  try{
+   const c=await connect();
+   const {data,error}=await c.from("companies").select("id,ticker,company_name").in("ticker",SYMBOLS);
+   if(error)throw Error(error.message);
+   companies=new Map((data||[]).map(v=>[v.ticker,v]));
+   serverConnected=true;
+   const result=await Promise.allSettled(SYMBOLS.map(ticker=>readSharedPriceSeries(c,{ticker,from})));
+   result.forEach((r,i)=>{
+    const ticker=SYMBOLS[i];
+    if(r.status==="fulfilled")next.set(ticker,r.value.points);
+    else{next.set(ticker,[]);failures.push(ticker);}
+   });
+  }catch(error){
+   serverError=error.message||String(error);
+   client=null;
+  }
+  for(const ticker of SYMBOLS)if(!next.has(ticker))next.set(ticker,[]);
+  try{
+   // Same-origin public TEST JSON; no tokens, CORS proxies or client-side scraping.
+   const published=await loadPublishedYahooReview({origin:location.href});
+   feedResult=mergeTestDailyPrices(next,published,{from,maxAgeDays:7});
+   series=feedResult.series;
+  }catch(error){feedError=error.message||String(error);series=next;}
+  renderSymbols();renderPrices();
   const available=SYMBOLS.filter(t=>series.get(t)?.length);
-  $("status").textContent=available.length+"개 기업 · "+from+" 이후 저장 종가 자동 조회"+(failures.length?" · 일부 조회 실패: "+failures.join(", "):"")+" · 실시간 시세 아님";
-  await loadFinance();
- }catch(error){
-  $("status").textContent="기업분석 자동 조회 실패: "+error.message;
-  if(!series.size)emptyChart($("priceChart"),"로그인 또는 데이터 연결을 확인하세요.");
-  drawFinance([]);
-  $("financeStatus").textContent="TEST 계정 연결 후 분기 자료가 표시됩니다.";
+  const origin=feedResult?.appended?" · 최근 자동수집 종가 "+feedResult.appended+"건 보완":"";
+  $("status").textContent=available.length+"/6개 기업 · "+from+" 이후 종가 조회"+origin+
+   (serverConnected?" · TEST 서버 이력 연결":" · TEST 서버 미연결")+
+   (serverError?" · 서버: "+serverError:"")+
+   (feedError?" · 최근 종가: "+feedError:"")+
+   (failures.length?" · 이력 미조회 "+failures.join(", "):"")+
+   " · Yahoo 데이터는 일별 종가이며 실시간 체결가가 아닙니다";
+  if(serverConnected)await loadFinance();
+  else{
+   financeCache.delete(selected);drawFinance([]);
+   $("financeStatus").textContent="분기 재무자료는 TEST 서버 로그인 후 조회합니다. 최근 종가 자동파일은 별도 표시됩니다.";
+  }
  }finally{busy=false;}
 }
 $("financialTicker").addEventListener("change",event=>{
