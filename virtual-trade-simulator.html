@@ -472,7 +472,7 @@ async function loadSharedChartObservations(){
  const ids=new Map((companies||[]).map(x=>[String(x.id),String(x.ticker||'').toUpperCase()]));
  const observations=[];
  for(let offset=0;offset<20000;offset+=1000){
-  const {data,error}=await client.from('market_price_observations').select('company_id,trading_date,close_price').order('trading_date',{ascending:true}).order('company_id',{ascending:true}).range(offset,offset+999);
+  const {data,error}=await client.from('market_price_observations').select('company_id,trading_date,close_price').eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:true}).order('company_id',{ascending:true}).range(offset,offset+999);
   if(error)throw new Error('주가 조회 실패: '+error.message);
   for(const p of data||[]){
    const ticker=ids.get(String(p.company_id)),price=Number(p.close_price);
@@ -586,7 +586,7 @@ async function refreshCurrentQuotes(){
   if(companyError)throw Error(companyError.message);
   const found=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
   const results=await Promise.allSettled(tickers.filter(t=>found.has(t)).map(async t=>{
-   const {data,error}=await client.from('market_price_observations').select('trading_date,close_price,price_basis').eq('company_id',found.get(t)).eq('currency','USD').order('trading_date',{ascending:false}).limit(1);
+   const {data,error}=await client.from('market_price_observations').select('trading_date,close_price,price_basis').eq('company_id',found.get(t)).eq('currency','USD').eq('price_basis','raw').order('trading_date',{ascending:false}).limit(1);
    if(error)throw Error(error.message);
    const row=data?.[0],price=row?.close_price;
    if(price===null||price===undefined||price===''||!Number.isFinite(Number(price))||Number(price)<=0)return {ticker:t,rejected:'가격 오류'};
