@@ -87,7 +87,7 @@ $('restoreOnline').onclick=async()=>{
  button.disabled=true;status.textContent='TEST 서버 데이터 복원 중…';
  try{
   if(online.ledger!==null){
-   const {error}=await client.from('investlab_pilot_ledger_documents').upsert({user_id:userId,payload:online.ledger},{onConflict:'user_id'});
+   const {error}=await client.from('investlab_pilot_ledger_documents').upsert({user_id:userId,payload:online.ledger,updated_at:new Date().toISOString()},{onConflict:'user_id'});
    if(error)throw Error('서버 원장 복원 실패: '+error.message);
   }
   const rows=Object.entries(online.strategies).map(([name,strategies])=>({user_id:userId,name,strategies,updated_at:new Date().toISOString()}));
