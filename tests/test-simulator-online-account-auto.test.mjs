@@ -21,7 +21,9 @@ test('only authenticated TEST owner ledger is read for automatic opening',()=>{
  assert.match(html,/window\.addEventListener\('pageshow',\(\)=>\{void refreshOnlineAccountLedger\(\);\}\)/);
 });
 test('existing simulator draft, explicit handoff and user editing block automatic overwrite',()=>{
- assert.match(html,/firstRead&&opening&&!localStorage\.getItem\(DRAFT_KEY\)&&!explicitHandoff&&!onlineLedgerUserEdited&&!draftTimer/);
+ assert.match(html,/mayAutoApplyTestLedger\(\{/);
+ assert.match(html,/hasDraft:Boolean\(localStorage\.getItem\(DRAFT_KEY\)\)/);
+ assert.match(html,/ownerChanged:onlineLedgerOwnerChanged/);
  assert.match(html,/onlineLedgerUserEdited=true/);
  assert.match(html,/scheduleWorkingDraft\(\);void refreshCurrentQuotes\(\);/);
  assert.match(html,/저장된 임시작업은 자동으로 덮어쓰지 않습니다/);
