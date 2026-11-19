@@ -83,10 +83,20 @@ async function loadCloudLedgerSafely(){
   const payload=remote.payload;
   if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('서버 원장 형식 오류');
   if(payload.accounts.length!==new Set(payload.accounts.map(a=>a.id)).size||payload.entries.length!==new Set(payload.entries.map(e=>e.id)).size)throw Error('서버 원장에 중복 ID가 있습니다');
-  // Reuse the ledger projection to reject invalid account/transaction structures before replacing local data.
+  // Projection is a display calculator, not a full ledger validator.
+  const ids=new Set(payload.accounts.map(a=>String(a.id)));
+  if(payload.accounts.some(a=>!a||typeof a.id!=='string'||!a.id.trim()||typeof a.name!=='string'||!a.name.trim()))throw Error('서버 계좌에 필수 항목이 누락되었습니다');
+  if(payload.entries.some(e=>!e||typeof e.id!=='string'||!e.id.trim()||!ids.has(String(e.accountId))||typeof e.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DIVIDEND','FX','DEPOSIT','WITHDRAW'].includes(e.type)))throw Error('서버 거래에 필수 항목, 날짜 또는 계좌 연결 오류가 있습니다');
   projectLedger(payload,'ALL');
   for(const a of payload.accounts)projectLedger(payload,a.id);
-  if(!confirm('서버 원장 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래를 불러옵니다. 현재 브라우저 원장을 JSON 파일로 먼저 백업해야 합니다. 백업을 시작하시겠습니까?'))return;
+  const current=original===null?{version:1,accounts:[],entries:[]}:JSON.parse(original);
+  if(current?.version!==1||!Array.isArray(current.accounts)||!Array.isArray(current.entries))throw Error('브라우저 원장 형식 오류 · 먼저 수동 백업이 필요합니다');
+  const remoteIds=new Set(payload.entries.map(e=>String(e.id)));
+  const localOnly=current.entries.filter(e=>!remoteIds.has(String(e.id))).length;
+  const canonical=value=>JSON.stringify(value,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(key=>[key,v[key]])):v);
+  const remoteMap=new Map(payload.entries.map(e=>[String(e.id),e]));
+  const changed=current.entries.filter(e=>remoteMap.has(String(e.id))&&canonical(e)!==canonical(remoteMap.get(String(e.id)))).length;
+  if(!confirm('서버 원장 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래를 불러옵니다. 브라우저에만 있는 거래 '+localOnly+'건, 같은 ID의 내용이 다른 거래 '+changed+'건이 교체될 수 있습니다. 현재 브라우저 원장을 JSON 파일로 백업하시겠습니까?'))return;
   const backup=original===null?JSON.stringify({version:1,accounts:[],entries:[]}):original;
   const blob=new Blob([backup],{type:'application/json;charset=utf-8'}),href=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=href;link.download='investlab-before-cloud-load-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(href),30000);
@@ -96,8 +106,15 @@ async function loadCloudLedgerSafely(){
   const {data:latest,error:latestError}=await client.from('investlab_pilot_ledger_documents').select('updated_at').eq('user_id',userId).maybeSingle();
   if(latestError||!latest||latest.updated_at!==remote.updated_at)throw Error('확인 중 서버 원장이 변경되었습니다. 다시 시도하세요');
   if(localStorage.getItem(KEY)!==original)throw Error('확인 중 브라우저 원장이 변경되었습니다. 다시 시도하세요');
-  localStorage.setItem(KEY,JSON.stringify(payload));
-  output.textContent='서버 원장을 브라우저에 불러왔습니다 · 백업 파일 보관 권장 · 화면 갱신 중';
+  const serialized=JSON.stringify(payload);
+  try{
+   localStorage.setItem(KEY,serialized);
+   if(localStorage.getItem(KEY)!==serialized)throw Error('브라우저 저장 결과가 일치하지 않습니다');
+  }catch(writeError){
+   try{if(original===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,original);}catch{}
+   throw Error('브라우저 저장 실패 또는 검증 실패: '+writeError.message);
+  }
+  output.textContent='서버 원장 불러오기 및 브라우저 저장 검증 완료 · 백업 파일 보관 권장 · 화면 갱신 중';
   location.reload();
  }catch(error){output.textContent='안전 불러오기 중단: '+error.message+' · 서버 데이터 변경 없음';}
  finally{button.disabled=false;}
