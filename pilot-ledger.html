@@ -123,12 +123,13 @@ $('cloudLogin').onclick=async()=>{
   const key=val('cloudKey'),email=val('cloudEmail'),password=val('cloudPassword');
   if(!key||!email||!password||key.startsWith('sb_secret_')||key.toLowerCase().includes('service_role'))throw Error('TEST 공개용 키·이메일·비밀번호를 입력하세요. 비밀 키는 사용할 수 없습니다.');
   if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다');
-  cloud=window.supabase.createClient(TEST_URL,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  cloud=window.supabase.createClient(TEST_URL,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   cloudKey=key;cloudUser=null;
   const {data,error}=await cloud.auth.signInWithPassword({email,password});
   if(error||!data?.user?.id)throw error||Error('로그인 실패');
   cloudUser=data.user.id;$('cloudPassword').value='';
-  cloudStatus('TEST 계정 로그인 완료 · 서버 데이터는 자동으로 불러오지 않습니다.');
+  localStorage.setItem('investlab_shared_data_connection_v1',JSON.stringify({url:TEST_URL,key}));
+  cloudStatus('TEST 계정 로그인 완료 · My Portfolio와 로그인 공유 · 서버 데이터 자동 불러오기 없음');
  }catch(e){cloudUser=null;cloudStatus('로그인 실패: '+e.message);}
 };
 $('cloudLogout').onclick=async()=>{if(cloud)await cloud.auth.signOut();cloud=null;cloudUser=null;cloudKey=null;cloudStatus('로그아웃 · 현재 브라우저 원장은 그대로 유지됩니다.');};
