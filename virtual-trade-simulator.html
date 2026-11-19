@@ -663,7 +663,7 @@ byId('loadPilotLedgerPositions').addEventListener('click',()=>{
   if(!result.holdings.length)throw Error('통합원장에 보유수량이 있는 종목이 없습니다.');
   if(!Number.isFinite(result.cash.USD)||result.cash.USD<0)throw Error('통합원장의 USD 현금잔고가 음수입니다. 거래내역을 확인하세요.');
   const positions=result.holdings.map(h=>({ticker:h.symbol,quantity:h.qty,averageCost:h.averageCost}));
-  if(!positions.every(p=>/^[A-Z][A-Z0-9.\\-]{0,14}$/.test(p.ticker)&&Number.isFinite(p.quantity)&&p.quantity>0&&Number.isFinite(p.averageCost)&&p.averageCost>=0))throw Error('보유종목 코드·수량·평균단가를 확인하세요.');
+  if(!positions.every(p=>/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.ticker)&&Number.isFinite(p.quantity)&&p.quantity>0&&Number.isFinite(p.averageCost)&&p.averageCost>=0))throw Error('보유종목 코드·수량·평균단가를 확인하세요.');
   if(!confirm('통합원장 '+data.accounts.length+'개 계좌의 보유종목 '+positions.length+'개와 USD 현금 '+result.cash.USD.toLocaleString('ko-KR')+'을 시작값에 적용합니다. 기존 전략·가정 주가는 유지합니다. 계속하시겠습니까?'))return;
   simulatorInputRevision++;
   invalidateCalculatedResults();
