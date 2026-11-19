@@ -1,6 +1,6 @@
 // INVESTLAB TEST: merge same-origin, read-only published daily closes with TEST history.
 // Never overwrite an existing trading date or treat an unofficial close as a live quote.
-const ALLOWED=new Set(["MSFT","GOOGL","AMZN","META","TSLA"]);
+const ALLOWED=new Set(["MSFT","GOOGL","AMZN","META","TSLA","SPCX"]);
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 export function mergeTestDailyPrices(knownSeries,review,{from="0000-00-00",today=new Date(),maxAgeDays=7}={}){
  if(!(knownSeries instanceof Map))throw Error("기존 주가 자료 오류");
@@ -15,6 +15,7 @@ export function mergeTestDailyPrices(knownSeries,review,{from="0000-00-00",today
  const incoming=new Map([...ALLOWED].map(t=>[t,[]]));
  for(const row of review.observations){
   if(!ALLOWED.has(row?.ticker))continue;
+  if(row.ticker==="SPCX"&&row.trading_date<"2026-06-12")throw Error("상장 전 SPCX 주가 차단");
   const stamp=Date.parse(String(row.trading_date)+"T00:00:00Z");
   if(!DATE.test(row.trading_date)||!Number.isFinite(stamp)||new Date(stamp).toISOString().slice(0,10)!==row.trading_date||
      stamp>todayMs||row.currency!=="USD"||row.price_basis!=="unadjusted_close")throw Error("TEST 주가 날짜·통화·기준 검증 실패");
