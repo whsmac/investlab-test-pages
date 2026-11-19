@@ -4,7 +4,7 @@
 <body><main class="wrap"><a href="./index.html">← 홈</a><h1>My Portfolio</h1>
 <p class="muted">통합원장과 같은 계좌·거래 데이터를 읽습니다. 보유종목을 다시 입력할 필요가 없습니다.</p>
 <p class="warn">현재는 동일 브라우저의 통합원장 임시 저장 데이터를 읽는 버전입니다. 다른 기기의 자료는 자동으로 표시되지 않습니다.</p>
-<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="loadPrices" type="button" style="padding:10px 15px;background:#274675;color:white;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 최신 주가 조회</button><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
+<section class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button id="loadPrices" type="button" style="padding:10px 15px;background:#274675;color:white;border:1px solid #6179a4;border-radius:9px;cursor:pointer">TEST 서버 최신 주가 조회</button><label class="muted" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="autoPrices" checked> 페이지 열 때 자동 조회</label><span id="priceStatus" class="muted" role="status">주가 미조회 · TEST 공유 데이터 로그인 세션이 필요합니다.</span></div><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
 <div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
 <div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
 <div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
@@ -18,7 +18,7 @@ import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
 const account=$('account');for(const a of data.accounts){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';account.append(o);}
-let prices=new Map(),pricesLoaded=false;
+let prices=new Map(),pricesLoaded=false,priceLoading=false;
 const todayIso=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
 const ageDays=date=>{const parsed=Date.parse(date+'T00:00:00Z');return Number.isFinite(parsed)?Math.max(0,Math.floor((Date.parse(todayIso()+'T00:00:00Z')-parsed)/86400000)):null;};
 const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
@@ -35,7 +35,9 @@ $('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){
 $('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
 $('status').textContent=data.accounts.length?'원장 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건을 기준으로 계산했습니다.':'등록된 계좌가 없습니다. 통합원장에서 계좌와 거래를 입력하세요.';
 }
-$('loadPrices').onclick=async()=>{
+async function loadPrices(){
+ if(priceLoading)return;
+ priceLoading=true;$('loadPrices').disabled=true;
  const status=$('priceStatus');status.textContent='TEST 서버 주가 조회 중…';
  try{
   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
@@ -60,6 +62,10 @@ $('loadPrices').onclick=async()=>{
   for(const {id,row} of results){if(!row)continue;const ticker=tickerById.get(id),close=Number(row.close_price);if(ticker&&Number.isFinite(close)&&close>=0)next.set(ticker,{date:row.trading_date,close,currency:row.currency});}
   prices=next;pricesLoaded=true;render();status.textContent='TEST 서버 종가 조회 완료 · '+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
  }catch(error){status.textContent='조회 실패: '+error.message+' · 기존 조회 가격은 유지됩니다.';}
-};
+ finally{priceLoading=false;$('loadPrices').disabled=false;}
+}
+$('loadPrices').onclick=loadPrices;
 account.onchange=render;window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
+// Only read existing TEST auth/config; never create a session or write server data automatically.
+try{const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');if($('autoPrices').checked&&cfg.url==='https://gopofxyezhwpfxbecrxd.supabase.co'&&cfg.key&&data.accounts.length)void loadPrices();}catch{}
 </script></body></html>
