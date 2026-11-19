@@ -7,7 +7,7 @@ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.ur
 test('TEST online ledger account selector is visible and unique',()=>{
  for(const id of ['pilotLedgerAccount','loadPilotLedgerCloud','pilotLedgerLoadStatus','onlineLedgerPreviewStatus'])
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id+' must be unique');
- assert.match(html,/<section class="panel quick-panel"><h2>현재 투자현황<\/h2><label for="pilotLedgerAccount">/);
+ assert.match(html,/<section class="panel quick-panel"><h2>현재 투자현황<\/h2><label id="pilotLedgerAccountLabel" for="pilotLedgerAccount">/);
  assert.match(html,/onlineAccountLedger\?\.ledger\|\|JSON\.parse/);
  assert.match(html,/byId\('pilotLedgerAccount'\)\.addEventListener\('change'/);
 });
