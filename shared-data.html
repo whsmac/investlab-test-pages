@@ -577,6 +577,8 @@ $("verifiedPortfolioPreview").onclick = () => {
   $("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
   $("logout").onclick = async () => { session = null; verifiedUserId = null; ++verificationSequence; $("verifiedPortfolioStatus").textContent = "로그아웃됨 · 검사 결과 초기화"; clearSharedData(); updateAuth(); if (client) { const {error} = await client.auth.signOut(); if (error) return authStatus("로그아웃 요청 실패: " + error.message + " · 표시된 데이터는 지웠습니다."); } authStatus("로그아웃했습니다."); };
   $("reload").onclick = loadData;
+  // Shared company prices/financials refresh in place while this page is open.
+  setInterval(()=>{if(!document.hidden&&verifiedUserId&&session?.user?.id===verifiedUserId)void loadData();},15*60*1000);
   connect(); updateAuth();
 })();
 </script>
