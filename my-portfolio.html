@@ -67,5 +67,8 @@ async function loadPrices(){
 $('loadPrices').onclick=loadPrices;
 account.onchange=render;window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 // Only read existing TEST auth/config; never create a session or write server data automatically.
+const AUTO_KEY='investlab_pilot_auto_prices_v1';
+try{$('autoPrices').checked=localStorage.getItem(AUTO_KEY)!=='off';}catch{}
+$('autoPrices').onchange=()=>{try{localStorage.setItem(AUTO_KEY,$('autoPrices').checked?'on':'off');}catch{}if($('autoPrices').checked&&!pricesLoaded)void loadPrices();};
 try{const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');if($('autoPrices').checked&&cfg.url==='https://gopofxyezhwpfxbecrxd.supabase.co'&&cfg.key&&data.accounts.length)void loadPrices();}catch{}
 </script></body></html>
