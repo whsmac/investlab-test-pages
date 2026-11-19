@@ -10,7 +10,7 @@
 <p class="muted">로그인 후 서버에서 불러오기 / 서버에 저장을 직접 선택합니다. DB 설치 전에는 저장할 수 없습니다. 이 브라우저 데이터는 자동으로 서버에 업로드되지 않습니다.</p>
 <div class="grid"><label class="wide">TEST 공개용 Supabase anon / publishable key<input id="cloudKey" type="password" autocomplete="off" placeholder="TEST 프로젝트 공개 키"></label>
 <label>이메일<input id="cloudEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="cloudPassword" type="password" autocomplete="current-password"></label></div>
-<div class="actions" style="margin-top:12px"><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
+<div class="actions" style="margin-top:12px"><button type="button" id="cloudReuseLogin">공유 데이터 로그인 사용</button><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
 <p id="cloudStatus" class="muted" role="status">서버 연결 전 · 브라우저 임시 저장만 사용 중</p></section>
 <section class="panel"><h2>계좌 등록</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식, ISA, 연금"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><p id="accounts" class="muted"></p></section>
 <section class="panel"><h2>원장 입력</h2><form id="entryForm" class="grid">
@@ -105,6 +105,18 @@ const requireCloud=async()=>{
  const {data,error}=await cloud.auth.getUser();
  if(error||data?.user?.id!==cloudUser)throw Error('서버 인증이 만료되었거나 계정이 변경되었습니다');
  return cloudUser;
+};
+$('cloudReuseLogin').onclick=async()=>{
+ try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  if(cfg.url!==TEST_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('공유 데이터 페이지의 TEST 공개용 연결 설정이 필요합니다');
+  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다');
+  const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const {data,error}=await candidate.auth.getUser();
+  if(error||!data?.user?.id)throw Error('공유 데이터 페이지에서 먼저 TEST 계정으로 로그인하세요');
+  cloud=candidate;cloudUser=data.user.id;cloudKey=cfg.key;
+  cloudStatus('공유 데이터 TEST 계정 인증 재사용 완료 · 서버 원장 자동 저장/불러오기 없음');
+ }catch(e){cloud=null;cloudUser=null;cloudStatus('공유 데이터 인증 재사용 실패: '+e.message);}
 };
 $('cloudLogin').onclick=async()=>{
  try{
