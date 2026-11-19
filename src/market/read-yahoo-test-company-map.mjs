@@ -2,6 +2,7 @@
 // Requires authenticated user; never mutates the database.
 const TEST_URL = "https://gopofxyezhwpfxbecrxd.supabase.co";
 const REQUIRED = ["MSFT", "GOOGL", "AMZN", "META", "TSLA"];
+const OPTIONAL = "SPCX";
 
 export async function readYahooTestCompanyMap(client) {
   if (!client || client.supabaseUrl !== TEST_URL) throw new Error("TEST Supabase URL mismatch");
@@ -28,7 +29,7 @@ export async function readYahooTestCompanyMap(client) {
   const ids = new Set();
   for (const row of rows) {
     const ticker = String(row.ticker || "").trim().toUpperCase();
-    if (!REQUIRED.includes(ticker)) continue;
+    if (!REQUIRED.includes(ticker) && ticker !== OPTIONAL) continue;
     const id = Number(row.id);
     if (!Number.isSafeInteger(id) || id <= 0 || ids.has(id) || Object.hasOwn(mapping, ticker)) {
       throw new Error("Invalid or duplicate TEST company mapping");
@@ -39,5 +40,6 @@ export async function readYahooTestCompanyMap(client) {
   for (const ticker of REQUIRED) {
     if (!Object.hasOwn(mapping, ticker)) throw new Error("Missing TEST company: " + ticker);
   }
-  return Object.fromEntries(REQUIRED.map(ticker => [ticker, mapping[ticker]]));
+  const tickers = Object.hasOwn(mapping, OPTIONAL) ? [...REQUIRED, OPTIONAL] : REQUIRED;
+  return Object.fromEntries(tickers.map(ticker => [ticker, mapping[ticker]]));
 }
