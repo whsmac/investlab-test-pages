@@ -36,11 +36,11 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <section class="panel">
 <p class="muted" style="margin:0 0 9px">종목 버튼을 눌러 여러 기업을 선택하거나 제외할 수 있습니다. 최소 1개 종목은 유지됩니다.</p>
 <div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div>
-<div class="controls" style="margin-top:17px"><h2 id="companyTitle" style="margin:0">기업 주가 분석</h2><label>조회 기간 <select id="period"><option value="3m">3개월</option><option value="6m">6개월</option><option value="1y" selected>1년</option><option value="3y">3년</option><option value="5y">5년</option></select></label></div>
+<div class="controls" style="margin-top:17px"><h2 id="companyTitle" style="margin:0">기업 주가 분석</h2><label>재무·요약 기준 종목 <select id="financialTicker" aria-label="재무 및 주가 요약 기준 종목"></select></label><label>조회 기간 <select id="period"><option value="3m">3개월</option><option value="6m">6개월</option><option value="1y" selected>1년</option><option value="3y">3년</option><option value="5y">5년</option></select></label></div>
 <p id="status" class="muted" role="status">주가 자동 조회 준비 중…</p>
 <p id="metricScope" class="muted">요약 지표와 분기 재무자료의 기준 기업: TSLA</p>
-<div class="metrics"><div class="metric"><small>최근 종가 (USD)</small><strong id="lastPrice">—</strong></div><div class="metric"><small>기간 수익률 (배당 제외)</small><strong id="periodReturn">—</strong></div><div class="metric"><small>조회 기간 시작 종가</small><strong id="firstPrice">—</strong></div><div class="metric"><small>마지막 거래일</small><strong id="lastDate">—</strong></div></div>
-<svg id="priceChart" viewBox="0 0 900 330" role="img" aria-label="선택한 기업들의 주가 통합 시계열"></svg>
+<div class="metrics"><div class="metric"><small id="lastPriceLabel">TSLA · 최근 종가 (USD)</small><strong id="lastPrice">—</strong></div><div class="metric"><small id="periodReturnLabel">TSLA · 기간 수익률 (배당 제외)</small><strong id="periodReturn">—</strong></div><div class="metric"><small id="firstPriceLabel">TSLA · 시작 종가 (USD)</small><strong id="firstPrice">—</strong></div><div class="metric"><small id="lastDateLabel">TSLA · 마지막 거래일</small><strong id="lastDate">—</strong></div></div>
+<svg id="priceChart" viewBox="0 0 900 560" role="img" aria-label="선택 종목의 주가와 기준 기업의 매출 및 CAPEX를 동일 날짜 축으로 나타낸 그래프"></svg>
 <div id="legend" class="legend" aria-label="선택 종목별 주가 선 색상"></div>
 <p id="priceChartNote" class="muted">한 종목은 USD 종가, 복수 종목은 공통 시작일을 100으로 설정한 상대지수로 표시합니다.</p>
 <p class="muted">데이터는 저장된 일별 종가 기준이며 실시간 시세가 아닙니다. 배당수익은 포함하지 않습니다.</p>
@@ -48,9 +48,9 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <section class="panel">
 <h2 id="financeTitle">분기 매출·CAPEX</h2>
 <p id="financeStatus" class="muted" role="status">기업 분기 재무자료 조회 중…</p>
-<svg id="financeChart" viewBox="0 0 900 280" role="img" aria-label="분기 매출과 설비투자 그래프"></svg>
+<p class="muted">매출·CAPEX 변화는 위 통합 그래프에서 주가와 같은 날짜 축으로 표시합니다. 세 항목은 서로 다른 단위와 축척을 사용합니다.</p>
 <div class="scroll"><table><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>CAPEX 기준</th></tr></thead><tbody id="financeRows"></tbody></table></div>
-<p class="muted">재무 수치는 실제로 서버에 수집된 분기 관측값만 표시합니다. 출처가 없는 값은 임의로 추정하지 않습니다.</p>
+<p class="muted">분기 종료일 기준 자료입니다. 현재 분기 재무자료 출처는 Yahoo Finance 비공식 JSON 데이터이며 SEC 공식 공시 대조는 아직 완료되지 않았습니다. 자료가 없는 기간은 임의로 채우지 않습니다.</p>
 </section>
 <p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
 </main>
@@ -61,7 +61,7 @@ const SYMBOLS=["MSFT","GOOGL","AMZN","META","TSLA","SPCX"];
 const COLORS=["#79b5ff","#efb76a","#a7dd9c","#d79cf2","#f6818b","#7dddd0"];
 const $=id=>document.getElementById(id);
 const fmt=(n,dec=2)=>Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
-let selected="TSLA",selectedTickers=new Set(["TSLA"]),client=null,busy=false,series=new Map(),companies=new Map(),latestRequest=0;
+let selected="TSLA",selectedTickers=new Set(["TSLA"]),client=null,busy=false,series=new Map(),companies=new Map(),latestRequest=0,financeCache=new Map();
 const isoDate=(period)=>{
  const d=new Date(),months={"3m":3,"6m":6,"1y":12,"3y":36,"5y":60}[period];
  d.setUTCMonth(d.getUTCMonth()-months);return d.toISOString().slice(0,10);
@@ -75,26 +75,62 @@ function node(name,props={},value){
 function emptyChart(svg,label){
  svg.replaceChildren();svg.append(node("text",{x:450,y:160,fill:"#b9c6da","text-anchor":"middle","font-size":15},label));
 }
-function chart(svg,sets,{index=false}={}){
- svg.replaceChildren();const data=sets.filter(s=>s.points?.length);
- if(!data.length){emptyChart(svg,"조회된 그래프 데이터가 없습니다.");return;}
+function chart(svg,sets,{index=false,finance=[]}={}){
+ svg.replaceChildren();
+ const data=sets.filter(s=>s.points?.length);
+ if(!data.length){emptyChart(svg,"조회된 주가 데이터가 없습니다.");return;}
  const all=data.flatMap(s=>s.points),times=all.map(p=>Date.parse(p.date+"T00:00:00Z"));
- const left=77,right=875,top=24,bottom=283,tMin=Math.min(...times),tMax=Math.max(...times);
- let vMin=Math.min(...all.map(p=>p.value)),vMax=Math.max(...all.map(p=>p.value));
- const pad=(vMax-vMin||Math.max(vMax*.05,1))*.12;vMin=Math.max(0,vMin-pad);vMax+=pad;
- const x=t=>left+(tMax===tMin?0.5:(t-tMin)/(tMax-tMin))*(right-left);
- const y=v=>bottom-(v-vMin)/(vMax-vMin)*(bottom-top);
+ const left=78,right=870,priceTop=36,priceBottom=282;
+ const revenueTop=329,revenueBottom=399,capexTop=438,capexBottom=508;
+ const tMin=Math.min(...times),tMax=Math.max(...times);
+ const x=t=>left+(tMax===tMin?.5:(t-tMin)/(tMax-tMin))*(right-left);
+ const pValues=all.map(p=>p.value),pLow=Math.min(...pValues),pHigh=Math.max(...pValues);
+ const pad=(pHigh-pLow||Math.max(pHigh*.05,1))*.12,vMin=Math.max(0,pLow-pad),vMax=pHigh+pad;
+ const py=v=>priceBottom-(v-vMin)/(vMax-vMin)*(priceBottom-priceTop);
+ svg.append(node("text",{x:left,y:21,fill:"#becbe1","font-size":13},index?"주가 · 공통시작 100 기준":"주가 · USD 종가"));
  for(let i=0;i<=4;i++){
-  const v=vMin+(vMax-vMin)*i/4,yy=y(v);
+  const v=vMin+(vMax-vMin)*i/4,yy=py(v);
   svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
-  svg.append(node("text",{x:left-9,y:yy+4,fill:"#aab9d0","text-anchor":"end","font-size":12},fmt(v,index?0:2)));
+  svg.append(node("text",{x:left-9,y:yy+4,fill:"#b4c1d6","text-anchor":"end","font-size":12},fmt(v,index?0:2)));
+ }
+ const quarters=finance.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.period_end||""))
+  .filter(r=>{const t=Date.parse(r.period_end+"T00:00:00Z");return Number.isFinite(t)&&t>=tMin&&t<=tMax;});
+ for(const r of quarters){
+  const qx=x(Date.parse(r.period_end+"T00:00:00Z"));
+  svg.append(node("line",{x1:qx,y1:priceTop,x2:qx,y2:capexBottom,stroke:"#53617d","stroke-dasharray":"3,6",opacity:.38}));
  }
  for(const s of data){
-  const d=s.points.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+y(p.value).toFixed(2)).join(" ");
-  svg.append(node("path",{d,fill:"none",stroke:s.color||"#83b5ff","stroke-width":s.selected?3:2,"stroke-linejoin":"round",opacity:s.selected||!index?1:0.76}));
+  const d=s.points.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+py(p.value).toFixed(2)).join(" ");
+  svg.append(node("path",{d,fill:"none",stroke:s.color||"#83b5ff","stroke-width":s.selected?3:2,"stroke-linejoin":"round",opacity:s.selected||!index?1:.76}));
  }
- const dates=[new Date(tMin),new Date((tMin+tMax)/2),new Date(tMax)];
- dates.forEach((d,i)=>svg.append(node("text",{x:[left,(left+right)/2,right][i],y:315,fill:"#aab9d0","text-anchor":i===0?"start":i===2?"end":"middle","font-size":12},d.toISOString().slice(0,10))));
+ function financialTrack(field,top,bottom,label,color){
+  svg.append(node("text",{x:left,y:top-10,fill:color,"font-size":13},selected+" · "+label+" (십억 USD)"));
+  svg.append(node("line",{x1:left,y1:bottom,x2:right,y2:bottom,stroke:"#384966"}));
+  const pairs=quarters.filter(r=>r[field]!==null&&r[field]!==undefined&&Number.isFinite(Number(r[field])))
+   .map(r=>({date:r.period_end,val:Number(r[field])}));
+  if(!pairs.length){
+   svg.append(node("text",{x:left+12,y:(top+bottom)/2+6,fill:"#a7b6cf","font-size":13},"조회 기간의 "+label+" 데이터가 없습니다."));
+   return;
+  }
+  const vals=pairs.map(v=>v.val),min=Math.min(...vals),max=Math.max(...vals);
+  const band=max-min||Math.max(max*.12,.5),low=Math.max(0,min-band*.2),high=max+band*.2;
+  const yy=v=>bottom-(v-low)/(high-low)*(bottom-top);
+  svg.append(node("text",{x:left-9,y:top+8,fill:"#a7b6cf","text-anchor":"end","font-size":11},fmt(high,1)));
+  svg.append(node("text",{x:left-9,y:bottom+4,fill:"#a7b6cf","text-anchor":"end","font-size":11},fmt(low,1)));
+  const d=pairs.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+yy(p.val).toFixed(2)).join(" ");
+  svg.append(node("path",{d,fill:"none",stroke:color,"stroke-width":2.5,"stroke-linejoin":"round"}));
+  for(const p of pairs){
+   const px=x(Date.parse(p.date+"T00:00:00Z")),cy=yy(p.val);
+   const dot=node("circle",{cx:px,cy,r:4.5,fill:color,stroke:"#131d30","stroke-width":1.5});
+   const title=node("title",{},selected+" · "+p.date+" · "+label+" "+fmt(p.val)+"십억 USD");
+   dot.append(title);svg.append(dot);
+  }
+  svg.append(node("text",{x:right,y:top-10,fill:color,"text-anchor":"end","font-size":12},"최근 "+fmt(pairs.at(-1).val)+"B"));
+ }
+ financialTrack("revenue_usd_bn",revenueTop,revenueBottom,"매출액","#6ee0b4");
+ financialTrack("capex_usd_bn",capexTop,capexBottom,"CAPEX","#ffbf80");
+ const labels=[new Date(tMin),new Date((tMin+tMax)/2),new Date(tMax)];
+ labels.forEach((d,i)=>svg.append(node("text",{x:[left,(left+right)/2,right][i],y:545,fill:"#b4c1d6","text-anchor":i===0?"start":i===2?"end":"middle","font-size":12},d.toISOString().slice(0,10))));
 }
 function renderSymbols(){
  const root=$("tickerButtons");root.replaceChildren();
@@ -118,6 +154,14 @@ function renderSymbols(){
   };
   root.append(b);
  }
+ const focus=$("financialTicker");
+ focus.replaceChildren();
+ for(const ticker of SYMBOLS.filter(t=>selectedTickers.has(t))){
+  const option=document.createElement("option");
+  option.value=ticker;option.textContent=ticker+" · "+(companies.get(ticker)?.company_name||ticker);
+  focus.append(option);
+ }
+ focus.value=selected;
 }
 function renderPrices(){
  const active=SYMBOLS.filter(t=>selectedTickers.has(t));
@@ -130,7 +174,11 @@ function renderPrices(){
  const displayItems=aligned.get(selected)||[];
  const name=companies.get(selected)?.company_name||selected;
  $("companyTitle").textContent=multi?active.length+"개 기업 주가 통합 비교 · 기준 100":name+" ("+selected+") · 일별 종가 (USD)";
- $("metricScope").textContent="요약 지표 및 아래 분기 매출·CAPEX 기준 기업: "+name+" ("+selected+")";
+ $("metricScope").textContent="주가 요약 · 매출액 · CAPEX 기준 기업: "+name+" ("+selected+")";
+ $("lastPriceLabel").textContent=selected+" · 최근 종가 (USD)";
+ $("periodReturnLabel").textContent=selected+" · 기간 수익률 (배당 제외)";
+ $("firstPriceLabel").textContent=selected+" · 시작 종가 (USD)";
+ $("lastDateLabel").textContent=selected+" · 마지막 거래일";
  $("priceChartNote").textContent=multi
   ?"선택한 "+active.length+"개 종목은 공통 조회 시작일 "+(commonStart||"미확인")+"의 첫 저장 종가를 100으로 환산했습니다. 동일한 날짜부터 비교하며, 기간 수익률은 배당 제외입니다."
   :"한 종목의 일별 USD 종가입니다. 다른 종목 버튼을 추가 선택하면 공통 시작일 기준 100 상대지수로 자동 전환합니다.";
@@ -148,7 +196,7 @@ function renderPrices(){
   return {ticker,color:COLORS[SYMBOLS.indexOf(ticker)],selected:ticker===selected,
    points:items.map(p=>({date:p.date,value:multi&&first?p.close/first*100:p.close}))};
  });
- chart($("priceChart"),sets,{index:multi});
+ chart($("priceChart"),sets,{index:multi,finance:financeCache.get(selected)||[]});
  const legend=$("legend");legend.replaceChildren();
  for(const s of sets){
   const label=document.createElement("span"),mark=document.createElement("b");mark.style.background=s.color;
@@ -157,33 +205,23 @@ function renderPrices(){
   const detail=ret===null?"자료 없음":(multi?" · "+(ret>=0?"+":"")+fmt(ret)+"%":" · USD "+fmt(items.at(-1).close));
   label.append(mark,document.createTextNode(s.ticker+detail));legend.append(label);
  }
+ for(const [title,color] of [[selected+" 매출액","#6ee0b4"],[selected+" CAPEX","#ffbf80"]]){
+  const label=document.createElement("span"),mark=document.createElement("b");mark.style.background=color;
+  label.append(mark,document.createTextNode(title+" · 하단 분기 자료"));legend.append(label);
+ }
 }
 function drawFinance(rows){
- const svg=$("financeChart");svg.replaceChildren();$("financeRows").replaceChildren();
- if(!rows.length){emptyChart(svg,"수집된 분기 매출·CAPEX 자료가 없습니다.");return;}
- const last=rows.slice(-12),values=last.flatMap(r=>[Number(r.revenue_usd_bn)||0,Number(r.capex_usd_bn)||0]);
- const hi=Math.max(...values,1)*1.15,left=70,right=880,top=20,bottom=215,step=(right-left)/last.length;
- for(let i=0;i<=4;i++){
-  const yy=bottom-(bottom-top)*i/4;
-  svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
-  svg.append(node("text",{x:left-7,y:yy+4,fill:"#aab9d0","text-anchor":"end","font-size":11},fmt(hi*i/4,0)));
- }
- last.forEach((r,i)=>{
-  const x=left+step*i+step*.17,w=step*.29;
-  for(const [j,v,color] of [[0,r.revenue_usd_bn,"#7ca7ff"],[1,r.capex_usd_bn,"#f0ba78"]]){
-   if(v===null||v===undefined)continue;
-   const h=Math.max(0,Number(v)/hi*(bottom-top));
-   svg.append(node("rect",{x:x+j*(w+3),y:bottom-h,width:w,height:h,fill:color}));
-  }
-  svg.append(node("text",{x:left+step*(i+.5),y:244,fill:"#aab9d0","text-anchor":"middle","font-size":10},r.fiscal_period.slice(2)));
- });
- for(const r of rows.slice().reverse()){
+ $("financeRows").replaceChildren();
+ const from=isoDate($("period").value);
+ const within=rows.filter(r=>r.period_end>=from);
+ for(const r of within.slice().reverse()){
   const tr=document.createElement("tr");
   for(const value of [r.fiscal_period,r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.capex_definition||"—"]){
    const td=document.createElement("td");td.textContent=String(value);tr.append(td);
   }
   $("financeRows").append(tr);
  }
+ renderPrices();
 }
 async function connect(){
  const cfg=JSON.parse(localStorage.getItem("investlab_shared_data_connection_v1")||"{}");
@@ -203,17 +241,21 @@ async function loadFinance(){
   const id=companies.get(selected)?.id;
   if(!id)throw Error("기업 ID를 찾을 수 없습니다.");
   const {data,error}=await client.from("quarterly_financial_observations")
-   .select("fiscal_period,revenue_usd_bn,capex_usd_bn,capex_definition")
+   .select("fiscal_period,period_end,revenue_usd_bn,capex_usd_bn,capex_definition,source_url")
    .eq("company_id",id).eq("is_current",true)
    .order("fiscal_period",{ascending:true}).limit(100);
   if(error)throw Error(error.message);
   if(request!==latestRequest)return;
-  const rows=(data||[]).filter(row=>/^\d{4}-Q[1-4]$/.test(row.fiscal_period));
+  const rows=(data||[]).filter(row=>/^\d{4}-Q[1-4]$/.test(row.fiscal_period)&&/^\d{4}-\d{2}-\d{2}$/.test(row.period_end||""));
+  financeCache.set(selected,rows);
   drawFinance(rows);
-  $("financeStatus").textContent=rows.length?"실제 분기 관측값 "+rows.length+"개 · 마지막 "+rows.at(-1).fiscal_period:"TEST 서버에 분기 재무 관측값이 아직 없습니다. 자료 확보 전에는 수치를 표시하지 않습니다.";
+  const within=rows.filter(row=>row.period_end>=isoDate($("period").value));
+  $("financeStatus").textContent=within.length
+   ?selected+" · 조회 기간 "+within.length+"개 분기 · 마지막 "+within.at(-1).fiscal_period+" · 출처: Yahoo Finance (공식 SEC 교차 검증 전)"
+   :selected+" · 현재 조회 기간에 수집된 분기 재무자료가 없습니다.";
  }catch(error){
   if(request!==latestRequest)return;
-  drawFinance([]);$("financeStatus").textContent="분기 재무자료 조회 실패: "+error.message;
+  financeCache.delete(selected);drawFinance([]);$("financeStatus").textContent="분기 재무자료 조회 실패: "+error.message;
  }
 }
 async function loadAll(){
@@ -243,6 +285,11 @@ async function loadAll(){
   $("financeStatus").textContent="TEST 계정 연결 후 분기 자료가 표시됩니다.";
  }finally{busy=false;}
 }
+$("financialTicker").addEventListener("change",event=>{
+ const ticker=event.target.value;
+ if(!selectedTickers.has(ticker))return;
+ selected=ticker;renderSymbols();renderPrices();void loadFinance();
+});
 $("period").addEventListener("change",()=>{void loadAll();});
 window.addEventListener("pageshow",()=>{void loadAll();});
 setInterval(()=>{if(!document.hidden)void loadAll();},15*60*1000);
