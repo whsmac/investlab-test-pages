@@ -10,7 +10,7 @@
 <p class="muted">로그인 후 서버에서 불러오기 / 서버에 저장을 직접 선택합니다. DB 설치 전에는 저장할 수 없습니다. 이 브라우저 데이터는 자동으로 서버에 업로드되지 않습니다.</p>
 <div class="grid"><label class="wide">TEST 공개용 Supabase anon / publishable key<input id="cloudKey" type="password" autocomplete="off" placeholder="TEST 프로젝트 공개 키"></label>
 <label>이메일<input id="cloudEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="cloudPassword" type="password" autocomplete="current-password"></label></div>
-<div class="actions" style="margin-top:12px"><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
+<div class="actions" style="margin-top:12px"><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
 <p id="cloudStatus" class="muted" role="status">서버 연결 전 · 브라우저 임시 저장만 사용 중</p></section>
 <section class="panel"><h2>계좌 등록</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식, ISA, 연금"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><p id="accounts" class="muted"></p></section>
 <section class="panel"><h2>원장 입력</h2><form id="entryForm" class="grid">
@@ -152,6 +152,18 @@ $('cloudLogin').onclick=async()=>{
  }catch(e){cloudUser=null;cloudStatus('로그인 실패: '+e.message);}
 };
 $('cloudLogout').onclick=async()=>{if(cloud)await cloud.auth.signOut();cloud=null;cloudUser=null;cloudKey=null;cloudStatus('로그아웃 · 현재 브라우저 원장은 그대로 유지됩니다.');};
+$('cloudPreflight').onclick=async()=>{
+ try{
+  const user=await requireCloud();
+  const {data,error}=await cloud.from(TABLE).select('user_id,updated_at').eq('user_id',user).limit(1);
+  if(error){
+   const missing=error.code==='42P01'||error.code==='PGRST205'||error.code==='PGRST204';
+   throw Error((missing?'TEST 서버에 제안 테이블이 설치되지 않았거나 API에서 접근할 수 없습니다: ':'읽기 권한 또는 연결 확인 필요: ')+error.message);
+  }
+  if(user!==cloudUser)throw Error('점검 중 로그인 계정이 변경되었습니다');
+  cloudStatus(data?.length?'사전점검: 사용자 본인 원장 1건 조회 성공 · 최종 수정 '+(data[0].updated_at||'미확인')+' · 저장/수정 없음':'사전점검: TEST 테이블 읽기 성공 · 본인 원장 없음 · 저장/수정 없음');
+ }catch(e){cloudStatus('사전점검 실패: '+e.message+' · 서버 데이터 변경 없음');}
+};
 $('cloudLoad').onclick=async()=>{
  try{
   const user=await requireCloud();
