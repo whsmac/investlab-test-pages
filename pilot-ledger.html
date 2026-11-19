@@ -5,9 +5,9 @@
 :root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#eaf0ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1200px;margin:auto;padding:20px 16px 60px}h1{font-size:clamp(23px,4vw,32px)}h2{font-size:19px}a{color:#a4c6ff}.panel{background:#161f32;border:1px solid #34405a;border-radius:14px;padding:17px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}label{font-size:13px;color:#b7c5dc;display:block}input,select,button{width:100%;padding:10px;border-radius:8px;background:#0b1424;color:#eef3ff;border:1px solid #43516a;font:inherit}button{background:#24395d;cursor:pointer}button:hover{background:#305184}button:disabled{opacity:.45}label>*{margin-top:5px}.wide{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions>*{width:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{border-bottom:1px solid #364159;padding:9px;text-align:right}td:first-child,th:first-child{text-align:left}.scroll{overflow-x:auto}.muted{color:#aab9d2;font-size:13px}.warn{color:#ffd48b}.stat{font-size:20px;font-weight:700}.stat small{display:block;font-size:12px;color:#aab9d2;font-weight:400}.hidden{display:none}#message{min-height:24px;color:#a9dfbf}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:span 2}.wrap{padding:14px 10px 40px}}@media(max-width:400px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
 </style></head><body><main class="wrap">
 <a href="./index.html">← INVESTLAB 홈</a><h1>통합원장 · 1단계 실사용 화면</h1>
-<p class="warn">현재는 브라우저 임시 저장 버전입니다. 온라인 계정 동기화가 아직 없으므로 PC·모바일 데이터는 자동 공유되지 않습니다. 중요한 실거래 자료는 JSON 백업을 보관하세요.</p>
+<p class="warn">TEST 계정 로그인 시 계좌와 거래를 자동으로 서버와 동기화합니다. 접속이 끊기면 브라우저에 기록을 보존하며 서버 변경 충돌은 자동 덮어쓰기하지 않습니다.</p>
 <section class="panel" id="onlineSync"><h2>온라인 저장 · TEST Supabase</h2>
-<p class="muted">로그인 후 서버에서 불러오기 / 서버에 저장을 직접 선택합니다. DB 설치 전에는 저장할 수 없습니다. 이 브라우저 데이터는 자동으로 서버에 업로드되지 않습니다.</p>
+<p class="muted">로그인하면 서버 원장을 자동으로 불러오고, 거래 변경 시 자동 저장합니다. 아래 수동 저장·불러오기는 동기화 충돌 해결 시 사용합니다.</p>
 <div class="grid"><label class="wide">TEST 공개용 Supabase anon / publishable key<input id="cloudKey" type="password" autocomplete="off" placeholder="TEST 프로젝트 공개 키"></label>
 <label>이메일<input id="cloudEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="cloudPassword" type="password" autocomplete="current-password"></label></div>
 <div class="actions" style="margin-top:12px"><button type="button" id="cloudReuseLogin">공유 데이터 로그인 사용</button><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
@@ -21,7 +21,7 @@
 <section class="panel"><h2>실현손익 (USD · 평균원가 기준)</h2><div class="grid"><div class="stat"><small>선택 계좌 누적 실현손익</small><span id="realizedTotal">USD 0</span></div><div class="stat"><small>매도 거래 수</small><span id="sellCount">0</span></div></div><p class="muted">매도금액 − 매도 직전 계좌별 평균매입단가 × 매도수량. 수수료·세금·환율·원화 취득원가는 미반영이며 세무신고용 금액이 아닙니다.</p></section>
 <section class="panel"><h2>거래 수정</h2><p id="editStatus" class="muted">거래 내역에서 수정 버튼을 누르면 아래 입력창에 해당 거래가 표시됩니다.</p><div class="actions"><button id="cancelEdit" type="button" class="hidden">수정 취소</button></div></section>
 <section class="panel"><h2>거래 내역</h2><div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>유형</th><th>종목</th><th>수량</th><th>단가</th><th>금액</th><th>통화</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
-<section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">JSON 복원은 현재 데이터를 교체합니다. 실사용 온라인 저장 기능이 구축되면 서버 기반으로 전환합니다.</p></section>
+<section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">브라우저 복원 후 TEST 로그인 상태에서는 서버 동기화를 시도합니다. 서버에 다른 내용이 있으면 덮어쓰지 않습니다.</p></section>
 </main><script type="module">
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 (()=>{
@@ -88,8 +88,8 @@ $('entryForm').onsubmit=e=>{
  const changed={id:previousEntry?.id||crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:previousEntry?.created||Date.now()};
  const next={...db,entries:previousEntry?db.entries.map(x=>x.id===editingId?changed:x):[...db.entries,changed]};
  try{validateLedger(next);}catch(error){msg('거래 기록 불가: '+error.message);return;}
- if(!confirm(editingId?'이 거래를 수정하시겠습니까? 이후 잔고까지 다시 계산됩니다.':'거래를 이 브라우저에 기록하시겠습니까? (서버 저장 아님)'))return;
- db=next;stopEditing();save();msg('브라우저 원장에 반영했습니다. 서버 저장은 별도로 진행해야 합니다.');
+ if(!confirm(editingId?'이 거래를 수정하시겠습니까? 이후 잔고까지 다시 계산됩니다.':'거래를 기록하시겠습니까? TEST 로그인 상태에서는 서버에도 자동 저장됩니다.'))return;
+ db=next;stopEditing();save();msg('거래를 기록했습니다. TEST 로그인 상태에서는 서버 자동 저장을 진행합니다.');
 };
 const updateEntryFields=()=>{const type=val('entryType'),stock=['OPEN','BUY','SELL'].includes(type),fx=type==='FX';document.querySelectorAll('.stockField').forEach(el=>el.classList.toggle('hidden',!stock));document.querySelectorAll('.moneyField').forEach(el=>el.classList.toggle('hidden',stock));document.querySelectorAll('.fxField').forEach(el=>el.classList.toggle('hidden',!fx));};
 $('entryType').onchange=updateEntryFields;updateEntryFields();
