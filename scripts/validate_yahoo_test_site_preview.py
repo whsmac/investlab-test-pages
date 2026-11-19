@@ -64,6 +64,24 @@ def validate_preview(site: Path):
             continue
         if not public_asset(relative):
             raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
+    optional_sec = site / "data/sec-quarterly-financials.json"
+    if optional_sec.exists():
+        if optional_sec.is_symlink() or optional_sec.stat().st_size > 1_000_000:
+            raise ValueError("Unsafe TEST SEC financial asset")
+        sec_data = json.loads(optional_sec.read_text(encoding="utf-8"))
+        rows = sec_data.get("rows", [])
+        if (sec_data.get("format") != "INVESTLAB_SEC_QUARTERLY_PREVIEW_V1"
+            or sec_data.get("source") != "SEC Company Facts"
+            or sec_data.get("database_writes") != 0 or not isinstance(rows, list)
+            or not rows or len(rows) > 300):
+            raise ValueError("Invalid TEST SEC quarterly financial preview")
+        for row in rows:
+            if (row.get("ticker") not in {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
+                or row.get("status") != "SEC_XBRL_PRELIMINARY"
+                or not re.fullmatch(r"\\d{4}-Q[1-4]", row.get("fiscal_period", ""))
+                or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", row.get("period_end", ""))
+                or not str(row.get("source_url", "")).startswith("https://data.sec.gov/api/xbrl/companyfacts/")):
+                raise ValueError("Invalid TEST SEC quarterly financial row")
     data = json.loads((site / "data/yahoo-public-review.json").read_text(encoding="utf-8"))
     if (data.get("mode") != "REVIEW_ONLY" or data.get("source") != "Yahoo Finance"
             or data.get("database_insert_authorized") is not False
