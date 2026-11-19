@@ -185,7 +185,12 @@ async function loadPrices(){
    if(error)throw Error(tickerById.get(id)+': '+error.message);return {id,row:rows?.[0]};
   }));
   const errors=[];
-  for(const result of results){if(result.status==='rejected'){errors.push(String(result.reason?.message||result.reason));continue;}const {id,row}=result.value;if(!row)continue;const ticker=tickerById.get(id),close=Number(row.close_price);if(ticker&&Number.isFinite(close)&&close>=0)next.set(ticker,{date:row.trading_date,close,currency:row.currency});}
+  for(const result of results){if(result.status==='rejected'){errors.push(String(result.reason?.message||result.reason));continue;}const {id,row}=result.value;if(!row)continue;const ticker=tickerById.get(id),raw=row.close_price,close=Number(raw);
+   const date=String(row.trading_date||''),parsed=/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?new Date(date+'T00:00:00Z'):new Date(NaN);
+   const ageDays=(Date.now()-parsed.getTime())/86400000;
+   const basis=String(row.price_basis||'').trim().toLowerCase();
+   if(ticker&&raw!==null&&raw!==undefined&&raw!==''&&Number.isFinite(close)&&close>0&&Number.isFinite(ageDays)&&ageDays<=7&&ageDays>=-1&&(!basis||['raw','unadjusted','close','regular','official','actual'].includes(basis)))next.set(ticker,{date,close,currency:row.currency});
+   else if(ticker)errors.push(ticker+': 오래되었거나 검증되지 않은 종가 ('+date+', '+(basis||'기준 미기재')+')');}
   if(errors.length===results.length)throw Error('모든 종목 조회 실패: '+errors.slice(0,3).join(' / '));
   if(requestVersion!==priceRequestVersion)return;
   prices=next;pricesLoaded=true;render();status.textContent=(errors.length?'일부 조회 실패('+errors.length+'개): '+errors.slice(0,2).join(' / ')+' · ':'TEST 서버 종가 조회 완료 · ')+next.size+'개 종목 · 조회 시각 '+new Date().toLocaleString('ko-KR')+' · 실시간 시세 아님';
