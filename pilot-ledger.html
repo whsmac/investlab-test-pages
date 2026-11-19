@@ -201,7 +201,7 @@ $('cloudReuseLogin').onclick=async()=>{
   const {data,error}=await candidate.auth.getUser();
   if(error||!data?.user?.id)throw Error('공유 데이터 페이지에서 먼저 TEST 계정으로 로그인하세요');
   cloud=candidate;cloudUser=data.user.id;cloudKey=cfg.key;restoreCloudBaseline(cloudUser);
-  cloudStatus('공유 데이터 TEST 계정 인증 재사용 완료 · 서버 원장 자동 저장/불러오기 없음');
+  cloudStatus('공유 데이터 TEST 계정 인증 재사용 완료');await connectAndLoadOnlineLedger();
  }catch(e){cloud=null;cloudUser=null;cloudStatus('공유 데이터 인증 재사용 실패: '+e.message);}
 };
 $('cloudLogin').onclick=async()=>{
@@ -215,7 +215,7 @@ $('cloudLogin').onclick=async()=>{
   if(error||!data?.user?.id)throw error||Error('로그인 실패');
   cloudUser=data.user.id;restoreCloudBaseline(cloudUser);$('cloudPassword').value='';
   localStorage.setItem('investlab_shared_data_connection_v1',JSON.stringify({url:TEST_URL,key}));
-  cloudStatus('TEST 계정 로그인 완료 · My Portfolio와 로그인 공유 · 서버 데이터 자동 불러오기 없음');
+  cloudStatus('TEST 계정 로그인 완료 · My Portfolio와 로그인 공유');await connectAndLoadOnlineLedger();
  }catch(e){cloudUser=null;cloudStatus('로그인 실패: '+e.message);}
 };
 $('cloudLogout').onclick=async()=>{if(cloud)await cloud.auth.signOut();cloud=null;cloudUser=null;cloudKey=null;cloudStatus('로그아웃 · 현재 브라우저 원장은 그대로 유지됩니다.');};
