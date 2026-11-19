@@ -393,6 +393,7 @@ function calculate(){
 
 const portfolioState={positions:[],prices:[]};
 const currentQuotePrices=new Map();
+const currentQuoteDates=new Map();
 const TEST_HANDOFF_KEY="INVESTLAB_TEST_SIMULATOR_HANDOFF_V1";
 let testHandoffPositions=null;
 let testOnlineBaseline=null;
@@ -585,17 +586,28 @@ byId('loadCurrentQuotes').addEventListener('click',async()=>{
   if(companyError)throw Error(companyError.message);
   const found=new Map((companies||[]).map(x=>[String(x.ticker).toUpperCase(),x.id]));
   const results=await Promise.allSettled(tickers.filter(t=>found.has(t)).map(async t=>{
-   const {data,error}=await client.from('market_price_observations').select('trading_date,close_price').eq('company_id',found.get(t)).eq('currency','USD').order('trading_date',{ascending:false}).limit(1);
+   const {data,error}=await client.from('market_price_observations').select('trading_date,close_price,price_basis').eq('company_id',found.get(t)).eq('currency','USD').order('trading_date',{ascending:false}).limit(1);
    if(error)throw Error(error.message);
    const row=data?.[0],price=row?.close_price;
-   if(price===null||price===undefined||price===''||!Number.isFinite(Number(price))||Number(price)<=0)return null;
-   return {ticker:t,price:Number(price),date:row.trading_date};
+   if(price===null||price===undefined||price===''||!Number.isFinite(Number(price))||Number(price)<=0)return {ticker:t,rejected:'가격 오류'};
+   const date=String(row.trading_date||''),parsed=/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?new Date(date+'T00:00:00Z'):new Date(NaN);
+   const ageDays=(Date.now()-parsed.getTime())/86400000;
+   if(!Number.isFinite(ageDays)||ageDays>7||ageDays< -1)return {ticker:t,rejected:'자료일 '+(date||'없음')+' (7일 초과 또는 날짜 오류)'};
+   const basis=String(row.price_basis||'').trim().toLowerCase();
+   if(basis&&!['raw','unadjusted','close','regular','official','actual'].includes(basis))return {ticker:t,rejected:'가격 기준 '+basis+' (검증 필요)'};
+   return {ticker:t,price:Number(price),date};
   }));
-  const next=new Map();let newest='';
-  for(const r of results)if(r.status==='fulfilled'&&r.value){next.set(r.value.ticker,r.value.price);if(r.value.date>newest)newest=r.value.date;}
+  const next=new Map(),rejected=[];let newest='';
+  for(const r of results){
+   if(r.status==='rejected'){rejected.push('조회 오류: '+String(r.reason?.message||r.reason));continue;}
+   if(!r.value)continue;
+   if(r.value.rejected){rejected.push(r.value.ticker+': '+r.value.rejected);continue;}
+   next.set(r.value.ticker,r.value.price);if(r.value.date>newest)newest=r.value.date;
+  }
+  for(const t of tickers)if(!found.has(t))rejected.push(t+': 기업 목록 없음');
   currentQuotePrices.clear();for(const [t,p] of next)currentQuotePrices.set(t,p);
   renderCompactPortfolioOverview();
-  status.textContent='조회 '+next.size+'/'+tickers.length+'종목 · 최근 자료일 '+(newest||'없음')+' · 미조회 종목 평가액 제외(합계는 —) · 실시간 시세 아님';
+  status.textContent='유효 종가 '+next.size+'/'+tickers.length+'종목 · 최근 자료일 '+(newest||'없음')+' · '+(rejected.length?'평가 제외: '+rejected.join(' / '):'7일 이내 자료만 사용')+' · 실시간 시세 아님';
  }catch(e){status.textContent='현재 주가 조회 실패: '+e.message;}
  finally{button.disabled=false;}
 });
