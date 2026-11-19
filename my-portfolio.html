@@ -1,0 +1,28 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB | My Portfolio</title>
+<style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#edf2ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1150px;margin:auto;padding:20px 16px 55px}a{color:#9fc4ff}h1{font-size:clamp(24px,4vw,34px)}.panel{background:#161f32;border:1px solid #35425c;border-radius:14px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{background:#0f192b;border:1px solid #34415b;border-radius:11px;padding:15px}.metric span{display:block;color:#b2c0d7;font-size:12px}.metric strong{display:block;margin-top:6px;font-size:21px}select{padding:10px;background:#101b2e;color:inherit;border:1px solid #4a5b78;border-radius:9px;min-width:190px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{text-align:right;padding:11px;border-bottom:1px solid #34415b}td:first-child,th:first-child{text-align:left}.muted{color:#adbad0;font-size:13px;line-height:1.6}.warn{color:#f4d18b}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:14px 10px 35px}td,th{padding:9px}}</style></head>
+<body><main class="wrap"><a href="./index.html">← 홈</a><h1>My Portfolio</h1>
+<p class="muted">통합원장과 같은 계좌·거래 데이터를 읽습니다. 보유종목을 다시 입력할 필요가 없습니다.</p>
+<p class="warn">현재는 동일 브라우저의 통합원장 임시 저장 데이터를 읽는 버전입니다. 다른 기기의 자료는 자동으로 표시되지 않습니다.</p>
+<section class="panel"><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label><p id="status" class="muted" role="status"></p><div class="grid">
+<div class="metric"><span>보유 종목 수</span><strong id="symbols">0</strong></div>
+<div class="metric"><span>보유종목 매입원가 합계</span><strong id="cost">USD 0</strong></div>
+<div class="metric"><span>현금 잔고 USD</span><strong id="usd">USD 0</strong></div>
+<div class="metric"><span>현금 잔고 KRW</span><strong id="krw">KRW 0</strong></div></div>
+<h2>보유종목 현황</h2><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 (USD)</th><th>매입원가 (USD)</th></tr></thead><tbody id="holdings"></tbody></table></div>
+<p class="muted">전체 계좌 평균매입단가는 계좌별 잔여 원가를 합산한 뒤 전체 보유수량으로 나눕니다. 현재 시세·평가손익은 아직 연동되지 않았습니다.</p></section>
+<section class="panel"><h2>계좌별 요약</h2><div class="scroll"><table><thead><tr><th>계좌</th><th>종목 수</th><th>매입원가 USD</th><th>현금 USD</th><th>현금 KRW</th></tr></thead><tbody id="accounts"></tbody></table></div></section>
+<p><a href="./pilot-ledger.html">통합원장에서 계좌·거래 입력하기</a></p>
+</main><script type="module">
+import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
+const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
+let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
+const account=$('account');for(const a of data.accounts){const o=document.createElement('option');o.value=a.id;o.textContent=a.name+' ('+a.type+')';account.append(o);}
+const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
+function render(){const selected=account.value,summary=projectLedger(data,selected);
+$('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
+$('holdings').replaceChildren();for(const h of summary.holdings){const tr=document.createElement('tr');for(const v of [h.symbol,fmt(h.qty,6),fmt(h.averageCost,4),fmt(h.cost)])cell(tr,v);$('holdings').append(tr);}
+$('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0)])cell(tr,v);$('accounts').append(tr);}
+$('status').textContent=data.accounts.length?'원장 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건을 기준으로 계산했습니다.':'등록된 계좌가 없습니다. 통합원장에서 계좌와 거래를 입력하세요.';
+}
+account.onchange=render;window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
+</script></body></html>
