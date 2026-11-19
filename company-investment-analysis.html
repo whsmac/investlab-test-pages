@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INVESTLAB | Company Investment Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;background:#0b1020;color:#edf2ff;font-family:system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1240px;margin:auto;padding:20px 17px 60px}
+a{color:#9fc5ff}h1{font-size:clamp(23px,4vw,32px);margin:16px 0 8px}h2{font-size:19px;margin:0 0 15px}
+p{line-height:1.65}.muted{color:#acb9d1;font-size:13px}
+.panel{background:#151e30;border:1px solid #34415e;border-radius:14px;padding:19px;margin:15px 0}
+.tickers{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.tickers button{background:#111b2d;color:#f0f4ff;border:1px solid #435576;border-radius:10px;padding:13px 6px;font:inherit;cursor:pointer;text-align:center}
+.tickers button[aria-pressed="true"]{background:#264570;border-color:#98bcff;box-shadow:inset 0 0 0 1px #98bcff}
+.tickers strong{font-size:16px}.tickers small{display:block;margin-top:5px;font-size:11px;color:#b9c6da;line-height:1.3}
+.controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between}
+select{font:inherit;background:#101b2d;border:1px solid #52647e;color:white;border-radius:9px;padding:10px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+.metric{border:1px solid #344462;border-radius:10px;padding:14px;background:#101b2c}.metric small{color:#b4c4da;font-size:12px}.metric strong{display:block;font-size:clamp(17px,2vw,22px);margin-top:6px;font-variant-numeric:tabular-nums}
+svg{display:block;width:100%;height:auto;min-height:180px}
+.legend{display:flex;gap:12px 20px;flex-wrap:wrap;margin:8px 0}.legend span{font-size:13px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
+td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-child,td:first-child{text-align:left}
+#status,#financeStatus{min-height:18px}
+@media(max-width:800px){.tickers{grid-template-columns:repeat(3,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:530px){.wrap{padding:14px 12px 44px}.panel{padding:12px}.tickers{gap:7px}.tickers button{padding:11px 4px}.tickers strong{font-size:14px}.tickers small{font-size:10px}}
+</style>
+</head>
+<body><main class="wrap">
+<a href="./index.html">← INVESTLAB 홈</a>
+<h1>Company Investment Analysis</h1>
+<p class="muted">6개 기업의 일별 종가와 분기 매출·설비투자를 비교합니다. 데이터는 TEST Supabase에서 자동 조회하며, 실시간 체결가격이 아닌 미국 증시의 저장 종가입니다.</p>
+<section class="panel">
+<div class="tickers" id="tickerButtons" aria-label="기업 선택"></div>
+<div class="controls" style="margin-top:17px"><h2 id="companyTitle" style="margin:0">기업 주가 분석</h2><label>조회 기간 <select id="period"><option value="3m">3개월</option><option value="6m">6개월</option><option value="1y" selected>1년</option><option value="3y">3년</option><option value="5y">5년</option></select></label></div>
+<p id="status" class="muted" role="status">주가 자동 조회 준비 중…</p>
+<div class="metrics"><div class="metric"><small>최근 종가 (USD)</small><strong id="lastPrice">—</strong></div><div class="metric"><small>기간 수익률 (배당 제외)</small><strong id="periodReturn">—</strong></div><div class="metric"><small>조회 기간 시작 종가</small><strong id="firstPrice">—</strong></div><div class="metric"><small>마지막 거래일</small><strong id="lastDate">—</strong></div></div>
+<svg id="priceChart" viewBox="0 0 900 330" role="img" aria-label="선택 기업의 일별 종가 시계열"></svg>
+<p class="muted">주가 기준: 제공처의 일별 종가(USD). 과거 분할 등 기업행동에 따른 제공처의 조정 방식이 적용될 수 있으며, 배당수익은 포함하지 않습니다.</p>
+</section>
+<section class="panel">
+<h2>6개 기업 주가 상대 비교</h2>
+<p class="muted">조회 기간에 확보된 <strong>각 종목의 첫 거래일을 100</strong>으로 설정합니다. SPCX는 자료 시작일이 다르므로 동일 기간 수익률을 뜻하지 않습니다.</p>
+<svg id="compareChart" viewBox="0 0 900 330" role="img" aria-label="6개 기업 종가의 기준 100 상대지수"></svg>
+<div id="legend" class="legend" aria-label="주가 비교 범례"></div>
+</section>
+<section class="panel">
+<h2 id="financeTitle">분기 매출·CAPEX</h2>
+<p id="financeStatus" class="muted" role="status">기업 분기 재무자료 조회 중…</p>
+<svg id="financeChart" viewBox="0 0 900 280" role="img" aria-label="분기 매출과 설비투자 그래프"></svg>
+<div class="scroll"><table><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>CAPEX 기준</th></tr></thead><tbody id="financeRows"></tbody></table></div>
+<p class="muted">재무 수치는 실제로 서버에 수집된 분기 관측값만 표시합니다. 출처가 없는 값은 임의로 추정하지 않습니다.</p>
+</section>
+<p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
+</main>
+<script type="module">
+import {readSharedPriceSeries} from "./src/market/read-shared-price-series.mjs";
+const TEST_URL="https://gopofxyezhwpfxbecrxd.supabase.co";
+const SYMBOLS=["MSFT","GOOGL","AMZN","META","TSLA","SPCX"];
+const COLORS=["#79b5ff","#efb76a","#a7dd9c","#d79cf2","#f6818b","#7dddd0"];
+const $=id=>document.getElementById(id);
+const fmt=(n,dec=2)=>Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+let selected="TSLA",client=null,busy=false,series=new Map(),companies=new Map(),latestRequest=0;
+const isoDate=(period)=>{
+ const d=new Date(),months={"3m":3,"6m":6,"1y":12,"3y":36,"5y":60}[period];
+ d.setUTCMonth(d.getUTCMonth()-months);return d.toISOString().slice(0,10);
+};
+function node(name,props={},value){
+ const el=document.createElementNS("http://www.w3.org/2000/svg",name);
+ for(const [key,val] of Object.entries(props))el.setAttribute(key,String(val));
+ if(value!==undefined)el.textContent=String(value);
+ return el;
+}
+function emptyChart(svg,label){
+ svg.replaceChildren();svg.append(node("text",{x:450,y:160,fill:"#b9c6da","text-anchor":"middle","font-size":15},label));
+}
+function chart(svg,sets,{index=false}={}){
+ svg.replaceChildren();const data=sets.filter(s=>s.points?.length);
+ if(!data.length){emptyChart(svg,"조회된 그래프 데이터가 없습니다.");return;}
+ const all=data.flatMap(s=>s.points),times=all.map(p=>Date.parse(p.date+"T00:00:00Z"));
+ const left=77,right=875,top=24,bottom=283,tMin=Math.min(...times),tMax=Math.max(...times);
+ let vMin=Math.min(...all.map(p=>p.value)),vMax=Math.max(...all.map(p=>p.value));
+ const pad=(vMax-vMin||Math.max(vMax*.05,1))*.12;vMin=Math.max(0,vMin-pad);vMax+=pad;
+ const x=t=>left+(tMax===tMin?0.5:(t-tMin)/(tMax-tMin))*(right-left);
+ const y=v=>bottom-(v-vMin)/(vMax-vMin)*(bottom-top);
+ for(let i=0;i<=4;i++){
+  const v=vMin+(vMax-vMin)*i/4,yy=y(v);
+  svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
+  svg.append(node("text",{x:left-9,y:yy+4,fill:"#aab9d0","text-anchor":"end","font-size":12},fmt(v,index?0:2)));
+ }
+ for(const s of data){
+  const d=s.points.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+y(p.value).toFixed(2)).join(" ");
+  svg.append(node("path",{d,fill:"none",stroke:s.color||"#83b5ff","stroke-width":s.selected?3:2,"stroke-linejoin":"round",opacity:s.selected||!index?1:0.76}));
+ }
+ const dates=[new Date(tMin),new Date((tMin+tMax)/2),new Date(tMax)];
+ dates.forEach((d,i)=>svg.append(node("text",{x:[left,(left+right)/2,right][i],y:315,fill:"#aab9d0","text-anchor":i===0?"start":i===2?"end":"middle","font-size":12},d.toISOString().slice(0,10))));
+}
+function renderSymbols(){
+ const root=$("tickerButtons");root.replaceChildren();
+ for(const ticker of SYMBOLS){
+  const b=document.createElement("button");b.type="button";b.setAttribute("aria-pressed",String(ticker===selected));
+  const strong=document.createElement("strong");strong.textContent=ticker;
+  const small=document.createElement("small");small.textContent=companies.get(ticker)?.company_name||"";
+  b.append(strong,small);b.onclick=()=>{selected=ticker;renderSymbols();renderPrices();void loadFinance();};root.append(b);
+ }
+}
+function renderPrices(){
+ const items=series.get(selected)||[],name=companies.get(selected)?.company_name||selected;
+ $("companyTitle").textContent=name+" ("+selected+") · 일별 종가";
+ if(!items.length){
+  for(const id of ["lastPrice","firstPrice","periodReturn","lastDate"])$(id).textContent="—";
+  emptyChart($("priceChart"),"선택 기간의 주가가 없습니다.");return;
+ }
+ const first=items[0],last=items.at(-1),ret=(last.close/first.close-1)*100;
+ $("lastPrice").textContent="USD "+fmt(last.close);
+ $("firstPrice").textContent="USD "+fmt(first.close);
+ $("periodReturn").textContent=(ret>=0?"+":"")+fmt(ret)+"%";
+ $("lastDate").textContent=last.date;
+ chart($("priceChart"),[{color:COLORS[SYMBOLS.indexOf(selected)],selected:true,points:items.map(p=>({date:p.date,value:p.close}))}]);
+}
+function renderCompare(){
+ const sets=SYMBOLS.map((ticker,i)=>{
+  const items=series.get(ticker)||[],first=items[0]?.close;
+  return {color:COLORS[i],selected:ticker===selected,points:first?items.map(p=>({date:p.date,value:p.close/first*100})):[]};
+ });
+ chart($("compareChart"),sets,{index:true});
+ const legend=$("legend");legend.replaceChildren();
+ SYMBOLS.forEach((ticker,i)=>{
+  const label=document.createElement("span"),mark=document.createElement("b");mark.style.background=COLORS[i];
+  label.append(mark,document.createTextNode(ticker+(sets[i].points.length?" ("+sets[i].points.length+"일)":" (자료 없음)")));legend.append(label);
+ });
+}
+function drawFinance(rows){
+ const svg=$("financeChart");svg.replaceChildren();$("financeRows").replaceChildren();
+ if(!rows.length){emptyChart(svg,"수집된 분기 매출·CAPEX 자료가 없습니다.");return;}
+ const last=rows.slice(-12),values=last.flatMap(r=>[Number(r.revenue_usd_bn)||0,Number(r.capex_usd_bn)||0]);
+ const hi=Math.max(...values,1)*1.15,left=70,right=880,top=20,bottom=215,step=(right-left)/last.length;
+ for(let i=0;i<=4;i++){
+  const yy=bottom-(bottom-top)*i/4;
+  svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
+  svg.append(node("text",{x:left-7,y:yy+4,fill:"#aab9d0","text-anchor":"end","font-size":11},fmt(hi*i/4,0)));
+ }
+ last.forEach((r,i)=>{
+  const x=left+step*i+step*.17,w=step*.29;
+  for(const [j,v,color] of [[0,r.revenue_usd_bn,"#7ca7ff"],[1,r.capex_usd_bn,"#f0ba78"]]){
+   if(v===null||v===undefined)continue;
+   const h=Math.max(0,Number(v)/hi*(bottom-top));
+   svg.append(node("rect",{x:x+j*(w+3),y:bottom-h,width:w,height:h,fill:color}));
+  }
+  svg.append(node("text",{x:left+step*(i+.5),y:244,fill:"#aab9d0","text-anchor":"middle","font-size":10},r.fiscal_period.slice(2)));
+ });
+ for(const r of rows.slice().reverse()){
+  const tr=document.createElement("tr");
+  for(const value of [r.fiscal_period,r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.capex_definition||"—"]){
+   const td=document.createElement("td");td.textContent=String(value);tr.append(td);
+  }
+  $("financeRows").append(tr);
+ }
+}
+async function connect(){
+ const cfg=JSON.parse(localStorage.getItem("investlab_shared_data_connection_v1")||"{}");
+ if(cfg.url!==TEST_URL||typeof cfg.key!=="string"||!cfg.key||cfg.key.startsWith("sb_secret_")||cfg.key.toLowerCase().includes("service_role"))throw Error("공유 데이터 화면에서 TEST 계정 로그인 설정을 완료하세요.");
+ if(!window.supabase?.createClient)throw Error("Supabase 라이브러리를 불러오지 못했습니다.");
+ const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"investlab_shared_data_auth_v1"}});
+ const {data,error}=await candidate.auth.getUser();
+ if(error||!data?.user?.id)throw Error("TEST 계정 로그인이 필요합니다.");
+ client=candidate;return candidate;
+}
+async function loadFinance(){
+ const request=++latestRequest,name=companies.get(selected)?.company_name||selected;
+ $("financeTitle").textContent=name+" · 분기 매출 및 CAPEX";
+ $("financeStatus").textContent="분기 재무자료 자동 조회 중…";
+ try{
+  if(!client)await connect();
+  const id=companies.get(selected)?.id;
+  if(!id)throw Error("기업 ID를 찾을 수 없습니다.");
+  const {data,error}=await client.from("quarterly_financial_observations")
+   .select("fiscal_period,revenue_usd_bn,capex_usd_bn,capex_definition")
+   .eq("company_id",id).eq("is_current",true)
+   .order("fiscal_period",{ascending:true}).limit(100);
+  if(error)throw Error(error.message);
+  if(request!==latestRequest)return;
+  const rows=(data||[]).filter(row=>/^\d{4}-Q[1-4]$/.test(row.fiscal_period));
+  drawFinance(rows);
+  $("financeStatus").textContent=rows.length?"실제 분기 관측값 "+rows.length+"개 · 마지막 "+rows.at(-1).fiscal_period:"TEST 서버에 분기 재무 관측값이 아직 없습니다. 자료 확보 전에는 수치를 표시하지 않습니다.";
+ }catch(error){
+  if(request!==latestRequest)return;
+  drawFinance([]);$("financeStatus").textContent="분기 재무자료 조회 실패: "+error.message;
+ }
+}
+async function loadAll(){
+ if(busy)return;busy=true;$("status").textContent="TEST 공통 주가 자동 조회 중…";
+ try{
+  const c=await connect();
+  const {data,error}=await c.from("companies").select("id,ticker,company_name").in("ticker",SYMBOLS);
+  if(error)throw Error(error.message);
+  companies=new Map((data||[]).map(v=>[v.ticker,v]));
+  renderSymbols();
+  const from=isoDate($("period").value);
+  const result=await Promise.allSettled(SYMBOLS.map(ticker=>readSharedPriceSeries(c,{ticker,from})));
+  const next=new Map(),failures=[];
+  result.forEach((r,i)=>{
+   const ticker=SYMBOLS[i];
+   if(r.status==="fulfilled")next.set(ticker,r.value.points);
+   else{next.set(ticker,[]);failures.push(ticker);}
+  });
+  series=next;renderPrices();renderCompare();
+  const available=SYMBOLS.filter(t=>series.get(t)?.length);
+  $("status").textContent=available.length+"개 기업 · "+from+" 이후 저장 종가 자동 조회"+(failures.length?" · 일부 조회 실패: "+failures.join(", "):"")+" · 실시간 시세 아님";
+  await loadFinance();
+ }catch(error){
+  $("status").textContent="기업분석 자동 조회 실패: "+error.message;
+  if(!series.size){emptyChart($("priceChart"),"로그인 또는 데이터 연결을 확인하세요.");emptyChart($("compareChart"),"주가를 불러올 수 없습니다.");}
+  drawFinance([]);
+  $("financeStatus").textContent="TEST 계정 연결 후 분기 자료가 표시됩니다.";
+ }finally{busy=false;}
+}
+$("period").addEventListener("change",()=>{void loadAll();});
+window.addEventListener("pageshow",()=>{void loadAll();});
+setInterval(()=>{if(!document.hidden)void loadAll();},15*60*1000);
+renderSymbols();
+</script>
+</body></html>
