@@ -18,7 +18,7 @@ def assess_coverage(snapshot, today=None):
         day = date.fromisoformat(row["trading_date"])
         latest[ticker] = max(latest.get(ticker, day), day)
     coverage = []
-    for ticker in TICKERS:
+    for ticker in (*TICKERS, *("SPCX",) if "SPCX" in latest else ()):
         day = latest.get(ticker)
         age = (today - day).days if day else None
         coverage.append({"ticker": ticker, "latest_trading_date": day.isoformat() if day else None,
