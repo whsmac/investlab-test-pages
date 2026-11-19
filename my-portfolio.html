@@ -84,10 +84,20 @@ async function compareCloudLedger(){
   if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('서버 원장 형식이 올바르지 않습니다');
   const {data:check,error:checkError}=await client.auth.getUser();
   if(checkError||check?.user?.id!==userId)throw Error('조회 중 로그인 계정이 변경되었습니다');
-  const localIds=new Set(data.entries.map(e=>String(e.id))),remoteIds=new Set(payload.entries.map(e=>String(e.id)));
-  const onlyLocal=data.entries.filter(e=>!remoteIds.has(String(e.id))).length;
-  const onlyRemote=payload.entries.filter(e=>!localIds.has(String(e.id))).length;
-  output.textContent='브라우저 '+data.accounts.length+'계좌 / '+data.entries.length+'거래 · 서버 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래 · 거래 ID 기준 브라우저 전용 '+onlyLocal+'건 / 서버 전용 '+onlyRemote+'건 · 서버 수정 '+(remote.updated_at||'미확인')+' · 내용 동일 여부는 미검증 · 데이터 변경 없음';
+  const canonical=value=>JSON.stringify(value,(key,val)=>val&&typeof val==='object'&&!Array.isArray(val)?Object.fromEntries(Object.keys(val).sort().map(k=>[k,val[k]])):val);
+  const compare=(local,server)=>{
+   const toMap=items=>new Map(items.map(item=>[String(item.id),item]));
+   const l=toMap(local),s=toMap(server);
+   const onlyLocal=[...l.keys()].filter(id=>!s.has(id)),onlyRemote=[...s.keys()].filter(id=>!l.has(id));
+   const changed=[...l.keys()].filter(id=>s.has(id)&&canonical(l.get(id))!==canonical(s.get(id)));
+   const duplicates=items=>items.length-new Set(items.map(item=>String(item.id))).size;
+   return {onlyLocal,onlyRemote,changed,duplicateLocal:duplicates(local),duplicateServer:duplicates(server)};
+  };
+  const accounts=compare(data.accounts,payload.accounts),entries=compare(data.entries,payload.entries);
+  const line=(name,r)=>name+': 브라우저 전용 '+r.onlyLocal.length+'건 / 서버 전용 '+r.onlyRemote.length+'건 / 동일 ID 내용 불일치 '+r.changed.length+'건'+(r.duplicateLocal||r.duplicateServer?' / 중복 ID(브라우저 '+r.duplicateLocal+', 서버 '+r.duplicateServer+')':'');
+  const sample=(name,r)=>{const examples=[...r.onlyLocal,...r.onlyRemote,...r.changed].slice(0,5);return examples.length?name+' 관련 ID 일부: '+examples.join(', '):'';};
+  const identical=[accounts,entries].every(r=>!r.onlyLocal.length&&!r.onlyRemote.length&&!r.changed.length&&!r.duplicateLocal&&!r.duplicateServer);
+  output.textContent=['브라우저 '+data.accounts.length+'계좌 / '+data.entries.length+'거래 · 서버 '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래',line('계좌',accounts),line('거래',entries),sample('계좌',accounts),sample('거래',entries),identical?'계좌·거래 내용 일치 (ID 및 필드 비교)':'계좌·거래 불일치 감지 · 자동 병합하지 않음','서버 수정 '+(remote.updated_at||'미확인')+' · 데이터 변경 없음'].filter(Boolean).join('\n');
  }catch(error){output.textContent='서버 원장 비교 실패: '+error.message+' · 브라우저 원장 유지';}
  finally{button.disabled=false;}
 }
