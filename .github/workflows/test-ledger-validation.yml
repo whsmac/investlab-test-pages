@@ -1,0 +1,31 @@
+name: TEST shared ledger validation unit tests
+on:
+  push:
+    branches:
+      - feature/test-navigation-20261112
+    paths:
+      - 'src/ledger/pilot-ledger-validation.mjs'
+      - 'tests/pilot-ledger-validation.test.mjs'
+      - 'pilot-ledger.html'
+      - 'my-portfolio.html'
+      - '.github/workflows/test-ledger-validation.yml'
+  pull_request:
+    paths:
+      - 'src/ledger/pilot-ledger-validation.mjs'
+      - 'tests/pilot-ledger-validation.test.mjs'
+      - 'pilot-ledger.html'
+      - 'my-portfolio.html'
+      - '.github/workflows/test-ledger-validation.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run offline validation tests
+        run: node --test tests/pilot-ledger-validation.test.mjs
