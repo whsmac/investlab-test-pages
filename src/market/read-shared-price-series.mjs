@@ -22,6 +22,8 @@ export async function readSharedPriceSeries(client, { ticker, from, to, pageSize
     let query = client.from("market_price_observations")
       .select("trading_date,close_price,currency,price_basis")
       .eq("company_id", company.id)
+      .eq("price_basis", "raw")
+      .eq("currency", "USD")
       .order("trading_date", { ascending: true })
       .range(offset, offset + count - 1);
     if (from) query = query.gte("trading_date", from);
