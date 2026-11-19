@@ -14,13 +14,13 @@ def assess_publication(candidate, today=None):
     public = build_public_snapshot(candidate)
     symbols = {row["ticker"] for row in public["observations"]}
     issues = []
-    if symbols != EXPECTED:
-        issues.append("Expected all five supported tickers")
+    if not EXPECTED.issubset(symbols) or symbols - EXPECTED - {"SPCX"}:
+        issues.append("Missing required five tickers or unexpected ticker")
     if public["row_count"] < 5:
         issues.append("Not enough observations")
     if public["row_count"] > 10000:
         issues.append("Too many observations")
-    for ticker in EXPECTED:
+    for ticker in sorted(symbols):
         dates = [date.fromisoformat(row["trading_date"])
                  for row in public["observations"] if row["ticker"] == ticker]
         if dates and (max(dates) > today or max(dates) < today - timedelta(days=7)):
