@@ -115,10 +115,6 @@ $('entryForm').onsubmit=e=>{
  if(stock&&currency!=='USD'){msg('1단계에서는 주식 거래의 USD 단가만 지원합니다. KRW 거래원가는 온라인 원장 통합 시 추가합니다.');return;}
  if(money&&!(amount>0)){msg('금액을 입력하세요.');return;}
  if(type==='FX'&&(currency===toCurrency||!(toAmount>0))){msg('서로 다른 통화와 수령액을 입력하세요.');return;}
- const existing=db.entries.filter(x=>x.accountId===accountId&&x.symbol===symbol&&['OPEN','BUY','SELL'].includes(x.type)&&x.date<=date).sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created);
- if(type==='SELL'){let balance=0;for(const x of existing)balance+=x.type==='SELL'?-x.qty:x.qty;if(qty>balance+1e-8){msg('매도 수량이 해당 계좌의 보유수량을 초과합니다.');return;}}
- const timeline=[...db.entries.filter(x=>x.accountId===accountId&&x.symbol===symbol&&['OPEN','BUY','SELL'].includes(x.type)),{date,type,qty,created:Date.now()+1}].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created);
- if(stock){let balance=0;for(const t of timeline){balance+=t.type==='SELL'?-t.qty:t.qty;if(balance< -1e-8){msg('해당 날짜의 거래를 기록하면 이후 보유수량이 음수가 됩니다. 날짜 또는 수량을 확인하세요.');return;}}}
  const previousEntry=editingId?db.entries.find(x=>x.id===editingId):null;
  if(editingId&&!previousEntry){msg('수정할 거래를 찾을 수 없습니다. 다시 선택하세요.');return;}
  const changed={id:previousEntry?.id||crypto.randomUUID(),accountId,date,type,symbol:stock?symbol:'',qty:stock?qty:0,price:stock?price:0,currency,amount:money?amount:0,toCurrency:type==='FX'?toCurrency:null,toAmount:type==='FX'?toAmount:0,note:val('entryNote'),created:previousEntry?.created||Date.now()};
