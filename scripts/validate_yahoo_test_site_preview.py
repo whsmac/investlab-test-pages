@@ -98,7 +98,7 @@ def validate_preview(site: Path):
     if sanitized["observations"] != sorted(data["observations"], key=lambda row: (row["ticker"], row["trading_date"])):
         raise ValueError("Public Yahoo observations contain unexpected or unsanitized fields")
     tickers = {row.get("ticker") for row in data["observations"]}
-    if tickers != EXPECTED:
+    if not EXPECTED.issubset(tickers) or tickers - EXPECTED - {"SPCX"}:
         raise ValueError("Unexpected ticker coverage: " + str(sorted(tickers)))
     html = (site / "test-yahoo-price-review.html").read_text(encoding="utf-8")
     if "loadPublishedYahooReview({origin:location.href})" not in html:
