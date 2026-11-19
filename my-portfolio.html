@@ -62,7 +62,7 @@ async function diagnoseConnection(){
   }else lines.push('주가 읽기: 일치하는 보유종목 없어 생략');
   lines.push('진단 완료 · 데이터 변경 없음');
  }catch(error){lines.push('진단 중단: '+error.message);}
- output.textContent=lines.join('\\n');
+ output.textContent=lines.join('\n');
 }
 $('diagnose').onclick=diagnoseConnection;
 async function loadPrices(){
