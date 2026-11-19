@@ -22,7 +22,8 @@
 <section class="panel"><h2>거래 수정</h2><p id="editStatus" class="muted">거래 내역에서 수정 버튼을 누르면 아래 입력창에 해당 거래가 표시됩니다.</p><div class="actions"><button id="cancelEdit" type="button" class="hidden">수정 취소</button></div></section>
 <section class="panel"><h2>거래 내역</h2><div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>유형</th><th>종목</th><th>수량</th><th>단가</th><th>금액</th><th>통화</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
 <section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">JSON 복원은 현재 데이터를 교체합니다. 실사용 온라인 저장 기능이 구축되면 서버 기반으로 전환합니다.</p></section>
-</main><script>
+</main><script type="module">
+import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),KEY='investlab_pilot_ledger_local_v1';
@@ -32,40 +33,7 @@ const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 const val=id=>$(id).value.trim(),num=id=>Number(val(id)),msg=s=>$('message').textContent=s;
 const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));render();};
 // Validate every account chronologically, including future effects of backdated edits.
-function validateLedger(candidate){
- if(!candidate||candidate.version!==1||!Array.isArray(candidate.accounts)||!Array.isArray(candidate.entries))throw Error('원장 형식이 올바르지 않습니다.');
- const ids=new Set();
- for(const a of candidate.accounts){if(!a||typeof a.id!=='string'||!a.id||typeof a.name!=='string'||!a.name||ids.has(a.id))throw Error('계좌 정보가 중복되거나 손상되었습니다.');ids.add(a.id);}
- const entries=[...candidate.entries].sort((a,b)=>String(a.date).localeCompare(String(b.date))||Number(a.created||0)-Number(b.created||0));
- const positions=new Map(),cash=new Map(),entryIds=new Set();
- const cashKey=(account,currency)=>account+'|'+currency;
- for(const e of entries){
-  if(!e||typeof e.id!=='string'||!e.id||entryIds.has(e.id)||!ids.has(e.accountId)||typeof e.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(e.type))throw Error('거래내역에 잘못된 계좌·날짜·유형 또는 중복 ID가 있습니다.');
-  entryIds.add(e.id);
-  const currency=e.currency;
-  if(!['USD','KRW'].includes(currency))throw Error(e.date+' 거래의 통화가 올바르지 않습니다.');
-  const amount=Number(e.amount),qty=Number(e.qty),price=Number(e.price);
-  const addCash=(cur,delta)=>{const key=cashKey(e.accountId,cur);const next=(cash.get(key)||0)+delta;if(next< -1e-7)throw Error(e.date+' '+e.accountId+' '+cur+' 현금잔고가 부족합니다.');cash.set(key,next);};
-  if(['OPEN','BUY','SELL'].includes(e.type)){
-   if(currency!=='USD'||typeof e.symbol!=='string'||!/^[A-Z][A-Z0-9.-]{0,15}$/.test(e.symbol)||!Number.isFinite(qty)||qty<=0||!Number.isFinite(price)||price<0)throw Error(e.date+' 주식 거래 입력값이 올바르지 않습니다.');
-   const key=e.accountId+'|'+e.symbol,next=(positions.get(key)||0)+(e.type==='SELL'?-qty:qty);
-   if(next< -1e-7)throw Error(e.date+' '+e.symbol+' 매도수량이 보유수량을 초과합니다.');
-   positions.set(key,next);
-   if(e.type==='BUY')addCash('USD',-qty*price);
-   if(e.type==='SELL')addCash('USD',qty*price);
-  }else{
-   if(!Number.isFinite(amount)||amount<=0)throw Error(e.date+' 현금 거래 금액이 올바르지 않습니다.');
-   if(e.type==='DEPOSIT'||e.type==='DIVIDEND')addCash(currency,amount);
-   if(e.type==='WITHDRAW')addCash(currency,-amount);
-   if(e.type==='FX'){
-    const received=Number(e.toAmount);
-    if(!['USD','KRW'].includes(e.toCurrency)||e.toCurrency===currency||!Number.isFinite(received)||received<=0)throw Error(e.date+' 환전 통화·수령액이 올바르지 않습니다.');
-    addCash(currency,-amount);addCash(e.toCurrency,received);
-   }
-  }
- }
- return true;
-}
+
 let editingId=null;
 function stopEditing(){editingId=null;$('submitEntry').textContent='거래 기록';$('cancelEdit').classList.add('hidden');$('editStatus').textContent='거래 내역에서 수정 버튼을 눌러주세요.';}
 $('cancelEdit').onclick=stopEditing;
