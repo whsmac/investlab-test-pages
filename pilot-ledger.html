@@ -40,7 +40,7 @@ function validateLedger(candidate){
  const positions=new Map(),cash=new Map(),entryIds=new Set();
  const cashKey=(account,currency)=>account+'|'+currency;
  for(const e of entries){
-  if(!e||typeof e.id!=='string'||!e.id||entryIds.has(e.id)||!ids.has(e.accountId)||typeof e.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(e.type))throw Error('거래내역에 잘못된 계좌·날짜·유형 또는 중복 ID가 있습니다.');
+  if(!e||typeof e.id!=='string'||!e.id||entryIds.has(e.id)||!ids.has(e.accountId)||typeof e.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!['OPEN','BUY','SELL','DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(e.type))throw Error('거래내역에 잘못된 계좌·날짜·유형 또는 중복 ID가 있습니다.');
   entryIds.add(e.id);
   const currency=e.currency;
   if(!['USD','KRW'].includes(currency))throw Error(e.date+' 거래의 통화가 올바르지 않습니다.');
