@@ -13,6 +13,8 @@ PUBLIC_DIRS = {"src", "assets", "css", "js", "images"}
 def public_asset(relative: Path) -> bool:
     if any(part.startswith(".") or part in {"node_modules", "__pycache__", "tests", "scripts"} for part in relative.parts):
         return False
+    if relative.as_posix() == "data/sec-quarterly-financials.json":
+        return True
     if len(relative.parts) == 1:
         return relative.suffix.lower() in ROOT_EXTENSIONS
     return relative.parts[0] in PUBLIC_DIRS and relative.suffix.lower() in ASSET_EXTENSIONS
