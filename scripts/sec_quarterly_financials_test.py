@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Read-only official SEC XBRL quarterly preview. Never writes to Supabase.
 Requires INVESTLAB_SEC_USER_AGENT with a real contact address; do not commit it.
+Includes 2021+ source facts to support Pilot three- and five-year financial charts.
 Quarterly CAPEX is only shown for matching PP&E cash purchases (direct or YTD delta).
 """
 import json
@@ -39,7 +40,7 @@ def extract(facts, tag):
             or x.get("fp") not in ("Q1", "Q2", "Q3", "Q4", "FY") or not isinstance(x.get("fy"), int)
             or not isinstance(x.get("val"), (int, float)) or not x.get("accn")
             or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(x.get("filed", "")))
-            or duration(x) < 70 or duration(x) > 380 or x["end"] < "2023-01-01"):
+            or duration(x) < 70 or duration(x) > 380 or x["end"] < "2021-01-01"):
             continue
         clean.append(x)
     return clean
