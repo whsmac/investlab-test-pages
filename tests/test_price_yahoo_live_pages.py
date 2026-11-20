@@ -48,7 +48,7 @@ class LiveVerifierTests(unittest.TestCase):
             "ticker":"UNKNOWN","trading_date":"2026-11-13",
             "close_price":"100","currency":"USD","price_basis":"unadjusted_close"})
         data["row_count"]=len(data["observations"])
-        with self.assertRaisesRegex(ValueError,"Unexpected"):
+        with self.assertRaisesRegex(ValueError,"Invalid public Yahoo observations"):
             verify_payload(raw(data),today=date(2026,11,16))
 
     def test_stale_data(self):
