@@ -58,7 +58,7 @@ def main():
     args = parser.parse_args()
     payload = build_public_snapshot(json.loads(args.candidate.read_text(encoding="utf-8-sig")))
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print("Static Yahoo review:", payload["row_count"], "rows; DB writes: 0; deployment: none")
 
 
