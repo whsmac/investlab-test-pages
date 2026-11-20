@@ -23,13 +23,26 @@ export function mergeTestDailyPrices(knownSeries,review,{from="0000-00-00",today
   if(!Number.isFinite(price)||price<=0)throw Error("TEST 종가 값 오류");
   if(row.trading_date>=from)incoming.get(row.ticker).push({date:row.trading_date,close:price});
  }
- const series=new Map(knownSeries),sourceCounts={},latestDates={};
+ const series=new Map(knownSeries),sourceCounts={},latestDates={},wholeSourceSymbols=[];
  for(const [ticker,rows] of incoming){
   const base=Array.isArray(knownSeries.get(ticker))?knownSeries.get(ticker):[];
   const dates=new Map(base.map(row=>[row.date,row]));
   const latest=rows.reduce((last,r)=>r.date>last?r.date:last,"");
   latestDates[ticker]=latest||null;
   if(latest&&Math.round((todayMs-Date.parse(latest+"T00:00:00Z"))/86400000)<=maxAgeDays){
+   const ordered=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+   // Avoid mixing split-adjusted Yahoo history with potentially different
+   // historical CSV/DB price bases. Replace only the in-memory chart series
+   // when the same Yahoo publication actually covers the selected period.
+   const effectiveFrom=ticker==="SPCX"&&from<"2026-06-12"?"2026-06-12":from;
+   const firstMs=Date.parse(effectiveFrom+"T00:00:00Z");
+   if(ordered.length>=20&&Number.isFinite(firstMs)&&
+      Date.parse(ordered[0].date+"T00:00:00Z")<=firstMs+10*86400000){
+    sourceCounts[ticker]=ordered.filter(item=>!dates.has(item.date)).length;
+    wholeSourceSymbols.push(ticker);
+    series.set(ticker,ordered);
+    continue;
+   }
    let count=0;
    for(const item of rows){
     if(dates.has(item.date))continue;
@@ -42,5 +55,5 @@ export function mergeTestDailyPrices(knownSeries,review,{from="0000-00-00",today
    series.set(ticker,base);
   }
  }
- return {series,sourceCounts,latestDates,appended:Object.values(sourceCounts).reduce((a,b)=>a+b,0)};
+ return {series,sourceCounts,latestDates,wholeSourceSymbols,appended:Object.values(sourceCounts).reduce((a,b)=>a+b,0)};
 }
