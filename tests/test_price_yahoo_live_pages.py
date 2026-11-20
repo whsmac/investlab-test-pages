@@ -22,6 +22,25 @@ class LiveVerifierTests(unittest.TestCase):
         self.assertTrue(report["fresh"])
         self.assertTrue(report["checksum_matches"])
         self.assertEqual(report["database_writes"],0)
+    def test_optional_sixth_company_can_be_published_without_false_alarm(self):
+        data=fixture()
+        data["observations"].append({
+            "ticker":"SPCX","trading_date":"2026-11-13",
+            "close_price":"100","currency":"USD","price_basis":"unadjusted_close"})
+        data["row_count"]=len(data["observations"])
+        result=verify_payload(raw(data),today=date(2026,11,16))
+        self.assertTrue(result["fresh"])
+        self.assertEqual(result["tickers"],sorted(["MSFT","GOOGL","AMZN","META","TSLA","SPCX"]))
+
+    def test_unknown_ticker_rejected(self):
+        data=fixture()
+        data["observations"].append({
+            "ticker":"UNKNOWN","trading_date":"2026-11-13",
+            "close_price":"100","currency":"USD","price_basis":"unadjusted_close"})
+        data["row_count"]=len(data["observations"])
+        with self.assertRaisesRegex(ValueError,"Unexpected"):
+            verify_payload(raw(data),today=date(2026,11,16))
+
     def test_stale_data(self):
         self.assertFalse(verify_payload(raw(fixture()),today=date(2026,12,1))["fresh"])
     def test_wrong_checksum(self):
