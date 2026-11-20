@@ -24,7 +24,7 @@ svg{display:block;width:100%;height:auto;min-height:220px}.chart-scroll{overflow
 .legend b{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px}
 .scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}
 td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-child,td:first-child{text-align:left}
-#status,#financeStatus{min-height:18px}
+#status,#financeStatus{min-height:18px}.coverage-alert{color:#f3cc80;line-height:1.55}
 @media(max-width:800px){.tickers{grid-template-columns:repeat(3,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:530px){.wrap{padding:14px 12px 44px}.panel{padding:12px}.tickers{gap:7px}.tickers button{padding:11px 4px}.tickers strong{font-size:14px}.tickers small{font-size:10px}}
 </style>
@@ -42,7 +42,8 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <div class="metrics"><div class="metric"><small id="lastPriceLabel">TSLA · 최근 종가 (USD)</small><strong id="lastPrice">—</strong></div><div class="metric"><small id="periodReturnLabel">TSLA · 기간 수익률 (배당 제외)</small><strong id="periodReturn">—</strong></div><div class="metric"><small id="firstPriceLabel">TSLA · 시작 종가 (USD)</small><strong id="firstPrice">—</strong></div><div class="metric"><small id="lastDateLabel">TSLA · 마지막 거래일</small><strong id="lastDate">—</strong></div></div>
 <div class="chart-scroll"><svg id="priceChart" viewBox="0 0 900 756" role="img" aria-label="선택 종목의 주가와 기준 기업의 분기 매출, CAPEX, 영업이익 및 영업이익률을 동일 날짜 축으로 나타낸 통합 그래프"></svg></div>
 <div id="legend" class="legend" aria-label="선택 종목별 주가 선 색상"></div>
-<p id="priceChartNote" class="muted">한 종목은 USD 종가, 복수 종목은 공통 시작일을 100으로 설정한 상대지수로 표시합니다.</p>
+<p id="priceChartNote" class="muted">한 종목은 USD 종가, 복수 종목은 상대지수로 표시합니다.</p>
+<p id="historyCoverageStatus" class="muted" role="status" aria-live="polite">요청한 조회기간의 데이터 확보 범위를 확인 중…</p>
 <p class="muted">데이터는 저장된 일별 종가 기준이며 실시간 시세가 아닙니다. 배당수익은 포함하지 않습니다.</p>
 </section>
 <section class="panel">
@@ -58,6 +59,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 import {readSharedPriceSeries} from "./src/market/read-shared-price-series.mjs";
 import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review.mjs";
 import {mergeTestDailyPrices} from "./src/market/merge-test-daily-prices.mjs";
+import {alignCompanyPriceSeries} from "./src/market/align-company-price-series.mjs";
 const TEST_URL="https://gopofxyezhwpfxbecrxd.supabase.co";
 const SYMBOLS=["MSFT","GOOGL","AMZN","META","TSLA","SPCX"];
 const COLORS=["#79b5ff","#efb76a","#a7dd9c","#d79cf2","#f6818b","#7dddd0"];
@@ -172,22 +174,31 @@ function renderSymbols(){
 function renderPrices(){
  const active=SYMBOLS.filter(t=>selectedTickers.has(t));
  const multi=active.length>1;
- const valid=active.filter(t=>(series.get(t)||[]).length);
- const commonStart=multi&&valid.length
-  ?valid.map(t=>series.get(t)[0].date).sort().at(-1)
-  :null;
- const aligned=new Map(active.map(t=>[t,(series.get(t)||[]).filter(p=>!commonStart||p.date>=commonStart)]));
+ const {commonStart,aligned,lateStarts,partialStarts,missing}=
+  alignCompanyPriceSeries(active,series,isoDate($("period").value));
  const displayItems=aligned.get(selected)||[];
  const name=companies.get(selected)?.company_name||selected;
  $("companyTitle").textContent=multi?active.length+"개 기업 주가 통합 비교 · 기준 100":name+" ("+selected+") · 일별 종가 (USD)";
  $("metricScope").textContent="주가 요약 · 매출액 · CAPEX · 영업이익 · 영업이익률 기준 기업: "+name+" ("+selected+")";
  $("lastPriceLabel").textContent=selected+" · 최근 종가 (USD)";
- $("periodReturnLabel").textContent=selected+" · 기간 수익률 (배당 제외)";
+ $("periodReturnLabel").textContent=selected+" · "+(partialStarts.some(v=>v.ticker===selected)?"확보 구간 수익률":"조회기간 수익률")+" (배당 제외)";
  $("firstPriceLabel").textContent=selected+" · 시작 종가 (USD)";
  $("lastDateLabel").textContent=selected+" · 마지막 거래일";
+ const lateDetail=lateStarts.map(v=>v.ticker+"("+v.date+"부터)").join(", ");
  $("priceChartNote").textContent=multi
-  ?"선택한 "+active.length+"개 종목은 공통 조회 시작일 "+(commonStart||"미확인")+"의 첫 저장 종가를 100으로 환산했습니다. 동일한 날짜부터 비교하며, 기간 수익률은 배당 제외입니다."
-  :"한 종목의 일별 USD 종가입니다. 다른 종목 버튼을 추가 선택하면 공통 시작일 기준 100 상대지수로 자동 전환합니다.";
+  ?"선택한 "+active.length+"개 종목의 첫 유효 종가를 100으로 환산했습니다. 장기 이력의 비교 기준은 "+
+   (commonStart||"미확인")+"입니다. "+(lateDetail
+    ?"늦게 시작한 종목 "+lateDetail+"은 각자 첫 거래일을 100으로 표시하므로 동일 기간 수익률 비교가 아닙니다."
+    :"선택 종목은 같은 시작일 부근부터 비교합니다.")+" 배당은 제외합니다."
+  :"한 종목의 일별 USD 종가입니다. 다른 종목을 추가하면 기준 100 상대지수로 전환하며 배당은 제외합니다.";
+ const incomplete=partialStarts.map(v=>v.ticker+" "+v.date+"부터");
+ const unavailable=missing.length?" · 자료 없음: "+missing.join(", "):"";
+ const coverage=$("historyCoverageStatus");
+ coverage.textContent=incomplete.length
+  ?"조회 시작 요청 "+isoDate($("period").value)+" · 전체 기간 미확보: "+incomplete.join(", ")+
+   " · 시작 종가와 수익률은 확보된 첫 거래일부터 계산합니다."+unavailable
+  :"조회 시작 요청 "+isoDate($("period").value)+" · 선택 종목의 요청 기간 이력이 확보되었습니다."+unavailable;
+ coverage.className=incomplete.length||missing.length?"muted coverage-alert":"muted";
  if(!displayItems.length){
   for(const id of ["lastPrice","firstPrice","periodReturn","lastDate"])$(id).textContent="—";
  }else{
