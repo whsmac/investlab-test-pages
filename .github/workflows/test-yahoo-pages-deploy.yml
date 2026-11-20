@@ -62,7 +62,14 @@ jobs:
           if [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
             mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
             cp "${RUNNER_TEMP}/sec-quarterly-financials.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
-            python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+            # SEC figures are optional preliminary context. If only those figures
+            # fail site validation, discard them and revalidate the complete
+            # five-year Yahoo site; never publish a partial or unchecked bundle.
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::Unverified SEC quarterly preview excluded; validated Yahoo site retained"
+            fi
           fi
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
