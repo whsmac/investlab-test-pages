@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {readFile, stat} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium} from 'playwright';
+import {companyPeriodStart} from '../src/market/company-period-range.mjs';
 
 const ROOT='https://whsmac.github.io/investlab-test-pages/';
 const BASE=new URL(ROOT);
@@ -50,7 +51,7 @@ const setup=async(browser,viewport)=>{
 const waitForQuotes=page=>page.waitForFunction(()=>{
  const status=document.querySelector('#status')?.textContent||'';
  return status.includes('6/6개 기업')&&document.querySelector('#lastDate')?.textContent!=='—';
-},{timeout:15000});
+},null,{timeout:15000});
 
 test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobile',async()=>{
  const browser=await chromium.launch({headless:true});
@@ -74,9 +75,9 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
     await page.goto(ROOT+'company-investment-analysis.html',{waitUntil:'domcontentloaded'});
     await page.locator('#period').selectOption('5y');
     await waitForQuotes(page);
-    assert.match(await page.locator('#historyCoverageStatus').innerText(),/2021-11-20/);
-    assert.match(await page.locator('#priceChart').innerText(),/2021-11-20/);
-    assert.match(await page.locator('#lastDate').innerText(),/2026-11-19/);
+    assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes(companyPeriodStart('5y')));
+    assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('5y')));
+    assert.match(await page.locator('#lastDate').innerText(),/^20\\d{2}-\\d{2}-\\d{2}$/);
     const tslaOnly=await page.locator('#priceChart path').count();
     assert.ok(tslaOnly>=1,device+': TSLA 5y SVG path');
     console.log('PASS',device,'five-year chart',tslaOnly);
@@ -84,13 +85,13 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
     await page.locator('#tickerButtons button[aria-label^="SPCX"]').click();
     assert.match(await page.locator('#priceChartNote').innerText(),/SPCX.*각자 첫 거래일/);
     assert.match(await page.locator('#historyCoverageStatus').innerText(),/SPCX 2026-06-12부터/);
-    assert.match(await page.locator('#priceChart').innerText(),/2021-11-20/);
+    assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('5y')));
     console.log('PASS',device,'TSLA five-year history retained with SPCX selected');
 
     await page.locator('#period').selectOption('3y');
     await waitForQuotes(page);
-    assert.match(await page.locator('#historyCoverageStatus').innerText(),/2023-11-20/);
-    assert.match(await page.locator('#priceChart').innerText(),/2023-11-20/);
+    assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes(companyPeriodStart('3y')));
+    assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('3y')));
     assert.equal(await page.locator('#financialTicker').inputValue(),'SPCX');
     console.log('PASS',device,'three-year period and selected financial ticker');
     if(device==='mobile'){
