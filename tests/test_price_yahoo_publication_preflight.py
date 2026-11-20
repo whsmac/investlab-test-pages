@@ -20,6 +20,16 @@ class YahooPublicationPreflightTests(unittest.TestCase):
         self.assertFalse(report["deployment_performed"])
         self.assertEqual(report["database_writes"], 0)
 
+    def test_stale_optional_spcx_does_not_block_five_healthy_tickers(self):
+        candidate = self.candidate()
+        candidate["observations"].append({
+            "ticker": "SPCX", "trading_date": "2026-11-01",
+            "close_price": "125", "currency": "USD", "price_basis": "unadjusted_close"})
+        report = assess_publication(candidate, date(2026, 11, 16))
+        self.assertTrue(report["checks_passed"])
+        self.assertIn("SPCX", " ".join(report["warnings"]))
+        self.assertEqual(report["database_writes"], 0)
+
     def test_stale_prices_blocked(self):
         report = assess_publication(self.candidate(date(2026, 10, 1)), date(2026, 11, 16))
         self.assertFalse(report["checks_passed"])
