@@ -124,6 +124,10 @@ def validate_preview(site: Path):
         if not target.is_file():
             raise ValueError("Broken TEST portfolio module import: " + import_path)
     checked_modules = check_transitive_modules(site, "test-my-portfolio-ledger.html") + check_transitive_modules(site, "test-yahoo-price-review.html")
+    # The live Pilot company chart imports an additional alignment module.
+    # Validate its full import chain before publishing the TEST site.
+    if (site / "company-investment-analysis.html").is_file():
+        checked_modules += check_transitive_modules(site, "company-investment-analysis.html")
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
     if "./data/yahoo-public-review.json" not in loader:
         raise ValueError("Published JSON path does not match preview asset")
