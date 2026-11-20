@@ -32,6 +32,16 @@ class LiveVerifierTests(unittest.TestCase):
         self.assertTrue(result["fresh"])
         self.assertEqual(result["tickers"],sorted(["MSFT","GOOGL","AMZN","META","TSLA","SPCX"]))
 
+    def test_stale_optional_spcx_does_not_mask_healthy_five(self):
+        data=fixture()
+        data["observations"].append({
+            "ticker":"SPCX","trading_date":"2026-10-01",
+            "close_price":"100","currency":"USD","price_basis":"unadjusted_close"})
+        data["row_count"]=len(data["observations"])
+        result=verify_payload(raw(data),today=date(2026,11,16))
+        self.assertTrue(result["fresh"])
+        self.assertEqual(result["optional_stale"],["SPCX"])
+
     def test_unknown_ticker_rejected(self):
         data=fixture()
         data["observations"].append({
