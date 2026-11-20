@@ -1,0 +1,115 @@
+name: TEST Pilot five-year prices and SEC source preflight (NO DEPLOY)
+# A single TEST-branch source inspection. No Pages upload, no DB connections.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/test-navigation-20261112
+    paths:
+      - '.github/workflows/test-pilot-five-year-readonly.yml'
+      - 'scripts/yahoo_price_probe_test.py'
+      - 'scripts/build_yahoo_review_candidate.py'
+      - 'scripts/check_yahoo_publication_preflight.py'
+      - 'scripts/build_gated_yahoo_public_review.py'
+      - 'scripts/report_yahoo_feed_coverage.py'
+      - 'scripts/sec_quarterly_financials_test.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: investlab-test-five-year-readonly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect-public-sources:
+    if: github.repository == 'whsmac/investlab-test-pages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read TEST development branch only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read Yahoo five-year daily closes, no database writes
+        id: yahoo
+        continue-on-error: true
+        run: python scripts/yahoo_price_probe_test.py
+      - name: Validate five-year public-only price candidate
+        if: steps.yahoo.outcome == 'success'
+        id: price_check
+        continue-on-error: true
+        run: |
+          python -m scripts.build_yahoo_review_candidate --input yahoo-price-probe.json --output yahoo-price-review-candidate.json
+          python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
+          python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
+          python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
+          python - <<'PY'
+          import json
+          data=json.load(open("yahoo-public-review.json",encoding="utf-8"))
+          required=("MSFT","GOOGL","AMZN","META","TSLA")
+          print("Five-year Yahoo source:",data["row_count"],"public rows; database writes: 0")
+          for ticker in required:
+              dates=[r["trading_date"] for r in data["observations"] if r["ticker"]==ticker]
+              print(ticker,"rows",len(dates),"from",min(dates),"to",max(dates))
+              if len(dates)<500:
+                  raise SystemExit("Less than two years of daily data for "+ticker)
+          PY
+      - name: Check official SEC quarterly preview when contact identity is configured
+        if: always()
+        id: sec_check
+        continue-on-error: true
+        env:
+          INVESTLAB_SEC_USER_AGENT: ${{ secrets.INVESTLAB_SEC_USER_AGENT }}
+        run: |
+          if [ -z "$INVESTLAB_SEC_USER_AGENT" ]; then
+            echo "::notice::SEC User-Agent secret is not configured; SEC source check skipped"
+            exit 0
+          fi
+          python scripts/sec_quarterly_financials_test.py --output sec-quarterly-financials.json
+          python - <<'PY'
+          import json
+          data=json.load(open("sec-quarterly-financials.json",encoding="utf-8"))
+          print("Official SEC preliminary quarters:",len(data["rows"]),"errors:",sorted(data["errors"]))
+          if not data["rows"]:
+              raise SystemExit("SEC result empty")
+          PY
+      - name: Preserve source-only diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investlab-test-five-year-source-check
+          path: |
+            yahoo-price-probe.json
+            yahoo-price-review-candidate.json
+            yahoo-publication-preflight.json
+            yahoo-public-review.json
+            yahoo-feed-coverage.json
+            sec-quarterly-financials.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Report status without deploying
+        if: always()
+        env:
+          YAHOO: ${{ steps.yahoo.outcome }}
+          PRICE_CHECK: ${{ steps.price_check.outcome }}
+          SEC: ${{ steps.sec_check.outcome }}
+        run: |
+          {
+            echo '## TEST Pilot five-year source check'
+            echo '| Source | Result |'
+            echo '|---|---|'
+            echo "| Yahoo 5-year fetch | $YAHOO |"
+            echo "| Yahoo publication checks | $PRICE_CHECK |"
+            echo "| SEC optional check | $SEC |"
+            echo ''
+            echo 'No GitHub Pages deployment, Git push, Supabase reads/writes, or production changes.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$YAHOO" != success ] || [ "$PRICE_CHECK" != success ]; then
+            echo "::error::Five-year Yahoo data not yet verified; the existing TEST site remains unchanged"
+            exit 1
+          fi
