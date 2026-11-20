@@ -63,7 +63,7 @@ const SYMBOLS=["MSFT","GOOGL","AMZN","META","TSLA","SPCX"];
 const COLORS=["#79b5ff","#efb76a","#a7dd9c","#d79cf2","#f6818b","#7dddd0"];
 const $=id=>document.getElementById(id);
 const fmt=(n,dec=2)=>Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
-let selected="TSLA",selectedTickers=new Set(["TSLA"]),client=null,busy=false,series=new Map(),companies=new Map(),latestRequest=0,financeCache=new Map();
+let selected="TSLA",selectedTickers=new Set(["TSLA"]),client=null,busy=false,reloadPending=false,series=new Map(),companies=new Map(),latestRequest=0,financeCache=new Map();
 const isoDate=(period)=>{
  const d=new Date(),months={"3m":3,"6m":6,"1y":12,"3y":36,"5y":60}[period];
  d.setUTCMonth(d.getUTCMonth()-months);return d.toISOString().slice(0,10);
@@ -218,7 +218,7 @@ function drawFinance(rows){
  const within=rows.filter(r=>r.period_end>=from);
  for(const r of within.slice().reverse()){
   const tr=document.createElement("tr");
-  for(const value of [r.fiscal_period,r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.operating_income_usd_bn==null?"—":fmt(r.operating_income_usd_bn),r.operating_margin_pct==null?"—":fmt(r.operating_margin_pct)+"%"]){
+  for(const value of [(r.fiscal_period+(r.status==="SEC_XBRL_PRELIMINARY"?" · SEC 예비":"")),r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.operating_income_usd_bn==null?"—":fmt(r.operating_income_usd_bn),r.operating_margin_pct==null?"—":fmt(r.operating_margin_pct)+"%"]){
    const td=document.createElement("td");td.textContent=String(value);tr.append(td);
   }
   $("financeRows").append(tr);
@@ -260,7 +260,7 @@ async function loadFinance(){
   if(error)throw Error(error.message);
   for(const row of data||[]){
    if(!/^\d{4}-Q[1-4]$/.test(row.fiscal_period)||!/^\d{4}-\d{2}-\d{2}$/.test(row.period_end||""))continue;
-   combined.set(row.fiscal_period+"|"+row.period_end,row);stored++;
+   combined.set(row.period_end,row);stored++;
   }
  }catch(e){serverError=String(e.message||e);client=null;}
  try{
@@ -269,7 +269,7 @@ async function loadFinance(){
    if(r.ticker!==ticker||r.status!=="SEC_XBRL_PRELIMINARY"||
       !/^\d{4}-Q[1-4]$/.test(r.fiscal_period)||!/^\d{4}-\d{2}-\d{2}$/.test(r.period_end||"")||
       r.source_url?.startsWith("https://data.sec.gov/api/xbrl/companyfacts/")!==true)continue;
-   const key=r.fiscal_period+"|"+r.period_end;
+   const key=r.period_end;
    // Existing TEST reviewed observations are never overwritten by SEC preliminary facts.
    if(!combined.has(key)){combined.set(key,r);official++;}
   }
@@ -286,7 +286,7 @@ async function loadFinance(){
    (serverError?" · 서버: "+serverError:"")+(secError?" · SEC: "+secError:"");
 }
 async function loadAll(){
- if(busy)return;
+ if(busy){reloadPending=true;return;}
  busy=true;
  const from=isoDate($("period").value),next=new Map(),failures=[];
  let serverConnected=false,serverError="",feedError="",feedResult=null;
@@ -325,14 +325,19 @@ async function loadAll(){
    (failures.length?" · 이력 미조회 "+failures.join(", "):"")+
    " · Yahoo 데이터는 일별 종가이며 실시간 체결가가 아닙니다";
   await loadFinance();
- }finally{busy=false;}
+ }catch(error){
+  $("status").textContent="주가/재무 조회 오류: "+String(error.message||error)+" · 이전 화면 데이터는 유지합니다.";
+ }finally{
+  busy=false;
+  if(reloadPending){reloadPending=false;void loadAll();}
+ }
 }
 $("financialTicker").addEventListener("change",event=>{
  const ticker=event.target.value;
  if(!selectedTickers.has(ticker))return;
  selected=ticker;renderSymbols();renderPrices();void loadFinance();
 });
-$("period").addEventListener("change",()=>{void loadAll();});
+$("period").addEventListener("change",()=>{$("status").textContent="선택한 조회기간의 주가·재무자료를 다시 불러옵니다…";void loadAll();});
 window.addEventListener("pageshow",()=>{void loadAll();});
 setInterval(()=>{if(!document.hidden)void loadAll();},15*60*1000);
 renderSymbols();
