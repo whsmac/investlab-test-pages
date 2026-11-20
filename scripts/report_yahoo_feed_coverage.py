@@ -25,7 +25,10 @@ def assess_coverage(snapshot, today=None):
                          "age_days": age, "usable": age is not None and 0 <= age <= 7})
     return {"mode": "TEST_YAHOO_COVERAGE_REVIEW_ONLY", "as_of_kst": today.isoformat(),
             "source": "Yahoo Finance", "rows": clean["row_count"],
-            "tickers": coverage, "all_usable": all(row["usable"] for row in coverage),
+            "tickers": coverage,
+            "all_usable": all(row["usable"] for row in coverage if row["ticker"] in TICKERS),
+            "optional_unavailable": [row["ticker"] for row in coverage
+                                     if row["ticker"] not in TICKERS and not row["usable"]],
             "published": False, "database_writes": 0}
 
 
