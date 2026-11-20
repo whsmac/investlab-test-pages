@@ -13,6 +13,8 @@ on:
       - 'scripts/build_gated_yahoo_public_review.py'
       - 'scripts/report_yahoo_feed_coverage.py'
       - 'scripts/sec_quarterly_financials_test.py'
+      - 'scripts/validate_pilot_site_integration.py'
+      - 'tests/test_pilot_site_integration.py'
 
 permissions:
   contents: read
@@ -59,6 +61,26 @@ jobs:
               if len(dates)<500:
                   raise SystemExit("Less than two years of daily data for "+ticker)
           PY
+      - name: Prepare Node for company-chart regressions
+        if: steps.price_check.outcome == 'success'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate complete five-menu TEST site preview offline
+        if: steps.price_check.outcome == 'success'
+        id: pilot_preview
+        continue-on-error: true
+        run: |
+          python -m unittest tests.test_pilot_site_integration tests.test_price_yahoo_site_preview -v
+          python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory "${RUNNER_TEMP}/investlab-yahoo-staged"
+          python -m scripts.assemble_yahoo_test_site_preview --repo . --staging "${RUNNER_TEMP}/investlab-yahoo-staged" --output "${RUNNER_TEMP}/investlab-pilot-site"
+          python -m scripts.validate_pilot_site_integration --site "${RUNNER_TEMP}/investlab-pilot-site" --report pilot-five-menu-report.json
+      - name: Validate three- and five-year integrated company charts
+        if: steps.price_check.outcome == 'success'
+        id: chart_tests
+        continue-on-error: true
+        run: |
+          node --test tests/company-financial-overlay.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-period-range.test.mjs tests/company-online-price-first.test.mjs
       - name: Check official SEC quarterly preview when contact identity is configured
         if: always()
         id: sec_check
@@ -91,6 +113,7 @@ jobs:
             yahoo-publication-preflight.json
             yahoo-public-review.json
             yahoo-feed-coverage.json
+            pilot-five-menu-report.json
             sec-quarterly-financials.json
           if-no-files-found: warn
           retention-days: 7
@@ -99,6 +122,8 @@ jobs:
         env:
           YAHOO: ${{ steps.yahoo.outcome }}
           PRICE_CHECK: ${{ steps.price_check.outcome }}
+          PILOT_PREVIEW: ${{ steps.pilot_preview.outcome }}
+          CHART_TESTS: ${{ steps.chart_tests.outcome }}
           SEC: ${{ steps.sec_check.outcome }}
           SEC_CONFIGURED: ${{ steps.sec_check.outputs.configured }}
         run: |
@@ -108,6 +133,8 @@ jobs:
             echo '|---|---|'
             echo "| Yahoo 5-year fetch | $YAHOO |"
             echo "| Yahoo publication checks | $PRICE_CHECK |"
+            echo "| Complete five-menu offline site | $PILOT_PREVIEW |"
+            echo "| 3y/5y chart regressions | $CHART_TESTS |"
             if [ "$SEC_CONFIGURED" != true ]; then
               echo "| SEC optional check | skipped (User-Agent not configured) |"
             else
@@ -116,7 +143,7 @@ jobs:
             echo ''
             echo 'No GitHub Pages deployment, Git push, Supabase reads/writes, or production changes.'
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$YAHOO" != success ] || [ "$PRICE_CHECK" != success ]; then
-            echo "::error::Five-year Yahoo data not yet verified; the existing TEST site remains unchanged"
+          if [ "$YAHOO" != success ] || [ "$PRICE_CHECK" != success ] || [ "$PILOT_PREVIEW" != success ] || [ "$CHART_TESTS" != success ]; then
+            echo "::error::Five-year TEST Pilot site validation incomplete; the existing published site remains unchanged"
             exit 1
           fi
