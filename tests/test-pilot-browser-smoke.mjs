@@ -77,7 +77,7 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
     await waitForQuotes(page);
     assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes(companyPeriodStart('5y')));
     assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('5y')));
-    assert.match(await page.locator('#lastDate').innerText(),/^20\\d{2}-\\d{2}-\\d{2}$/);
+    assert.match(await page.locator('#lastDate').innerText(),/^20\d{2}-\d{2}-\d{2}$/);
     const tslaOnly=await page.locator('#priceChart path').count();
     assert.ok(tslaOnly>=1,device+': TSLA 5y SVG path');
     console.log('PASS',device,'five-year chart',tslaOnly);
