@@ -29,7 +29,7 @@ test('TEST simulator clears owner cache on logout, rechecks session on focus, an
  assert.match(html,/differentVerifiedUser\(lastVerifiedOnlineUserId,userId\)/);
  assert.match(html,/mayAutoApplyTestLedger\(\{/);
  assert.match(html,/ownerChanged:onlineLedgerOwnerChanged/);
- assert.match(html,/window\.addEventListener\('focus',\(\)=>\{void refreshOnlineAccountLedger\(\);\}\)/);
+ assert.match(html,/window\.addEventListener\('focus',\(\)=>\{void refreshOnlineAccountLedger\(\);void loadScenariosOnline\(\)/);
  assert.match(html,/investlab_shared_data_auth_v1/);
  assert.match(html,/id="pilotLedgerAccountLabel"/);
 });
