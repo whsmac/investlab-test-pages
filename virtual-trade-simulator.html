@@ -714,7 +714,7 @@ function refreshPilotLedgerAccountOptions(){
  select.replaceChildren();
  const all=document.createElement('option');all.value='ALL';all.textContent='전체 계좌';select.append(all);
  try{
-  const raw=onlineAccountLedger?.ledger||JSON.parse(localStorage.getItem('investlab_pilot_ledger_local_v1')||'null');
+  const raw=onlineAccountLedger?.ledger||null; // unscoped browser ledger must not appear in another TEST account
   if(raw?.version===1&&Array.isArray(raw.accounts))for(const a of raw.accounts){
    if(typeof a.id!=='string'||typeof a.name!=='string')continue;
    const option=document.createElement('option');option.value=a.id;option.textContent=a.name+(a.type?' ('+a.type+')':'');select.append(option);
