@@ -45,14 +45,19 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
   try{
    const data=await read("./data/yahoo-public-review.json");
    if(data.mode!=="REVIEW_ONLY"||data.source!=="Yahoo Finance"||data.database_insert_authorized!==false||data.writes_performed!==0||!Array.isArray(data.observations)||data.row_count!==data.observations.length)throw Error("주가 파일 형식 오류");
-   const last=new Map();
+   const core=["MSFT","GOOGL","AMZN","META","TSLA"],allowed=new Set([...core,"SPCX"]);
+   const first=new Map(),last=new Map();
    for(const row of data.observations){
-    if(!["MSFT","GOOGL","AMZN","META","TSLA","SPCX"].includes(row.ticker)||!/^\d{4}-\d{2}-\d{2}$/.test(row.trading_date))continue;
+    if(!allowed.has(row.ticker)||!/^\d{4}-\d{2}-\d{2}$/.test(row.trading_date))continue;
+    if(row.trading_date<(first.get(row.ticker)||"9999-99-99"))first.set(row.ticker,row.trading_date);
     if(row.trading_date>(last.get(row.ticker)||""))last.set(row.ticker,row.trading_date);
    }
    const current=[...last.values()].filter(day=>age(day)>=0&&age(day)<=7).length;
    const latest=[...last.values()].sort().at(-1)||"미확인";
-   target.textContent="일별 종가: "+current+"/6개 종목 최근 7일 내 자료 · 마지막 거래일 "+latest+" · Yahoo 비공식 종가, 실시간 체결가 아님";
+   const commonStart=core.every(t=>first.has(t))?core.map(t=>first.get(t)).sort().at(-1):"미확인";
+   target.textContent="일별 종가: "+current+"/6개 종목 최근 7일 내 자료 · 마지막 거래일 "+latest+
+     " · 5개 주요기업 공통 이력 시작 "+commonStart+
+     " · Yahoo 공개 종가(분할 조정 가능), 실시간 체결가 아님";
   }catch(e){target.textContent="일별 종가: "+String(e.message||e)+" · TEST 배포/갱신 확인 필요";}
  }
  async function finance(){
