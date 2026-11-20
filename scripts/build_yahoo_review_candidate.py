@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 SYMBOLS = ("MSFT", "GOOGL", "AMZN", "META", "TSLA")
+MAX_HISTORY_DAYS = 1850  # Yahoo range=5y including leap years and boundary slack
 
 
 def build_candidate(report, today=None):
@@ -27,7 +28,7 @@ def build_candidate(report, today=None):
         for row in rows:
             day = date.fromisoformat(row["trading_date"])
             price = Decimal(str(row["close_price"]))
-            if not price.is_finite() or price <= 0 or day > today or day < today - timedelta(days=45):
+            if not price.is_finite() or price <= 0 or day > today or day < today - timedelta(days=MAX_HISTORY_DAYS):
                 raise ValueError(f"{ticker}: invalid date or close")
             if day in dates:
                 raise ValueError(f"{ticker}: duplicate trading date")
@@ -43,7 +44,7 @@ def build_candidate(report, today=None):
         for row in optional.get("observations", []):
             day = date.fromisoformat(row["trading_date"])
             price = Decimal(str(row["close_price"]))
-            if day < date(2026, 6, 12) or day > today or day < today - timedelta(days=45) or not price.is_finite() or price <= 0 or day in dates:
+            if day < date(2026, 6, 12) or day > today or day < today - timedelta(days=MAX_HISTORY_DAYS) or not price.is_finite() or price <= 0 or day in dates:
                 raise ValueError("SPCX: invalid or duplicate public trading day")
             dates.add(day)
             result["observations"].append({"ticker":"SPCX","trading_date":day.isoformat(),
