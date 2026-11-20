@@ -20,6 +20,17 @@ class YahooCoverageTests(unittest.TestCase):
         self.assertEqual(result["database_writes"], 0)
         self.assertFalse(result["published"])
 
+    def test_stale_optional_spcx_is_visible_but_core_remains_ready(self):
+        payload = sample()
+        payload["observations"].append({
+            "ticker": "SPCX", "trading_date": "2026-11-01",
+            "close_price": "125", "currency": "USD", "price_basis": "unadjusted_close"})
+        payload["row_count"] = len(payload["observations"])
+        report = assess_coverage(payload, today=date(2026, 11, 17))
+        self.assertTrue(report["all_usable"])
+        self.assertEqual(report["optional_unavailable"], ["SPCX"])
+        self.assertFalse(report["tickers"][-1]["usable"])
+
     def test_stale_ticker_identified(self):
         payload = sample()
         payload["observations"][-1]["trading_date"] = "2026-11-01"
