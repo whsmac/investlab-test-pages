@@ -28,7 +28,7 @@ class PublicYahooExportTests(unittest.TestCase):
 
     def test_unapproved_symbol_rejected(self):
         c = self.candidate()
-        c["observations"][0]["ticker"] = "SPCX"
+        c["observations"][0]["ticker"] = "UNLISTED_FAKE"
         with self.assertRaises(ValueError):
             build_public_snapshot(c)
 
