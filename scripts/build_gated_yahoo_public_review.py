@@ -25,7 +25,7 @@ def main():
     candidate = json.loads(args.candidate.read_text(encoding="utf-8-sig"))
     payload = build_gated_snapshot(candidate)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print("Gated Yahoo review:", payload["row_count"], "rows; deployment: none; DB writes: 0")
 
 
