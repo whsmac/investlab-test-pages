@@ -13,6 +13,7 @@ from pathlib import Path
 
 TARGET = "https://whsmac.github.io/investlab-test-pages/data/yahoo-public-review.json"
 TICKERS = {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
+OPTIONAL_TICKERS = {"SPCX"}
 MAX_BYTES = 2_000_000
 
 def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date | None = None):
@@ -36,8 +37,9 @@ def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date |
         raise ValueError("Invalid public Yahoo observations") from exc
     if sanitized["observations"] != sorted(rows, key=lambda r: (r["ticker"], r["trading_date"])):
         raise ValueError("Unexpected public Yahoo observation fields")
-    if {r["ticker"] for r in rows} != TICKERS:
-        raise ValueError("Incomplete public Yahoo ticker coverage")
+    seen = {r["ticker"] for r in rows}
+    if not TICKERS.issubset(seen) or seen - TICKERS - OPTIONAL_TICKERS:
+        raise ValueError("Incomplete or unexpected public Yahoo ticker coverage")
     # The TEST audience is in Korea; use a fixed KST calendar day on CI runners too.
     now = today or datetime.now(timezone(timedelta(hours=9))).date()
     latest = {}
@@ -46,11 +48,11 @@ def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date |
         if day > now:
             raise ValueError("Future-dated published observation")
         latest[row["ticker"]] = max(latest.get(row["ticker"], day), day)
-    age = {ticker: (now - latest[ticker]).days for ticker in sorted(TICKERS)}
+    age = {ticker: (now - latest[ticker]).days for ticker in sorted(seen)}
     return {"mode": "TEST_PAGES_LIVE_READ_ONLY_CHECK", "reachable": True,
             "published_json_sha256": digest, "checksum_matches": bool(expected_sha256),
-            "rows": len(rows), "tickers": sorted(TICKERS),
-            "latest_dates": {ticker: latest[ticker].isoformat() for ticker in sorted(TICKERS)},
+            "rows": len(rows), "tickers": sorted(seen),
+            "latest_dates": {ticker: latest[ticker].isoformat() for ticker in sorted(seen)},
             "age_days": age, "fresh": all(days <= 7 for days in age.values()),
             "database_writes": 0, "deployment_performed": False}
 
