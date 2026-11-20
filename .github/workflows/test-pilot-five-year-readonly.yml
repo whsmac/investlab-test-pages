@@ -67,9 +67,11 @@ jobs:
           INVESTLAB_SEC_USER_AGENT: ${{ secrets.INVESTLAB_SEC_USER_AGENT }}
         run: |
           if [ -z "$INVESTLAB_SEC_USER_AGENT" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice::SEC User-Agent secret is not configured; SEC source check skipped"
             exit 0
           fi
+          echo "configured=true" >> "$GITHUB_OUTPUT"
           python scripts/sec_quarterly_financials_test.py --output sec-quarterly-financials.json
           python - <<'PY'
           import json
@@ -98,6 +100,7 @@ jobs:
           YAHOO: ${{ steps.yahoo.outcome }}
           PRICE_CHECK: ${{ steps.price_check.outcome }}
           SEC: ${{ steps.sec_check.outcome }}
+          SEC_CONFIGURED: ${{ steps.sec_check.outputs.configured }}
         run: |
           {
             echo '## TEST Pilot five-year source check'
@@ -105,7 +108,11 @@ jobs:
             echo '|---|---|'
             echo "| Yahoo 5-year fetch | $YAHOO |"
             echo "| Yahoo publication checks | $PRICE_CHECK |"
-            echo "| SEC optional check | $SEC |"
+            if [ "$SEC_CONFIGURED" != true ]; then
+              echo "| SEC optional check | skipped (User-Agent not configured) |"
+            else
+              echo "| SEC optional check | $SEC |"
+            fi
             echo ''
             echo 'No GitHub Pages deployment, Git push, Supabase reads/writes, or production changes.'
           } >> "$GITHUB_STEP_SUMMARY"
