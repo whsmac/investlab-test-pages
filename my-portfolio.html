@@ -18,7 +18,7 @@ import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
-const KEY='investlab_pilot_ledger_local_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
+const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
 const account=$('account');
 function refreshAccountOptions(){
@@ -118,12 +118,17 @@ async function loadCloudLedgerSafely(){
   const {data:latest,error:latestError}=await client.from('investlab_pilot_ledger_documents').select('updated_at').eq('user_id',userId).maybeSingle();
   if(latestError||!latest||latest.updated_at!==remote.updated_at)throw Error('확인 중 서버 원장이 변경되었습니다. 다시 시도하세요');
   if(localStorage.getItem(KEY)!==original)throw Error('확인 중 브라우저 원장이 변경되었습니다. 다시 시도하세요');
-  const serialized=JSON.stringify(payload);
+  const serialized=JSON.stringify(payload),oldOwner=localStorage.getItem(LOCAL_OWNER_KEY);
   try{
    localStorage.setItem(KEY,serialized);
-   if(localStorage.getItem(KEY)!==serialized)throw Error('브라우저 저장 결과가 일치하지 않습니다');
+   localStorage.setItem(LOCAL_OWNER_KEY,userId);
+   if(localStorage.getItem(KEY)!==serialized||localStorage.getItem(LOCAL_OWNER_KEY)!==userId)
+    throw Error('원장 및 계정 소유자 저장 검증 실패');
   }catch(writeError){
-   try{if(original===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,original);}catch{}
+   try{
+    if(original===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,original);
+    if(oldOwner===null)localStorage.removeItem(LOCAL_OWNER_KEY);else localStorage.setItem(LOCAL_OWNER_KEY,oldOwner);
+   }catch{}
    throw Error('브라우저 저장 실패 또는 검증 실패: '+writeError.message);
   }
   output.textContent='서버 원장 불러오기 및 브라우저 저장 검증 완료 · 백업 파일 보관 권장 · 화면 갱신 중';
@@ -227,8 +232,21 @@ async function loadPrices(){
 }
 account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;render();$('priceStatus').textContent='계좌 변경 · 해당 계좌 가격 재조회 필요';void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 // Use the authenticated TEST ledger as the display source; never overwrite unsynced local entries.
-let displayedCloudLedgerRevision=null;
+let displayedCloudLedgerRevision=null,displayedCloudLedgerOwnerId=null;
 let cloudLedgerBusy=false;
+function resetVisiblePortfolio(){
+ // Account isolation affects the screen only. Unsent local ledger data stays intact.
+ data={version:1,accounts:[],entries:[]};
+ displayedCloudLedgerRevision=null;displayedCloudLedgerOwnerId=null;
+ priceRequestVersion++;prices=new Map();pricesLoaded=false;
+ refreshAccountOptions();render();
+}
+function usePortfolioDisplay(payload,revision,ownerId){
+ data=payload;displayedCloudLedgerRevision=revision;displayedCloudLedgerOwnerId=ownerId;
+ priceRequestVersion++;prices=new Map();pricesLoaded=false;
+ refreshAccountOptions();render();
+ if(payload.accounts.length)void loadPrices();
+}
 async function refreshOnlineLedgerDisplay(){
  if(cloudLedgerBusy)return;
  cloudLedgerBusy=true;
@@ -237,34 +255,54 @@ async function refreshOnlineLedgerDisplay(){
   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
   const url='https://gopofxyezhwpfxbecrxd.supabase.co';
   if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role')){
-   if(displayedCloudLedgerRevision===null)status.textContent='브라우저 원장 표시 중 · TEST 로그인 시 온라인 원장 자동 조회';
+   if(displayedCloudLedgerOwnerId)resetVisiblePortfolio();
+   status.textContent='TEST 계정 미연결 · 기존 브라우저 원장 데이터는 보존했습니다';
    return;
   }
   if(!window.supabase?.createClient)throw Error('Supabase 라이브러리 로딩 실패');
   const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data:auth,error:authError}=await client.auth.getUser();
   if(authError||!auth?.user?.id){
-   if(displayedCloudLedgerRevision===null)status.textContent='브라우저 원장 표시 중 · TEST 계정 로그인이 필요합니다';
+   if(displayedCloudLedgerOwnerId)resetVisiblePortfolio();
+   status.textContent='TEST 계정 로그인이 필요합니다 · 다른 온라인 계정의 보유현황은 숨겼습니다';
    return;
   }
-  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',auth.user.id).maybeSingle();
+  const ownerId=auth.user.id,localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
+  // Don't expose a different account's holdings while new user data loads.
+  if((displayedCloudLedgerOwnerId&&displayedCloudLedgerOwnerId!==ownerId)||
+     (!displayedCloudLedgerOwnerId&&localOwner!==ownerId&&(data.accounts.length||data.entries.length)))
+   resetVisiblePortfolio();
+  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents')
+   .select('payload,updated_at').eq('user_id',ownerId).maybeSingle();
   if(error)throw Error(error.message);
-  if(!remote){if(displayedCloudLedgerRevision===null)status.textContent='TEST 서버에 저장된 원장이 없어 브라우저 자료 표시 중';return;}
+  const {data:verified,error:verifyError}=await client.auth.getUser();
+  if(verifyError||verified?.user?.id!==ownerId)throw Error('조회 도중 TEST 로그인 계정이 변경되었습니다');
+  if(!remote){
+   // Local fallback is permitted only for the same account's recorded draft.
+   if(localOwner===ownerId){
+    const stored=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(stored?.version===1&&Array.isArray(stored.accounts)&&Array.isArray(stored.entries)){
+     validateLedger(stored);
+     if(displayedCloudLedgerOwnerId!==ownerId||displayedCloudLedgerRevision!==null)
+      usePortfolioDisplay(stored,null,ownerId);
+     status.textContent='본인 TEST 서버 원장 없음 · 동일 계정의 브라우저 원장을 표시 중';
+     return;
+    }
+   }
+   resetVisiblePortfolio();
+   status.textContent='이 TEST 계정에 서버 원장이 없습니다 · 다른 계정의 브라우저 자료는 화면에서 숨겼습니다';
+   return;
+  }
   const payload=remote.payload;
   if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('원장 형식 오류');
-  validateLedger(payload);
-  projectLedger(payload,'ALL');
+  validateLedger(payload);projectLedger(payload,'ALL');
   for(const a of payload.accounts)projectLedger(payload,a.id);
-  const revision=auth.user.id+':'+remote.updated_at;
-  if(displayedCloudLedgerRevision!==revision){
-   data=payload;
-   displayedCloudLedgerRevision=revision;
-   priceRequestVersion++;prices=new Map();pricesLoaded=false;
-   refreshAccountOptions();render();void loadPrices();
-  }
-  status.textContent='TEST 서버 원장 자동 연결 · '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래 · '+(remote.updated_at||'갱신 시각 미확인')+' · 브라우저 원장 변경 없음';
+  const revision=ownerId+':'+remote.updated_at;
+  if(displayedCloudLedgerRevision!==revision||displayedCloudLedgerOwnerId!==ownerId)
+   usePortfolioDisplay(payload,revision,ownerId);
+  status.textContent='본인 TEST 서버 원장 자동 연결 · '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래 · 브라우저 원장은 변경하지 않았습니다';
  }catch(error){
-  status.textContent='TEST 서버 원장 조회 실패: '+error.message+' · '+(displayedCloudLedgerRevision===null?'브라우저 자료 표시':'마지막 서버 조회 자료 유지');
+  status.textContent='TEST 서버 원장 조회 실패: '+error.message+' · 저장된 원장은 변경하지 않았습니다';
  }finally{cloudLedgerBusy=false;}
 }
 window.addEventListener('pageshow',()=>{void refreshOnlineLedgerDisplay();});
