@@ -303,44 +303,58 @@ async function loadFinance(){
 async function loadAll(){
  if(busy){reloadPending=true;return;}
  busy=true;
- const from=isoDate($("period").value),next=new Map(),failures=[];
- let serverConnected=false,serverError="",feedError="",feedResult=null;
- $("status").textContent="TEST 저장 주가 및 자동수집 종가를 조회 중…";
+ const from=isoDate($("period").value),next=new Map(SYMBOLS.map(t=>[t,[]])),failures=[];
+ let serverConnected=false,serverError="",feedError="",feedResult=null,published=null;
+ $("status").textContent="공개 TEST 주가를 먼저 조회 중…";
  try{
+  // Load the published five-year prices first. The public chart must not wait
+  // for six authenticated, paginated TEST database price queries.
+  try{
+   published=await loadPublishedYahooReview({origin:location.href});
+   feedResult=mergeTestDailyPrices(next,published,{from,maxAgeDays:7});
+   series=feedResult.series;
+   if(from!==isoDate($("period").value)){reloadPending=true;return;}
+   renderSymbols();renderPrices();
+   $("status").textContent="공개 Yahoo 종가를 먼저 표시했습니다. TEST 기업 정보·부족한 이력 확인 중…";
+  }catch(error){
+   feedError=error.message||String(error);
+   series=next;
+  }
   try{
    const c=await connect();
    const {data,error}=await c.from("companies").select("id,ticker,company_name").in("ticker",SYMBOLS);
    if(error)throw Error(error.message);
    companies=new Map((data||[]).map(v=>[v.ticker,v]));
    serverConnected=true;
-   const result=await Promise.allSettled(SYMBOLS.map(ticker=>readSharedPriceSeries(c,{ticker,from})));
+   // A complete, current Yahoo series already includes the chosen horizon.
+   // Only query TEST historical rows for symbols not covered by that series.
+   const missingHistory=SYMBOLS.filter(t=>!feedResult?.wholeSourceSymbols?.includes(t));
+   const result=await Promise.allSettled(missingHistory.map(ticker=>readSharedPriceSeries(c,{ticker,from})));
    result.forEach((r,i)=>{
-    const ticker=SYMBOLS[i];
+    const ticker=missingHistory[i];
     if(r.status==="fulfilled")next.set(ticker,r.value.points);
-    else{next.set(ticker,[]);failures.push(ticker);}
+    else failures.push(ticker);
    });
   }catch(error){
    serverError=error.message||String(error);
    client=null;
   }
-  for(const ticker of SYMBOLS)if(!next.has(ticker))next.set(ticker,[]);
+  if(from!==isoDate($("period").value)){reloadPending=true;return;}
   try{
-   // Same-origin public TEST JSON; no tokens, CORS proxies or client-side scraping.
-   const published=await loadPublishedYahooReview({origin:location.href});
-   feedResult=mergeTestDailyPrices(next,published,{from,maxAgeDays:7});
-   series=feedResult.series;
-  }catch(error){feedError=error.message||String(error);series=next;}
+   if(published)feedResult=mergeTestDailyPrices(next,published,{from,maxAgeDays:7});
+   series=feedResult?.series||next;
+  }catch(error){feedError=error.message||String(error);series=next;feedResult=null;}
   renderSymbols();renderPrices();
   const available=SYMBOLS.filter(t=>series.get(t)?.length);
   const coherent=feedResult?.wholeSourceSymbols||[];
   const origin=coherent.length?" · Yahoo 장기 단일 출처 "+coherent.join(", "):
    feedResult?.appended?" · TEST 기존 이력에 최근 종가 "+feedResult.appended+"건 보완":"";
   $("status").textContent=available.length+"/6개 기업 · "+from+" 이후 종가 조회"+origin+
-   (serverConnected?" · TEST 서버 이력 연결":" · TEST 서버 미연결")+
+   (serverConnected?" · TEST 서버 연결":" · TEST 서버 미연결")+
    (serverError?" · 서버: "+serverError:"")+
-   (feedError?" · 최근 종가: "+feedError:"")+
-   (failures.length?" · 이력 미조회 "+failures.join(", "):"")+
-   " · TEST DB 변경 없음 · Yahoo 종가는 분할 조정 가능, 배당 포함 총수익률·실시간 체결가 아님";
+   (feedError?" · 공개 종가: "+feedError:"")+
+   (failures.length?" · 저장 이력 미조회 "+failures.join(", "):"")+
+   " · DB 변경 없음 · Yahoo 종가는 분할 조정 가능, 배당 포함 총수익률·실시간 체결가 아님";
   await loadFinance();
  }catch(error){
   $("status").textContent="주가/재무 조회 오류: "+String(error.message||error)+" · 이전 화면 데이터는 유지합니다.";
