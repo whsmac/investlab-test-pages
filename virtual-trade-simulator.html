@@ -1074,7 +1074,7 @@ function ownerStorageKey(base){
 }
 const TEST_SCENARIO_URL='https://gopofxyezhwpfxbecrxd.supabase.co';
 async function getOnlineScenarioConnection(){
- const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+ const cfg=(()=>{try{return JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}')}catch{return {}}})();
  if(cfg.url!==TEST_SCENARIO_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))return null;
  if(!window.supabase?.createClient)return null;
  const client=window.supabase.createClient(TEST_SCENARIO_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
