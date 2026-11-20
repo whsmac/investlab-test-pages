@@ -8,6 +8,8 @@ from pathlib import Path
 
 SYMBOLS = ("MSFT", "GOOGL", "AMZN", "META", "TSLA")
 MAX_HISTORY_DAYS = 1850  # Yahoo range=5y including leap years and boundary slack
+MIN_FIVE_YEAR_ROWS = 1100
+MIN_FIVE_YEAR_SPAN_DAYS = 1650
 
 
 def build_candidate(report, today=None):
@@ -36,7 +38,16 @@ def build_candidate(report, today=None):
             result["observations"].append({"ticker": ticker, "trading_date": day.isoformat(),
                                            "close_price": str(price), "currency": "USD",
                                            "price_basis": "unadjusted_close"})
-        result["symbols"][ticker] = {"count": len(rows), "latest_date": max(dates).isoformat()}
+        # Only enforce this on reports explicitly produced by the five-year
+        # collector. Historical small offline fixtures remain valid for
+        # individual schema tests; real TEST publication cannot silently
+        # regress from five years to one month.
+        if report.get("requested_range") == "5y":
+            span=(today-min(dates)).days
+            if len(dates) < MIN_FIVE_YEAR_ROWS or span < MIN_FIVE_YEAR_SPAN_DAYS:
+                raise ValueError(f"{ticker}: five-year source truncated ({len(dates)} sessions, {span} calendar days)")
+        result["symbols"][ticker] = {"count": len(rows), "latest_date": max(dates).isoformat(),
+                                    "first_date": min(dates).isoformat()}
     # Optional sixth company: do not fail the existing five if its source is unavailable.
     optional = report.get("symbols", {}).get("SPCX", {})
     if optional.get("status") == "ok" and optional.get("currency") == "USD" and optional.get("price_basis") == "unadjusted_close":
