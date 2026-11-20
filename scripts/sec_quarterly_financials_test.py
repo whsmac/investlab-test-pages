@@ -22,9 +22,7 @@ METRICS = {
     "operating": "operating_income_usd_bn",
     "capex": "capex_usd_bn",
 }
-DAY = 86400
 FORMS = {"10-Q", "10-K", "10-Q/A", "10-K/A"}
-PERIODS = ("Q1", "Q2", "Q3", "Q4")
 CAPEX_TAG = "PaymentsToAcquirePropertyPlantAndEquipment"
 
 def duration(row):
@@ -38,7 +36,7 @@ def extract(facts, tag):
     clean = []
     for x in values:
         if (not isinstance(x, dict) or x.get("form") not in FORMS
-            or x.get("fp") not in (*PERIODS, "FY") or not isinstance(x.get("fy"), int)
+            or x.get("fp") not in ("Q1", "Q2", "Q3", "Q4", "FY") or not isinstance(x.get("fy"), int)
             or not isinstance(x.get("val"), (int, float)) or not x.get("accn")
             or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(x.get("filed", "")))
             or duration(x) < 70 or duration(x) > 380 or x["end"] < "2023-01-01"):
@@ -46,49 +44,64 @@ def extract(facts, tag):
         clean.append(x)
     return clean
 
-def newest(rows):
-    return max(rows, key=lambda x: (x["filed"], x["accn"]))
-
 def quarterly(rows, cash_spend=False):
-    """Prefer directly stated 3-month facts, otherwise matching fiscal YTD deltas."""
-    direct, cumul = {}, {}
-    for x in rows:
-        fiscal = x["fy"]
-        fp = "Q4" if x["fp"] == "FY" else x["fp"]
-        key = (fiscal, fp)
-        days = duration(x)
-        if 70 <= days <= 110 and x["fp"] != "FY":
-            if key not in direct or (x["filed"], x["accn"]) > (direct[key]["filed"], direct[key]["accn"]):
-                direct[key] = x
-        if x["fp"] == "FY" and days < 320:
+    """Group by actual quarter end, not SEC's filing FY/FP (which also labels comparatives).
+
+    Prefer 70-110 day standalone XBRL facts. For 6/9/12-month cumulative
+    cash-flow facts, derive the quarter only from a prior cumulative fact
+    with the SAME start date and a quarter-length period difference.
+    All values remain preview-only until issuer-specific filing reconciliation.
+    """
+    by_range = {}
+    for row in rows:
+        end = row["end"]
+        # These five issuers report calendar-quarter-end dates; skip non-quarter
+        # interim facts rather than mislabelling them as fiscal quarters.
+        try:
+            end_date = date.fromisoformat(end)
+            if end_date.month not in (3, 6, 9, 12):
+                continue
+            from calendar import monthrange
+            if end_date.day != monthrange(end_date.year, end_date.month)[1]:
+                continue
+        except ValueError:
             continue
-        if key not in cumul or (x["filed"], x["accn"]) > (cumul[key]["filed"], cumul[key]["accn"]):
-            cumul[key] = x
+        key = (row["start"], end)
+        previous = by_range.get(key)
+        if previous is None or (row["filed"], row["accn"]) > (previous["filed"], previous["accn"]):
+            by_range[key] = row
+    direct, cumulative = {}, {}
+    for row in by_range.values():
+        days = duration(row)
+        if 70 <= days <= 110:
+            current = direct.get(row["end"])
+            if current is None or (row["filed"], row["accn"]) > (current["filed"], current["accn"]):
+                direct[row["end"]] = row
+        elif 140 <= days <= 380:
+            # Keep revisions separate by period start/end, not by FY/FP alone.
+            cumulative[(row["start"], row["end"])] = row
     answer = {}
-    for key, item in direct.items():
-        v = float(item["val"])
-        if not cash_spend or v >= 0:
-            answer[key] = {"end": item["end"], "value": abs(v) if cash_spend else v,
-                           "accn": item["accn"], "mode": "direct"}
-    for key, item in cumul.items():
-        if key in answer:
+    for end, row in direct.items():
+        value = float(row["val"])
+        if cash_spend and value < 0:
+            continue  # Never silently flip a filing's cash-flow sign.
+        answer[end] = {"end": end, "value": value,
+                       "accn": row["accn"], "mode": "direct"}
+    for (start, end), row in sorted(cumulative.items(), key=lambda item: item[0][1]):
+        if end in answer:
             continue
-        fiscal, fp = key
-        idx = PERIODS.index(fp)
-        if idx == 0:
-            if not (70 <= duration(item) <= 110):
-                continue
-            value = float(item["val"])
-        else:
-            previous = cumul.get((fiscal, PERIODS[idx-1]))
-            if (not previous or previous.get("start") != item.get("start")
-                or previous["end"] >= item["end"] or duration(item) < 140):
-                continue
-            value = float(item["val"]) - float(previous["val"])
-        if not (-1e15 < value < 1e15) or (not cash_spend and value < 0):
+        # The prior cumulative period must be approximately one fiscal quarter earlier.
+        prior = [prev for (pstart, pend), prev in by_range.items()
+                 if pstart == start and pend < end and 70 <=
+                 (date.fromisoformat(end) - date.fromisoformat(pend)).days <= 110]
+        if not prior:
             continue
-        answer[key] = {"end": item["end"], "value": abs(value) if cash_spend else value,
-                       "accn": item["accn"], "mode": "ytd_delta" if idx else "ytd_q1"}
+        previous = max(prior, key=lambda item: item["end"])
+        value = float(row["val"]) - float(previous["val"])
+        if not (-1e15 < value < 1e15) or (cash_spend and value < 0):
+            continue
+        answer[end] = {"end": end, "value": value,
+                       "accn": row["accn"], "mode": "ytd_delta"}
     return answer
 
 def collect_company(ticker, cik, revenue_tag, user_agent):
@@ -107,15 +120,16 @@ def collect_company(ticker, cik, revenue_tag, user_agent):
         "capex": quarterly(extract(facts, CAPEX_TAG), cash_spend=True),
     }
     result = []
-    for period in sorted(set().union(*(set(s) for s in selections.values()))):
-        fy, fp = period
-        selected = {name: data.get(period) for name, data in selections.items()}
+    for period_end in sorted(selections["revenue"]):
+        selected = {name: data.get(period_end) for name, data in selections.items()}
         # A reporting quarter needs a consolidated revenue observation.
         revenue = selected["revenue"]
         if not revenue or revenue["value"] <= 0:
             continue
-        row = {"ticker": ticker, "fiscal_period": f"{fy}-{fp}",
-               "period_end": revenue["end"], "source_url": url,
+        reported = date.fromisoformat(period_end)
+        quarter = (reported.month - 1)//3 + 1
+        row = {"ticker": ticker, "fiscal_period": f"{reported.year}-Q{quarter}",
+               "period_end": period_end, "source_url": url,
                "status": "SEC_XBRL_PRELIMINARY"}
         for metric, key in METRICS.items():
             value = selected[metric]
