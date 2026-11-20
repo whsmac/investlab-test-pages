@@ -15,6 +15,9 @@ on:
       - 'scripts/sec_quarterly_financials_test.py'
       - 'scripts/validate_pilot_site_integration.py'
       - 'tests/test_pilot_site_integration.py'
+      - 'tests/test-pilot-browser-smoke.mjs'
+      - 'company-investment-analysis.html'
+      - 'src/market/company-period-range.mjs'
 
 permissions:
   contents: read
@@ -27,7 +30,7 @@ jobs:
   inspect-public-sources:
     if: github.repository == 'whsmac/investlab-test-pages'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 18
     steps:
       - name: Read TEST development branch only
         uses: actions/checkout@v4
@@ -81,7 +84,17 @@ jobs:
         continue-on-error: true
         run: |
           node --test tests/company-financial-overlay.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-period-range.test.mjs tests/company-online-price-first.test.mjs
-      - name: Check official SEC quarterly preview when contact identity is configured
+      - name: Exercise five TEST menus and charts in headless desktop/mobile Chromium
+        if: steps.pilot_preview.outcome == 'success' && steps.chart_tests.outcome == 'success'
+        id: browser_tests
+        continue-on-error: true
+        env:
+          INVESTLAB_TEST_SITE: ${{ runner.temp }}/investlab-pilot-site
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node --test tests/test-pilot-browser-smoke.mjs
+      - name: Check official SEC quarterly preview when a contact identity is configured
         if: always()
         id: sec_check
         continue-on-error: true
@@ -124,6 +137,7 @@ jobs:
           PRICE_CHECK: ${{ steps.price_check.outcome }}
           PILOT_PREVIEW: ${{ steps.pilot_preview.outcome }}
           CHART_TESTS: ${{ steps.chart_tests.outcome }}
+          BROWSER_TESTS: ${{ steps.browser_tests.outcome }}
           SEC: ${{ steps.sec_check.outcome }}
           SEC_CONFIGURED: ${{ steps.sec_check.outputs.configured }}
         run: |
@@ -135,6 +149,7 @@ jobs:
             echo "| Yahoo publication checks | $PRICE_CHECK |"
             echo "| Complete five-menu offline site | $PILOT_PREVIEW |"
             echo "| 3y/5y chart regressions | $CHART_TESTS |"
+            echo "| Desktop and mobile Chromium smoke | $BROWSER_TESTS |"
             if [ "$SEC_CONFIGURED" != true ]; then
               echo "| SEC optional check | skipped (User-Agent not configured) |"
             else
@@ -143,7 +158,7 @@ jobs:
             echo ''
             echo 'No GitHub Pages deployment, Git push, Supabase reads/writes, or production changes.'
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$YAHOO" != success ] || [ "$PRICE_CHECK" != success ] || [ "$PILOT_PREVIEW" != success ] || [ "$CHART_TESTS" != success ]; then
+          if [ "$YAHOO" != success ] || [ "$PRICE_CHECK" != success ] || [ "$PILOT_PREVIEW" != success ] || [ "$CHART_TESTS" != success ] || [ "$BROWSER_TESTS" != success ]; then
             echo "::error::Five-year TEST Pilot site validation incomplete; the existing published site remains unchanged"
             exit 1
           fi
