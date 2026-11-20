@@ -19,6 +19,17 @@ class YahooCandidateTests(unittest.TestCase):
         self.assertFalse(result["database_insert_authorized"])
         self.assertEqual(result["writes_performed"], 0)
 
+    def test_accepts_five_year_history_for_pilot_chart(self):
+        report = self.fixture()
+        for ticker in ("MSFT", "GOOGL", "AMZN", "META", "TSLA"):
+            report["symbols"][ticker]["observations"].insert(
+                0, {"trading_date": "2021-11-20", "close_price": "95.5"})
+            report["symbols"][ticker]["count"] = 2
+        result = build_candidate(report, date(2026, 11, 20))
+        self.assertEqual(len(result["observations"]), 10)
+        self.assertEqual(result["observations"][0]["trading_date"], "2021-11-20")
+        self.assertEqual(result["writes_performed"], 0)
+
     def test_reject_mixed_currency(self):
         report = self.fixture()
         report["symbols"]["TSLA"]["currency"] = "KRW"
