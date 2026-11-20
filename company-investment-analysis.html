@@ -77,27 +77,40 @@ function node(name,props={},value){
 function emptyChart(svg,label){
  svg.replaceChildren();svg.append(node("text",{x:450,y:160,fill:"#b9c6da","text-anchor":"middle","font-size":15},label));
 }
-function chart(svg,sets,{index=false,finance=[]}={}){
+function chart(svg,sets,{index=false,finance=[],from}={}){
  svg.replaceChildren();
  const data=sets.filter(s=>s.points?.length);
- if(!data.length){emptyChart(svg,"조회된 주가 데이터가 없습니다.");return;}
  const all=data.flatMap(s=>s.points),times=all.map(p=>Date.parse(p.date+"T00:00:00Z"));
  const left=78,right=870,priceTop=36,priceBottom=256;
  const revenueTop=298,revenueBottom=362,capexTop=402,capexBottom=466;
  const incomeTop=506,incomeBottom=570,marginTop=610,marginBottom=674;
- const tMin=Math.min(...times),tMax=Math.max(...times);
- const x=t=>left+(tMax===tMin?.5:(t-tMin)/(tMax-tMin))*(right-left);
- const pValues=all.map(p=>p.value),pLow=Math.min(...pValues),pHigh=Math.max(...pValues);
- const pad=(pHigh-pLow||Math.max(pHigh*.05,1))*.12,vMin=Math.max(0,pLow-pad),vMax=pHigh+pad;
- const py=v=>priceBottom-(v-vMin)/(vMax-vMin)*(priceBottom-priceTop);
- svg.append(node("text",{x:left,y:21,fill:"#becbe1","font-size":13},index?"주가 · 종목별 시작 100 기준":"주가 · USD 종가"));
- for(let i=0;i<=4;i++){
-  const v=vMin+(vMax-vMin)*i/4,yy=py(v);
-  svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
-  svg.append(node("text",{x:left-9,y:yy+4,fill:"#b4c1d6","text-anchor":"end","font-size":12},fmt(v,index?0:2)));
- }
+ const fromMs=Date.parse(String(from)+"T00:00:00Z");
+ const kstToday=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,10);
+ const todayMs=Date.parse(kstToday+"T00:00:00Z");
+ const tMin=Number.isFinite(fromMs)?fromMs:Math.min(todayMs,...times);
+ const tMax=Math.max(tMin+86400000,todayMs,...times.filter(Number.isFinite));
+ // A selected 3y/5y horizon is the shared time axis even if some price
+ // history is absent. Quarterly finances must not be clipped to the first
+ // available price quote, nor hidden just because all prices are missing.
  const quarters=finance.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.period_end||""))
   .filter(r=>{const t=Date.parse(r.period_end+"T00:00:00Z");return Number.isFinite(t)&&t>=tMin&&t<=tMax;});
+ if(!data.length&&!quarters.length){emptyChart(svg,"조회 기간에 주가·분기 재무자료가 없습니다.");return;}
+ const x=t=>left+(t-tMin)/(tMax-tMin)*(right-left);
+ svg.append(node("text",{x:left,y:21,fill:"#becbe1","font-size":13},index?"주가 · 종목별 시작 100 기준":"주가 · USD 종가"));
+ let py=()=>priceBottom;
+ if(data.length){
+  const pValues=all.map(p=>p.value),pLow=Math.min(...pValues),pHigh=Math.max(...pValues);
+  const pad=(pHigh-pLow||Math.max(pHigh*.05,1))*.12,vMin=Math.max(0,pLow-pad),vMax=pHigh+pad;
+  py=v=>priceBottom-(v-vMin)/(vMax-vMin)*(priceBottom-priceTop);
+  for(let i=0;i<=4;i++){
+   const v=vMin+(vMax-vMin)*i/4,yy=py(v);
+   svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
+   svg.append(node("text",{x:left-9,y:yy+4,fill:"#b4c1d6","text-anchor":"end","font-size":12},fmt(v,index?0:2)));
+  }
+ }else{
+  svg.append(node("text",{x:left+12,y:(priceTop+priceBottom)/2,fill:"#b9c6da","font-size":14},
+   "선택 종목의 주가 없음 · 확보된 분기 재무자료만 표시"));
+ }
  for(const r of quarters){
   const qx=x(Date.parse(r.period_end+"T00:00:00Z"));
   svg.append(node("line",{x1:qx,y1:priceTop,x2:qx,y2:marginBottom,stroke:"#53617d","stroke-dasharray":"3,6",opacity:.38}));
@@ -211,7 +224,7 @@ function renderPrices(){
   return {ticker,color:COLORS[SYMBOLS.indexOf(ticker)],selected:ticker===selected,
    points:items.map(p=>({date:p.date,value:multi&&first?p.close/first*100:p.close}))};
  });
- chart($("priceChart"),sets,{index:multi,finance:financeCache.get(selected)||[]});
+ chart($("priceChart"),sets,{index:multi,finance:financeCache.get(selected)||[],from:isoDate($("period").value)});
  const legend=$("legend");legend.replaceChildren();
  for(const s of sets){
   const label=document.createElement("span"),mark=document.createElement("b");mark.style.background=s.color;
