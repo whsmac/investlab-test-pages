@@ -30,6 +30,8 @@ class YahooProbeRetryTests(unittest.TestCase):
             result = probe.fetch_chart("TSLA")
         self.assertEqual(result["status"], "ok")
         self.assertEqual(fetch.call_count, 2)
+        self.assertIn("range=5y", fetch.call_args.args[0].full_url)
+        self.assertIn("interval=1d", fetch.call_args.args[0].full_url)
         sleep.assert_called_once_with(2)
 
     def test_429_rate_limit_not_retried(self):
