@@ -53,7 +53,10 @@ def verify_payload(raw: bytes, expected_sha256: str | None = None, today: date |
             "published_json_sha256": digest, "checksum_matches": bool(expected_sha256),
             "rows": len(rows), "tickers": sorted(seen),
             "latest_dates": {ticker: latest[ticker].isoformat() for ticker in sorted(seen)},
-            "age_days": age, "fresh": all(days <= 7 for days in age.values()),
+            "age_days": age,
+            "fresh": all(0 <= age[ticker] <= 7 for ticker in TICKERS),
+            "optional_stale": [ticker for ticker in sorted(OPTIONAL_TICKERS.intersection(seen))
+                               if not 0 <= age[ticker] <= 7],
             "database_writes": 0, "deployment_performed": False}
 
 def fetch_public_json(url: str = TARGET):
