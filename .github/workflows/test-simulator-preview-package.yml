@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir -p preview/src
           cp virtual-trade-simulator.html preview/
-          cp -R src/simulator src/ledger preview/src/
+          cp -R src/simulator src/ledger src/market src/sync preview/src/
           printf '%s\n' 'INVESTLAB TEST preview — unzip, cd into the extracted folder, then run: python3 -m http.server 8765' > preview/README.txt
           test -f preview/src/simulator/virtual-trade-engine.mjs
           test -f preview/src/ledger/scenario-backup.mjs
