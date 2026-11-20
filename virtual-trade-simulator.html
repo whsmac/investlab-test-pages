@@ -1076,7 +1076,7 @@ const TEST_SCENARIO_URL='https://gopofxyezhwpfxbecrxd.supabase.co';
 async function getOnlineScenarioConnection(){
  const cfg=(()=>{try{return JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}')}catch{return {}}})();
  if(cfg.url!==TEST_SCENARIO_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))return null;
- if(!window.supabase?.createClient)return null;
+ if(!window.supabase?.createClient)throw Error('TEST 인증 라이브러리가 로딩되지 않았습니다. 이전 작업은 유지됩니다.');
  const client=window.supabase.createClient(TEST_SCENARIO_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
  const {data,error}=await client.auth.getUser();
  if(error){
@@ -1232,7 +1232,7 @@ byId('saveScenario').addEventListener('click',async()=>{
  try{
   const online=await saveScenarioOnline(name,strategies,connection);
   if(activeSimulatorOwnerId===connection.userId)byId('scenarioStorageStatus').textContent=online?'TEST 서버 및 브라우저 저장 완료: '+name:'브라우저 저장 완료: '+name+' · 서버 동기화 미완료';
- }catch(error){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='브라우저 저장 완료 · 서버 저장 실패: '+error.message;}
+ }catch(error){if(activeSimulatorOwnerId===connection.userId){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='브라우저 저장 완료 · 서버 저장 실패: '+error.message;}}
  }catch(error){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='전략 저장 실패: '+error.message;}
 });
 byId('loadScenario').addEventListener('click',()=>storageAction(()=>{
@@ -1282,7 +1282,7 @@ byId('deleteScenario').addEventListener('click',async()=>{
  try{
   const online=await deleteScenarioOnline(name,connection);
   if(activeSimulatorOwnerId===connection.userId)byId('scenarioStorageStatus').textContent=online?'브라우저 및 TEST 서버에서 전략 삭제 완료: '+name:'브라우저에서만 전략 삭제 완료: '+name;
- }catch(error){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='브라우저에서 삭제됨 · 서버 삭제 실패: '+error.message;}
+ }catch(error){if(activeSimulatorOwnerId===connection.userId){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='브라우저에서 삭제됨 · 서버 삭제 실패: '+error.message;}}
  }catch(error){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='전략 삭제 실패: '+error.message;}
 });
 storageAction(refreshSavedScenarioList);
