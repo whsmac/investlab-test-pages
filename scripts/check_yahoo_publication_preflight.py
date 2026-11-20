@@ -14,6 +14,7 @@ def assess_publication(candidate, today=None):
     public = build_public_snapshot(candidate)
     symbols = {row["ticker"] for row in public["observations"]}
     issues = []
+    warnings = []
     if not EXPECTED.issubset(symbols) or symbols - EXPECTED - {"SPCX"}:
         issues.append("Missing required five tickers or unexpected ticker")
     if public["row_count"] < 5:
@@ -23,12 +24,18 @@ def assess_publication(candidate, today=None):
     for ticker in sorted(symbols):
         dates = [date.fromisoformat(row["trading_date"])
                  for row in public["observations"] if row["ticker"] == ticker]
-        if dates and (max(dates) > today or max(dates) < today - timedelta(days=7)):
-            issues.append(ticker + ": latest price outside seven-day freshness window")
+        if dates and max(dates) > today:
+            issues.append(ticker + ": latest price is future-dated")
+        elif dates and max(dates) < today - timedelta(days=7):
+            # An optional halted/unavailable symbol must not block fresh
+            # closing prices for the five required Pilot companies.
+            (warnings if ticker == "SPCX" else issues).append(
+                ticker + ": latest price older than seven days")
     return {"mode": "PUBLICATION_PREFLIGHT_ONLY", "publish_authorized": False,
             "deployment_performed": False, "database_writes": 0,
             "candidate_rows": public["row_count"], "symbols": sorted(symbols),
-            "checks_passed": not issues, "issues": sorted(issues)}
+            "checks_passed": not issues, "issues": sorted(issues),
+            "warnings": sorted(warnings)}
 
 
 def main():
