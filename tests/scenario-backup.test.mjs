@@ -64,7 +64,7 @@ test('backup import reports invalid JSON clearly and skips no-op storage writes'
  assert.match(section,/const added=Object\.keys\(incoming\)\.filter\(name=>!Object\.hasOwn\(current,name\)\)/);
  assert.match(section,/if\(!collisions\.length&&!added\.length\)/);
  assert.match(section,/변경 없이 유지했습니다/);
- assert.ok(section.indexOf('if(!collisions.length&&!added.length)')<section.indexOf('localStorage.setItem(SCENARIO_STORAGE_KEY'));
+ assert.ok(section.indexOf('if(!collisions.length&&!added.length)')<section.indexOf('localStorage.setItem(ownerStorageKey(SCENARIO_STORAGE_KEY)');
 });
 
 test('backup import distinguishes storage quota failures and retains file for retry',()=>{
@@ -85,7 +85,7 @@ test('backup import refreshes current editor save status on success and no-op',(
  const end=html.indexOf('function updateStrategySaveState()',start);
  const section=html.slice(start,end);
  assert.match(section,/변경 없이 유지했습니다.*updateStrategySaveState\(\);return;/);
- assert.match(section,/localStorage\.setItem\(SCENARIO_STORAGE_KEY,JSON\.stringify\(merged\)\);refreshSavedScenarioList\(\);updateStrategySaveState\(\)/);
+ assert.match(section,/localStorage\.setItem\(ownerStorageKey\(SCENARIO_STORAGE_KEY\),JSON\.stringify\(merged\)\);refreshSavedScenarioList\(\);updateStrategySaveState\(\)/);
 });
 
 test('save load and delete refresh editor saved status immediately',()=>{
