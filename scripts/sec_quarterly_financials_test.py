@@ -104,6 +104,18 @@ def quarterly(rows, cash_spend=False):
                        "accn": row["accn"], "mode": "ytd_delta"}
     return answer
 
+def reporting_fiscal_period(ticker, period_end):
+    """Issuer fiscal period for UI labels; do not confuse calendar Q3 with MSFT FY Q1."""
+    ended = date.fromisoformat(period_end)
+    if ticker == "MSFT":
+        fiscal_year = ended.year + (1 if ended.month >= 7 else 0)
+        fiscal_quarter = ((ended.month - 7) % 12)//3 + 1
+    else:
+        fiscal_year = ended.year
+        fiscal_quarter = (ended.month - 1)//3 + 1
+    return f"{fiscal_year}-Q{fiscal_quarter}"
+
+
 def collect_company(ticker, cik, revenue_tag, user_agent):
     url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
     req = urllib.request.Request(url, headers={"User-Agent": user_agent, "Accept": "application/json"})
@@ -126,9 +138,7 @@ def collect_company(ticker, cik, revenue_tag, user_agent):
         revenue = selected["revenue"]
         if not revenue or revenue["value"] <= 0:
             continue
-        reported = date.fromisoformat(period_end)
-        quarter = (reported.month - 1)//3 + 1
-        row = {"ticker": ticker, "fiscal_period": f"{reported.year}-Q{quarter}",
+        row = {"ticker": ticker, "fiscal_period": reporting_fiscal_period(ticker, period_end),
                "period_end": period_end, "source_url": url,
                "status": "SEC_XBRL_PRELIMINARY"}
         for metric, key in METRICS.items():
