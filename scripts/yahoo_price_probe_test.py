@@ -87,7 +87,7 @@ def save(report):
 
 def main():
     report = {"mode": "LIVE_SOURCE_TRIAL", "source": "Yahoo Finance unofficial chart endpoint",
-              "generated_on": date.today().isoformat(), "writes_performed": 0,
+              "generated_on": date.today().isoformat(), "requested_range": "5y", "writes_performed": 0,
               "database_insert_authorized": False, "symbols": {}}
     save(report)
     for ticker in SYMBOLS:
