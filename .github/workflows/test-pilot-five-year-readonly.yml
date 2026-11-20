@@ -29,7 +29,7 @@ concurrency:
 jobs:
   inspect-public-sources:
     if: github.repository == 'whsmac/investlab-test-pages'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Pin Playwright-supported runner; ubuntu-26.04 is unsupported by pinned Chromium
     timeout-minutes: 18
     steps:
       - name: Read TEST development branch only
