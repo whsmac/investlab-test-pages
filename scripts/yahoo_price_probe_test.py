@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TEST-only Yahoo Finance chart API availability trial; no database access."""
+"""TEST-only Yahoo daily close collection, up to five years; no database access."""
 import json
 import os
 import sys
@@ -48,14 +48,17 @@ def parse_chart(payload, ticker):
     if not observations:
         raise ValueError("No valid closes")
     return {"status": "ok", "currency": currency, "price_basis": "unadjusted_close",
-            "count": len(observations), "latest_date": max(observations),
+            "count": len(observations), "first_date": min(observations), "latest_date": max(observations),
             "observations": [{"trading_date": day, "close_price": observations[day]}
                              for day in sorted(observations)]}
 
 
 def fetch_chart(ticker):
     url = "https://query1.finance.yahoo.com/v8/finance/chart/" + urllib.parse.quote(ticker)
-    url += "?interval=1d&range=1mo"
+    # Pull five years once daily for long-horizon (3y/5y) Pilot charts.
+    # Yahoo quote.close is split-adjusted but not dividend-adjusted; this
+    # pipeline never treats it as a tick-by-tick/live price.
+    url += "?interval=1d&range=5y"
     request = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (compatible; INVESTLAB-TEST/1.0)",
         "Accept": "application/json"})
@@ -95,7 +98,7 @@ def main():
                                           "message": str(exc)[:180]}
         save(report)
         print(ticker, report["symbols"][ticker]["status"], flush=True)
-    # SPCX started public trading on 2026-06-12; optional source failure must not halt five incumbent tickers.
+    # Optional sixth ticker failure must not halt the five required companies.
     return 0 if all(report["symbols"][t]["status"] == "ok" for t in CORE_SYMBOLS) else 1
 
 
