@@ -30,6 +30,12 @@ class YahooCandidateTests(unittest.TestCase):
         self.assertEqual(result["observations"][0]["trading_date"], "2021-11-20")
         self.assertEqual(result["writes_performed"], 0)
 
+    def test_five_year_live_collection_must_not_silently_shrink_to_one_month(self):
+        report = self.fixture()
+        report["requested_range"] = "5y"
+        with self.assertRaisesRegex(ValueError, "five-year source truncated"):
+            build_candidate(report, date(2026, 11, 20))
+
     def test_reject_mixed_currency(self):
         report = self.fixture()
         report["symbols"]["TSLA"]["currency"] = "KRW"
