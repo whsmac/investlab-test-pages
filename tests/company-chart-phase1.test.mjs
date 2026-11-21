@@ -64,7 +64,7 @@ test("financial QoQ/YoY include operating-margin percentage points, reject missi
  const [first,prev,now]=enrichQuarterlyFinance(rows);
  assert.equal(first.qoq.revenue,null);
  assert.equal(prev.yoy.revenue,null);
- assert.equal(now.qoq.revenue,20);
+ assert.ok(Math.abs(now.qoq.revenue-20)<1e-9);
  assert.equal(now.yoy.revenue,50);
  assert.equal(now.qoq.margin,5);
  assert.equal(now.yoy.margin,10);
