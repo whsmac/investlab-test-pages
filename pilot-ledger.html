@@ -7,7 +7,7 @@
 <a href="./index.html">← INVESTLAB 홈</a><h1>통합원장 · 1단계 실사용 화면</h1>
 <p class="warn">TEST 계정 로그인 시 계좌와 거래를 자동으로 서버와 동기화합니다. 접속이 끊기면 브라우저에 기록을 보존하며 서버 변경 충돌은 자동 덮어쓰기하지 않습니다.</p>
 <section class="panel" id="onlineSync"><h2>온라인 저장 · TEST Supabase</h2>
-<p class="muted">로그인하면 서버 원장을 자동으로 불러오고, 거래 변경 시 자동 저장합니다. 아래 수동 저장·불러오기는 동기화 충돌 해결 시 사용합니다.</p>
+<p class="muted">로그인하면 본인 TEST 원장을 자동으로 불러오고 거래를 자동 저장합니다. 같은 브라우저에서 다른 TEST 계정으로 전환할 때도 각 계정의 브라우저 원장을 별도로 보존합니다. 아래 수동 저장·불러오기는 동기화 충돌 해결 시 사용합니다.</p>
 <div class="grid"><label class="wide">TEST 공개용 Supabase anon / publishable key<input id="cloudKey" type="password" autocomplete="off" placeholder="TEST 프로젝트 공개 키"></label>
 <label>이메일<input id="cloudEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="cloudPassword" type="password" autocomplete="current-password"></label></div>
 <div class="actions" style="margin-top:12px"><button type="button" id="cloudReuseLogin">공유 데이터 로그인 사용</button><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
@@ -105,6 +105,33 @@ const cloudBaseKey=userId=>'investlab_pilot_ledger_cloud_base_v1:'+userId;
 const stableLedger=value=>JSON.stringify(value,(key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(name=>[name,item[name]])):item);
 let syncTimer=null,syncInFlight=false,syncAgain=false,cloudBaseline=null,cloudBaselineRevision=null;
 const LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1';
+const scopedLocalLedgerKey=userId=>KEY+':'+userId;
+function requireLocalLedgerOwner(userId){
+ const owner=localStorage.getItem(LOCAL_OWNER_KEY);
+ if(owner!==userId)throw Error('다른 TEST 계정 또는 소유자 미확인 브라우저 원장입니다. 계정별 전환 후 저장하세요');
+}
+function activateLocalLedgerOwner(userId){
+ const previous=localStorage.getItem(LOCAL_OWNER_KEY);
+ if(previous===userId)return;
+ if(!previous&&!emptyLedger(db))throw Error('기존 브라우저 원장의 계정 소유자가 확인되지 않습니다. JSON 백업 후 별도 브라우저에서 TEST 계정을 사용하세요');
+ if(previous&&!/^[a-f0-9-]{30,50}$/i.test(previous))throw Error('이전 브라우저 원장 소유자 정보 오류');
+ const targetKey=scopedLocalLedgerKey(userId),oldArchiveKey=previous?scopedLocalLedgerKey(previous):null;
+ const targetRaw=localStorage.getItem(targetKey),next=targetRaw?JSON.parse(targetRaw):{version:1,accounts:[],entries:[]};
+ validateLedger(next);
+ const tracked=[KEY,LOCAL_OWNER_KEY,targetKey,...(oldArchiveKey?[oldArchiveKey]:[])];
+ const backup=new Map(tracked.map(key=>[key,localStorage.getItem(key)]));
+ try{
+  if(oldArchiveKey)localStorage.setItem(oldArchiveKey,JSON.stringify(db));
+  localStorage.setItem(KEY,JSON.stringify(next));
+  localStorage.setItem(LOCAL_OWNER_KEY,userId);
+  if(localStorage.getItem(KEY)!==JSON.stringify(next)||localStorage.getItem(LOCAL_OWNER_KEY)!==userId||
+     (oldArchiveKey&&localStorage.getItem(oldArchiveKey)!==JSON.stringify(db)))throw Error('계정별 원장 보관 확인 실패');
+ }catch(error){
+  for(const [key,value] of backup)try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch{}
+  throw Error('계정 전환 실패: '+error.message+' · 기존 원장을 보존했습니다');
+ }
+ db=next;stopEditing();render();
+}
 function recordCloudBaseline(userId,payload,revision){
  cloudBaseline=stableLedger(payload);cloudBaselineRevision=revision;
  try{localStorage.setItem(LOCAL_OWNER_KEY,userId);}catch{}
@@ -118,7 +145,7 @@ function restoreCloudBaseline(userId){
 }
 const emptyLedger=payload=>!payload.accounts.length&&!payload.entries.length;
 function queueAutomaticCloudSave(){
- if(!cloud||!cloudUser)return;
+ if(!cloud||!cloudUser||localStorage.getItem(LOCAL_OWNER_KEY)!==cloudUser)return;
  clearTimeout(syncTimer);
  syncTimer=setTimeout(()=>{syncTimer=null;void automaticCloudSave();},500);
 }
@@ -127,7 +154,9 @@ async function automaticCloudSave(){
  if(!cloud||!cloudUser)return;
  syncInFlight=true;
  try{
-  const user=await requireCloud(),payload=JSON.parse(JSON.stringify(db)),serialized=stableLedger(payload);
+  const user=await requireCloud();
+  requireLocalLedgerOwner(user);
+  const payload=JSON.parse(JSON.stringify(db)),serialized=stableLedger(payload);
   validateLedger(payload);
   if(serialized.length>700000)throw Error('TEST 원장 크기가 자동 저장 제한을 초과했습니다');
   const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',user).maybeSingle();
@@ -169,16 +198,16 @@ async function connectAndLoadOnlineLedger(){
   const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data:auth,error:authError}=await candidate.auth.getUser();
   if(authError||!auth?.user?.id)return;
-  if(syncInFlight||syncTimer)return;
-  cloud=candidate;cloudUser=auth.user.id;cloudKey=cfg.key;
-  restoreCloudBaseline(cloudUser);
-  const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',cloudUser).maybeSingle();
+  if(syncInFlight)return;
+  if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
+  const userId=auth.user.id;
+  activateLocalLedgerOwner(userId);
+  cloud=candidate;cloudUser=userId;cloudKey=cfg.key;
+  restoreCloudBaseline(userId);
+  const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',userId).maybeSingle();
   if(error)throw error;
   const localJson=stableLedger(db),localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
-  if(localOwner&&localOwner!==cloudUser&&!emptyLedger(db)){
-   cloudStatus('다른 TEST 계정에서 작성한 브라우저 원장이 감지되어 자동 전환을 중지했습니다. 브라우저 원장을 백업한 후 계정을 확인하세요');
-   return;
-  }
+  requireLocalLedgerOwner(cloudUser);
   if(!remote){
    cloudBaseline=null;cloudBaselineRevision=null;
    if(emptyLedger(db)&&!localOwner)try{localStorage.setItem(LOCAL_OWNER_KEY,cloudUser);}catch{}
@@ -243,6 +272,7 @@ $('cloudPreflight').onclick=async()=>{
 $('cloudLoad').onclick=async()=>{
  try{
   const user=await requireCloud();
+  requireLocalLedgerOwner(user);
   const {data,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',user).maybeSingle();
   if(error)throw error;
   if(!data){cloudStatus('온라인 원장이 비어 있습니다. 현재 브라우저 데이터를 저장하려면 서버에 저장을 선택하세요.');return;}
@@ -257,6 +287,7 @@ $('cloudLoad').onclick=async()=>{
 $('cloudSave').onclick=async()=>{
  try{
   const user=await requireCloud();
+  requireLocalLedgerOwner(user);
   validateLedger(db);
   const payload=JSON.parse(JSON.stringify(db));
   if(JSON.stringify(payload).length>700000)throw Error('데이터 용량이 너무 큽니다. JSON 백업을 사용하세요');
