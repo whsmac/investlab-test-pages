@@ -396,7 +396,7 @@ $('cloudSave').onclick=async()=>{
  }catch(e){cloudStatus('서버 저장 실패: '+e.message+' · 브라우저 원장은 유지됩니다.');}
 };
 $('entryDate').value=new Date().toLocaleDateString('en-CA');render();
-window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'&&event.newValue===null){$('ledgerPrivate').hidden=true;cloud=null;cloudUser=null;cloudStatus('로그아웃되었습니다. HOME에서 로그인하세요.');}});
+window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'){ $('ledgerPrivate').hidden=true;cloud=null;cloudUser=null;cloudStatus('로그인 상태 변경 · 계정 확인 중…');void connectAndLoadOnlineLedger();}});
 window.addEventListener('pageshow',()=>{void connectAndLoadOnlineLedger();});
 setInterval(()=>{if(!document.hidden&&!syncInFlight&&!syncTimer)void connectAndLoadOnlineLedger();},15*60*1000);
 })();
