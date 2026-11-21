@@ -53,6 +53,12 @@ jobs:
           else
             echo "::notice::SEC contact identity is not configured; official financial collection skipped"
           fi
+      - name: Fetch real NASDAQ 100 and S&P 500 index levels (optional, read-only)
+        run: |
+          if ! python -m scripts.yahoo_market_indices_test --output "${RUNNER_TEMP}/market-index-benchmarks.json"; then
+            rm -f "${RUNNER_TEMP}/market-index-benchmarks.json"
+            echo "::warning::Benchmark source unavailable; do not substitute ETF or stale levels"
+          fi
       - name: Stage reviewed public-only data
         run: python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-staged
       - name: Assemble and validate complete TEST website (no partial publishing)
@@ -69,6 +75,17 @@ jobs:
               rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
               python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
               echo "::warning::Unverified SEC quarterly preview excluded; validated Yahoo site retained"
+            fi
+          fi
+      - name: Stage and validate optional index data
+        run: |
+          if [ -s "${RUNNER_TEMP}/market-index-benchmarks.json" ]; then
+            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
+            cp "${RUNNER_TEMP}/market-index-benchmarks.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/market-index-benchmarks.json"
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/market-index-benchmarks.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::Invalid index asset excluded from TEST website"
             fi
           fi
       - name: Configure GitHub Pages

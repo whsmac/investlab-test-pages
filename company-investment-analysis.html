@@ -14,7 +14,7 @@ p{line-height:1.65}.muted{color:#acb9d1;font-size:13px}
 .tickers{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .tickers button{background:#111b2d;color:#f0f4ff;border:1px solid #435576;border-radius:10px;padding:13px 6px;font:inherit;cursor:pointer;text-align:center}
 .tickers button[aria-pressed="true"]{background:#264570;border-color:#98bcff;box-shadow:inset 0 0 0 1px #98bcff}
-.tickers strong{font-size:16px}.tickers small{display:block;margin-top:5px;font-size:11px;color:#b9c6da;line-height:1.3}
+.benchmarks{grid-template-columns:repeat(2,minmax(0,220px));margin-top:10px}.benchmarks button{padding:10px}.chart-detail{border:1px solid #3f5475;border-radius:9px;padding:10px 12px;margin-top:10px;background:#101b2d;line-height:1.6;white-space:pre-wrap;font-variant-numeric:tabular-nums}.tickers strong{font-size:16px}.tickers small{display:block;margin-top:5px;font-size:11px;color:#b9c6da;line-height:1.3}
 .controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between}
 select{font:inherit;background:#101b2d;border:1px solid #52647e;color:white;border-radius:9px;padding:10px}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 16px}
@@ -36,13 +36,17 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <section class="panel">
 <p class="muted" style="margin:0 0 9px">종목 버튼을 눌러 여러 기업을 선택하거나 제외할 수 있습니다. 최소 1개 종목은 유지됩니다.</p>
 <div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div>
+<p class="muted" style="margin:14px 0 6px">시장지수 비교 (복수 선택 가능 · 선택 시 기준값 100 자동 전환)</p>
+<div class="tickers benchmarks" id="benchmarkButtons" aria-label="비교할 주요 시장지수 선택"></div>
+<p id="benchmarkStatus" class="muted" role="status">NASDAQ 100 · S&amp;P 500 데이터 확인 중…</p>
 <div class="controls" style="margin-top:17px"><h2 id="companyTitle" style="margin:0">기업 주가 분석</h2><label>재무·요약 기준 종목 <select id="financialTicker" aria-label="재무 및 주가 요약 기준 종목"></select></label><label>조회 기간 <select id="period"><option value="3m">3개월</option><option value="6m">6개월</option><option value="1y" selected>1년</option><option value="3y">3년</option><option value="5y">5년</option></select></label></div>
 <p id="status" class="muted" role="status">주가 자동 조회 준비 중…</p>
 <p id="metricScope" class="muted">요약 지표와 분기 재무자료의 기준 기업: TSLA</p>
 <div class="metrics"><div class="metric"><small id="lastPriceLabel">TSLA · 최근 종가 (USD)</small><strong id="lastPrice">—</strong></div><div class="metric"><small id="periodReturnLabel">TSLA · 기간 수익률 (배당 제외)</small><strong id="periodReturn">—</strong></div><div class="metric"><small id="firstPriceLabel">TSLA · 시작 종가 (USD)</small><strong id="firstPrice">—</strong></div><div class="metric"><small id="lastDateLabel">TSLA · 마지막 거래일</small><strong id="lastDate">—</strong></div></div>
-<div class="chart-scroll"><svg id="priceChart" viewBox="0 0 900 756" role="img" aria-label="선택 종목의 주가와 기준 기업의 분기 매출, CAPEX, 영업이익 및 영업이익률을 동일 날짜 축으로 나타낸 통합 그래프"></svg></div>
+<div class="chart-scroll"><svg id="priceChart" viewBox="0 0 900 756" role="img" aria-label="선택 종목의 주가·시장지수와 기준 기업의 분기 매출, CAPEX, 영업이익 및 영업이익률을 동일 날짜 축으로 나타낸 통합 그래프"></svg></div>
+<div id="chartDetail" class="chart-detail" role="status" aria-live="polite">그래프에 마우스를 올리거나 터치하면 날짜·주가·분기 실적을 확인할 수 있습니다.</div>
 <div id="legend" class="legend" aria-label="선택 종목별 주가 선 색상"></div>
-<p id="priceChartNote" class="muted">한 종목은 USD 종가, 복수 종목은 상대지수로 표시합니다.</p>
+<p id="priceChartNote" class="muted">시장지수를 선택하지 않으면 기업 수와 관계없이 실제 USD 종가를 표시합니다.</p>
 <p id="historyCoverageStatus" class="muted" role="status" aria-live="polite">한국 날짜 기준 조회기간의 데이터 확보 범위를 확인 중…</p>
 <p class="muted">데이터는 저장된 일별 종가 기준이며 실시간 시세가 아닙니다. 배당수익은 포함하지 않습니다.</p>
 </section>
@@ -50,7 +54,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <h2 id="financeTitle">분기 매출·CAPEX·영업이익</h2>
 <p id="financeStatus" class="muted" role="status">기업 분기 재무자료 조회 중…</p>
 <p class="muted">매출·CAPEX·영업이익·영업이익률 변화를 주가와 같은 날짜 축에서 비교합니다. 각 재무항목은 독립 축척을 사용하며, 영업이익률 단위는 %입니다.</p>
-<div class="scroll"><table><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>영업이익 (십억 USD)</th><th>영업이익률 (%)</th></tr></thead><tbody id="financeRows"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>영업이익 (십억 USD)</th><th>영업이익률 (%)</th><th>전분기 변화(QoQ)</th><th>전년 동기(YoY)</th></tr></thead><tbody id="financeRows"></tbody></table></div>
 <p class="muted">분기 종료일 기준입니다. 저장된 TEST 재무자료와 자동 수집한 SEC Company Facts 예비값을 함께 조회합니다. SEC 예비값은 공시별 태그·CAPEX 정의 대조 전이므로 투자 판단 전에 원문을 확인하세요. 영업이익률 = 영업이익 ÷ 매출액 × 100. 결측치는 채우지 않습니다.</p>
 </section>
 <p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
@@ -61,12 +65,16 @@ import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review
 import {mergeTestDailyPrices} from "./src/market/merge-test-daily-prices.mjs";
 import {alignCompanyPriceSeries} from "./src/market/align-company-price-series.mjs";
 import {companyPeriodStart} from "./src/market/company-period-range.mjs";
+import {buildPriceComparison,enrichQuarterlyFinance} from "./src/market/company-chart-metrics.mjs";
+import {loadPublishedMarketIndices} from "./src/market/load-published-market-indices.mjs";
 const TEST_URL="https://gopofxyezhwpfxbecrxd.supabase.co";
 const SYMBOLS=["MSFT","GOOGL","AMZN","META","TSLA","SPCX"];
 const COLORS=["#79b5ff","#efb76a","#a7dd9c","#d79cf2","#f6818b","#7dddd0"];
 const $=id=>document.getElementById(id);
 const fmt=(n,dec=2)=>Number(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
 let selected="TSLA",selectedTickers=new Set(["TSLA"]),client=null,busy=false,reloadPending=false,series=new Map(),companies=new Map(),latestRequest=0,financeCache=new Map();
+let selectedBenchmarks=new Set(),benchmarkSeries=new Map(),benchmarkError="지수 자료를 확인하고 있습니다.";
+const BENCHMARKS=[["NDX","NASDAQ 100","#f6c566"],["SPX","S&P 500","#e8a0fd"]];
 const isoDate=period=>companyPeriodStart(period);
 function node(name,props={},value){
  const el=document.createElementNS("http://www.w3.org/2000/svg",name);
@@ -89,14 +97,12 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
  const todayMs=Date.parse(kstToday+"T00:00:00Z");
  const tMin=Number.isFinite(fromMs)?fromMs:Math.min(todayMs,...times);
  const tMax=Math.max(tMin+86400000,todayMs,...times.filter(Number.isFinite));
- // A selected 3y/5y horizon is the shared time axis even if some price
- // history is absent. Quarterly finances must not be clipped to the first
- // available price quote, nor hidden just because all prices are missing.
+ // The 3y/5y horizon remains visible even when price history is incomplete.
  const quarters=finance.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.period_end||""))
   .filter(r=>{const t=Date.parse(r.period_end+"T00:00:00Z");return Number.isFinite(t)&&t>=tMin&&t<=tMax;});
  if(!data.length&&!quarters.length){emptyChart(svg,"조회 기간에 주가·분기 재무자료가 없습니다.");return;}
  const x=t=>left+(t-tMin)/(tMax-tMin)*(right-left);
- svg.append(node("text",{x:left,y:21,fill:"#becbe1","font-size":13},index?"주가 · 종목별 시작 100 기준":"주가 · USD 종가"));
+ svg.append(node("text",{x:left,y:21,fill:"#becbe1","font-size":13},index?"주가 · 선택기간 시작 100 기준":"주가 · USD 종가"));
  let py=()=>priceBottom;
  if(data.length){
   const pValues=all.map(p=>p.value),pLow=Math.min(...pValues),pHigh=Math.max(...pValues);
@@ -105,11 +111,25 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
   for(let i=0;i<=4;i++){
    const v=vMin+(vMax-vMin)*i/4,yy=py(v);
    svg.append(node("line",{x1:left,y1:yy,x2:right,y2:yy,stroke:"#36425c"}));
-   svg.append(node("text",{x:left-9,y:yy+4,fill:"#b4c1d6","text-anchor":"end","font-size":12},fmt(v,index?0:2)));
+   svg.append(node("text",{x:left-9,y:yy+4,fill:"#b4c1d6","text-anchor":"end","font-size":12},fmt(v,index?1:2)));
   }
  }else{
   svg.append(node("text",{x:left+12,y:(priceTop+priceBottom)/2,fill:"#b9c6da","font-size":14},
    "선택 종목의 주가 없음 · 확보된 분기 재무자료만 표시"));
+ }
+ const ticks=(()=>{
+  const duration=(tMax-tMin)/86400000,steps=duration<=125?6:duration<=410?7:6;
+  return Array.from({length:steps+1},(_,i)=>{
+   const time=tMin+Math.round((tMax-tMin)*i/steps),date=new Date(time).toISOString().slice(0,10);
+   return {time,label:i===0||i===steps?date:duration>=1100?date.slice(0,4):date.slice(0,7)};
+  });
+ })();
+ svg.append(node("line",{x1:left,y1:710,x2:right,y2:710,stroke:"#8593b0","stroke-width":1.3}));
+ for(const tick of ticks){
+  const tx=x(tick.time);
+  svg.append(node("line",{x1:tx,y1:priceTop,x2:tx,y2:marginBottom,stroke:"#6c7b98","stroke-dasharray":"2 8",opacity:.28}));
+  svg.append(node("line",{x1:tx,y1:708,x2:tx,y2:717,stroke:"#b4c1d6","stroke-width":1.2}));
+  svg.append(node("text",{x:tx,y:733,fill:"#d0daef","text-anchor":tx===left?"start":tx===right?"end":"middle","font-size":11},tick.label));
  }
  for(const r of quarters){
   const qx=x(Date.parse(r.period_end+"T00:00:00Z"));
@@ -118,13 +138,46 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
  for(const s of data){
   const d=s.points.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+py(p.value).toFixed(2)).join(" ");
   svg.append(node("path",{d,fill:"none",stroke:s.color||"#83b5ff","stroke-width":s.selected?3:2,"stroke-linejoin":"round",opacity:s.selected||!index?1:.76}));
+  const low=s.points.reduce((a,p)=>!a||p.close<a.close?p:a,null);
+  const high=s.points.reduce((a,p)=>!a||p.close>a.close?p:a,null);
+  for(const [type,p,color] of [["최고",high,"#59dcab"],["최저",low,"#ff9b70"]]){
+   if(!p)continue;
+   const cx=x(Date.parse(p.date+"T00:00:00Z")),cy=py(p.value);
+   const mark=node("circle",{cx,cy,r:s.selected?5:3.5,fill:color,stroke:s.color||"#fff","stroke-width":1.5});
+   mark.append(node("title",{},s.ticker+" "+type+" 종가 · "+p.date+" · USD "+fmt(p.close)));
+   svg.append(mark);
+   if(s.selected){
+    const label=s.ticker+" "+type+" USD "+fmt(p.close)+" · "+p.date;
+    const tx=Math.min(right-120,Math.max(left+120,cx));
+    const ty=type==="최고"?Math.max(priceTop+15,cy-13):Math.min(priceBottom-6,cy+18);
+    svg.append(node("text",{x:tx,y:ty,fill:color,"text-anchor":"middle","font-size":11},label));
+   }
+  }
+ }
+ function financePrevious(row,priorBy){
+  if(!row?.fiscal_period)return null;
+  const match=/^(\d{4})-Q([1-4])$/.exec(row.fiscal_period);
+  if(!match)return null;
+  const year=Number(match[1]),quarter=Number(match[2]);
+  return priorBy==="QoQ"?((quarter===1?year-1:year)+"-Q"+(quarter===1?4:quarter-1)):(year-1)+"-Q"+quarter;
+ }
+ const quarterMap=new Map(finance.map(r=>[r.fiscal_period,r]));
+ function change(row,field,kind){
+  const before=quarterMap.get(financePrevious(row,kind));
+  const a=row?.[field],b=before?.[field];
+  if(a===null||a===undefined||b===null||b===undefined||!Number.isFinite(Number(a))||!Number.isFinite(Number(b)))return null;
+  if(field==="operating_margin_pct")return {value:Number(a)-Number(b),unit:"%p"};
+  return Number(b)===0?null:{value:(Number(a)/Number(b)-1)*100,unit:"%"};
+ }
+ function changeText(ch){
+  return ch?(ch.value>0?"+":"")+fmt(ch.value,1)+ch.unit:"—";
  }
  function financialTrack(field,top,bottom,label,color,{percent=false}={}){
   const unit=percent?"%":"십억 USD";
   svg.append(node("text",{x:left,y:top-10,fill:color,"font-size":13},selected+" · "+label+" ("+unit+")"));
   svg.append(node("line",{x1:left,y1:bottom,x2:right,y2:bottom,stroke:"#384966"}));
   const pairs=quarters.filter(r=>r[field]!==null&&r[field]!==undefined&&Number.isFinite(Number(r[field])))
-   .map(r=>({date:r.period_end,val:Number(r[field])}));
+   .map(r=>({date:r.period_end,val:Number(r[field]),row:r}));
   if(!pairs.length){
    svg.append(node("text",{x:left+12,y:(top+bottom)/2+6,fill:"#a7b6cf","font-size":13},"조회 기간의 "+label+" 데이터가 없습니다."));
    return;
@@ -136,11 +189,15 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
   svg.append(node("text",{x:left-9,y:bottom+4,fill:"#a7b6cf","text-anchor":"end","font-size":11},fmt(low,1)));
   const d=pairs.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+yy(p.val).toFixed(2)).join(" ");
   svg.append(node("path",{d,fill:"none",stroke:color,"stroke-width":2.5,"stroke-linejoin":"round"}));
-  for(const p of pairs){
-   const px=x(Date.parse(p.date+"T00:00:00Z")),cy=yy(p.val);
+  for(let i=0;i<pairs.length;i++){
+   const p=pairs[i],px=x(Date.parse(p.date+"T00:00:00Z")),cy=yy(p.val);
    const dot=node("circle",{cx:px,cy,r:4.5,fill:color,stroke:"#131d30","stroke-width":1.5});
-   const title=node("title",{},selected+" · "+p.date+" · "+label+" "+fmt(p.val)+(percent?"%":"십억 USD"));
-   dot.append(title);svg.append(dot);
+   const detail=selected+" · "+p.date+" · "+label+" "+fmt(p.val)+(percent?"%":"십억 USD")+
+     " · QoQ "+changeText(change(p.row,field,"QoQ"))+" · YoY "+changeText(change(p.row,field,"YoY"))+
+     " · 영업이익률 "+(p.row.operating_margin_pct==null?"—":fmt(p.row.operating_margin_pct,1)+"%");
+   dot.append(node("title",{},detail));svg.append(dot);
+   const textY=Math.max(top+10,Math.min(bottom-4,cy+(i%2?13:-10)));
+   svg.append(node("text",{x:px,y:textY,fill:color,"font-size":9.5,"text-anchor":"middle"},fmt(p.val,1)+(percent?"%":"")));
   }
   svg.append(node("text",{x:right,y:top-10,fill:color,"text-anchor":"end","font-size":12},"최근 "+fmt(pairs.at(-1).val)+(percent?"%":"B")));
  }
@@ -148,8 +205,41 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
  financialTrack("capex_usd_bn",capexTop,capexBottom,"CAPEX","#ffbf80");
  financialTrack("operating_income_usd_bn",incomeTop,incomeBottom,"영업이익","#d8b4fe");
  financialTrack("operating_margin_pct",marginTop,marginBottom,"영업이익률","#78aaff",{percent:true});
- const labels=[new Date(tMin),new Date((tMin+tMax)/2),new Date(tMax)];
- labels.forEach((d,i)=>svg.append(node("text",{x:[left,(left+right)/2,right][i],y:730,fill:"#b4c1d6","text-anchor":i===0?"start":i===2?"end":"middle","font-size":12},d.toISOString().slice(0,10))));
+ // A single crosshair reports the selected trading date, every visible
+ // company's close, and quarterly details without requiring pixel-perfect
+ // hovering over thin lines. Pointer down supports touch screens.
+ const tooltip=typeof document.getElementById==="function"?document.getElementById("chartDetail"):null;
+ const guide=node("line",{x1:left,y1:priceTop,x2:left,y2:marginBottom,stroke:"#dde6ff","stroke-dasharray":"4 4",opacity:0});
+ svg.append(guide);
+ // 5-year multi-symbol charts can exceed 10,000 observations: cache hover
+ // dates and per-series lookups rather than parsing every date per pointermove.
+ const hoverDates=[...new Set(all.map(p=>p.date))].sort();
+ const hoverTimes=hoverDates.map(date=>Date.parse(date+"T00:00:00Z"));
+ const hoverValues=new Map(data.map(s=>[s.ticker,new Map(s.points.map(p=>[p.date,p]))]));
+ const handle=event=>{
+  if(!tooltip||!data.length||typeof svg.getBoundingClientRect!=="function")return;
+  const bounds=svg.getBoundingClientRect();
+  if(!bounds.width)return;
+  const px=Math.max(left,Math.min(right,(event.clientX-bounds.left)*900/bounds.width));
+  const dateMs=tMin+(px-left)/(right-left)*(tMax-tMin);
+  let lo=0,hi=hoverTimes.length-1;
+  while(lo<hi){const mid=(lo+hi)>>1;if(hoverTimes[mid]<dateMs)lo=mid+1;else hi=mid;}
+  const nearest=lo>0&&Math.abs(hoverTimes[lo-1]-dateMs)<Math.abs(hoverTimes[lo]-dateMs)?lo-1:lo;
+  const closeDate=hoverDates[nearest],values=data.map(s=>{
+   const match=hoverValues.get(s.ticker).get(closeDate);
+   if(!match)return s.ticker+": 해당일 자료 없음";
+   return s.ticker+": "+(s.benchmark?"지수 "+fmt(match.close):"USD "+fmt(match.close))+
+    (index?" · 기준 100: "+fmt(match.value,1):"");
+  });
+  const quarter=quarters.find(r=>Math.abs(Date.parse(r.period_end+"T00:00:00Z")-Date.parse(closeDate+"T00:00:00Z"))<=7*86400000);
+  if(quarter)values.push(selected+" · 분기 영업이익률: "+(quarter.operating_margin_pct==null?"—":fmt(quarter.operating_margin_pct,1)+"%"));
+  tooltip.textContent=closeDate+" · "+(index?"시장 대비 성과 (기준 100)":"기업 종가 (USD)")+"\n"+values.join("  |  ");
+  const gx=x(Date.parse(closeDate+"T00:00:00Z"));
+  guide.setAttribute("x1",gx);guide.setAttribute("x2",gx);guide.setAttribute("opacity",.9);
+ };
+ svg.onpointermove=handle;
+ svg.onpointerdown=handle;
+ svg.onpointerleave=()=>guide.setAttribute("opacity",0);
 }
 function renderSymbols(){
  const root=$("tickerButtons");root.replaceChildren();
@@ -182,33 +272,63 @@ function renderSymbols(){
  }
  focus.value=selected;
 }
+function renderBenchmarkButtons(){
+ const root=$("benchmarkButtons");root.replaceChildren();
+ for(const [ticker,label] of BENCHMARKS){
+  const button=document.createElement("button");button.type="button";
+  button.setAttribute("aria-pressed",String(selectedBenchmarks.has(ticker)));
+  button.textContent=label;
+  button.onclick=()=>{
+   if(selectedBenchmarks.has(ticker))selectedBenchmarks.delete(ticker);
+   else selectedBenchmarks.add(ticker);
+   renderBenchmarkButtons();renderPrices();
+  };
+  root.append(button);
+ }
+}
+async function loadBenchmarks(){
+ try{
+  benchmarkSeries=await loadPublishedMarketIndices({origin:location.href});
+  benchmarkError="";
+  $("benchmarkStatus").textContent="NASDAQ 100 · S&P 500: Yahoo Finance 시장지수 종가 자동수집 (ETF 대체 없음, 실시간 아님)";
+ }catch(error){
+  benchmarkSeries=new Map();
+  benchmarkError=String(error.message||error);
+  $("benchmarkStatus").textContent="시장지수 비교 자료 이용 불가: "+benchmarkError+" · 임의 ETF/가격을 대신 사용하지 않습니다.";
+ }
+ renderPrices();
+}
 function renderPrices(){
  const active=SYMBOLS.filter(t=>selectedTickers.has(t));
- const multi=active.length>1;
+ const multi=active.length>1,indexed=selectedBenchmarks.size>0;
+ const from=isoDate($("period").value);
  const {commonStart,aligned,lateStarts,partialStarts,missing}=
   alignCompanyPriceSeries(active,series,isoDate($("period").value));
- const displayItems=aligned.get(selected)||[];
+ const displayItems=(series.get(selected)||[]).filter(p=>p.date>=from);
  const name=companies.get(selected)?.company_name||selected;
- $("companyTitle").textContent=multi?active.length+"개 기업 주가 통합 비교 · 기준 100":name+" ("+selected+") · 일별 종가 (USD)";
+ $("companyTitle").textContent=indexed
+  ?active.join(" · ")+" + "+[...selectedBenchmarks].map(t=>t==="NDX"?"NASDAQ 100":"S&P 500").join(" · ")+" · 기준 100 비교"
+  :multi?active.length+"개 기업 실제 USD 주가 비교":name+" ("+selected+") · 일별 종가 (USD)";
  $("metricScope").textContent="주가 요약 · 매출액 · CAPEX · 영업이익 · 영업이익률 기준 기업: "+name+" ("+selected+")";
  $("lastPriceLabel").textContent=selected+" · 최근 종가 (USD)";
  $("periodReturnLabel").textContent=selected+" · "+(partialStarts.some(v=>v.ticker===selected)?"확보 구간 수익률":"조회기간 수익률")+" (배당 제외)";
  $("firstPriceLabel").textContent=selected+" · 시작 종가 (USD)";
  $("lastDateLabel").textContent=selected+" · 마지막 거래일";
- const lateDetail=lateStarts.map(v=>v.ticker+"("+v.date+"부터)").join(", ");
- $("priceChartNote").textContent=multi
-  ?"선택한 "+active.length+"개 종목의 첫 유효 종가를 100으로 환산했습니다. 장기 이력의 비교 기준은 "+
-   (commonStart||"미확인")+"입니다. "+(lateDetail
-    ?"늦게 시작한 종목 "+lateDetail+"은 각자 첫 거래일을 100으로 표시하므로 동일 기간 수익률 비교가 아닙니다."
-    :"선택 종목은 같은 시작일 부근부터 비교합니다.")+" 배당은 제외합니다."
-  :"한 종목의 일별 USD 종가입니다. 다른 종목을 추가하면 기준 100 상대지수로 전환하며 배당은 제외합니다.";
+ const model=buildPriceComparison(active,series,benchmarkSeries,from,[...selectedBenchmarks]);
+ const lateDetail=model.lateStarts.map(v=>v.ticker+"("+v.date+"부터)").join(", ");
+ $("priceChartNote").textContent=indexed
+  ?"NASDAQ 100·S&P 500은 실제 지수 종가를 사용합니다. 비교 기준일: "+(model.baseline||"미확인")+
+   ". "+(lateDetail?"늦게 시작한 종목 "+lateDetail+"은 각자 첫 거래일을 100으로 표시하므로 동일 기간 비교가 아닙니다. ":"")+
+   "시장지수 선택을 모두 해제하면 실제 USD 종가로 돌아갑니다."+
+   (model.missing.filter(t=>t==="NDX"||t==="SPX").length?" 지수 자료 미확보: "+model.missing.filter(t=>t==="NDX"||t==="SPX").join(", ")+" ("+benchmarkError+").":"")
+  :"선택한 "+active.length+"개 기업의 실제 USD 종가입니다. 시장지수 버튼을 선택해야 기준값 100으로 전환됩니다.";
  const incomplete=partialStarts.map(v=>v.ticker+" "+v.date+"부터");
  const unavailable=missing.length?" · 자료 없음: "+missing.join(", "):"";
  const coverage=$("historyCoverageStatus");
  coverage.textContent=incomplete.length
-  ?"조회 시작 요청 "+isoDate($("period").value)+" · 전체 기간 미확보: "+incomplete.join(", ")+
+  ?"조회 시작 요청 "+from+" · 전체 기간 미확보: "+incomplete.join(", ")+
    " · 시작 종가와 수익률은 확보된 첫 거래일부터 계산합니다."+unavailable
-  :"조회 시작 요청 "+isoDate($("period").value)+" · 선택 종목의 요청 기간 이력이 확보되었습니다."+unavailable;
+  :"조회 시작 요청 "+from+" · 선택 종목의 요청 기간 이력이 확보되었습니다."+unavailable;
  coverage.className=incomplete.length||missing.length?"muted coverage-alert":"muted";
  if(!displayItems.length){
   for(const id of ["lastPrice","firstPrice","periodReturn","lastDate"])$(id).textContent="—";
@@ -219,19 +339,23 @@ function renderPrices(){
   $("periodReturn").textContent=(ret>=0?"+":"")+fmt(ret)+"%";
   $("lastDate").textContent=last.date;
  }
- const sets=active.map(ticker=>{
-  const items=aligned.get(ticker)||[],first=items[0]?.close;
-  return {ticker,color:COLORS[SYMBOLS.indexOf(ticker)],selected:ticker===selected,
-   points:items.map(p=>({date:p.date,value:multi&&first?p.close/first*100:p.close}))};
- });
- chart($("priceChart"),sets,{index:multi,finance:financeCache.get(selected)||[],from:isoDate($("period").value)});
+ const sets=model.sets.map(s=>({...s,selected:s.ticker===selected,
+  color:s.benchmark?BENCHMARKS.find(b=>b[0]===s.ticker)[2]:COLORS[SYMBOLS.indexOf(s.ticker)]}));
+ chart($("priceChart"),sets,{index:indexed,finance:financeCache.get(selected)||[],from:isoDate($("period").value)});
  const legend=$("legend");legend.replaceChildren();
  for(const s of sets){
   const label=document.createElement("span"),mark=document.createElement("b");mark.style.background=s.color;
-  const items=aligned.get(s.ticker)||[];
+  const items=s.points;
   const ret=items.length?((items.at(-1).close/items[0].close-1)*100):null;
-  const detail=ret===null?"자료 없음":(multi?" · "+(ret>=0?"+":"")+fmt(ret)+"%":" · USD "+fmt(items.at(-1).close));
-  label.append(mark,document.createTextNode(s.ticker+detail));legend.append(label);
+  const detail=ret===null?"자료 없음":(indexed?" · "+(ret>=0?"+":"")+fmt(ret)+"%":" · "+(s.benchmark?"지수 ":"USD ")+fmt(items.at(-1).close));
+  const name=s.ticker==="NDX"?"NASDAQ 100":s.ticker==="SPX"?"S&P 500":s.ticker;
+  label.append(mark,document.createTextNode(name+detail));legend.append(label);
+  if(items.length&&!s.benchmark){
+   const high=items.reduce((a,p)=>p.close>a.close?p:a,items[0]),low=items.reduce((a,p)=>p.close<a.close?p:a,items[0]);
+   const ext=document.createElement("span");
+   ext.textContent=s.ticker+" 최고 USD "+fmt(high.close)+" ("+high.date+") · 최저 USD "+fmt(low.close)+" ("+low.date+")";
+   legend.append(ext);
+  }
  }
  for(const [title,color] of [[selected+" 매출액","#6ee0b4"],[selected+" CAPEX","#ffbf80"],[selected+" 영업이익","#d8b4fe"],[selected+" 영업이익률","#78aaff"]]){
   const label=document.createElement("span"),mark=document.createElement("b");mark.style.background=color;
@@ -241,10 +365,20 @@ function renderPrices(){
 function drawFinance(rows){
  $("financeRows").replaceChildren();
  const from=isoDate($("period").value);
- const within=rows.filter(r=>r.period_end>=from);
+ const within=enrichQuarterlyFinance(rows).filter(r=>r.period_end>=from);
+ const change=(value,points=false)=>value==null?"—":(value>0?"+":"")+fmt(value,1)+(points?"%p":"%");
  for(const r of within.slice().reverse()){
   const tr=document.createElement("tr");
-  for(const value of [(r.fiscal_period+(r.status==="SEC_XBRL_PRELIMINARY"?" · SEC 예비":"")),r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),r.operating_income_usd_bn==null?"—":fmt(r.operating_income_usd_bn),r.operating_margin_pct==null?"—":fmt(r.operating_margin_pct)+"%"]){
+  const delta=(type)=>[
+   ["매출",r[type].revenue,false],["CAPEX",r[type].capex,false],
+   ["영업이익",r[type].income,false],["영업이익률",r[type].margin,true]
+  ].map(([title,value,points])=>title+" "+change(value,points)).join(" / ");
+  for(const value of [(r.fiscal_period+(r.status==="SEC_XBRL_PRELIMINARY"?" · SEC 예비":"")),
+   r.revenue_usd_bn==null?"—":fmt(r.revenue_usd_bn),
+   r.capex_usd_bn==null?"—":fmt(r.capex_usd_bn),
+   r.operating_income_usd_bn==null?"—":fmt(r.operating_income_usd_bn),
+   r.operating_margin_pct==null?"—":fmt(r.operating_margin_pct)+"%",
+   delta("qoq"),delta("yoy")]){
    const td=document.createElement("td");td.textContent=String(value);tr.append(td);
   }
   $("financeRows").append(tr);
@@ -380,8 +514,9 @@ $("financialTicker").addEventListener("change",event=>{
  selected=ticker;renderSymbols();renderPrices();void loadFinance();
 });
 $("period").addEventListener("change",()=>{$("status").textContent="선택한 조회기간의 주가·재무자료를 다시 불러옵니다…";void loadAll();});
-window.addEventListener("pageshow",()=>{void loadAll();});
-setInterval(()=>{if(!document.hidden)void loadAll();},15*60*1000);
+window.addEventListener("pageshow",()=>{void loadAll();void loadBenchmarks();});
+setInterval(()=>{if(!document.hidden){void loadAll();void loadBenchmarks();}},15*60*1000);
 renderSymbols();
+renderBenchmarkButtons();
 </script>
 </body></html>
