@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate offline TEST site preview assets; no network, deployment or DB access."""
 import argparse
+from datetime import date
 import hashlib
 import json
 import re
@@ -60,7 +61,7 @@ def validate_preview(site: Path):
         if not candidate.is_file():
             continue
         relative = candidate.relative_to(site)
-        if relative.as_posix() == "data/yahoo-public-review.json":
+        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json"}:
             continue
         if not public_asset(relative):
             raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
@@ -82,6 +83,37 @@ def validate_preview(site: Path):
                 or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", row.get("period_end", ""))
                 or not str(row.get("source_url", "")).startswith("https://data.sec.gov/api/xbrl/companyfacts/")):
                 raise ValueError("Invalid TEST SEC quarterly financial row")
+    optional_market = site / "data/market-index-benchmarks.json"
+    if optional_market.exists():
+        if optional_market.is_symlink() or optional_market.stat().st_size > 1_000_000:
+            raise ValueError("Unsafe benchmark file")
+        market = json.loads(optional_market.read_text(encoding="utf-8"))
+        rows = market.get("observations")
+        if (market.get("mode") != "BENCHMARK_REVIEW_ONLY" or
+            market.get("source") != "Yahoo Finance" or
+            market.get("database_writes") != 0 or market.get("writes_performed") != 0 or
+            not isinstance(rows,list) or market.get("row_count") != len(rows) or
+            not 40 <= len(rows) <= 6000):
+            raise ValueError("Invalid benchmark metadata")
+        seen = set()
+        coverage = {"NDX": [], "SPX": []}
+        for row in rows:
+            ticker = row.get("ticker")
+            day = row.get("date")
+            try:
+                price = float(row.get("close"))
+                valid_date = date.fromisoformat(day).isoformat() == day
+            except (TypeError,ValueError):
+                raise ValueError("Invalid benchmark date or level")
+            if (ticker not in coverage or row.get("source_symbol") != {"NDX":"^NDX","SPX":"^GSPC"}[ticker] or
+                row.get("unit") != "index_points" or row.get("currency") != "USD" or
+                row.get("price_basis") != "index_close" or not valid_date or
+                not (0 < price < float("inf")) or (ticker,day) in seen):
+                raise ValueError("Invalid benchmark observation")
+            seen.add((ticker,day))
+            coverage[ticker].append(day)
+        if any(len(days)<20 for days in coverage.values()):
+            raise ValueError("Incomplete benchmark coverage")
     data = json.loads((site / "data/yahoo-public-review.json").read_text(encoding="utf-8"))
     if (data.get("mode") != "REVIEW_ONLY" or data.get("source") != "Yahoo Finance"
             or data.get("database_insert_authorized") is not False
