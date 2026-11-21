@@ -211,15 +211,22 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
  const tooltip=typeof document.getElementById==="function"?document.getElementById("chartDetail"):null;
  const guide=node("line",{x1:left,y1:priceTop,x2:left,y2:marginBottom,stroke:"#dde6ff","stroke-dasharray":"4 4",opacity:0});
  svg.append(guide);
+ // 5-year multi-symbol charts can exceed 10,000 observations: cache hover
+ // dates and per-series lookups rather than parsing every date per pointermove.
+ const hoverDates=[...new Set(all.map(p=>p.date))].sort();
+ const hoverTimes=hoverDates.map(date=>Date.parse(date+"T00:00:00Z"));
+ const hoverValues=new Map(data.map(s=>[s.ticker,new Map(s.points.map(p=>[p.date,p]))]));
  const handle=event=>{
   if(!tooltip||!data.length||typeof svg.getBoundingClientRect!=="function")return;
   const bounds=svg.getBoundingClientRect();
   if(!bounds.width)return;
   const px=Math.max(left,Math.min(right,(event.clientX-bounds.left)*900/bounds.width));
   const dateMs=tMin+(px-left)/(right-left)*(tMax-tMin);
-  const target=all.reduce((a,p)=>Math.abs(Date.parse(p.date+"T00:00:00Z")-dateMs)<Math.abs(Date.parse(a.date+"T00:00:00Z")-dateMs)?p:a,all[0]);
-  const closeDate=target.date,values=data.map(s=>{
-   const match=s.points.find(p=>p.date===closeDate);
+  let lo=0,hi=hoverTimes.length-1;
+  while(lo<hi){const mid=(lo+hi)>>1;if(hoverTimes[mid]<dateMs)lo=mid+1;else hi=mid;}
+  const nearest=lo>0&&Math.abs(hoverTimes[lo-1]-dateMs)<Math.abs(hoverTimes[lo]-dateMs)?lo-1:lo;
+  const closeDate=hoverDates[nearest],values=data.map(s=>{
+   const match=hoverValues.get(s.ticker).get(closeDate);
    if(!match)return s.ticker+": 해당일 자료 없음";
    return s.ticker+": "+(s.benchmark?"지수 "+fmt(match.close):"USD "+fmt(match.close))+
     (index?" · 기준 100: "+fmt(match.value,1):"");
