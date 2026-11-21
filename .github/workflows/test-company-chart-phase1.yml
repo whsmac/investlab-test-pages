@@ -1,0 +1,46 @@
+name: TEST six-company phase-1 chart acceptance (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'company-investment-analysis.html'
+      - 'src/market/company-chart-metrics.mjs'
+      - 'src/market/load-published-market-indices.mjs'
+      - 'src/market/market-index-validation.mjs'
+      - 'scripts/yahoo_market_indices_test.py'
+      - 'tests/company-chart-phase1.test.mjs'
+      - 'tests/company-financial-chart-date-axis.test.mjs'
+      - 'tests/company-financial-overlay.test.mjs'
+      - '.github/workflows/test-company-chart-phase1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check HTML and JavaScript syntax without deployment
+        run: |
+          node --check src/market/company-chart-metrics.mjs
+          node --check src/market/load-published-market-indices.mjs
+          node --check src/market/market-index-validation.mjs
+          python -m py_compile scripts/yahoo_market_indices_test.py
+      - name: Run new and regression browser-model tests
+        run: |
+          node --test tests/company-chart-phase1.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-financial-overlay.test.mjs tests/company-online-price-first.test.mjs
+      - name: Run offline index collector tests
+        run: python -m unittest discover -s tests -p 'test_company_benchmarks.py' -v
+      - name: Confirm read-only boundary
+        run: |
+          echo "Only GitHub TEST draft branch; no Pages deployment, API keys or Supabase connection"
