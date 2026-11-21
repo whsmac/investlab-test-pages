@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INVESTLAB TEST | 홈</title>
+<title>INVESTLAB | 홈</title>
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#0b1020;color:#edf2ff}
 *{box-sizing:border-box}body{margin:0}.wrap{max-width:1040px;margin:auto;padding:30px 18px 70px}
@@ -17,17 +17,17 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 .data-status h2{margin:0 0 9px;font-size:17px}.data-status p{margin:6px 0;font-size:14px;line-height:1.65}
 .notice{margin-top:24px;border:1px solid #67582a;background:#292516;color:#f5d98b;border-radius:12px;padding:16px;font-size:13px;line-height:1.7}
 @media(max-width:680px){.grid{grid-template-columns:1fr}.wrap{padding:20px 14px 50px}}
-</style></head>
-<body><main class="wrap">
+</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
+<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html" aria-current="page">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav>
 <header><div class="brand">INVEST<span>LAB</span></div><div class="tag">TEST ONLY · GitHub Pages</div></header>
 <h1>투자 분석 대시보드</h1>
 <p>1단계 Pilot의 5개 기능을 이용합니다. 주가는 자동 조회하며, 개인 계좌·거래·전략은 로그인한 TEST 계정으로 저장합니다.</p>
 <section class="pilot-login" aria-label="Pilot 시작"><div><strong>1단계 Pilot 시작</strong><p>처음 이용한다면 초보자 사용 가이드를 먼저 보세요. 계좌 등록부터 거래 기록·가상거래·기업 재무 검토까지 순서대로 안내합니다.</p></div><div class="pilot-links"><a href="./pilot-guide.html">초보자 사용 가이드</a><a href="./shared-data.html">TEST 계정 연결·로그인</a></div></section>
 <section class="grid" aria-label="INVESTLAB 주요 메뉴">
-<a class="card" href="./my-portfolio.html"><h2>1. My Portfolio</h2><p>계좌별 보유·평균매입단가·현금·현재 종가 평가</p><span class="state">TEST 개인 원장·주가 자동 조회</span></a>
-<a class="card" href="./virtual-trade-simulator.html"><h2>2. Virtual Trade Simulator</h2><p>가상 매수·매도, 보유 현황 비교, 전략 저장·불러오기</p><span class="state">TEST 시나리오 온라인 저장</span></a>
-<a class="card" href="./company-investment-analysis.html"><h2>3. Company Investment Analysis</h2><p>6개 기업 주가 비교와 분기 매출·CAPEX·영업이익·이익률</p><span class="state pending">주가 자동 갱신 · 분기 재무자료 확보 중</span></a>
-<a class="card" href="./pilot-ledger.html"><h2>4. Unified Ledger</h2><p>계좌·거래·배당·환전·현금 입출금과 손익 관리</p><span class="state">TEST 원장 자동 저장·불러오기</span></a>
+<a class="card" href="./my-portfolio.html"><h2>1. 내 투자현황</h2><p>계좌별 보유·평균매입단가·현금·현재 종가 평가</p><span class="state">TEST 개인 원장·주가 자동 조회</span></a>
+<a class="card" href="./virtual-trade-simulator.html"><h2>2. 가상매매 시뮬레이터</h2><p>가상 매수·매도, 보유 현황 비교, 전략 저장·불러오기</p><span class="state">TEST 시나리오 온라인 저장</span></a>
+<a class="card" href="./company-investment-analysis.html"><h2>3. 기업 투자분석</h2><p>6개 기업 주가 비교와 분기 매출·CAPEX·영업이익·이익률</p><span class="state pending">주가 자동 갱신 · 분기 재무자료 확보 중</span></a>
+<a class="card" href="./pilot-ledger.html"><h2>4. 계좌·매매 기록 관리</h2><p>계좌·거래·배당·환전·현금 입출금과 손익 관리</p><span class="state">TEST 원장 자동 저장·불러오기</span></a>
 <a class="card" href="./data-management.html"><h2>5. Data Management</h2><p>TEST 서버 원장·전략과 브라우저 초안 백업·복원</p><span class="state">TEST 온라인 데이터 백업·복원</span></a>
 </section>
 <section class="data-status" aria-label="Pilot 자동 데이터 현황">
