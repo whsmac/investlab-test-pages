@@ -40,7 +40,7 @@ test('three-year financial quarters are not clipped to a single month of prices'
  const sets=[{ticker:'TSLA',color:'#ccc',selected:true,
   points:[{date:'2026-10-01',value:300},{date:'2026-11-19',value:450}]}];
  const svg=render(sets,[row('2022-12-31'),row('2024-03-31'),row('2025-09-30')],'2023-11-20');
- assert.equal(nodes(svg,'circle').length,8);
+ assert.equal(nodes(svg,'circle').length,10,'8 financial dots plus price high/low');
  assert.ok(labels(svg).includes('2023-11-20'));
  assert.ok(nodes(svg,'path').length>=5,'price path plus four quarterly tracks');
 });
