@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INVESTLAB | 1단계 Pilot 처음 사용하기</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1020;color:#edf2ff}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:920px;margin:auto;padding:25px 18px 65px}
+a{color:#a6caff}p,li{line-height:1.72}.muted{color:#adbad1}.eyebrow{font-size:12px;letter-spacing:.08em;color:#f2d38b;font-weight:700}
+h1{font-size:clamp(25px,4vw,34px);line-height:1.25;margin:12px 0}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:16px 0 6px}
+.quick{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.quick a{padding:9px 13px;border:1px solid #435776;border-radius:9px;text-decoration:none;background:#16243c;font-size:13px}
+.step{background:#151f32;border:1px solid #344360;border-radius:14px;padding:19px 22px;margin:14px 0;scroll-margin-top:18px}
+.step ol{padding-left:22px;margin:12px 0}.step li{margin:7px 0}
+.note{background:#24231b;border:1px solid #64552f;border-radius:10px;padding:12px 14px;color:#f0d79f;font-size:14px;line-height:1.65;margin:15px 0}
+.action{display:inline-block;border:1px solid #8daeff;border-radius:10px;background:#2a4772;color:#fff;text-decoration:none;padding:11px 15px;font-weight:700;margin-top:6px}
+.kicker{display:inline-block;color:#b9cded;margin-bottom:4px;font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{text-align:left;border-bottom:1px solid #36415d;padding:10px}th{color:#bfd3ef}
+footer{margin-top:26px;color:#adbad1;font-size:13px}
+@media(max-width:600px){.wrap{padding:16px 12px 45px}.step{padding:16px 14px}.quick{gap:7px}}
+</style></head>
+<body><main class="wrap">
+<a href="./index.html">← INVESTLAB 홈으로</a>
+<p class="eyebrow">1단계 PILOT · 초보자 가이드</p>
+<h1>계좌 등록부터 가상거래·기업분석까지</h1>
+<p class="muted">처음 이용할 때는 아래 순서대로 진행하세요. 실제 주문은 실행되지 않으며, 입력한 계좌·거래·전략은 TEST 환경의 자료입니다. 모든 기능을 한꺼번에 익힐 필요는 없습니다.</p>
+<nav class="quick" aria-label="사용 방법 바로가기">
+<a href="#login">① 로그인</a><a href="#ledger">② 계좌·거래</a><a href="#portfolio">③ 보유현황</a><a href="#simulator">④ 가상거래</a><a href="#analysis">⑤ 기업분석</a><a href="#backup">⑥ 백업</a>
+</nav>
+<section class="step" id="login">
+<span class="kicker">STEP 1</span><h2>TEST 계정으로 로그인</h2>
+<ol><li>홈페이지의 <strong>TEST 계정 연결·로그인</strong>을 누릅니다.</li>
+<li>기존에 연결한 TEST 프로젝트의 공개용 키와 본인 계정으로 로그인합니다. <strong>service_role·secret 키는 사용하지 마세요.</strong></li>
+<li>로그인 완료 안내를 확인한 뒤 통합원장으로 이동합니다.</li></ol>
+<a class="action" href="./shared-data.html">TEST 계정 연결·로그인</a>
+</section>
+<section class="step" id="ledger">
+<span class="kicker">STEP 2</span><h2>통합원장에 계좌와 거래 입력</h2>
+<ol>
+<li><strong>Unified Ledger → 계좌 등록</strong>에서 계좌 이름과 종류를 정하고 <strong>계좌 추가</strong>를 누릅니다. 실제 증권계좌 번호나 비밀번호를 입력할 필요는 없습니다.</li>
+<li><strong>원장 입력</strong>에서 계좌와 날짜를 고른 다음 <strong>거래 종류</strong>를 선택합니다.</li>
+<li>현재 보유수량을 시작값으로 등록한다면 <strong>초기 보유 입력</strong>으로 종목·수량·평균매입단가(USD)를 입력합니다. 현재 현금은 <strong>현금 입금</strong>으로 별도 입력합니다.</li>
+<li>이후 새로 발생한 거래는 <strong>매수</strong> 또는 <strong>매도</strong>를 선택해 수량과 주당 가격을 기록합니다. 필요한 경우 배당금 수령·현금 출금·환전도 거래 종류에서 선택할 수 있습니다.</li>
+<li><strong>거래 기록</strong>을 누른 다음 화면 아래 보유현황과 거래내역을 확인합니다. 온라인 연결 상태의 서버 자동 저장 완료 안내도 확인하세요.</li>
+</ol>
+<div class="note"><strong>중복 입력 주의:</strong> 오늘 기준 TSLA 10주를 '초기 보유 입력'했다면, 그 10주를 구성한 과거 매수를 다시 입력하지 마세요. 초기 보유 기준일 이후 발생한 거래만 추가해야 수량이 중복되지 않습니다. 현재 1단계의 USD 실현손익은 증권사 세무신고 기준 손익과 다를 수 있습니다.</div>
+<a class="action" href="./pilot-ledger.html">Unified Ledger 열기</a>
+</section>
+<section class="step" id="portfolio">
+<span class="kicker">STEP 3</span><h2>My Portfolio에서 보유현황 확인</h2>
+<ol><li>통합원장에 기록한 종목·수량·평균매입단가·현금을 다시 입력할 필요가 없습니다.</li>
+<li><strong>My Portfolio</strong>에서 계좌별/전체 계좌 기준으로 보유수량, 평균매입단가, USD 현금 및 최근 종가 기반 평가금액을 확인합니다.</li>
+<li>수량이나 평균단가가 맞지 않다면 이 화면에서 다시 입력하지 말고 <strong>Unified Ledger의 거래 기록</strong>을 수정하세요.</li></ol>
+<a class="action" href="./my-portfolio.html">My Portfolio 열기</a>
+</section>
+<section class="step" id="simulator">
+<span class="kicker">STEP 4</span><h2>Virtual Trade Simulator로 가상 매수·매도</h2>
+<ol><li><strong>현재 투자현황</strong>의 계좌 기준을 정하고 <strong>선택 계좌를 가상매매 시작값에 적용</strong>을 누른 뒤 확인합니다.</li>
+<li>시작 보유수량과 USD 현금을 확인합니다. 필요하면 <strong>최근 종가로 빈 가정주가 채우기</strong>를 사용하고, 미래 가정주가는 직접 조정합니다.</li>
+<li><strong>+ 거래 추가</strong>에서 가상의 매도 또는 매수, 종목, 수량 및 가정 체결가격을 입력합니다.</li>
+<li><strong>시나리오 계산 · 결과 갱신</strong>을 눌러 최종 보유수량, 현금흐름, 실현손익과 평가금액 차이를 비교합니다.</li>
+<li>전략 이름을 정하고 <strong>현재 전략 저장</strong>을 누릅니다. 나중에는 저장 목록에서 골라 <strong>선택 전략 불러오기</strong>를 사용하세요.</li></ol>
+<div class="note">시뮬레이터의 거래는 실제 통합원장의 매수·매도 내역을 변경하지 않습니다. 저장 전략을 다시 열면 현재 계좌의 시작 보유정보와 가정주가를 확인하고 계산을 다시 실행하세요.</div>
+<a class="action" href="./virtual-trade-simulator.html">Virtual Trade Simulator 열기</a>
+</section>
+<section class="step" id="analysis">
+<span class="kicker">STEP 5</span><h2>Company Investment Analysis에서 기업 재무 검토</h2>
+<ol><li>상단에서 MSFT·GOOGL·AMZN·META·TSLA·SPCX 중 비교할 기업을 <strong>복수 선택</strong>합니다.</li>
+<li><strong>조회 기간</strong>을 3년 또는 5년으로 변경하면 복수 종목 주가를 각 종목 시작점 100 기준으로 비교할 수 있습니다.</li>
+<li><strong>재무·요약 기준 종목</strong>을 바꾸면서 한 기업의 분기별 <strong>매출액, CAPEX, 영업이익, 영업이익률</strong>을 같은 날짜 축에서 검토합니다.</li>
+<li>하단 분기 재무자료 표로 정확한 표시값과 누락 구간을 확인합니다.</li></ol>
+<div class="note">주가는 최근 게시된 종가로 실시간 호가가 아니며 배당 총수익률을 포함하지 않습니다. TEST 분기 재무자료와 SEC 자동수집 자료의 공식 공시 대조는 별도로 확인해야 합니다.</div>
+<a class="action" href="./company-investment-analysis.html">Company Investment Analysis 열기</a>
+</section>
+<section class="step" id="backup">
+<span class="kicker">STEP 6</span><h2>Data Management에서 백업</h2>
+<ol><li><strong>Data Management</strong>에서 현재 로그인 계정의 브라우저 저장 전략·임시작업을 확인합니다.</li>
+<li><strong>TEST 서버 포함 전체 백업</strong>을 누르면 개인 원장과 저장 전략 등을 JSON 파일로 내려받습니다.</li>
+<li>다운로드한 파일을 보관합니다. <strong>복원</strong> 버튼은 기존 자료를 교체할 수 있으므로 복원이 필요할 때만 사용하세요.</li></ol>
+<a class="action" href="./data-management.html">Data Management 열기</a>
+</section>
+<section class="step">
+<h2>어디에서 무엇을 수정하나요?</h2>
+<table><thead><tr><th>하고 싶은 일</th><th>이용 메뉴</th></tr></thead><tbody>
+<tr><td>계좌 추가, 실제 매수·매도 내역 수정</td><td>Unified Ledger</td></tr>
+<tr><td>현재 보유수량·평균단가·평가금액 확인</td><td>My Portfolio</td></tr>
+<tr><td>미래 가정가격으로 매매 전략 실험</td><td>Virtual Trade Simulator</td></tr>
+<tr><td>기업별 주가·매출·CAPEX·이익률 확인</td><td>Company Investment Analysis</td></tr>
+<tr><td>원장과 전략 파일 백업·복원</td><td>Data Management</td></tr>
+</tbody></table>
+</section>
+<footer>이 가이드는 1단계 Pilot TEST 화면을 기준으로 작성했습니다. 기능의 실제 이름이나 위치가 바뀌면 함께 수정합니다. <a href="./index.html">홈으로 돌아가기</a></footer>
+</main></body></html>
