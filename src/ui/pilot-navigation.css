@@ -1,0 +1,7 @@
+/* Shared TEST Pilot navigation. One tap to reach any daily-use module. */
+.pilot-nav{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:2px 0 18px;padding:10px;background:#141f34;border:1px solid #354867;border-radius:13px;font-family:system-ui,-apple-system,sans-serif}
+.pilot-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:9px 12px;border:1px solid transparent;border-radius:9px;text-decoration:none;color:#e4edff;font-size:14px;font-weight:600;line-height:1.35;white-space:nowrap}
+.pilot-nav a:hover,.pilot-nav a:focus-visible{background:#2a4870;outline:2px solid #89b8ff;outline-offset:1px}
+.pilot-nav a[aria-current=page]{background:#315882;border-color:#789fd4;color:white}
+.pilot-nav .pilot-nav-settings{margin-left:auto;color:#c3d0e2;border:1px solid #3e506a;font-weight:500}
+@media(max-width:720px){.pilot-nav{gap:5px;padding:7px}.pilot-nav a{font-size:12px;min-height:42px;padding:8px 9px;flex:1 1 28%;white-space:normal;text-align:center}.pilot-nav .pilot-nav-settings{margin-left:0}}
