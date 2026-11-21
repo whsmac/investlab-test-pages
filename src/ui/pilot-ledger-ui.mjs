@@ -51,8 +51,7 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
    const rename=document.createElement('button');rename.type='button';rename.textContent='이름 변경';
    rename.onclick=()=>{const value=prompt('변경할 계좌 이름',a.name);if(value===null)return;const name=value.trim();if(!name||name===a.name)return;if(name.length>80||db.accounts.some(x=>x.id!==a.id&&x.name===name)){msg('계좌 이름이 중복되거나 너무 깁니다.');return;}a.name=name;save();msg('계좌 이름을 변경했습니다. 서버 저장 상태를 확인하세요.');};
    const del=document.createElement('button');del.type='button';del.textContent='삭제';
-   del.onclick=()=>{if(db.entries.some(e=>e.accountId===a.id)){msg('거래가 있는 계좌는 삭제할 수 없습니다.');return;}if(!confirm('거래가 없는 계좌 '+a.name+'을 삭제하시겠습니까?'))return;db.accounts=db.accounts.filter(x=>x.id!==a.id);save();msg('계좌를 삭제했습니다.');};
-   // The parent owns the db object, so account removal is performed through a mutator below.
+   // Remove only accounts with no trades; retain the shared db object for the parent.
    del.onclick=()=>{if(db.entries.some(e=>e.accountId===a.id)){msg('거래가 있는 계좌는 삭제할 수 없습니다.');return;}if(!confirm('거래가 없는 계좌 '+a.name+'을 삭제하시겠습니까?'))return;db.accounts.splice(db.accounts.findIndex(x=>x.id===a.id),1);save();msg('계좌를 삭제했습니다.');};
    wrap.append(rename,del);root.append(wrap);
   }
