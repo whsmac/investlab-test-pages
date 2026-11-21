@@ -46,10 +46,35 @@ $('homeLoginForm').addEventListener('submit',async event=>{
  }catch(error){$('homeAuthStatus').textContent='로그인 실패: '+error.message;}
  finally{button.disabled=false;}
 });
+// Park the active account's local draft before signing out, so a later visitor
+// cannot see it through the shared browser's unscoped ledger slot.
+function parkCurrentUserLedger(userId){
+ const key='investlab_pilot_ledger_local_v1',ownerKey='investlab_pilot_ledger_local_owner_v1';
+ const owner=localStorage.getItem(ownerKey),raw=localStorage.getItem(key);
+ if(owner!==userId)return; // Never act on a different user's local record.
+ if(raw!==null){
+  const archive=key+':'+userId;
+  const before=localStorage.getItem(archive);
+  try{
+   localStorage.setItem(archive,raw);
+   if(localStorage.getItem(archive)!==raw)throw Error('로그아웃 보관 확인 실패');
+   localStorage.removeItem(key);
+   localStorage.removeItem(ownerKey);
+  }catch(error){
+   if(before===null)localStorage.removeItem(archive);else localStorage.setItem(archive,before);
+   throw error;
+  }
+ }else localStorage.removeItem(ownerKey);
+}
 $('homeLogout').addEventListener('click',async()=>{
  const button=$('homeLogout');button.disabled=true;
  try{
-  if(client){const {error}=await client.auth.signOut();if(error)throw error;}
+  if(client){
+   const {data:current,error:userError}=await client.auth.getUser();
+   if(userError||!current?.user?.id)throw Error('로그아웃 전 계정을 확인할 수 없습니다.');
+   parkCurrentUserLedger(current.user.id);
+   const {error}=await client.auth.signOut();if(error)throw error;
+  }
   renderAuth(null);$('homePassword').value='';$('homeAuthStatus').textContent='로그아웃했습니다. 기존 TEST 자료는 서버에 유지됩니다.';
  }catch(error){$('homeAuthStatus').textContent='로그아웃 실패: '+error.message;}
  finally{button.disabled=false;}
