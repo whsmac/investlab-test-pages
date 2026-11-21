@@ -21,7 +21,7 @@
 <div class="entry-account"><label for="entryAccount">계좌 선택</label><select id="entryAccount" required></select></div>
 <label>거래 날짜<input id="entryDate" type="date" required></label>
 <label>거래 종류<select id="entryType"><option value="BUY">매수</option><option value="SELL">매도</option><option value="OPEN">초기 보유 입력</option><option value="DEPOSIT">현금 입금</option><option value="WITHDRAW">현금 출금</option><option value="DIVIDEND">배당금 수령</option><option value="FX">환전 (통화 교환)</option></select></label>
-<label class="stockField">종목 선택 방식<select id="entrySymbolCategory"><option value="held">보유종목</option><option value="watch">관심종목</option><option value="past">기 보유·매매종목</option><option value="manual">직접입력</option></select></label>
+<label class="stockField">종목 선택 방식<select id="entrySymbolCategory"><option value="held">보유종목</option><option value="watch">관심종목</option><option value="past">기 보유·매매종목</option><option value="manual" selected>직접입력</option></select></label>
 <label class="stockField" id="symbolPickWrap">종목 선택<select id="entrySymbolPick"></select></label>
 <label class="stockField" id="symbolManualWrap" hidden>종목코드 직접입력<input id="entrySymbol" placeholder="TSLA" maxlength="16" autocomplete="off"></label>
 <label class="stockField">수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label>
