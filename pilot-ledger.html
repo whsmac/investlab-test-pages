@@ -260,13 +260,16 @@ async function automaticCloudSave(){
  }catch(error){cloudStatus('브라우저 저장 완료 · TEST 서버 자동 저장 보류: '+error.message);}
  finally{syncInFlight=false;if(syncAgain){syncAgain=false;queueAutomaticCloudSave();}}
 }
+let ledgerAuthSequence=0;
 async function connectAndLoadOnlineLedger(){
+ const request=++ledgerAuthSequence;
  try{
   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
   if(cfg.url!==TEST_URL||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))return;
   if(!window.supabase?.createClient)return;
   const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data:auth,error:authError}=await candidate.auth.getUser();
+  if(request!==ledgerAuthSequence)return;
   if(authError||!auth?.user?.id){cloud=null;cloudUser=null;$('ledgerPrivate').hidden=true;cloudStatus('로그인이 필요합니다. HOME에서 로그인하세요.');return;}
   if(syncInFlight)return;
   if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
@@ -276,7 +279,11 @@ async function connectAndLoadOnlineLedger(){
   $('ledgerPrivate').hidden=false;render();
   restoreCloudBaseline(userId);
   const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',userId).maybeSingle();
+  if(request!==ledgerAuthSequence)return;
   if(error)throw error;
+  const {data:verified,error:verifyError}=await candidate.auth.getUser();
+  if(request!==ledgerAuthSequence)return;
+  if(verifyError||verified?.user?.id!==userId){$('ledgerPrivate').hidden=true;cloud=null;cloudUser=null;cloudStatus('계정이 변경되어 계좌 자료 표시를 중단했습니다.');return;}
   const localJson=stableLedger(db),localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
   requireLocalLedgerOwner(cloudUser);
   if(!remote){
@@ -396,7 +403,7 @@ $('cloudSave').onclick=async()=>{
  }catch(e){cloudStatus('서버 저장 실패: '+e.message+' · 브라우저 원장은 유지됩니다.');}
 };
 $('entryDate').value=new Date().toLocaleDateString('en-CA');render();
-window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'){ $('ledgerPrivate').hidden=true;cloud=null;cloudUser=null;cloudStatus('로그인 상태 변경 · 계정 확인 중…');void connectAndLoadOnlineLedger();}});
+window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'){ ++ledgerAuthSequence;$('ledgerPrivate').hidden=true;cloud=null;cloudUser=null;cloudStatus('로그인 상태 변경 · 계정 확인 중…');void connectAndLoadOnlineLedger();}});
 window.addEventListener('pageshow',()=>{void connectAndLoadOnlineLedger();});
 setInterval(()=>{if(!document.hidden&&!syncInFlight&&!syncTimer)void connectAndLoadOnlineLedger();},15*60*1000);
 })();
