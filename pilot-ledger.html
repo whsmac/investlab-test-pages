@@ -16,6 +16,7 @@
 <h1>계좌·매매 기록 관리</h1>
 <p class="ledger-intro">계좌와 매수·매도·입출금 기록을 저장합니다. 자산과 수익률은 <a href="./my-portfolio.html">내 투자현황</a>에서 확인하세요.</p>
 <section class="panel" id="onlineSync" aria-label="저장 상태"><p id="cloudStatus" class="muted" role="status">HOME 로그인 확인 중…</p></section>
+<div id="ledgerPrivate" hidden>
 <section class="panel"><h2>계좌 관리</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식 A, ISA"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><div id="accounts" class="account-list" role="status"></div>
 <details style="margin-top:14px"><summary style="cursor:pointer;color:#bbcbde">관심종목 관리 (선택)</summary><p class="small-note">로그인한 계정에 저장되며 거래 시 '관심종목' 목록에서 선택할 수 있습니다.</p>
 <div class="account-row"><label>관심종목 코드<input id="watchSymbol" maxlength="16" placeholder="예: TQQQ"></label><button id="watchAdd" type="button">관심종목 추가</button></div><div id="watchList" class="account-list"></div></details></section>
@@ -42,6 +43,7 @@
 <p id="historyStatus" class="small-note" role="status">최근 5건</p>
 <div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>거래</th><th>종목</th><th>수량</th><th>주당단가</th><th>금액</th><th>통화</th><th>적용환율</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div>
 <div class="history-pager"><button id="historyPrev" type="button">이전 5건</button><span id="historyPageLabel" class="small-note">1 / 1</span><button id="historyNext" type="button">다음 5건</button></div></section>
+</div>
 <div hidden aria-hidden="true" id="legacyCompatibility">
 <input id="cloudKey" type="password"><input id="cloudEmail" type="text"><input id="cloudPassword" type="password">
 <button id="cloudReuseLogin" type="button"></button><button id="cloudLogin" type="button"></button><button id="cloudLogout" type="button"></button><button id="cloudPreflight" type="button"></button><button id="cloudLoad" type="button"></button><button id="cloudSave" type="button"></button>
@@ -265,12 +267,13 @@ async function connectAndLoadOnlineLedger(){
   if(!window.supabase?.createClient)return;
   const candidate=window.supabase.createClient(TEST_URL,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data:auth,error:authError}=await candidate.auth.getUser();
-  if(authError||!auth?.user?.id)return;
+  if(authError||!auth?.user?.id){cloud=null;cloudUser=null;$('ledgerPrivate').hidden=true;cloudStatus('로그인이 필요합니다. HOME에서 로그인하세요.');return;}
   if(syncInFlight)return;
   if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
   const userId=auth.user.id;
   activateLocalLedgerOwner(userId);
   cloud=candidate;cloudUser=userId;cloudKey=cfg.key;
+  $('ledgerPrivate').hidden=false;render();
   restoreCloudBaseline(userId);
   const {data:remote,error}=await cloud.from(TABLE).select('payload,updated_at').eq('user_id',userId).maybeSingle();
   if(error)throw error;
@@ -289,7 +292,7 @@ async function connectAndLoadOnlineLedger(){
    db=remote.payload;save(false);recordCloudBaseline(cloudUser,remote.payload,remote.updated_at);
    cloudStatus('TEST 서버 원장 자동 불러오기 완료 · '+db.accounts.length+'계좌 / '+db.entries.length+'거래');
   }else cloudStatus('로컬에 서버와 다른 미동기화 원장이 있습니다. 덮어쓰지 않았습니다. 데이터 백업 후 서버 원장 불러오기를 선택하세요');
- }catch(error){cloudStatus('TEST 원장 자동 연결 실패: '+error.message+' · 브라우저 자료 보존');}
+ }catch(error){$('ledgerPrivate').hidden=true;cloudStatus('TEST 원장 자동 연결 실패: '+error.message+' · 브라우저 자료 보존');}
 }
 
 const requireCloud=async()=>{
@@ -393,6 +396,7 @@ $('cloudSave').onclick=async()=>{
  }catch(e){cloudStatus('서버 저장 실패: '+e.message+' · 브라우저 원장은 유지됩니다.');}
 };
 $('entryDate').value=new Date().toLocaleDateString('en-CA');render();
+window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'&&event.newValue===null){$('ledgerPrivate').hidden=true;cloud=null;cloudUser=null;cloudStatus('로그아웃되었습니다. HOME에서 로그인하세요.');}});
 window.addEventListener('pageshow',()=>{void connectAndLoadOnlineLedger();});
 setInterval(()=>{if(!document.hidden&&!syncInFlight&&!syncTimer)void connectAndLoadOnlineLedger();},15*60*1000);
 })();
