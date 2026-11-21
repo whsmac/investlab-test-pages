@@ -17,11 +17,10 @@ const CONTENT_TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript; 
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png',
  '.jpg':'image/jpeg','.woff2':'font/woff2'};
 const MENUS=[
- ['My Portfolio','my-portfolio.html'],
- ['Virtual Trade Simulator','virtual-trade-simulator.html'],
- ['Company Investment Analysis','company-investment-analysis.html'],
- ['Unified Ledger','pilot-ledger.html'],
- ['Data Management','data-management.html'],
+ ['내 투자현황','my-portfolio.html'],
+ ['가상매매 시뮬레이터','virtual-trade-simulator.html'],
+ ['기업 투자분석','company-investment-analysis.html'],
+ ['계좌·매매 기록 관리','pilot-ledger.html'],
 ];
 async function localRoute(route){
  const url=new URL(route.request().url());
@@ -61,7 +60,8 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
    const device=viewport.width<500?'mobile':'desktop';
    try{
     await page.goto(ROOT,{waitUntil:'domcontentloaded'});
-    assert.equal(await page.locator('a.card').count(),5,device+': 5 home menus');
+    assert.equal(await page.locator('a.card').count(),4,device+': four daily-use home modules');
+    assert.equal(await page.locator('a.pilot-nav-settings[href="./data-management.html"]').count(),1,device+': backup accessible in settings');
     for(const [label,target] of MENUS){
      await page.goto(ROOT,{waitUntil:'domcontentloaded'});
      const link=page.locator('a.card[href="./'+target+'"]');
