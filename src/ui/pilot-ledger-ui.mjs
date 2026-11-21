@@ -1,5 +1,4 @@
 import {projectLedger} from '../ledger/pilot-portfolio-projection.mjs';
-import {readManagedSymbols} from '../simulator/managed-symbols.mjs';
 
 // Presentation helpers only. All edits go through the parent page's existing validator and save flow.
 export const ledgerTypeNames={OPEN:'초기 보유',BUY:'매수',SELL:'매도',DEPOSIT:'입금',WITHDRAW:'출금',DIVIDEND:'배당',FX:'환전'};
@@ -14,12 +13,12 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
  const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
  let historyPage=0;
  function symbols(category){
-  const db=getDb(),managed=readManagedSymbols(localStorage);
+  const db=getDb();
   const held=projectLedger(db,'ALL').holdings.map(h=>h.symbol);
   const traded=db.entries.filter(e=>['OPEN','BUY','SELL'].includes(e.type)&&e.symbol).map(e=>e.symbol);
-  const items=category==='held'?[...held,...managed.filter(m=>m.categories.includes('보유')).map(m=>m.ticker)]
-   :category==='watch'?managed.filter(m=>m.categories.includes('관심')).map(m=>m.ticker)
-   :category==='past'?[...traded,...managed.filter(m=>m.categories.includes('거래이력')).map(m=>m.ticker)]:[];
+  // Watchlist is stored inside this authenticated user's ledger document; never read global browser keys.
+  const watched=Array.isArray(db.watchlist)?db.watchlist:[];
+  const items=category==='held'?held:category==='watch'?watched:category==='past'?traded:[];
   return [...new Set(items.map(t=>String(t).trim().toUpperCase()).filter(Boolean))].sort();
  }
  function refreshSymbols(){
@@ -56,6 +55,16 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
    wrap.append(rename,del);root.append(wrap);
   }
  }
+ function renderWatchlist(){
+  const db=getDb(),root=$('watchList');root.replaceChildren();
+  for(const ticker of Array.isArray(db.watchlist)?db.watchlist:[]){
+   const chip=document.createElement('div');chip.className='account-chip';
+   const label=document.createElement('span');label.textContent=ticker;
+   const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
+   remove.onclick=()=>{if(!confirm(ticker+' 관심종목을 삭제하시겠습니까?'))return;db.watchlist=db.watchlist.filter(x=>x!==ticker);save();};
+   chip.append(label,remove);root.append(chip);
+  }
+ }
  function renderHistory(){
   const db=getDb(),select=$('historyAccount'),previous=select.value;
   select.replaceChildren();const all=document.createElement('option');all.value='ALL';all.textContent='전체 계좌';select.append(all);
@@ -84,6 +93,14 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
   }
  }
  function attach(){
+  $('watchAdd').onclick=()=>{
+   const db=getDb(),ticker=$('watchSymbol').value.trim().toUpperCase();
+   if(!/^[A-Z][A-Z0-9.-]{0,15}$/.test(ticker)){msg('관심종목 코드를 확인하세요.');return;}
+   const watchlist=Array.isArray(db.watchlist)?db.watchlist:[];
+   if(watchlist.includes(ticker)){msg('이미 등록된 관심종목입니다.');return;}
+   db.watchlist=[...watchlist,ticker];$('watchSymbol').value='';save();msg('관심종목에 '+ticker+'을 추가했습니다.');
+  };
+
   $('historyAccount').onchange=()=>{historyPage=0;renderHistory();};
   $('historyStart').onchange=()=>{historyPage=0;renderHistory();};
   $('historyEnd').onchange=()=>{historyPage=0;renderHistory();};
@@ -94,5 +111,5 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
   for(const id of ['entryAmount','entryToAmount','entryCurrency','entryToCurrency'])$(id).addEventListener('input',updateFx);
  }
  attach();
- return {renderAccounts,renderHistory,refreshSymbols,selectSymbolForEdit,updateFx};
+ return {renderAccounts,renderHistory,renderWatchlist,refreshSymbols,selectSymbolForEdit,updateFx};
 }
