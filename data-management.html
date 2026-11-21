@@ -104,7 +104,9 @@ $('exportOnline').onclick=async()=>{
  }catch(error){status.textContent='온라인 백업 실패: '+error.message+' · 기존 서버 데이터 유지';}
  finally{button.disabled=false;}
 };
-$('import').onchange=async e=>{pending=null;pendingOnline=null;$('restore').disabled=true;$('restoreOnline').disabled=true;const file=e.target.files?.[0];if(!file)return;try{if(file.size>MAX)throw Error('5MB 이하 파일만 지원합니다.');const payload=JSON.parse(await file.text()),data=validate(payload);pending=data;
+$('import').onchange=async e=>{pending=null;pendingOnline=null;pendingOwnerId=null;$('restore').disabled=true;$('restoreOnline').disabled=true;const file=e.target.files?.[0];if(!file)return;try{if(file.size>MAX)throw Error('5MB 이하 파일만 지원합니다.');const payload=JSON.parse(await file.text()),data=validate(payload);
+ if(payload.ownerId!==undefined&&!/^[a-f0-9-]{30,50}$/i.test(String(payload.ownerId)))throw Error('백업 계정 정보 형식 오류');
+ pending=data;pendingOwnerId=payload.ownerId??null;
  if(payload.online!==undefined){
   const online=payload.online;
   if(!object(online)||online.project!=='investlab-ledger-test'||!Object.hasOwn(online,'ledger')||!object(online.strategies)||Object.keys(online.strategies).length>30)throw Error('온라인 백업 데이터 형식이 올바르지 않습니다.');
@@ -114,7 +116,44 @@ $('import').onchange=async e=>{pending=null;pendingOnline=null;$('restore').disa
   $('restoreOnline').disabled=false;
  }
  $('preview').textContent='복원 대상: 계좌 '+(data.ledger?.accounts?.length??0)+'개 · 원장 거래 '+(data.ledger?.entries?.length??0)+'건 · 저장 전략 '+(data.scenarios?Object.keys(data.scenarios).length:0)+'개 · 작업 초안 '+(data.draft?'있음':'없음')+(pendingOnline?' · TEST 서버 원장 '+(pendingOnline.ledger?.entries?.length??0)+'건 / 서버 전략 '+Object.keys(pendingOnline.strategies).length+'개 포함':'')+'. 브라우저와 서버 복원은 각각 별도 실행합니다.';$('restore').disabled=false;$('status').textContent='';}catch(error){$('preview').textContent='파일 검토 실패: '+error.message;}};
-$('restore').onclick=()=>{if(!pending)return;if(!confirm('현재 브라우저의 원장·저장 전략·작업 초안을 선택한 백업으로 교체합니다. 먼저 현재 데이터를 백업하셨습니까?'))return;const before={};try{for(const [name,key] of Object.entries(KEYS))before[name]=localStorage.getItem(key);for(const [name,key] of Object.entries(KEYS)){if(pending[name]===null)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify(pending[name]));}pending=null;$('restore').disabled=true;$('preview').textContent='복원 완료 · 다른 메뉴가 열려 있다면 새로고침하세요.';$('status').textContent='세 종류의 저장 데이터 복원이 완료되었습니다.';render();}catch(e){try{for(const [name,key] of Object.entries(KEYS)){if(before[name]===null)localStorage.removeItem(key);else if(before[name]!==undefined)localStorage.setItem(key,before[name]);}}catch{}$('status').textContent='복원 실패: '+e.message+' · 기존 데이터 복구를 시도했습니다.';}};
+$('restore').onclick=async()=>{
+ if(!pending)return;
+ const button=$('restore'),data=pending,owner=pendingOwnerId,status=$('status');
+ button.disabled=true;
+ try{
+  const {client,userId}=await authenticatedTestClient();
+  if(owner&&owner!==userId)throw Error('백업 계정과 현재 TEST 계정이 다릅니다.');
+  const savedOwner=localStorage.getItem(OWNER_KEY);
+  if(savedOwner&&savedOwner!==userId)throw Error('다른 계정의 브라우저 원장이 있어 복원을 중단했습니다. 먼저 해당 계정에서 백업하세요.');
+  if(!owner&&!confirm('구형 백업에는 계정 정보가 없습니다. 이 계정의 자료가 맞는지 확인했습니까?'))return;
+  if(!confirm('본인 TEST 계정의 브라우저 원장·저장 전략·작업 초안을 교체합니다. 현재 자료를 백업했습니까?'))return;
+  const {data:verified,error}=await client.auth.getUser();
+  if(error||verified?.user?.id!==userId)throw Error('복원 도중 로그인 계정이 변경되었습니다.');
+  const keys={ledger:KEYS.ledger,scenarios:KEYS.scenarios+':'+userId,draft:KEYS.draft+':'+userId};
+  const tracked=[...Object.values(keys),OWNER_KEY],before=new Map(tracked.map(k=>[k,localStorage.getItem(k)]));
+  try{
+   for(const [name,key] of Object.entries(keys)){
+    if(data[name]===null)localStorage.removeItem(key);
+    else localStorage.setItem(key,JSON.stringify(data[name]));
+   }
+   if(data.ledger!==null)localStorage.setItem(OWNER_KEY,userId);
+   for(const [name,key] of Object.entries(keys)){
+    const expected=data[name]===null?null:JSON.stringify(data[name]);
+    if(localStorage.getItem(key)!==expected)throw Error(name+' 저장 확인 실패');
+   }
+   if(data.ledger!==null&&localStorage.getItem(OWNER_KEY)!==userId)throw Error('원장 소유자 확인 실패');
+  }catch(error){
+   for(const [key,value] of before)try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch{}
+   throw Error('브라우저 저장 실패: '+error.message+' · 원상 복구를 시도했습니다');
+  }
+  pending=null;pendingOnline=null;pendingOwnerId=null;
+  $('restoreOnline').disabled=true;
+  $('preview').textContent='본인 TEST 계정의 브라우저 복원 완료 · 다른 메뉴를 새로고침하세요.';
+  status.textContent='원장·전략·작업 초안을 본인 계정으로 복원했습니다. 서버 변경 없음';
+  currentUserId=userId;render();
+ }catch(error){status.textContent='브라우저 복원 중단: '+error.message;}
+ finally{button.disabled=false;}
+};
 
 $('restoreOnline').onclick=async()=>{
  if(!pendingOnline)return;
@@ -122,6 +161,7 @@ $('restoreOnline').onclick=async()=>{
  if(!confirm('TEST 서버의 본인 계정 원장 전체를 선택한 백업으로 교체하고, 백업에 포함된 전략은 같은 이름을 덮어씁니다. 다른 이름의 서버 전략은 유지합니다. 이미 현재 서버 데이터를 별도로 백업했습니까?'))return;
  const {client,userId}=await authenticatedTestClient().catch(error=>{status.textContent='TEST 로그인 필요: '+error.message;return {};});
  if(!client||!userId)return;
+ if(pendingOwnerId&&pendingOwnerId!==userId){status.textContent='서버 복원 차단: 백업 계정과 로그인 계정이 다릅니다.';return;}
  button.disabled=true;status.textContent='TEST 서버 데이터 복원 중…';
  try{
   if(online.ledger!==null){
@@ -138,4 +178,13 @@ $('restoreOnline').onclick=async()=>{
  finally{button.disabled=false;}
 };
 render();
+async function refreshCurrentLogin(){
+ try{
+  const {userId}=await authenticatedTestClient();
+  if(currentUserId!==userId){currentUserId=userId;render();}
+ }catch{if(currentUserId!==null){currentUserId=null;render();}}
+}
+window.addEventListener('pageshow',()=>{void refreshCurrentLogin();});
+window.addEventListener('focus',()=>{void refreshCurrentLogin();});
+void refreshCurrentLogin();
 </script></body></html>
