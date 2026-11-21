@@ -96,7 +96,16 @@ $('entryType').onchange=updateEntryFields;updateEntryFields();
 $('viewAccount').onchange=()=>{const selected=val('viewAccount');render();$('viewAccount').value=selected;};
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='investlab-ledger-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);};
 $('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const x=JSON.parse(await file.text());if(x.version!==1||!Array.isArray(x.accounts)||!Array.isArray(x.entries)||x.accounts.some(a=>!a.id||!a.name)||x.entries.some(t=>!t.id||!t.accountId||!t.date||!t.type))throw Error('지원하지 않는 데이터 형식');validateLedger(x);if(!confirm('현재 브라우저 원장 데이터를 백업 파일로 교체하시겠습니까?'))return;db=x;save();msg('복원 완료');}catch(err){msg('복원 실패: '+err.message);}finally{e.target.value='';}};
-$('clear').onclick=()=>{if(confirm('이 브라우저의 계좌와 모든 거래를 삭제하시겠습니까? 백업을 먼저 확인하세요.')){db={version:1,accounts:[],entries:[]};save();msg('초기화했습니다.');}};
+$('clear').onclick=()=>{
+ if(cloud&&cloudUser){
+  msg('온라인 로그인 중에는 원장 초기화를 사용할 수 없습니다. 서버 원장 보호를 위해 먼저 JSON 백업 후 로그아웃하세요.');
+  return;
+ }
+ if(confirm('서버에는 아무 변경 없이 이 브라우저의 원장만 초기화합니다. 현재 자료를 JSON으로 백업했습니까?')){
+  db={version:1,accounts:[],entries:[]};save(false);
+  msg('브라우저 원장만 초기화했습니다. TEST 서버 원장은 변경하지 않았습니다.');
+ }
+};
 const TEST_URL='https://gopofxyezhwpfxbecrxd.supabase.co',TABLE='investlab_pilot_ledger_documents';
 let cloud=null,cloudUser=null,cloudKey=null;
 const cloudStatus=s=>$('cloudStatus').textContent=s;
@@ -131,6 +140,28 @@ function activateLocalLedgerOwner(userId){
   throw Error('계정 전환 실패: '+error.message+' · 기존 원장을 보존했습니다');
  }
  db=next;stopEditing();render();
+}
+function hideLocalLedgerAfterSignout(){
+ const owner=localStorage.getItem(LOCAL_OWNER_KEY);
+ if(!owner){
+  // Unsigned legacy ledger stays in browser storage but not on the signed-out screen.
+  db={version:1,accounts:[],entries:[]};stopEditing();render();
+  return;
+ }
+ const archiveKey=scopedLocalLedgerKey(owner),before=new Map(
+  [KEY,LOCAL_OWNER_KEY,archiveKey].map(key=>[key,localStorage.getItem(key)]));
+ try{
+  localStorage.setItem(archiveKey,JSON.stringify(db));
+  if(localStorage.getItem(archiveKey)!==JSON.stringify(db))throw Error('보관 검증 실패');
+  localStorage.removeItem(KEY);localStorage.removeItem(LOCAL_OWNER_KEY);
+  if(localStorage.getItem(KEY)!==null||localStorage.getItem(LOCAL_OWNER_KEY)!==null)
+   throw Error('로그아웃 표시 분리 검증 실패');
+ }catch(error){
+  for(const [key,value] of before)try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch{}
+  db={version:1,accounts:[],entries:[]};stopEditing();render();
+  throw Error('개인 원장 화면을 숨겼지만 브라우저 보관에 문제가 있습니다: '+error.message);
+ }
+ db={version:1,accounts:[],entries:[]};stopEditing();render();
 }
 function recordCloudBaseline(userId,payload,revision){
  cloudBaseline=stableLedger(payload);cloudBaselineRevision=revision;
@@ -256,7 +287,15 @@ $('cloudLogin').onclick=async()=>{
   cloudStatus('TEST 계정 로그인 완료 · My Portfolio와 로그인 공유');await connectAndLoadOnlineLedger();
  }catch(e){cloudUser=null;cloudStatus('로그인 실패: '+e.message);}
 };
-$('cloudLogout').onclick=async()=>{if(cloud)await cloud.auth.signOut();cloud=null;cloudUser=null;cloudKey=null;cloudStatus('로그아웃 · 현재 브라우저 원장은 그대로 유지됩니다.');};
+$('cloudLogout').onclick=async()=>{
+ try{
+  if(cloud){const {error}=await cloud.auth.signOut();if(error)throw Error(error.message);}
+  if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
+  cloud=null;cloudUser=null;cloudKey=null;
+  hideLocalLedgerAfterSignout();
+  cloudStatus('로그아웃 완료 · 본인 원장을 브라우저에 보관하고 화면에서 숨겼습니다. 재로그인하면 원장이 복원됩니다.');
+ }catch(error){cloudStatus('로그아웃 및 원장 보관 확인: '+error.message);}
+};
 $('cloudPreflight').onclick=async()=>{
  try{
   const user=await requireCloud();
