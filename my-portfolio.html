@@ -11,7 +11,7 @@
 @media(max-width:750px){.hero{padding:15px}.portfolio-grid{gap:8px}.hero .metric{padding:12px}.hero .metric strong{font-size:17px}.portfolio-section-head label{width:100%}.portfolio-section-head select{flex:1;min-width:0}}
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
 <body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
-<p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
+<div id="portfolioPrivate" hidden><p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
 <section class="hero" aria-label="전체 투자자산"><span class="total-label">전체 투자자산 (KRW 환산)</span><div id="dashboardTotal" class="total-amount">—</div>
 <div class="portfolio-grid">
 <div class="metric"><span>총 평가손익</span><strong id="dashboardGain">—</strong></div>
@@ -25,7 +25,7 @@
 <section class="panel portfolio-tables"><div class="portfolio-section-head"><h2>보유종목별 투자현황</h2><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label></div>
 <div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균단가 USD</th><th>최근 종가 USD</th><th>평가금액 USD</th><th>평가손익 USD</th><th>수익률</th></tr></thead><tbody id="dashboardHoldings"></tbody></table></div>
 <p id="dashboardNotice" role="status">시세를 확인 중입니다.</p></section>
-<details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
+</div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
 <button id="diagnose" type="button"></button><p id="diagnostics"></p><button id="loadCloudLedger" type="button"></button><button id="compareCloudLedger" type="button"></button>
 <span id="priceStatus"></span><span id="symbols"></span><span id="cost"></span><span id="usd"></span><span id="krw"></span><span id="realized"></span><span id="sales"></span><span id="marketValue"></span><span id="unrealized"></span><p id="coverage"></p>
@@ -38,7 +38,7 @@ import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
 import {renderPortfolioDashboard,fetchUsdKrwRate} from './src/ui/pilot-portfolio-dashboard.mjs';
 const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
-let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
+let data={version:1,accounts:[],entries:[]}; // Never show unverified browser data to a signed-out visitor.
 const account=$('account');
 let portfolioFx=null,portfolioFxDate='';
 function refreshAccountOptions(){
@@ -256,6 +256,7 @@ account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;
 let displayedCloudLedgerRevision=null,displayedCloudLedgerOwnerId=null;
 let cloudLedgerBusy=false;
 function resetVisiblePortfolio(){
+ $('portfolioPrivate').hidden=true;
  // Account isolation affects the screen only. Unsent local ledger data stays intact.
  data={version:1,accounts:[],entries:[]};
  displayedCloudLedgerRevision=null;displayedCloudLedgerOwnerId=null;
@@ -263,6 +264,7 @@ function resetVisiblePortfolio(){
  refreshAccountOptions();render();
 }
 function usePortfolioDisplay(payload,revision,ownerId){
+ $('portfolioPrivate').hidden=false;
  data=payload;displayedCloudLedgerRevision=revision;displayedCloudLedgerOwnerId=ownerId;
  priceRequestVersion++;prices=new Map();pricesLoaded=false;
  refreshAccountOptions();render();
@@ -276,7 +278,7 @@ async function refreshOnlineLedgerDisplay(){
   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
   const url='https://gopofxyezhwpfxbecrxd.supabase.co';
   if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role')){
-   if(displayedCloudLedgerOwnerId)resetVisiblePortfolio();
+   resetVisiblePortfolio();
    status.textContent='TEST 계정 미연결 · 기존 브라우저 원장 데이터는 보존했습니다';
    return;
   }
@@ -284,7 +286,7 @@ async function refreshOnlineLedgerDisplay(){
   const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data:auth,error:authError}=await client.auth.getUser();
   if(authError||!auth?.user?.id){
-   if(displayedCloudLedgerOwnerId)resetVisiblePortfolio();
+   resetVisiblePortfolio();
    status.textContent='TEST 계정 로그인이 필요합니다 · 다른 온라인 계정의 보유현황은 숨겼습니다';
    return;
   }
@@ -313,7 +315,7 @@ async function refreshOnlineLedgerDisplay(){
      return;
     }
    }
-   resetVisiblePortfolio();
+   resetVisiblePortfolio();$('portfolioPrivate').hidden=false;
    status.textContent='이 TEST 계정에 서버 원장이 없습니다 · 다른 계정의 브라우저 자료는 화면에서 숨겼습니다';
    return;
   }
@@ -330,6 +332,7 @@ async function refreshOnlineLedgerDisplay(){
  }finally{cloudLedgerBusy=false;}
 }
 window.addEventListener('pageshow',()=>{void refreshOnlineLedgerDisplay();});
+window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'){resetVisiblePortfolio();void refreshOnlineLedgerDisplay();}});
 setInterval(()=>{if(!document.hidden)void refreshOnlineLedgerDisplay();},15*60*1000);
 // Only read existing TEST auth/config; never create a session or write server data automatically.
 function refreshPortfolioQuotesIfConnected(){
