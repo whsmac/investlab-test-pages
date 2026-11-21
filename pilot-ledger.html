@@ -3,25 +3,49 @@
 <title>INVESTLAB | 계좌·매매 기록 관리</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 :root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#eaf0ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1200px;margin:auto;padding:20px 16px 60px}h1{font-size:clamp(23px,4vw,32px)}h2{font-size:19px}a{color:#a4c6ff}.panel{background:#161f32;border:1px solid #34405a;border-radius:14px;padding:17px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}label{font-size:13px;color:#b7c5dc;display:block}input,select,button{width:100%;padding:10px;border-radius:8px;background:#0b1424;color:#eef3ff;border:1px solid #43516a;font:inherit}button{background:#24395d;cursor:pointer}button:hover{background:#305184}button:disabled{opacity:.45}label>*{margin-top:5px}.wide{grid-column:span 2}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions>*{width:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{border-bottom:1px solid #364159;padding:9px;text-align:right}td:first-child,th:first-child{text-align:left}.scroll{overflow-x:auto}.muted{color:#aab9d2;font-size:13px}.warn{color:#ffd48b}.stat{font-size:20px;font-weight:700}.stat small{display:block;font-size:12px;color:#aab9d2;font-weight:400}.hidden{display:none}#message{min-height:24px;color:#a9dfbf}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:span 2}.wrap{padding:14px 10px 40px}}@media(max-width:400px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+[hidden]{display:none!important}.ledger-intro{color:#bcc9dc;font-size:13px;line-height:1.6}
+#onlineSync{padding:9px 15px;margin:12px 0}#onlineSync .muted{margin:0}
+.entry-account{grid-column:1/-1;border-bottom:1px solid #3b4b65;padding-bottom:13px;margin-bottom:4px}
+.small-note{font-size:12px;color:#aebbd2;margin:4px 0 7px}
+.fx-rate{background:#101d30;border:1px solid #425572;border-radius:9px;padding:11px 14px}.fx-rate strong{display:block;font-size:18px;margin-top:4px}
+.history-tools{display:flex;align-items:end;flex-wrap:wrap;gap:9px;margin:13px 0}.history-tools>*{flex:1;min-width:130px}
+.history-pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:12px 0}.history-pager button{width:auto}
+.account-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.account-chip{display:flex;align-items:center;gap:8px;background:#0c1728;border:1px solid #3d4f6b;padding:7px 10px;border-radius:8px;font-size:13px}.account-chip button{width:auto;padding:5px 8px;font-size:12px}
+@media(max-width:600px){.history-tools>*{flex:1 1 44%}.entry-account{grid-column:1/-1}}
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head><body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./pilot-ledger.html" aria-current="page">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav>
 <a href="./index.html">← INVESTLAB 홈</a><h1>계좌·매매 기록 관리</h1>
-<p class="warn">TEST 계정 로그인 시 계좌와 거래를 자동으로 서버와 동기화합니다. 접속이 끊기면 브라우저에 기록을 보존하며 서버 변경 충돌은 자동 덮어쓰기하지 않습니다.</p>
-<section class="panel" id="onlineSync"><h2>온라인 저장 · TEST Supabase</h2>
-<p class="muted">로그인하면 본인 TEST 원장을 자동으로 불러오고 거래를 자동 저장합니다. 같은 브라우저에서 다른 TEST 계정으로 전환할 때도 각 계정의 브라우저 원장을 별도로 보존합니다. 아래 수동 저장·불러오기는 동기화 충돌 해결 시 사용합니다.</p>
-<div class="grid"><label class="wide">TEST 공개용 Supabase anon / publishable key<input id="cloudKey" type="password" autocomplete="off" placeholder="TEST 프로젝트 공개 키"></label>
-<label>이메일<input id="cloudEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="cloudPassword" type="password" autocomplete="current-password"></label></div>
-<div class="actions" style="margin-top:12px"><button type="button" id="cloudReuseLogin">공유 데이터 로그인 사용</button><button type="button" id="cloudLogin">로그인</button><button type="button" id="cloudLogout">로그아웃</button><button type="button" id="cloudPreflight">온라인 저장 사전점검 (읽기 전용)</button><button type="button" id="cloudLoad">서버에서 불러오기</button><button type="button" id="cloudSave">서버에 저장</button></div>
-<p id="cloudStatus" class="muted" role="status">서버 연결 전 · 브라우저 임시 저장만 사용 중</p></section>
-<section class="panel"><h2>계좌 등록</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식, ISA, 연금"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><p id="accounts" class="muted"></p></section>
-<section class="panel"><h2>원장 입력</h2><form id="entryForm" class="grid">
-<label>계좌<select id="entryAccount" required></select></label><label>날짜<input id="entryDate" type="date" required></label><label>거래 종류<select id="entryType"><option value="OPEN">초기 보유 입력</option><option value="BUY">매수</option><option value="SELL">매도</option><option value="DEPOSIT">현금 입금</option><option value="WITHDRAW">현금 출금</option><option value="DIVIDEND">배당금 수령</option><option value="FX">환전 (통화 교환)</option></select></label><label class="stockField">종목코드<input id="entrySymbol" placeholder="TSLA" maxlength="16"></label>
-<label class="stockField">수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label><label class="stockField">주당 단가<input id="entryPrice" type="number" min="0" step="any" placeholder="250"></label><label>통화<select id="entryCurrency"><option>USD</option><option>KRW</option></select></label><label class="moneyField">현금 금액<input id="entryAmount" type="number" min="0" step="any" placeholder="1000"></label><label class="fxField">환전 후 통화<select id="entryToCurrency"><option>KRW</option><option>USD</option></select></label><label class="fxField">환전 후 수령액<input id="entryToAmount" type="number" min="0" step="any" placeholder="1400000"></label><label class="wide">메모<input id="entryNote" maxlength="200" placeholder="선택 사항"></label><button id="submitEntry" type="submit">거래 기록</button>
-</form><p class="muted">초기 보유는 수량과 매입단가를 입력합니다. 초기 현금은 입금으로 기록하세요. 수수료·세금·환율별 취득원가 계산은 아직 포함되지 않았습니다.</p><p id="message" role="status"></p></section>
-<section class="panel"><h2>My Portfolio · 원장 기반 보유현황</h2><div class="grid"><label>계좌 선택<select id="viewAccount"><option value="ALL">전체 계좌</option></select></label><div class="stat"><small>보유 종목 수</small><span id="symbolCount">0</span></div><div class="stat"><small>USD 현금</small><span id="usdCash">0</span></div><div class="stat"><small>KRW 현금</small><span id="krwCash">0</span></div></div><div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균매입단가 USD</th><th>매입원가 USD</th></tr></thead><tbody id="holdings"></tbody></table></div><p class="muted">전체 계좌 평균단가는 보유수량을 가중치로 계산합니다. 현재 주가가 연결되지 않아 평가손익은 표시하지 않습니다.</p></section>
-<section class="panel"><h2>실현손익 (USD · 평균원가 기준)</h2><div class="grid"><div class="stat"><small>선택 계좌 누적 실현손익</small><span id="realizedTotal">USD 0</span></div><div class="stat"><small>매도 거래 수</small><span id="sellCount">0</span></div></div><p class="muted">매도금액 − 매도 직전 계좌별 평균매입단가 × 매도수량. 수수료·세금·환율·원화 취득원가는 미반영이며 세무신고용 금액이 아닙니다.</p></section>
-<section class="panel"><h2>거래 수정</h2><p id="editStatus" class="muted">거래 내역에서 수정 버튼을 누르면 아래 입력창에 해당 거래가 표시됩니다.</p><div class="actions"><button id="cancelEdit" type="button" class="hidden">수정 취소</button></div></section>
-<section class="panel"><h2>거래 내역</h2><div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>유형</th><th>종목</th><th>수량</th><th>단가</th><th>금액</th><th>통화</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div></section>
-<section class="panel"><h2>데이터 관리</h2><div class="actions"><button id="export" type="button">JSON 백업</button><label style="display:inline-block">JSON 복원<input id="import" type="file" accept=".json,application/json"></label><button id="clear" type="button">이 브라우저 데이터 초기화</button></div><p class="muted">브라우저 복원 후 TEST 로그인 상태에서는 서버 동기화를 시도합니다. 서버에 다른 내용이 있으면 덮어쓰지 않습니다.</p></section>
+<p class="ledger-intro">계좌와 매수·매도·입출금 기록을 저장합니다. 자산과 수익률은 <a href="./my-portfolio.html">내 투자현황</a>에서 확인하세요.</p>
+<section class="panel" id="onlineSync" aria-label="저장 상태"><p id="cloudStatus" class="muted" role="status">HOME 로그인 확인 중…</p></section>
+<section class="panel"><h2>계좌 관리</h2><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식 A, ISA"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><div id="accounts" class="account-list" role="status"></div></section>
+<section class="panel"><h2>거래 입력</h2><form id="entryForm" class="grid">
+<div class="entry-account"><label for="entryAccount">계좌 선택</label><select id="entryAccount" required></select></div>
+<label>거래 날짜<input id="entryDate" type="date" required></label>
+<label>거래 종류<select id="entryType"><option value="BUY">매수</option><option value="SELL">매도</option><option value="OPEN">초기 보유 입력</option><option value="DEPOSIT">현금 입금</option><option value="WITHDRAW">현금 출금</option><option value="DIVIDEND">배당금 수령</option><option value="FX">환전 (통화 교환)</option></select></label>
+<label class="stockField">종목 선택 방식<select id="entrySymbolCategory"><option value="held">보유종목</option><option value="watch">관심종목</option><option value="past">기 보유·매매종목</option><option value="manual">직접입력</option></select></label>
+<label class="stockField" id="symbolPickWrap">종목 선택<select id="entrySymbolPick"></select></label>
+<label class="stockField" id="symbolManualWrap" hidden>종목코드 직접입력<input id="entrySymbol" placeholder="TSLA" maxlength="16" autocomplete="off"></label>
+<label class="stockField">수량<input id="entryQty" type="number" min="0" step="any" placeholder="10"></label>
+<label class="stockField">주당 단가 (USD)<input id="entryPrice" type="number" min="0" step="any" placeholder="250"></label>
+<label>통화<select id="entryCurrency"><option>USD</option><option>KRW</option></select></label>
+<label class="moneyField">금액<input id="entryAmount" type="number" min="0" step="any" placeholder="1000"></label>
+<label class="fxField">환전 후 통화<select id="entryToCurrency"><option>KRW</option><option>USD</option></select></label>
+<label class="fxField">실제 수령금액<input id="entryToAmount" type="number" min="0" step="any" placeholder="10"></label>
+<div class="fxField fx-rate wide" id="fxRatePanel"><span class="small-note">실제 지출·수령금액 기준 (수수료 포함)</span><strong id="fxEffectiveRate">적용환율 자동 계산</strong></div>
+<label class="wide">메모 (선택)<input id="entryNote" maxlength="200" placeholder="예: 양도소득세 납부 (현금 출금)"></label>
+<button id="submitEntry" type="submit">저장</button><button id="cancelEdit" type="button" class="hidden">수정 취소</button>
+</form><p id="editStatus" class="small-note" role="status"></p>
+<p class="small-note">초기 보유를 등록했다면 해당 과거 매수는 중복 입력하지 마세요. 양도세 납부는 현금 출금으로 기록하고 메모에 남깁니다.</p><p id="message" role="status"></p></section>
+<section class="panel"><h2>거래 내역</h2>
+<div class="history-tools"><label>계좌<select id="historyAccount"><option value="ALL">전체 계좌</option></select></label><label>시작일<input id="historyStart" type="date"></label><label>종료일<input id="historyEnd" type="date"></label><button id="historyReset" type="button">최근 내역</button></div>
+<p id="historyStatus" class="small-note" role="status">최근 5건</p>
+<div class="scroll"><table><thead><tr><th>계좌 / 날짜</th><th>거래</th><th>종목</th><th>수량</th><th>주당단가</th><th>금액</th><th>통화</th><th>적용환율</th><th>관리</th></tr></thead><tbody id="transactions"></tbody></table></div>
+<div class="history-pager"><button id="historyPrev" type="button">이전 5건</button><span id="historyPageLabel" class="small-note">1 / 1</span><button id="historyNext" type="button">다음 5건</button></div></section>
+<div hidden aria-hidden="true" id="legacyCompatibility">
+<input id="cloudKey" type="password"><input id="cloudEmail" type="text"><input id="cloudPassword" type="password">
+<button id="cloudReuseLogin" type="button"></button><button id="cloudLogin" type="button"></button><button id="cloudLogout" type="button"></button><button id="cloudPreflight" type="button"></button><button id="cloudLoad" type="button"></button><button id="cloudSave" type="button"></button>
+<select id="viewAccount"><option value="ALL">전체 계좌</option></select><span id="realizedTotal"></span><span id="sellCount"></span><span id="symbolCount"></span><span id="usdCash"></span><span id="krwCash"></span><table><tbody id="holdings"></tbody></table>
+<button id="export" type="button"></button><input id="import" type="file"><button id="clear" type="button"></button>
+</div>
 </main><script type="module">
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 (()=>{
