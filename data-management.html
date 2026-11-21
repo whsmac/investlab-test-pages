@@ -15,7 +15,7 @@ const read=key=>{const raw=localStorage.getItem(key);return raw===null?null:JSON
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 function browserDataForUser(userId){
  if(!userId)throw Error('TEST 로그인 후 개인 백업을 이용하세요.');
- const ledger=localStorage.getItem(OWNER_KEY)===userId?read(KEYS.ledger):null;
+ const ledger=localStorage.getItem(OWNER_KEY)===userId?read(KEYS.ledger):read(KEYS.ledger+':'+userId);
  return {ledger,scenarios:read(KEYS.scenarios+':'+userId),draft:read(KEYS.draft+':'+userId)};
 }
 function saveJsonFile(raw,filename){
