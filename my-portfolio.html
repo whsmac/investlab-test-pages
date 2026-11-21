@@ -36,9 +36,11 @@ import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
+import {renderPortfolioDashboard,fetchUsdKrwRate} from './src/ui/pilot-portfolio-dashboard.mjs';
 const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]};try{const raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw?.version===1&&Array.isArray(raw.accounts)&&Array.isArray(raw.entries))data=raw;}catch{}
 const account=$('account');
+let portfolioFx=null,portfolioFxDate='';
 function refreshAccountOptions(){
  const current=account.value;
  account.replaceChildren();
@@ -62,7 +64,8 @@ const complete=pricesLoaded&&summary.holdings.length>0&&pricedCount===summary.ho
 $('coverage').textContent=!pricesLoaded?'주가를 조회해야 평가액을 계산할 수 있습니다.':!summary.holdings.length?'보유종목이 없습니다.':(complete?'전체 평가 가능':'부분 평가 · 전체 평가액 아님')+' · '+pricedCount+'/'+summary.holdings.length+'종목 · '+(missing.length?'미조회: '+missing.join(', ')+' · ':'')+(staleCount?'7일 초과 자료 '+staleCount+'종목 · ':'')+'기준일은 종목별로 다를 수 있습니다.';
 $('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){const tr=document.createElement('tr');for(const v of [r.symbol,fmt(r.sellCount,0),fmt(r.proceedsUsd),fmt(r.disposedCostUsd),fmt(r.realizedUsd)])cell(tr,v);$('realizedSymbols').append(tr);}
 $('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
-$('status').textContent=data.accounts.length?'원장 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건을 기준으로 계산했습니다.':'등록된 계좌가 없습니다. 통합원장에서 계좌와 거래를 입력하세요.';
+$('status').textContent=data.accounts.length?'저장된 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건 기준입니다.':'등록된 계좌가 없습니다. 계좌·매매 기록 관리에서 등록하세요.';
+ renderPortfolioDashboard({data,prices,fx:portfolioFx,fxDate:portfolioFxDate,selected});
 }
 async function diagnoseConnection(){
  const output=$('diagnostics'),lines=['TEST 연결 진단 (읽기 전용)'];
@@ -197,7 +200,7 @@ async function loadPrices(){
  const requestVersion=priceRequestVersion,selectedAccount=account.value;
  priceLoading=true;
  const status=$('priceStatus');status.textContent='최근 종가 자동 조회 중…';
- const holdings=projectLedger(data,selectedAccount).holdings;
+ const holdings=projectLedger(data,'ALL').holdings;
  const tickers=new Set(holdings.map(h=>h.symbol));
  const next=new Map();
  let serverError='',feedError='',feedCount=0;
@@ -334,5 +337,19 @@ function refreshPortfolioQuotesIfConnected(){
  if(data.accounts.length)void loadPrices();}catch{}
 }
 window.addEventListener('pageshow',refreshPortfolioQuotesIfConnected);
+let loadingFx=false;
+async function refreshPortfolioFx(){
+ if(loadingFx)return;
+ loadingFx=true;
+ try{
+  const {rate,date}=await fetchUsdKrwRate();
+  portfolioFx=rate;portfolioFxDate=date;
+ }catch(error){
+  // Never fabricate a KRW total when currency conversion is unavailable.
+  portfolioFx=null;portfolioFxDate='';
+ }finally{loadingFx=false;render();}
+}
+window.addEventListener('pageshow',()=>{void refreshPortfolioFx();});
+
 setInterval(()=>{if(!document.hidden)refreshPortfolioQuotesIfConnected();},15*60*1000);
 </script></body></html>
