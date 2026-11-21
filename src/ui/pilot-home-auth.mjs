@@ -1,6 +1,8 @@
 // HOME sign-in reuses the TEST Supabase session and public-key configuration used by all modules.
 const TEST_URL='https://gopofxyezhwpfxbecrxd.supabase.co';
 const CONFIG='investlab_shared_data_connection_v1';
+// This key is public by design; secret and service_role keys are never included.
+const PUBLIC_KEY='sb_publishable_qi06fNVX2hpFCj0Ho8Wg_w_FBS_Z7YL';
 const AUTH_STORAGE='investlab_shared_data_auth_v1';
 const $=id=>document.getElementById(id);
 const validKey=key=>typeof key==='string'&&key.length>20&&!key.startsWith('sb_secret_')&&!key.toLowerCase().includes('service_role');
@@ -20,12 +22,9 @@ function renderAuth(user){
 async function refreshLogin(){
  const cfg=readConfig();
  try{
-  if(cfg.url!==TEST_URL||!validKey(cfg.key)){
-   renderAuth(null);$('homeKeyDetails').open=true;
-   $('homeAuthStatus').textContent='최초 이용: 공개용 연결 키를 등록한 뒤 로그인하세요.';
-   return;
-  }
-  client=getClient(cfg.key);
+  const key=cfg.url===TEST_URL&&validKey(cfg.key)?cfg.key:PUBLIC_KEY;
+  client=getClient(key);
+  if(cfg.url!==TEST_URL||cfg.key!==key)localStorage.setItem(CONFIG,JSON.stringify({url:TEST_URL,key}));
   const {data,error}=await client.auth.getUser();
   if(error||!data?.user){renderAuth(null);$('homeAuthStatus').textContent='계정 로그인이 필요합니다.';return;}
   renderAuth(data.user);$('homeAuthStatus').textContent='로그인 상태 확인 완료 · 개인 투자자료를 사용할 수 있습니다.';
@@ -34,7 +33,7 @@ async function refreshLogin(){
 $('homeLoginForm').addEventListener('submit',async event=>{
  event.preventDefault();const button=$('homeLoginButton');button.disabled=true;
  try{
-  const cfg=readConfig(),entered=$('homePublicKey').value.trim(),key=entered||cfg.key;
+  const cfg=readConfig(),entered=$('homePublicKey').value.trim(),key=entered||(cfg.url===TEST_URL&&validKey(cfg.key)?cfg.key:PUBLIC_KEY);
   if(!validKey(key))throw Error('최초 이용 시 공개용 연결 키를 입력하세요.');
   client=getClient(key);
   const {data,error}=await client.auth.signInWithPassword({email:$('homeEmail').value.trim(),password:$('homePassword').value});
