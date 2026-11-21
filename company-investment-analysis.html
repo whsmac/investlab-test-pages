@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>INVESTLAB | Company Investment Analysis</title>
+<title>INVESTLAB | 기업 투자분석</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{color-scheme:dark;background:#0b1020;color:#edf2ff;font-family:system-ui,-apple-system,sans-serif}
@@ -28,10 +28,10 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 @media(max-width:800px){.tickers{grid-template-columns:repeat(3,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:530px){.wrap{padding:14px 12px 44px}.panel{padding:12px}.tickers{gap:7px}.tickers button{padding:11px 4px}.tickers strong{font-size:14px}.tickers small{font-size:10px}}
 </style>
-</head>
-<body><main class="wrap">
+<link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
+<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html" aria-current="page">기업 투자분석</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav>
 <a href="./index.html">← INVESTLAB 홈</a>
-<h1>Company Investment Analysis</h1>
+<h1>기업 투자분석</h1>
 <p class="muted">6개 기업의 일별 종가와 분기 매출·CAPEX·영업이익·영업이익률을 비교합니다. GitHub Pages의 자동수집 장기 종가를 우선 표시하고 부족한 구간만 TEST 서버 이력으로 보완합니다. 실시간 체결가는 아닙니다.</p>
 <section class="panel">
 <p class="muted" style="margin:0 0 9px">종목 버튼을 눌러 여러 기업을 선택하거나 제외할 수 있습니다. 최소 1개 종목은 유지됩니다.</p>
