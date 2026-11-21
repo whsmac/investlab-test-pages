@@ -282,13 +282,16 @@ async function refreshOnlineLedgerDisplay(){
   if(verifyError||verified?.user?.id!==ownerId)throw Error('조회 도중 TEST 로그인 계정이 변경되었습니다');
   if(!remote){
    // Local fallback is permitted only for the same account's recorded draft.
-   if(localOwner===ownerId){
-    const stored=JSON.parse(localStorage.getItem(KEY)||'null');
+   // A sign-out or account switch parks each user's local ledger at KEY:userId.
+   // The user may view only their own parked copy when no server record exists.
+   const localRaw=localOwner===ownerId?localStorage.getItem(KEY):localStorage.getItem(KEY+':'+ownerId);
+   if(localRaw){
+    const stored=JSON.parse(localRaw);
     if(stored?.version===1&&Array.isArray(stored.accounts)&&Array.isArray(stored.entries)){
      validateLedger(stored);
      if(displayedCloudLedgerOwnerId!==ownerId||displayedCloudLedgerRevision!==null)
       usePortfolioDisplay(stored,null,ownerId);
-     status.textContent='본인 TEST 서버 원장 없음 · 동일 계정의 브라우저 원장을 표시 중';
+     status.textContent='본인 TEST 서버 원장 없음 · 동일 계정의 브라우저 보관 원장을 표시 중 (서버 미저장)';
      return;
     }
    }
