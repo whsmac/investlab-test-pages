@@ -17,12 +17,12 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 .data-status h2{margin:0 0 9px;font-size:17px}.data-status p{margin:6px 0;font-size:14px;line-height:1.65}
 .notice{margin-top:24px;border:1px solid #67582a;background:#292516;color:#f5d98b;border-radius:12px;padding:16px;font-size:13px;line-height:1.7}
 @media(max-width:680px){.grid{grid-template-columns:1fr}.wrap{padding:20px 14px 50px}}
-</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
+[hidden]{display:none!important}</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
 <body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html" aria-current="page">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav>
 <header><div class="brand">INVEST<span>LAB</span></div><div class="tag">TEST ONLY · GitHub Pages</div></header>
 <h1>투자 분석 대시보드</h1>
 <p>1단계 Pilot의 4개 주요 기능을 이용합니다. 주가는 자동 조회하며, 개인 계좌·거래·전략은 로그인한 TEST 계정으로 저장합니다.</p>
-<section class="pilot-login" aria-label="로그인"><div style="width:100%"><strong>TEST 계정 로그인</strong><p>이곳에서 로그인하면 모든 모듈에서 같은 개인 계좌·거래 데이터를 사용합니다.</p>
+<section class="pilot-login" id="login" aria-label="로그인"><div style="width:100%"><strong>TEST 계정 로그인</strong><p>이곳에서 로그인하면 모든 모듈에서 같은 개인 계좌·거래 데이터를 사용합니다.</p>
 <form id="homeLoginForm" class="login-form"><label>이메일<input id="homeEmail" type="email" autocomplete="username" required placeholder="이메일"></label><label>비밀번호<input id="homePassword" type="password" autocomplete="current-password" required placeholder="비밀번호"></label><button type="submit" id="homeLoginButton">로그인</button></form>
 <details id="homeKeyDetails" class="login-extra"><summary>최초 연결 또는 공개용 연결 키 변경</summary><label>TEST Supabase 공개용 publishable/anon 키<input id="homePublicKey" type="password" autocomplete="off" placeholder="최초 연결에만 입력"></label><p>service_role 및 secret 키는 입력하지 마세요. 기존 TEST 로그인에서 공개용 키를 저장했다면 다시 입력할 필요가 없습니다.</p></details>
 <div id="homeLoggedIn" hidden><p id="homeWelcome" class="login-state">로그인 상태 확인 중…</p><div class="auth-actions"><button id="homeLogout" type="button">로그아웃</button><a href="./pilot-ledger.html">계좌·매매 기록 시작</a></div></div>
