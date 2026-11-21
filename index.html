@@ -24,7 +24,7 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 <p>1단계 Pilot의 4개 주요 기능을 이용합니다. 주가는 자동 조회하며, 개인 계좌·거래·전략은 로그인한 TEST 계정으로 저장합니다.</p>
 <section class="pilot-login" id="login" aria-label="로그인"><div style="width:100%"><strong>TEST 계정 로그인</strong><p>이곳에서 로그인하면 모든 모듈에서 같은 개인 계좌·거래 데이터를 사용합니다.</p>
 <form id="homeLoginForm" class="login-form"><label>이메일<input id="homeEmail" type="email" autocomplete="username" required placeholder="이메일"></label><label>비밀번호<input id="homePassword" type="password" autocomplete="current-password" required placeholder="비밀번호"></label><button type="submit" id="homeLoginButton">로그인</button></form>
-<details id="homeKeyDetails" class="login-extra"><summary>최초 연결 또는 공개용 연결 키 변경</summary><label>TEST Supabase 공개용 publishable/anon 키<input id="homePublicKey" type="password" autocomplete="off" placeholder="최초 연결에만 입력"></label><p>service_role 및 secret 키는 입력하지 마세요. 기존 TEST 로그인에서 공개용 키를 저장했다면 다시 입력할 필요가 없습니다.</p></details>
+<details id="homeKeyDetails" class="login-extra"><summary>연결 문제 해결 (고급)</summary><label>TEST Supabase 공개용 publishable/anon 키<input id="homePublicKey" type="password" autocomplete="off" placeholder="최초 연결에만 입력"></label><p>service_role 및 secret 키는 입력하지 마세요. 일반 사용자는 자동으로 연결됩니다. 연결 문제가 있을 때만 공개용 키를 수동 변경하세요.</p></details>
 <div id="homeLoggedIn" hidden><p id="homeWelcome" class="login-state">로그인 상태 확인 중…</p><div class="auth-actions"><button id="homeLogout" type="button">로그아웃</button><a href="./pilot-ledger.html">계좌·매매 기록 시작</a></div></div>
 <p id="homeAuthStatus" class="login-state" role="status">로그인 확인 중…</p>
 <div class="pilot-links" style="margin-top:9px"><a href="./pilot-guide.html">초보자 사용 가이드</a></div>
