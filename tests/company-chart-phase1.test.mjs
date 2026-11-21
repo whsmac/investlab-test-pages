@@ -37,11 +37,11 @@ test("NASDAQ 100 and S&P 500 toggles normalize selected companies on the same ba
 });
 test("late listings show a partial-comparison warning and never acquire fabricated earlier prices",()=>{
  const stocks=new Map(companies);
- stocks.set("SPCX",[point("2026-01-07",100)]);
+ stocks.set("SPCX",[point("2026-06-12",100)]);
  const result=buildPriceComparison(["TSLA","SPCX"],stocks,indices,"2026-01-05",["NDX"]);
  assert.equal(result.sets[1].points.length,1);
  assert.equal(result.sets[1].points[0].value,100);
- assert.deepEqual(result.lateStarts,[{ticker:"SPCX",date:"2026-01-07"}]);
+ assert.deepEqual(result.lateStarts,[{ticker:"SPCX",date:"2026-06-12"}]);
 });
 test("missing index data is exposed rather than substituted",()=>{
  const result=buildPriceComparison(["TSLA"],companies,new Map(),"2026-01-05",["NDX","SPX"]);
