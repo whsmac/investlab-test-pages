@@ -116,6 +116,8 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ runner.temp }}/investlab-test-pages-site
+      - name: Allow uploaded TEST Pages artifact to become discoverable
+        run: sleep 18
       - name: Deploy TEST Pages only after all checks succeed
         id: deployment
         uses: actions/deploy-pages@v4
