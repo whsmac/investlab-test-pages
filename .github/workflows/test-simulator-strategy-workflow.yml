@@ -1,0 +1,26 @@
+name: TEST simulator strategy workflow (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'virtual-trade-simulator.html'
+      - 'tests/simulator-strategy-workflow.test.mjs'
+      - '.github/workflows/test-simulator-strategy-workflow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  strategy-workflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check button layout and existing simulator behaviors
+        run: |
+          node --test tests/simulator-strategy-workflow.test.mjs tests/simulator-bear-bull-targets.test.mjs tests/test-simulator-online-account-auto.test.mjs tests/scenario-terminal-prices.test.mjs tests/simulator-price-details-collapse.test.mjs tests/simulator-desktop-layout.test.mjs tests/scenario-backup.test.mjs
+      - name: Confirm no deployment
+        run: echo "TEST-only PR, no ledger changes or deployment"
