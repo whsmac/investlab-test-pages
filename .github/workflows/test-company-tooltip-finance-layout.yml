@@ -1,0 +1,29 @@
+name: TEST company chart pointer and financial layout (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'company-investment-analysis.html'
+      - 'tests/company-chart-tooltip-finance-responsive.test.mjs'
+      - 'tests/company-chart-phase1.test.mjs'
+      - 'tests/company-financial-overlay.test.mjs'
+      - 'tests/company-financial-chart-date-axis.test.mjs'
+      - '.github/workflows/test-company-tooltip-finance-layout.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check on-chart price tooltip and QoQ YoY layout
+        run: |
+          node --test tests/company-chart-tooltip-finance-responsive.test.mjs tests/company-financial-overlay.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-chart-phase1.test.mjs
+      - name: Confirm read-only boundary
+        run: echo "TEST chart HTML only; no Supabase mutation and no Pages deployment"
