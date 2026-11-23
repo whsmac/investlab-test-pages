@@ -6,7 +6,7 @@ import {loadPublishedMarketTrends} from "../src/market/load-published-market-tre
 
 const today=new Date("2026-11-23T00:00:00Z");
 const rows=[...Array.from({length:260},(_,i)=>({ticker:"XLK",source_symbol:"XLK",trading_date:new Date(Date.UTC(2026,10,23-(259-i))).toISOString().slice(0,10),close_price:String(100+i),currency:"USD",price_basis:"unadjusted_close"})),
- ...Array.from({length:35},(_,i)=>({ticker:"^TNX",source_symbol:"^TNX",trading_date:new Date(Date.UTC(2026,9,20+i)).toISOString().slice(0,10),close_price:"42.4",currency:"USD",price_basis:"unadjusted_close"}))];
+ ...Array.from({length:35},(_,i)=>({ticker:"^TNX",source_symbol:"^TNX",trading_date:new Date(Date.UTC(2026,9,20+i)).toISOString().slice(0,10),close_price:"4.24",currency:"USD",price_basis:"unadjusted_close"}))];
 const fresh=rows.filter(r=>r.trading_date<="2026-11-23");
 const report={mode:"MARKET_TRENDS_REVIEW_ONLY",source:"Yahoo Finance",database_writes:0,writes_performed:0,generated_on:"2026-11-23",observations:fresh,row_count:fresh.length};
 test("market trends modules keep 3 official indicators and 11 existing sectors",()=>{
@@ -29,7 +29,7 @@ test("returns use close changes, yields convert ^TNX to percent",()=>{
  const data=parseMarketTrendsReport(report,{today});
  assert.ok(periodChange(data.series.get("XLK"),21)>0);
  assert.equal(periodChange(data.series.get("XLK"),260),null);
- assert.deepEqual(indicatorHistory(data.series.get("^TNX"),5,10).map(x=>x.value),[4.24,4.24,4.24,4.24,4.24]);
+ assert.deepEqual(indicatorHistory(data.series.get("^TNX"),5,1).map(x=>x.value),[4.24,4.24,4.24,4.24,4.24]);
  assert.equal(heatColor(null),"#354158");
 });
 test("strict same-origin market data fetch and correct response MIME",async()=>{
