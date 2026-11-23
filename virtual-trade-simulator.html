@@ -660,22 +660,77 @@ function updateInitialValuation(){
  }catch(e){const p=document.createElement('p');p.className='notice';p.textContent='합계 계산 대기: '+e.message;root.append(p);}
 }
 byId('cash').addEventListener('input',updateInitialValuation);
+function updateTradesUsingForecast(ticker,phase,value){
+ // Do not rewrite manually entered prices: only steps explicitly linked to
+ // this ticker AND the selected market direction are synchronized.
+ const linked=Number.isFinite(value)&&value>0;
+ for(const strategy of strategyState)for(const trade of strategy.trades){
+  if(String(trade.ticker||'').trim().toUpperCase()!==ticker||trade.priceBasis!==phase)continue;
+  if(linked)trade.price=value;
+  else trade.priceBasis='manual'; // old execution price is retained, never zeroed.
+ }
+ for(const row of editor.querySelectorAll('.trade-grid')){
+  const tickerInput=row.querySelector('[data-field="ticker"]'),basisInput=row.querySelector('[data-field="priceBasis"]');
+  if(tickerInput?.value!==ticker||basisInput?.value!==phase)continue;
+  if(linked)row.querySelector('[data-field="price"]').value=String(value);
+  else basisInput.value='manual';
+ }
+ syncAdvanced();updateStrategySaveState();
+}
 function renderPortfolio(){
- for(const [kind,id,fields] of [['positions','positionEditor',[['ticker','종목'],['quantity','수량'],['averageCost','평균단가']]],['prices','priceEditor',[['ticker','종목'],['price','최종가격']]]]){
-  const root=byId(id);root.replaceChildren();
-  portfolioState[kind].forEach((entry,index)=>{
-   const row=document.createElement('div');row.className='simple-row'+(kind==='prices'?' prices':'');
-   for(const [field,label] of fields){
-    const input=document.createElement('input');input.setAttribute('aria-label',label);
-    input.placeholder=label;input.type=field==='ticker'?'text':'number';if(field==='ticker')input.setAttribute('list','managedSymbolOptions');
-    if(field!=='ticker'){input.step='any';input.min='0';}
-    input.value=entry[field];input.addEventListener('input',()=>{entry[field]=input.value;updateInitialValuation();try{syncPortfolioJson();byId('portfolioStatus').textContent='';}catch{byId('portfolioStatus').textContent='최종 가정주가 등 필수값을 입력하면 JSON도 동기화됩니다.';}});
-    row.append(input);
-   }
-   const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
-   remove.addEventListener('click',()=>{portfolioState[kind].splice(index,1);renderPortfolio();});
-   row.append(remove);root.append(row);
+ const positionRoot=byId('positionEditor');positionRoot.replaceChildren();
+ for(const [index,entry] of portfolioState.positions.entries()){
+  const row=document.createElement('div');row.className='simple-row';
+  for(const [field,label] of [['ticker','종목'],['quantity','수량'],['averageCost','평균단가']]){
+   const input=document.createElement('input');input.setAttribute('aria-label',label);
+   input.placeholder=label;input.type=field==='ticker'?'text':'number';
+   if(field==='ticker')input.setAttribute('list','managedSymbolOptions');
+   else{input.step='any';input.min='0';}
+   input.value=entry[field];
+   input.addEventListener('input',()=>{entry[field]=input.value;updateInitialValuation();
+    try{syncPortfolioJson();byId('portfolioStatus').textContent='';}
+    catch{byId('portfolioStatus').textContent='최종 평가주가와 보유종목을 확인하면 JSON도 동기화됩니다.';}
+   });
+   row.append(input);
+  }
+  const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
+  remove.addEventListener('click',()=>{portfolioState.positions.splice(index,1);renderPortfolio();});
+  row.append(remove);positionRoot.append(row);
+ }
+ const priceRoot=byId('priceEditor');priceRoot.replaceChildren();
+ for(const [index,entry] of portfolioState.prices.entries()){
+  const row=document.createElement('div');row.className='forecast-price-row';
+  const name=document.createElement('label');name.className='forecast-ticker';name.textContent='종목';
+  const ticker=document.createElement('input');ticker.type='text';ticker.value=entry.ticker||'';
+  ticker.setAttribute('list','managedSymbolOptions');ticker.setAttribute('aria-label','예상 주가 종목코드');
+  ticker.addEventListener('change',()=>{entry.ticker=ticker.value.trim().toUpperCase();
+   ticker.value=entry.ticker;updateInitialValuation();scheduleWorkingDraft();
+   try{syncPortfolioJson();}catch{}});
+  name.append(ticker);row.append(name);
+  for(const [phase,field,label] of [['bear','bearPrice','하락 예상가 USD'],['bull','bullPrice','상승 예상가 USD']]){
+   const wrap=document.createElement('label');wrap.textContent=label;
+   const input=document.createElement('input');input.type='number';input.min='0.01';input.step='any';
+   input.placeholder=phase==='bear'?'하락 목표가':'상승 목표가';
+   input.value=entry[field]??(phase==='bull'?entry.price??'':'');
+   input.dataset.forecast=phase;input.setAttribute('aria-label',(entry.ticker||'종목')+' '+label);
+   input.addEventListener('input',()=>{
+    entry[field]=input.value===''?'':Number(input.value);
+    if(phase==='bull')entry.price=input.value===''?'':Number(input.value); // Keep terminal valuation contract.
+    const symbol=String(entry.ticker||'').trim().toUpperCase();
+    updateTradesUsingForecast(symbol,phase,validForecastPrice(input.value)?Number(input.value):null);
+    simulatorInputRevision++;invalidateCalculatedResults();updateInitialValuation();
+    try{syncPortfolioJson();byId('portfolioStatus').textContent='';}
+    catch{byId('portfolioStatus').textContent='상승 목표가 등 필수 평가가격을 입력하면 JSON도 동기화됩니다.';}
+    scheduleWorkingDraft();
+   });
+   wrap.append(input);row.append(wrap);
+  }
+  const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
+  remove.addEventListener('click',()=>{
+   portfolioState.prices.splice(index,1);renderPortfolio();simulatorInputRevision++;
+   invalidateCalculatedResults();scheduleWorkingDraft();
   });
+  row.append(remove);priceRoot.append(row);
  }
  updateInitialValuation();
 }
