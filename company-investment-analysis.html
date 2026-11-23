@@ -224,41 +224,75 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
  financialTrack("capex_usd_bn",capexTop,capexBottom,"CAPEX","#ffbf80");
  financialTrack("operating_income_usd_bn",incomeTop,incomeBottom,"영업이익","#d8b4fe");
  financialTrack("operating_margin_pct",marginTop,marginBottom,"영업이익률","#78aaff",{percent:true});
- // A single crosshair reports the selected trading date, every visible
- // company's close, and quarterly details without requiring pixel-perfect
- // hovering over thin lines. Pointer down supports touch screens.
+ // Show actual closing prices inside the price panel. Mouse hover previews;
+ // clicking/touching pins the selected day's values within the graph.
  const tooltip=typeof document.getElementById==="function"?document.getElementById("chartDetail"):null;
- const guide=node("line",{x1:left,y1:priceTop,x2:left,y2:marginBottom,stroke:"#dde6ff","stroke-dasharray":"4 4",opacity:0});
+ const guide=node("line",{x1:left,y1:priceTop,x2:left,y2:priceBottom,stroke:"#f0f5ff","stroke-dasharray":"4 4",opacity:0,"pointer-events":"none"});
  svg.append(guide);
- // 5-year multi-symbol charts can exceed 10,000 observations: cache hover
- // dates and per-series lookups rather than parsing every date per pointermove.
+ // Cache trading dates so multi-year, multi-stock charts remain responsive.
  const hoverDates=[...new Set(all.map(p=>p.date))].sort();
  const hoverTimes=hoverDates.map(date=>Date.parse(date+"T00:00:00Z"));
  const hoverValues=new Map(data.map(s=>[s.ticker,new Map(s.points.map(p=>[p.date,p]))]));
+ const popupWidth=304,popupHeight=35+data.length*20;
+ const popup=node("g",{opacity:0,"pointer-events":"none","aria-hidden":"true"});
+ popup.append(node("rect",{x:0,y:0,width:popupWidth,height:popupHeight,rx:9,fill:"#0a172b",stroke:"#94b9f0","stroke-width":1.2}));
+ const popupTitle=node("text",{x:12,y:21,fill:"#f7fbff","font-size":13,"font-weight":"700"});
+ popup.append(popupTitle);
+ const popupLines=data.map((s,i)=>{
+  popup.append(node("rect",{x:12,y:33+i*20,width:8,height:8,fill:s.color||"#85b8ff",rx:1}));
+  const label=node("text",{x:26,y:41+i*20,fill:"#e9f2ff","font-size":12});
+  popup.append(label);return label;
+ });
+ const activeDots=data.map(s=>{
+  const dot=node("circle",{r:4.5,opacity:0,fill:s.color||"#85b8ff",stroke:"#ffffff","stroke-width":1.4,"pointer-events":"none"});
+  svg.append(dot);return dot;
+ });
+ svg.append(popup);
+ let pinned=false;
  const handle=event=>{
-  if(!tooltip||!data.length||typeof svg.getBoundingClientRect!=="function")return;
+  if(!data.length||!hoverDates.length||typeof svg.getBoundingClientRect!=="function")return;
   const bounds=svg.getBoundingClientRect();
   if(!bounds.width)return;
   const px=Math.max(left,Math.min(right,(event.clientX-bounds.left)*900/bounds.width));
-  const dateMs=tMin+(px-left)/(right-left)*(tMax-tMin);
+  const targetMs=tMin+(px-left)/(right-left)*(tMax-tMin);
   let lo=0,hi=hoverTimes.length-1;
-  while(lo<hi){const mid=(lo+hi)>>1;if(hoverTimes[mid]<dateMs)lo=mid+1;else hi=mid;}
-  const nearest=lo>0&&Math.abs(hoverTimes[lo-1]-dateMs)<Math.abs(hoverTimes[lo]-dateMs)?lo-1:lo;
-  const closeDate=hoverDates[nearest],values=data.map(s=>{
+  while(lo<hi){const mid=(lo+hi)>>1;if(hoverTimes[mid]<targetMs)lo=mid+1;else hi=mid;}
+  const nearest=lo>0&&Math.abs(hoverTimes[lo-1]-targetMs)<Math.abs(hoverTimes[lo]-targetMs)?lo-1:lo;
+  const closeDate=hoverDates[nearest];
+  const gx=x(Date.parse(closeDate+"T00:00:00Z")),lines=[];
+  data.forEach((s,i)=>{
    const match=hoverValues.get(s.ticker).get(closeDate);
-   if(!match)return s.ticker+": 해당일 자료 없음";
-   return s.ticker+": "+(s.benchmark?"지수 "+fmt(match.close):"USD "+fmt(match.close))+
-    (index?" · 기준 100: "+fmt(match.value,1):"");
+   const label=s.ticker==="NDX"?"NASDAQ 100":s.ticker==="SPX"?"S&P 500":s.ticker;
+   const line=match
+    ?label+"  "+(s.benchmark?"지수 "+fmt(match.close,2):"USD "+fmt(match.close,2))+
+     (index?"  (100기준 "+fmt(match.value,1)+")":"")
+    :label+"  해당일 종가 없음";
+   popupLines[i].textContent=line;lines.push(line);
+   const dot=activeDots[i];
+   if(match){dot.setAttribute("cx",gx);dot.setAttribute("cy",py(match.value));dot.setAttribute("opacity",1);}
+   else dot.setAttribute("opacity",0);
   });
-  const quarter=quarters.find(r=>Math.abs(Date.parse(r.period_end+"T00:00:00Z")-Date.parse(closeDate+"T00:00:00Z"))<=7*86400000);
-  if(quarter)values.push(selected+" · 분기 영업이익률: "+(quarter.operating_margin_pct==null?"—":fmt(quarter.operating_margin_pct,1)+"%"));
-  tooltip.textContent=closeDate+" · "+(index?"시장 대비 성과 (기준 100)":"기업 종가 (USD)")+"\n"+values.join("  |  ");
-  const gx=x(Date.parse(closeDate+"T00:00:00Z"));
-  guide.setAttribute("x1",gx);guide.setAttribute("x2",gx);guide.setAttribute("opacity",.9);
+  popupTitle.textContent=closeDate+" · 선택일 종가";
+  const anchor=gx+popupWidth+12<=right?gx+12:gx-popupWidth-12;
+  const boxX=Math.min(right-popupWidth,Math.max(left+4,anchor));
+  popup.setAttribute("transform","translate("+boxX+" "+(priceTop+7)+")");
+  popup.setAttribute("opacity",1);
+  guide.setAttribute("x1",gx);guide.setAttribute("x2",gx);guide.setAttribute("opacity",.95);
+  if(tooltip){
+   const quarter=quarters.find(r=>Math.abs(Date.parse(r.period_end+"T00:00:00Z")-Date.parse(closeDate+"T00:00:00Z"))<=7*86400000);
+   tooltip.textContent=closeDate+" · 종가 상세\n"+lines.join("  |  ")+
+    (quarter?"\n"+selected+" · 분기 영업이익률: "+(quarter.operating_margin_pct==null?"—":fmt(quarter.operating_margin_pct,1)+"%"):"");
+  }
+  if(event.type==="pointerdown")pinned=true;
  };
  svg.onpointermove=handle;
  svg.onpointerdown=handle;
- svg.onpointerleave=()=>guide.setAttribute("opacity",0);
+ svg.onpointerleave=()=>{
+  if(pinned)return;
+  popup.setAttribute("opacity",0);
+  guide.setAttribute("opacity",0);
+  for(const dot of activeDots)dot.setAttribute("opacity",0);
+ };
 }
 function renderSymbols(){
  const root=$("tickerButtons");root.replaceChildren();
