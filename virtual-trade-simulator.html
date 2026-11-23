@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>INVESTLAB | 가상매매 시뮬레이터</title>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>INVESTLAB | 가상거래 시뮬레이터</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 :root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#101724;color:#edf3ff}body{max-width:1100px;margin:32px auto;padding:0 20px}h1{font-size:26px}p,.hint{color:#b4c1d6}.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{border:1px solid #34425c;border-radius:12px;padding:20px;background:#1a2435}label{display:block;margin:10px 0 4px;font-size:14px}input,textarea,button{box-sizing:border-box;width:100%;border-radius:7px;border:1px solid #52637e;background:#111a29;color:white;padding:10px;font:inherit}textarea{min-height:140px;font-family:ui-monospace,monospace;font-size:13px}button{margin-top:15px;background:#285ca3;cursor:pointer;font-weight:600}table{width:100%;border-collapse:collapse}td,th{text-align:right;padding:9px;border-bottom:1px solid #34425c}td:first-child,th:first-child{text-align:left}.wide{grid-column:1/-1}.error{color:#ffb0b0;white-space:pre-wrap}.notice{color:#f4c97c}.editor-actions{display:flex;gap:8px;flex-wrap:wrap}.editor-actions button{width:auto;min-width:110px}.trade-head{display:grid;grid-template-columns:90px 150px 90px 110px 116px;gap:7px;margin:12px 0 2px;color:#b4c1d6;font-size:12px;text-align:center}.trade-head span:nth-child(2){text-align:left}.result-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}.result-metric{border:1px solid #40506a;background:#111a29;border-radius:10px;padding:15px}.result-metric strong{display:block;font-size:23px;margin-top:7px;font-variant-numeric:tabular-nums}.result-metric small{color:#b4c1d6}.result-metric .positive{color:#82e4ad}.result-metric .negative{color:#ffb0b0}.strategy-overview-table .positive{color:#82e4ad;font-weight:700}.strategy-overview-table .negative{color:#ffb0b0;font-weight:700}.result-details{margin-top:18px}.result-details>summary{cursor:pointer;color:#8dc0ff;font-weight:600;padding:10px 0}@media(max-width:740px){.result-hero{grid-template-columns:1fr}}.trade-grid{display:grid;grid-template-columns:90px 150px 90px 110px 116px;gap:7px;align-items:center;margin:8px 0}.trade-grid input,.trade-grid select{min-width:0;width:100%;box-sizing:border-box;border:1px solid #52637e;border-radius:6px;background:#111a29;color:white;padding:9px}.trade-grid button{margin:0;padding:9px;background:#493d55}.trade-actions{display:flex;gap:3px}.trade-actions button{padding:7px 5px;flex:1}.trade-actions button:disabled{opacity:.35;cursor:not-allowed}.strategy-card{border:1px solid #40506a;border-radius:9px;padding:12px;margin-top:12px}.trade-grid.trade-error{outline:2px solid #ff8b8b;outline-offset:3px;border-radius:5px}.trade-grid.trade-error [data-field="ticker"]{border-color:#ff8b8b}.strategy-title{display:flex;gap:8px;align-items:center}.strategy-title input{flex:1}.strategy-title button{width:auto;margin:0;background:#493d55}.simple-row{display:grid;grid-template-columns:minmax(82px,1.2fr) minmax(72px,.8fr) minmax(90px,1fr) 65px;gap:6px;margin:8px 0;align-items:center}.simple-row.prices{grid-template-columns:minmax(82px,1fr) minmax(90px,1fr) 65px}.simple-row input{min-width:0;padding:8px}.simple-row button{margin:0;padding:8px;background:#493d55}.small-add{margin:5px 0 12px}.simple-caption{font-size:12px;color:#b4c1d6;margin-top:10px}details{margin-top:12px}.wide-editor{overflow-x:auto}.buy-helper[hidden]{display:none!important}.buy-helper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 14px;padding:10px;border:1px solid #40506a;border-radius:8px}.buy-helper label{font-size:12px;color:#b4c1d6}.buy-helper input{width:135px;max-width:100%;margin:0}.buy-helper button{width:auto;margin:0}.buy-helper output{font-size:12px;color:#b4c1d6}.wide-editor .trade-grid{min-width:584px}.wide-editor .trade-head{min-width:584px}.trade-grid [data-field="ticker"]{min-width:140px!important;text-transform:uppercase}.trade-actions button{font-size:12px;overflow-wrap:normal;white-space:nowrap}body{max-width:1340px;margin:16px auto}.layout{grid-template-columns:minmax(320px,.8fr) minmax(600px,1.4fr);align-items:start}.quick-panel{position:static}.quick-panel>.secondary-settings[open]{max-height:300px;overflow-y:auto;border-top:1px solid #34425c;padding-top:6px}.quick-panel>.secondary-settings:not([open]){max-height:none}.secondary-settings{margin-top:12px}.secondary-settings>summary{cursor:pointer;color:#9fc7ff;padding:8px 0}.primary-calculate{position:static;background:#3479d1;font-size:17px;padding:13px;box-shadow:0 3px 14px #080f1d}.quick-panel #priceEditor{min-height:32px}.recalc-notice{border:1px solid #b18b49;background:#302a20;color:#ffdf9e;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600}.recalc-notice[hidden]{display:none}.tax-settings{margin:0}.tax-settings>summary{cursor:pointer;font-size:19px;font-weight:700;padding:4px 0;color:#edf3ff}.tax-settings[open]>summary{margin-bottom:14px}.quick-results{margin-top:12px;border:1px solid #40506a;border-radius:9px;padding:12px;background:#141f30}.quick-results[hidden]{display:none}.quick-results h3{margin:0 0 7px;font-size:15px}.quick-results .result-hero{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0}.quick-results .result-metric{padding:9px}.quick-results .result-metric strong{font-size:19px}.quick-results .hint{margin:6px 0 0;font-size:12px}@media(max-width:460px){.quick-results .result-hero{grid-template-columns:1fr}}@media(max-width:1050px){.layout{grid-template-columns:1fr}.quick-panel{position:static}}@media(max-width:740px){body{margin:8px auto;padding:0 10px}h1{font-size:22px}.panel{padding:13px}.layout{gap:10px}.strategy-card{padding:10px}.strategy-title{flex-wrap:wrap}.strategy-title input{min-width:0}.trade-head{display:none}.wide-editor{overflow-x:visible}.wide-editor .trade-grid{min-width:0}.trade-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;border:1px solid #40506a;border-radius:10px;padding:12px;margin:12px 0}.trade-grid>select,.trade-grid>input{min-width:0!important;width:100%;font-size:16px;min-height:44px}.trade-grid>select[data-field="side"]{grid-column:1}.trade-grid>input[data-field="ticker"]{grid-column:2}.trade-grid>input[data-field="quantity"]{grid-column:1}.trade-grid>input[data-field="price"]{grid-column:2}.trade-grid>select[data-field="side"],.trade-grid>input[data-field="ticker"],.trade-grid>input[data-field="quantity"],.trade-grid>input[data-field="price"]{margin-top:17px}.trade-grid [data-field]::placeholder{color:#8c9bb3}.trade-grid .trade-actions{grid-column:1/-1;display:flex;gap:8px}.trade-grid .trade-actions button{min-height:42px;font-size:14px}.trade-grid>[data-field]{position:relative}.trade-grid>select[data-field="side"]{background-color:#111a29}.trade-grid .mobile-field{position:relative;min-width:0}.trade-grid .mobile-field::before{content:attr(data-label);position:absolute;top:0;left:1px;font-size:12px;color:#b4c1d6}.trade-grid .mobile-field>input,.trade-grid .mobile-field>select{width:100%;min-width:0!important;min-height:44px;font-size:16px;margin-top:19px}.trade-grid .mobile-field:nth-child(1){grid-column:1}.trade-grid .mobile-field:nth-child(2){grid-column:2}.trade-grid .mobile-field:nth-child(3){grid-column:1}.trade-grid .mobile-field:nth-child(4){grid-column:2}.trade-grid .mobile-field:nth-child(5){grid-column:1/-1}.buy-helper{display:grid;grid-template-columns:1fr}.buy-helper input{width:100%}.quick-results .result-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-results .result-metric strong{font-size:17px}}.undo-trade-area{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #52637e;border-radius:8px;padding:10px;margin:10px 0;color:#f4c97c}.undo-trade-area[hidden]{display:none}.undo-trade-area button{width:auto;margin:0;padding:8px 14px;min-height:40px}.strategy-quickbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:9px;align-items:end;margin:10px 0 14px}.strategy-quickbar-select{min-width:0}.strategy-quickbar-select label{margin:0 0 5px}.strategy-quickbar select{width:100%;min-width:0;min-height:42px;border-radius:7px;border:1px solid #52637e;background:#111a29;color:#fff;padding:9px}.strategy-quickbar button{width:auto;min-height:42px;margin:0;white-space:nowrap}.strategy-management{margin:8px 0;color:#b4c1d6;font-size:12px}.strategy-management summary{cursor:pointer}.strategy-management button{width:auto;background:#493d55;margin:7px 0}@media(max-width:740px){.strategy-quickbar{grid-template-columns:1fr 1fr}.strategy-quickbar-select{grid-column:1/-1}.strategy-quickbar button{width:100%;white-space:normal}}#portfolioBulkReview{overflow-x:auto;margin:10px 0}#portfolioBulkReview table{width:100%;min-width:560px;border-collapse:collapse;font-size:13px}#portfolioBulkReview th,#portfolioBulkReview td{padding:8px;border-bottom:1px solid #47536b;text-align:left}#portfolioBulkReview p{font-weight:600}#portfolioBulkReview input[type=number]{width:110px;max-width:100%;padding:7px;border:1px solid #72809b;border-radius:7px;background:#101a2d;color:#edf2ff}#portfolioBulkReview .bulk-validation-message{font-weight:600}#portfolioBulkApply:disabled{opacity:.45;cursor:not-allowed}.bulk-missing-cost{outline:1px solid #b68a50;outline-offset:2px}#portfolioBulkPriceDifferences{overflow-x:auto;margin:10px 0}#portfolioBulkPriceDifferences table{width:100%;min-width:530px;border-collapse:collapse;font-size:13px}#portfolioBulkPriceDifferences th,#portfolioBulkPriceDifferences td{padding:8px;border-bottom:1px solid #47536b;text-align:left}.bulk-impact-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.bulk-impact-metric{padding:14px;border:1px solid #42516b;border-radius:10px;background:#1b2a40;min-width:0}.bulk-impact-metric span{display:block;font-size:12px;color:#b9c8e0}.bulk-impact-metric strong{display:block;font-size:clamp(17px,3vw,24px);margin-top:6px;overflow-wrap:anywhere}.bulk-impact-metric .positive{color:#78d7ad}.bulk-impact-metric .negative{color:#ffaaaa}.bulk-impact-coverage{grid-column:1/-1;font-size:13px;margin:0}.bulk-impact-details{margin:12px 0;overflow-x:auto}.bulk-impact-details summary{cursor:pointer;padding:12px;border:1px solid #52637e;border-radius:8px;font-weight:600}.bulk-impact-details table{min-width:650px}@media(max-width:600px){.bulk-impact-cards{grid-template-columns:1fr}.bulk-impact-metric{padding:12px}.bulk-impact-details summary{font-size:14px}}#bulkImpactSort{width:100%;max-width:250px;margin:6px 0 12px;padding:9px;border:1px solid #52637e;border-radius:7px;background:#111a29;color:#edf3ff}.bulk-impact-details label{font-size:13px;color:#b9c8e0}.bulk-impact-top-movers{margin:12px 0;padding:12px;border:1px solid #42516b;border-radius:10px}.bulk-impact-top-movers h4{margin:0 0 10px;font-size:14px}.bulk-impact-mover{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-top:1px solid #34425c}.bulk-impact-mover .positive{color:#78d7ad}.bulk-impact-mover .negative{color:#ffaaaa}.bulk-impact-mover span{font-weight:700;font-variant-numeric:tabular-nums}.bulk-impact-top-movers button.bulk-impact-mover{width:100%;margin:0;background:transparent;border:0;border-top:1px solid #34425c;border-radius:0;color:inherit;text-align:left;cursor:pointer}.bulk-impact-top-movers button.bulk-impact-mover:focus-visible{outline:2px solid #85b9ff;outline-offset:2px}.bulk-impact-selected{background:#29476b;outline:2px solid #8bbcff;outline-offset:-2px}@media(prefers-reduced-motion:reduce){.bulk-impact-selected{scroll-behavior:auto}}.bulk-price-details{margin:10px 0;overflow-x:auto}.bulk-price-details summary{cursor:pointer;padding:12px;border:1px solid #52637e;border-radius:8px;font-weight:600;font-size:14px}.bulk-price-details table{min-width:510px}.bulk-apply-panel{margin:14px 0;padding:14px;border:1px solid #6d84a9;border-radius:12px;background:#1c2a40}.bulk-apply-panel>strong{display:block;font-size:16px}.bulk-apply-panel #portfolioBulkReady{font-size:14px;font-weight:600;margin:8px 0}.bulk-apply-panel #portfolioBulkApply{width:100%;min-height:48px;font-weight:700}.bulk-apply-panel .simple-row{margin:10px 0}@media(max-width:600px){.bulk-apply-panel{padding:12px}.bulk-apply-panel #portfolioBulkApply{min-height:52px}}@media(max-width:600px){
  #portfolioBulkReview{overflow:visible}
@@ -30,11 +30,22 @@
  .primary-trade-panel .wide-editor .trade-grid,.primary-trade-panel .wide-editor .trade-head{min-width:584px}
 }
 @media(max-width:1050px){.layout>.primary-trade-panel{grid-column:auto;grid-row:auto}}
-.scenario-price-row{display:grid;grid-template-columns:minmax(120px,1.3fr) minmax(90px,1fr) minmax(100px,1fr);gap:8px;align-items:center}.scenario-price-row input{font-size:16px}.trade-grid select[data-field="ticker"]{min-width:125px;width:100%;padding:9px;border:1px solid #52637e;border-radius:6px;background:#111a29;color:#fff}@media(max-width:740px){.scenario-price-row{grid-template-columns:minmax(0,1fr) minmax(0,.75fr) minmax(0,.85fr)}.scenario-price-row label{font-size:12px;overflow-wrap:anywhere}.trade-grid select[data-field="ticker"]{min-width:0;width:100%;min-height:44px;font-size:16px}}.layout{grid-template-columns:minmax(430px,1fr) minmax(600px,1.25fr)}.quick-panel>.secondary-settings[open]{max-height:none;overflow:visible;border-top:0;padding-top:0}.quick-panel>h2{margin:0 0 12px}.quick-panel .compact-price-note{font-size:12px;line-height:1.35;margin:9px 0}.quick-panel #compactPortfolioOverview table{font-size:clamp(13px,1.1vw,16px);font-variant-numeric:tabular-nums}.quick-panel #compactPortfolioOverview th,.quick-panel #compactPortfolioOverview td{padding:9px 5px;white-space:nowrap}.quick-panel #compactPortfolioOverview th:first-child,.quick-panel #compactPortfolioOverview td:first-child{padding-left:0}.portfolio-summary{margin-top:12px;border-top:1px solid #40506a}.portfolio-summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #34425c;white-space:nowrap;font-variant-numeric:tabular-nums}.portfolio-summary-row span{font-size:clamp(12px,1.1vw,15px)}.portfolio-summary-row strong{font-size:clamp(15px,1.35vw,19px)}@media(max-width:1100px){.layout{grid-template-columns:1fr}}@media(max-width:500px){.portfolio-summary-row{gap:5px}.portfolio-summary-row span{font-size:12px}.portfolio-summary-row strong{font-size:16px}.quick-panel #compactPortfolioOverview table{font-size:13px}}.portfolio-usd-amount{display:inline-flex;align-items:baseline;justify-content:flex-end;gap:6px;white-space:nowrap}.portfolio-usd-amount span:first-child{font-size:.8em;font-weight:600}.compact-category-title{font-size:15px;margin:13px 0 3px;color:#c7d9f4}.quick-panel #compactPortfolioOverview table td:first-child{font-weight:650}.ticker-chart-button{width:auto;margin:0;padding:3px 5px;background:transparent;border:0;text-decoration:underline;text-underline-offset:3px;font-weight:700;color:#a6cfff;cursor:pointer}#tickerChartDialog{width:min(600px,calc(100vw - 30px));max-height:85vh;border:1px solid #52637e;border-radius:14px;background:#1a2435;color:#edf3ff;padding:20px}#tickerChartDialog::backdrop{background:rgba(0,0,0,.72)}.chart-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.chart-dialog-head h2{margin:0}.chart-dialog-head button{width:auto;margin:0}.chart-periods{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}.chart-periods button{width:auto;margin:0;padding:8px 10px}.chart-periods button.active{background:#3e76c6}#tickerChartExternal{color:#a6cfff}#tickerChartPlot svg{display:block;width:100%;height:auto;background:#111a29;border-radius:8px}#tickerChartCsv{font-size:14px}</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
-<body><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html" aria-current="page">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><details style="margin:0 0 14px;padding:10px 14px;border:1px solid #34425c;border-radius:10px"><summary style="cursor:pointer;color:#b4c1d6">개발용 점검 도구</summary><button id="legacyScenarioPreviewButton" type="button">기존 전략 중복 저장 항목 점검 (읽기 전용)</button><p id="legacyScenarioPreviewStatus" class="hint" role="status">가상 거래 단계만 변환 가능성 확인 · 기존 전략·원장 변경 없음</p></details><h1>가상매매 시뮬레이터</h1><p>하락장 재매수·종목 전환과 상승장 단계별 매도를 시험합니다. 기존 포트폴리오 보유정보를 읽기 전용으로 불러와 가상 거래에 사용합니다. 실제 포트폴리오와 매매원장은 변경하지 않습니다.</p>
+.scenario-price-row{display:grid;grid-template-columns:minmax(120px,1.3fr) minmax(90px,1fr) minmax(100px,1fr);gap:8px;align-items:center}.scenario-price-row input{font-size:16px}.trade-grid select[data-field="ticker"]{min-width:125px;width:100%;padding:9px;border:1px solid #52637e;border-radius:6px;background:#111a29;color:#fff}@media(max-width:740px){.scenario-price-row{grid-template-columns:minmax(0,1fr) minmax(0,.75fr) minmax(0,.85fr)}.scenario-price-row label{font-size:12px;overflow-wrap:anywhere}.trade-grid select[data-field="ticker"]{min-width:0;width:100%;min-height:44px;font-size:16px}}.layout{grid-template-columns:minmax(430px,1fr) minmax(600px,1.25fr)}.quick-panel>.secondary-settings[open]{max-height:none;overflow:visible;border-top:0;padding-top:0}.quick-panel>h2{margin:0 0 12px}.quick-panel .compact-price-note{font-size:12px;line-height:1.35;margin:9px 0}.quick-panel #compactPortfolioOverview table{font-size:clamp(13px,1.1vw,16px);font-variant-numeric:tabular-nums}.quick-panel #compactPortfolioOverview th,.quick-panel #compactPortfolioOverview td{padding:9px 5px;white-space:nowrap}.quick-panel #compactPortfolioOverview th:first-child,.quick-panel #compactPortfolioOverview td:first-child{padding-left:0}.portfolio-summary{margin-top:12px;border-top:1px solid #40506a}.portfolio-summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #34425c;white-space:nowrap;font-variant-numeric:tabular-nums}.portfolio-summary-row span{font-size:clamp(12px,1.1vw,15px)}.portfolio-summary-row strong{font-size:clamp(15px,1.35vw,19px)}@media(max-width:1100px){.layout{grid-template-columns:1fr}}@media(max-width:500px){.portfolio-summary-row{gap:5px}.portfolio-summary-row span{font-size:12px}.portfolio-summary-row strong{font-size:16px}.quick-panel #compactPortfolioOverview table{font-size:13px}}.portfolio-usd-amount{display:inline-flex;align-items:baseline;justify-content:flex-end;gap:6px;white-space:nowrap}.portfolio-usd-amount span:first-child{font-size:.8em;font-weight:600}.compact-category-title{font-size:15px;margin:13px 0 3px;color:#c7d9f4}.quick-panel #compactPortfolioOverview table td:first-child{font-weight:650}.ticker-chart-button{width:auto;margin:0;padding:3px 5px;background:transparent;border:0;text-decoration:underline;text-underline-offset:3px;font-weight:700;color:#a6cfff;cursor:pointer}#tickerChartDialog{width:min(600px,calc(100vw - 30px));max-height:85vh;border:1px solid #52637e;border-radius:14px;background:#1a2435;color:#edf3ff;padding:20px}#tickerChartDialog::backdrop{background:rgba(0,0,0,.72)}.chart-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.chart-dialog-head h2{margin:0}.chart-dialog-head button{width:auto;margin:0}.chart-periods{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}.chart-periods button{width:auto;margin:0;padding:8px 10px}.chart-periods button.active{background:#3e76c6}#tickerChartExternal{color:#a6cfff}#tickerChartPlot svg{display:block;width:100%;height:auto;background:#111a29;border-radius:8px}#tickerChartCsv{font-size:14px}
+/* Two explicit user-supplied market targets; final valuation uses the bullish target by default. */
+.forecast-price-row{display:grid;grid-template-columns:minmax(72px,.75fr) minmax(95px,1fr) minmax(95px,1fr) 65px;gap:8px;align-items:end;margin:10px 0}
+.forecast-price-row label{min-width:0;margin:0;font-size:12px;color:#bdcbe0}
+.forecast-price-row input{margin-top:5px;min-width:0;font-size:16px;min-height:43px}
+.forecast-price-row button{margin:0;min-height:43px;padding:7px;background:#493d55}
+.trade-price-wrap{display:grid;grid-template-columns:1fr;gap:4px}
+.trade-price-wrap select{font-size:12px;min-height:30px;padding:4px 8px!important}
+.trade-price-wrap input{min-height:37px}
+@media(max-width:540px){.forecast-price-row{grid-template-columns:1fr 1fr;gap:8px;border-bottom:1px solid #35435b;padding-bottom:10px}
+.forecast-price-row>.forecast-ticker{grid-column:1/-1}.forecast-price-row>button{grid-column:1/-1;width:100%}}
+</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
+<body><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html" aria-current="page">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><details style="margin:0 0 14px;padding:10px 14px;border:1px solid #34425c;border-radius:10px"><summary style="cursor:pointer;color:#b4c1d6">개발용 점검 도구</summary><button id="legacyScenarioPreviewButton" type="button">기존 전략 중복 저장 항목 점검 (읽기 전용)</button><p id="legacyScenarioPreviewStatus" class="hint" role="status">가상 거래 단계만 변환 가능성 확인 · 기존 전략·원장 변경 없음</p></details><h1>가상거래 시뮬레이터</h1><p>하락장 재매수·종목 전환과 상승장 단계별 매도를 시험합니다. 기존 포트폴리오 보유정보를 읽기 전용으로 불러와 가상 거래에 사용합니다. 실제 포트폴리오와 매매원장은 변경하지 않습니다.</p>
 <details class="panel secondary-settings" style="margin-bottom:16px"><summary>기존 포트폴리오 종목 선택 · 연결 상태</summary><p class="hint" id="managedSymbolStatus">종목 목록 확인 중…</p><p id="savedQuoteStatus" class="hint" role="status"></p><button type="button" id="refreshManagedSymbols" style="max-width:240px">종목 목록 새로고침</button><datalist id="managedSymbolOptions"></datalist><p class="hint">이 화면은 기존 종목관리 정보를 읽기만 합니다. 종목 등록·수정은 기존 종목관리에서 수행하세요. 다른 도메인이나 기기의 목록은 자동 연결되지 않습니다.</p></details>
 <div class="layout">
-<section class="panel quick-panel"><h2>현재 투자현황</h2><label id="pilotLedgerAccountLabel" for="pilotLedgerAccount">계좌 기준</label><select id="pilotLedgerAccount" style="width:100%;padding:10px;margin:7px 0"><option value="ALL">전체 계좌</option></select><p id="onlineLedgerPreviewStatus" class="hint" role="status">TEST 서버의 최신 계좌·보유종목·현금을 자동 확인합니다.</p><button type="button" id="loadPilotLedgerCloud" style="width:auto;max-width:100%">선택 계좌를 가상매매 시작값에 적용</button><p id="pilotLedgerLoadStatus" class="hint" role="status">저장된 임시작업은 자동으로 덮어쓰지 않습니다.</p><div id="compactPortfolioOverview" style="overflow-x:auto"></div><p class="hint compact-price-note">현재 주가는 TEST 서버 또는 자동수집된 최근 USD 종가를 사용합니다. 실시간 체결가는 아니며 최종 가정 주가는 오른쪽 가상 거래에만 적용됩니다.</p><span id="currentQuotesStatus" class="hint" aria-live="polite">최근 종가 자동 조회 준비 중</span><div style="margin-top:9px"><button type="button" id="fillBlankAssumedPrices" disabled style="width:auto;max-width:100%">최근 종가로 빈 가정주가 채우기</button></div><p id="fillBlankAssumedPricesStatus" class="hint" role="status">최근 종가를 불러온 후 사용할 수 있습니다. 직접 입력한 가정주가는 그대로 유지합니다.</p><details class="secondary-settings"><summary>원장 연결·보유정보 다시 가져오기 (고급)</summary><input id="cash" type="hidden" value="0"><div id="positionEditor" hidden></div><p class="hint">시작 현금과 보유종목은 위 현재 투자현황과 동일한 원장 기준값을 사용합니다. 이 화면에서 별도로 입력하지 않습니다.</p><details><summary>계좌별 초기잔고 검토 파일에서 가져오기 (오프라인)</summary><p class="hint">계좌별 배정·취득원가를 확인하고 저장한 원장 대조 JSON 파일을 선택하세요. 이 브라우저에서만 시작 보유정보를 변경하며, 서버에 저장하지 않습니다.</p><input id="accountOpeningFile" type="file" accept=".json,application/json"><label for="accountOpeningSelect">가져올 계좌</label><select id="accountOpeningSelect" multiple size="4" style="width:100%;padding:10px"></select><p class="hint">Ctrl(Windows) 또는 Command(Mac)를 누르고 여러 계좌를 선택할 수 있습니다. 동일 종목은 수량가중평균 취득단가로 합산합니다.</p><button id="compareAccountOpenings" type="button">개별 계좌·전체 합산 비교</button><button id="compareAccountScenarios" type="button">현재 전략을 계좌별로 비교 계산</button><div id="accountScenarioComparison" style="overflow-x:auto"></div><div id="accountOpeningComparison" style="overflow-x:auto"></div><button id="loadAccountOpening" type="button">선택 계좌를 시뮬레이터 시작값에 반영</button><p id="accountOpeningStatus" role="status" class="hint"></p></details><button type="button" id="loadPilotLedgerPositions">브라우저 원장 보유·현금 가져오기 (오프라인)</button><button type="button" id="loadPortfolioPositions">현재 포트폴리오 보유정보 다시 불러오기</button><p id="positionLoadStatus" class="hint" role="status"></p><button class="small-add" type="button" id="addPosition" hidden>+ 보유종목 추가</button><div id="initialValuation" hidden></div><details><summary>고급 입력: 보유정보·최종가격 JSON</summary><label for="positions">보유종목 JSON</label><textarea id="positions" spellcheck="false">{"TSLA":{"quantity":10,"averageCost":100}}</textarea><label for="terminal">최종 가정 주가 JSON</label><textarea id="terminal" spellcheck="false">{"TSLA":150,"SOXL":40}</textarea><button id="applyPortfolioJson" type="button">JSON 입력 반영</button></details><p id="portfolioStatus" class="hint" role="status"></p></details><h2>공통 최종 가정 주가 · 기본값</h2><p class="simple-caption">종목별 가상 최종가격(USD)</p><div id="priceEditor"></div><button class="small-add" type="button" id="addPrice">+ 종목 가격 추가</button></section>
+<section class="panel quick-panel"><h2>현재 투자현황</h2><label id="pilotLedgerAccountLabel" for="pilotLedgerAccount">계좌 기준</label><select id="pilotLedgerAccount" style="width:100%;padding:10px;margin:7px 0"><option value="ALL">전체 계좌</option></select><p id="onlineLedgerPreviewStatus" class="hint" role="status">TEST 서버의 최신 계좌·보유종목·현금을 자동 확인합니다.</p><p id="pilotLedgerLoadStatus" class="hint" role="status">저장된 임시작업은 자동으로 덮어쓰지 않습니다.</p><div id="compactPortfolioOverview" style="overflow-x:auto"></div><p class="hint compact-price-note">현재 주가는 TEST 서버 또는 자동수집된 최근 USD 종가를 사용합니다. 실시간 체결가는 아니며 최종 가정 주가는 오른쪽 가상 거래에만 적용됩니다.</p><span id="currentQuotesStatus" class="hint" aria-live="polite">최근 종가 자동 조회 준비 중</span><details class="secondary-settings"><summary>원장 연결·보유정보 다시 가져오기 (고급)</summary><input id="cash" type="hidden" value="0"><div id="positionEditor" hidden></div><p class="hint">시작 현금과 보유종목은 위 현재 투자현황과 동일한 원장 기준값을 사용합니다. 이 화면에서 별도로 입력하지 않습니다.</p><details><summary>계좌별 초기잔고 검토 파일에서 가져오기 (오프라인)</summary><p class="hint">계좌별 배정·취득원가를 확인하고 저장한 원장 대조 JSON 파일을 선택하세요. 이 브라우저에서만 시작 보유정보를 변경하며, 서버에 저장하지 않습니다.</p><input id="accountOpeningFile" type="file" accept=".json,application/json"><label for="accountOpeningSelect">가져올 계좌</label><select id="accountOpeningSelect" multiple size="4" style="width:100%;padding:10px"></select><p class="hint">Ctrl(Windows) 또는 Command(Mac)를 누르고 여러 계좌를 선택할 수 있습니다. 동일 종목은 수량가중평균 취득단가로 합산합니다.</p><button id="compareAccountOpenings" type="button">개별 계좌·전체 합산 비교</button><button id="compareAccountScenarios" type="button">현재 전략을 계좌별로 비교 계산</button><div id="accountScenarioComparison" style="overflow-x:auto"></div><div id="accountOpeningComparison" style="overflow-x:auto"></div><button id="loadAccountOpening" type="button">선택 계좌를 시뮬레이터 시작값에 반영</button><p id="accountOpeningStatus" role="status" class="hint"></p></details><button type="button" id="loadPilotLedgerPositions">브라우저 원장 보유·현금 가져오기 (오프라인)</button><button type="button" id="loadPortfolioPositions">현재 포트폴리오 보유정보 다시 불러오기</button><p id="positionLoadStatus" class="hint" role="status"></p><button class="small-add" type="button" id="addPosition" hidden>+ 보유종목 추가</button><div id="initialValuation" hidden></div><details><summary>고급 입력: 보유정보·최종가격 JSON</summary><label for="positions">보유종목 JSON</label><textarea id="positions" spellcheck="false">{"TSLA":{"quantity":10,"averageCost":100}}</textarea><label for="terminal">최종 가정 주가 JSON</label><textarea id="terminal" spellcheck="false">{"TSLA":150,"SOXL":40}</textarea><button id="applyPortfolioJson" type="button">JSON 입력 반영</button></details><p id="portfolioStatus" class="hint" role="status"></p></details><p class="simple-caption"><strong>종목별 예상 목표 주가 (USD)</strong> · 하락장과 상승장 목표가를 각각 입력하세요. 거래 단계에서 선택하면 체결가에 적용됩니다. 상승 목표가는 최종 평가주가 기본값으로 사용합니다. 기존 최종가격은 상승 목표가에 이어 표시됩니다.</p><div id="priceEditor"></div><button class="small-add" type="button" id="addPrice">+ 종목 가격 추가</button></section>
 <section class="panel" id="portfolioBulkHandoff" hidden><h2>보유종목 일괄 가져오기 · 검토</h2><p class="notice">선택한 계좌 범위의 수량입니다. 취득단가는 각 종목마다 직접 입력해야 하며 실제 원장은 변경되지 않습니다.</p><label for="portfolioBulkAccountFile">계좌별 취득단가 검토 보고서 JSON (선택)</label><input id="portfolioBulkAccountFile" type="file" accept=".json,application/json"><button id="portfolioBulkAccountSuggest" type="button">계좌별 가중평균 단가 확인</button><p id="portfolioBulkAccountStatus" role="status"></p><label for="portfolioBulkLegacyFile">기존 포트폴리오 보유종목 JSON (선택)</label><input id="portfolioBulkLegacyFile" type="file" accept=".json,application/json"><button id="portfolioBulkSuggest" type="button">평균단가 일치 여부 확인</button><p id="portfolioBulkCostStatus" role="status">계좌별 취득단가는 검증되지 않았습니다. 파일의 종목과 수량이 정확히 일치하는 경우에만 참고값을 표시합니다.</p><div id="portfolioBulkRows"></div><div id="portfolioBulkMissingShortcuts" class="bulk-missing-shortcuts" role="group" aria-label="평균취득단가 미입력 종목 바로가기" hidden></div><div id="portfolioBulkReview" role="status" aria-live="polite"></div><div class="bulk-apply-panel" aria-label="시뮬레이터 반영 확인"><strong>검토 후 반영</strong><p id="portfolioBulkReady" role="status" aria-live="polite">선택 종목과 평균취득단가를 확인하세요.</p><label class="simple-row"><input id="portfolioBulkPricesApply" type="checkbox"> 가정주가도 함께 반영 (선택)</label><p id="portfolioBulkPricesStatus" role="status"></p><button id="portfolioBulkApply" type="button">선택 종목을 시뮬레이터에 반영</button><p id="portfolioBulkStatus" role="status"></p></div><div id="portfolioBulkPriceDifferences" role="status" aria-live="polite"></div></section>
 <section class="panel" id="testOnlineSimulatorImport" hidden><h2>TEST 온라인 원장 보유종목 가져오기</h2><p class="hint">TEST 원장에서 가져온 참고값입니다. 기존 시뮬레이터 입력값을 바꾸기 전 확인이 필요합니다. 실제 원장에는 쓰지 않습니다.</p><div id="testOnlineSimulatorPreview" role="status"></div><button id="testOnlineSimulatorApply" type="button">확인 후 시뮬레이터 시작값으로 적용</button><button id="testOnlineSimulatorCancel" type="button">가져오기 취소</button><p id="testOnlineSimulatorStatus" role="status"></p></section><section class="panel" id="portfolioHandoff" hidden><h2>My Portfolio에서 가져온 종목</h2><p id="portfolioHandoffSummary"></p><label for="portfolioHandoffCost">평균취득단가 (USD, 직접 확인 후 입력)</label><input id="portfolioHandoffCost" type="number" min="0" step="any" placeholder="평균취득단가 입력"><button id="portfolioHandoffApply" type="button">보유종목에 반영</button><p id="portfolioHandoffStatus" role="status"></p><p class="notice">이 화면의 변경은 가상 시뮬레이션에만 적용됩니다. 실제 원장이나 Supabase에는 반영하지 않습니다.</p></section>
 <section class="panel primary-trade-panel"><h2>가상 거래</h2><p class="hint">아래 전략 편집기에서 거래를 추가·삭제하고 가격과 수량을 직접 수정하세요.</p><div class="strategy-quickbar"><div class="strategy-quickbar-select"><label for="savedScenarioList">저장된 전략 선택</label><select id="savedScenarioList" aria-label="저장된 전략 선택"></select><button id="refreshOnlineScenarios" type="button" style="margin-top:7px;width:100%;white-space:normal;min-height:34px;font-size:12px">다른 기기에서 저장한 전략 새로고침</button></div><button id="saveScenario" type="button">현재 전략 저장</button><button id="loadScenario" type="button">선택 전략 불러오기</button></div><p id="scenarioStorageLocation" class="hint" role="status">TEST 로그인 시 사용자별 전략을 서버와 이 기기에 저장합니다. 다른 기기에서는 서버 전략 목록 새로고침 후 선택해 불러오세요.</p><p class="hint">저장되는 전략에는 가상거래·목표가격이 포함됩니다. 시작 보유종목·수량·현금은 현재 로그인 계정의 통합원장 기준으로 따로 적용하며, 저장 전략을 불러오는 것만으로 변경되지 않습니다.</p><button id="adoptLegacySimulator" type="button" hidden>기존 브라우저 전략·임시작업 가져오기</button><p id="legacyImportStatus" class="hint" role="status"></p><p id="strategySaveState" class="hint" role="status" aria-live="polite">전략 저장 상태 확인 중…</p><p id="scenarioStorageStatus" class="hint" role="status"></p><div id="strategyEditor"></div><div id="undoTradeArea" class="undo-trade-area" hidden><span id="undoTradeMessage"></span><button id="undoTradeDelete" type="button">삭제 취소</button></div><button id="calculate" type="button" class="primary-calculate">시나리오 계산 · 결과 갱신</button><p class="hint" style="margin:6px 0 10px">빠른 계산: Mac ⌘ + Enter / Windows Ctrl + Enter</p><p id="recalcNotice" class="recalc-notice" role="status" aria-live="polite" hidden>입력값이 변경되었습니다. 「시나리오 계산 · 결과 갱신」을 눌러 다시 계산하세요.</p><div id="quickResults" class="quick-results" hidden aria-live="polite"><h3>빠른 결과 · 첫 번째 전략</h3><div id="quickMetrics" class="result-hero"></div><p id="quickResultHint" class="hint">상세 결과는 아래 결과 비교에서 확인하세요.</p></div><details class="secondary-settings"><summary>전략 저장·불러오기 · 추가 기능</summary><details class="secondary-settings"><summary>작업 전체 백업 · 복원 (JSON 파일)</summary><p class="hint">보유정보·현금·가정주가·거래전략·세금 가정을 파일로 보관합니다. 서버에 업로드하지 않습니다. 복원하면 현재 임시 입력을 덮어씁니다.</p><div class="editor-actions"><button id="exportDraft" type="button">현재 작업 백업 저장</button></div><label for="importDraft">백업 파일 선택</label><input id="importDraft" type="file" accept=".json,application/json"><p id="draftTransferStatus" class="hint" role="status"></p></details><div class="editor-actions"><button id="addStrategy" type="button">+ 전략 추가</button><button id="presetRise" type="button">상승장 부분 매도</button><button id="presetDip" type="button">하락장 재매수</button></div><div class="editor-actions"><button id="appendScenario" type="button">저장된 전략 비교에 추가</button><button id="deleteScenario" type="button">저장된 전략 삭제</button></div><p class="hint">저장 이름은 위 전략 편집기의 첫 번째 전략 이름을 사용합니다. 여러 전략을 편집 중이면 함께 저장됩니다.</p><p class="hint">로그인 계정별로 전략을 브라우저와 TEST 서버에 저장하고 다른 기기에서 목록을 불러옵니다. 보유정보·현금·세금 가정은 전략 저장에 포함되지 않으며 임시작업은 이 브라우저에만 보관됩니다. 다른 기기에서 이어서 편집하려면 작업 전체 백업을 사용하세요.</p><div class="editor-actions"><button id="exportScenarios" type="button">저장 전략 JSON 백업</button><button id="importScenarios" type="button">JSON 백업 가져오기</button></div><label for="scenarioBackupFile">전략 백업 파일 (최대 1MiB)</label><input id="scenarioBackupFile" type="file" accept=".json,application/json"><p class="hint">다른 기기로 전략을 옮길 때 사용합니다. 자동 동기화가 아니며, 같은 이름이 있으면 덮어쓰기 전에 확인합니다.</p><p id="editorStatus" class="hint"></p><details><summary>고급 입력: JSON 직접 편집</summary><p class="hint">배열 순서대로 체결을 가정합니다. buy/sell, ticker, quantity, price를 입력하세요. 1단계에서는 거래 수수료를 적용하지 않습니다.</p><label for="trades">가상 거래 목록 (JSON)</label><textarea id="trades" spellcheck="false" style="min-height:245px">[
@@ -45,6 +56,7 @@
 </div>
 <dialog id="tickerChartDialog" aria-labelledby="tickerChartTitle"><div class="chart-dialog-head"><h2 id="tickerChartTitle">종목 주가 차트</h2><button id="tickerChartClose" type="button" aria-label="닫기">닫기</button></div><div class="chart-periods" aria-label="차트 기간"><button type="button" data-period="1D">1일</button><button type="button" data-period="1W">1주</button><button type="button" data-period="1M">1개월</button><button type="button" data-period="1Y">1년</button><button type="button" data-period="ALL">전체</button></div><div id="tickerChartPlot"></div><p id="tickerChartStatus" role="status"></p><label for="tickerChartCsv">CSV 대체 불러오기 (자동 조회 실패 시)</label><input id="tickerChartCsv" type="file" accept=".csv,text/csv"><p class="hint">기본은 TEST 공유 DB 자동 조회입니다. CSV는 개발·장애 대응용이며 브라우저에서만 읽습니다.</p><p><a id="tickerChartExternal" target="_blank" rel="noopener noreferrer">외부 주가 차트 보기</a></p></dialog><script type="module">
 import {compareScenarios} from './src/simulator/scenario-comparison.mjs';
+import {forecastTarget,forecastSnapshot,validateForecastSnapshot,restoreForecastSnapshot,assignForecastToTrade,validForecastPrice} from './src/simulator/bear-bull-target-prices.mjs';
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {previewBulkImportValuation} from './src/simulator/bulk-import-valuation.mjs';
@@ -574,10 +586,9 @@ function renderCompactPortfolioOverview(){
  root.append(summary);
 }
 async function refreshCurrentQuotes(){
- const status=byId('currentQuotesStatus'),fillButton=byId('fillBlankAssumedPrices'),
+ const status=byId('currentQuotesStatus'),
   tickers=[...new Set(portfolioState.positions.map(p=>String(p.ticker||'').trim().toUpperCase()).filter(Boolean))];
  const ownerAtStart=activeSimulatorOwnerId,tickersAtStart=tickers.join('|');
- fillButton.disabled=true;
  if(!tickers.length){currentQuotePrices.clear();renderCompactPortfolioOverview();status.textContent='보유종목 없음 · 원장 연결 후 최근 종가 자동 조회';return;}
  status.textContent='최근 종가 자동 조회 중…';
  const next=new Map();let dbError='',yahooError='',yahooCount=0,newest='';
@@ -622,7 +633,6 @@ async function refreshCurrentQuotes(){
   }
   currentQuotePrices.clear();
   for(const [ticker,row] of next){currentQuotePrices.set(ticker,row.price);if(row.date>newest)newest=row.date;}
-  fillButton.disabled=!activeSimulatorOwnerId||!next.size;
   renderCompactPortfolioOverview();
   status.textContent='최근 종가 '+next.size+'/'+tickers.length+'종목 · 최종 거래일 '+(newest||'미확인')+
    (yahooCount?' · 자동 수집 '+yahooCount+'종목 반영':'')+
@@ -630,29 +640,6 @@ async function refreshCurrentQuotes(){
    ' · 실시간 체결가 아님';
  }catch(error){status.textContent='현재 종가 조회 실패: '+String(error.message||error);}
 }
-byId('fillBlankAssumedPrices').addEventListener('click',()=>{
- const status=byId('fillBlankAssumedPricesStatus');
- if(!activeSimulatorOwnerId){status.textContent='TEST 계정으로 먼저 로그인하세요.';return;}
- const held=[...new Set(portfolioState.positions.map(p=>String(p.ticker||'').trim().toUpperCase()).filter(Boolean))];
- let filled=0,preserved=0;const missing=[];
- for(const ticker of held){
-  const quote=currentQuotePrices.get(ticker);
-  const existing=portfolioState.prices.find(p=>String(p.ticker||'').trim().toUpperCase()===ticker);
-  if(existing&&existing.price!==''&&existing.price!==null&&existing.price!==undefined){preserved++;continue;}
-  if(!Number.isFinite(quote)||quote<=0){missing.push(ticker);continue;}
-  if(existing)existing.price=quote;
-  else portfolioState.prices.push({ticker,price:quote});
-  filled++;
- }
- if(filled){
-  simulatorInputRevision++;invalidateCalculatedResults();renderPortfolio();
-  try{syncPortfolioJson();}catch{}
-  scheduleWorkingDraft();
- }
- status.textContent='빈 가정주가 '+filled+'개에 최근 종가를 입력했습니다. 기존 가정주가 '+preserved+
-  '개는 그대로 유지했습니다.'+(missing.length?' · 종가 미조회: '+missing.join(', '):'')+
-  ' · 향후 목표가격은 직접 조정하세요. 실제 거래원장에는 반영하지 않습니다.';
-});
 window.addEventListener('pageshow',()=>{void refreshCurrentQuotes();});
 setInterval(()=>{if(!document.hidden)void refreshCurrentQuotes();},15*60*1000);
 function updateInitialValuation(){
@@ -673,22 +660,77 @@ function updateInitialValuation(){
  }catch(e){const p=document.createElement('p');p.className='notice';p.textContent='합계 계산 대기: '+e.message;root.append(p);}
 }
 byId('cash').addEventListener('input',updateInitialValuation);
+function updateTradesUsingForecast(ticker,phase,value){
+ // Do not rewrite manually entered prices: only steps explicitly linked to
+ // this ticker AND the selected market direction are synchronized.
+ const linked=Number.isFinite(value)&&value>0;
+ for(const strategy of strategyState)for(const trade of strategy.trades){
+  if(String(trade.ticker||'').trim().toUpperCase()!==ticker||trade.priceBasis!==phase)continue;
+  if(linked)trade.price=value;
+  else trade.priceBasis='manual'; // old execution price is retained, never zeroed.
+ }
+ for(const row of editor.querySelectorAll('.trade-grid')){
+  const tickerInput=row.querySelector('[data-field="ticker"]'),basisInput=row.querySelector('[data-field="priceBasis"]');
+  if(tickerInput?.value!==ticker||basisInput?.value!==phase)continue;
+  if(linked)row.querySelector('[data-field="price"]').value=String(value);
+  else basisInput.value='manual';
+ }
+ syncAdvanced();updateStrategySaveState();
+}
 function renderPortfolio(){
- for(const [kind,id,fields] of [['positions','positionEditor',[['ticker','종목'],['quantity','수량'],['averageCost','평균단가']]],['prices','priceEditor',[['ticker','종목'],['price','최종가격']]]]){
-  const root=byId(id);root.replaceChildren();
-  portfolioState[kind].forEach((entry,index)=>{
-   const row=document.createElement('div');row.className='simple-row'+(kind==='prices'?' prices':'');
-   for(const [field,label] of fields){
-    const input=document.createElement('input');input.setAttribute('aria-label',label);
-    input.placeholder=label;input.type=field==='ticker'?'text':'number';if(field==='ticker')input.setAttribute('list','managedSymbolOptions');
-    if(field!=='ticker'){input.step='any';input.min='0';}
-    input.value=entry[field];input.addEventListener('input',()=>{entry[field]=input.value;updateInitialValuation();try{syncPortfolioJson();byId('portfolioStatus').textContent='';}catch{byId('portfolioStatus').textContent='최종 가정주가 등 필수값을 입력하면 JSON도 동기화됩니다.';}});
-    row.append(input);
-   }
-   const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
-   remove.addEventListener('click',()=>{portfolioState[kind].splice(index,1);renderPortfolio();});
-   row.append(remove);root.append(row);
+ const positionRoot=byId('positionEditor');positionRoot.replaceChildren();
+ for(const [index,entry] of portfolioState.positions.entries()){
+  const row=document.createElement('div');row.className='simple-row';
+  for(const [field,label] of [['ticker','종목'],['quantity','수량'],['averageCost','평균단가']]){
+   const input=document.createElement('input');input.setAttribute('aria-label',label);
+   input.placeholder=label;input.type=field==='ticker'?'text':'number';
+   if(field==='ticker')input.setAttribute('list','managedSymbolOptions');
+   else{input.step='any';input.min='0';}
+   input.value=entry[field];
+   input.addEventListener('input',()=>{entry[field]=input.value;updateInitialValuation();
+    try{syncPortfolioJson();byId('portfolioStatus').textContent='';}
+    catch{byId('portfolioStatus').textContent='최종 평가주가와 보유종목을 확인하면 JSON도 동기화됩니다.';}
+   });
+   row.append(input);
+  }
+  const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
+  remove.addEventListener('click',()=>{portfolioState.positions.splice(index,1);renderPortfolio();});
+  row.append(remove);positionRoot.append(row);
+ }
+ const priceRoot=byId('priceEditor');priceRoot.replaceChildren();
+ for(const [index,entry] of portfolioState.prices.entries()){
+  const row=document.createElement('div');row.className='forecast-price-row';
+  const name=document.createElement('label');name.className='forecast-ticker';name.textContent='종목';
+  const ticker=document.createElement('input');ticker.type='text';ticker.value=entry.ticker||'';
+  ticker.setAttribute('list','managedSymbolOptions');ticker.setAttribute('aria-label','예상 주가 종목코드');
+  ticker.addEventListener('change',()=>{entry.ticker=ticker.value.trim().toUpperCase();
+   ticker.value=entry.ticker;updateInitialValuation();scheduleWorkingDraft();
+   try{syncPortfolioJson();}catch{}});
+  name.append(ticker);row.append(name);
+  for(const [phase,field,label] of [['bear','bearPrice','하락 예상가 USD'],['bull','bullPrice','상승 예상가 USD']]){
+   const wrap=document.createElement('label');wrap.textContent=label;
+   const input=document.createElement('input');input.type='number';input.min='0.01';input.step='any';
+   input.placeholder=phase==='bear'?'하락 목표가':'상승 목표가';
+   input.value=entry[field]??(phase==='bull'?entry.price??'':'');
+   input.dataset.forecast=phase;input.setAttribute('aria-label',(entry.ticker||'종목')+' '+label);
+   input.addEventListener('input',()=>{
+    entry[field]=input.value===''?'':Number(input.value);
+    if(phase==='bull')entry.price=input.value===''?'':Number(input.value); // Keep terminal valuation contract.
+    const symbol=String(entry.ticker||'').trim().toUpperCase();
+    updateTradesUsingForecast(symbol,phase,validForecastPrice(input.value)?Number(input.value):null);
+    simulatorInputRevision++;invalidateCalculatedResults();updateInitialValuation();
+    try{syncPortfolioJson();byId('portfolioStatus').textContent='';}
+    catch{byId('portfolioStatus').textContent='상승 목표가 등 필수 평가가격을 입력하면 JSON도 동기화됩니다.';}
+    scheduleWorkingDraft();
+   });
+   wrap.append(input);row.append(wrap);
+  }
+  const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
+  remove.addEventListener('click',()=>{
+   portfolioState.prices.splice(index,1);renderPortfolio();simulatorInputRevision++;
+   invalidateCalculatedResults();scheduleWorkingDraft();
   });
+  row.append(remove);priceRoot.append(row);
  }
  updateInitialValuation();
 }
@@ -771,10 +813,39 @@ function getOnlineAccountOpening(){
  byId('onlineLedgerPreviewStatus').textContent='TEST 서버 '+name+' · 보유 '+positions.length+'종목 · 현금 USD '+result.cash.USD.toLocaleString('ko-KR')+' · 갱신 '+(onlineAccountLedger.updatedAt||'미확인')+' · 읽기 전용';
  return {positions,cash:result.cash.USD,name};
 }
-byId('pilotLedgerAccount').addEventListener('change',()=>{
- try{const opening=getOnlineAccountOpening();byId('pilotLedgerLoadStatus').textContent=opening?'계좌를 선택했습니다. 현재 가상거래 입력은 그대로이며 위 적용 버튼으로 시작값을 변경할 수 있습니다.':'브라우저 계좌를 선택했습니다. TEST 서버 원장은 로그인 후 조회됩니다.';}
- catch(e){byId('onlineLedgerPreviewStatus').textContent='조회 실패: '+e.message;}
-});
+function applySelectedOnlineAccountToSimulator(){
+ const status=byId('pilotLedgerLoadStatus');
+ try{
+  // Account selection is the user's explicit instruction to change the
+  // simulated *starting* balance. No real ledger or saved strategy is written.
+  if(!onlineAccountLedger||!activeSimulatorOwnerId||
+     onlineAccountLedger.userId!==activeSimulatorOwnerId||
+     onlineAccountLedger.userId!==lastVerifiedOnlineUserId)
+   throw Error('TEST 계정 로그인 및 본인 원장 조회가 완료된 뒤 계좌를 선택하세요.');
+  const opening=getOnlineAccountOpening();
+  if(!opening)throw Error('선택 계좌의 시작 보유현황을 가져올 수 없습니다.');
+  onlineLedgerUserEdited=true;
+  onlineLedgerOwnerChanged=false; // Explicit selection after isolated account switch.
+  simulatorInputRevision++;invalidateCalculatedResults();
+  portfolioState.positions=opening.positions.map(p=>({...p}));
+  byId('cash').value=String(opening.cash);
+  const known=new Set(portfolioState.prices.map(p=>String(p.ticker||'').trim().toUpperCase()));
+  for(const p of opening.positions)if(!known.has(p.ticker)){
+   portfolioState.prices.push({ticker:p.ticker,price:''});known.add(p.ticker);
+  }
+  testOnlineBaseline=opening.positions.map(p=>({...p}));
+  currentQuotePrices.clear();currentQuoteDates.clear();
+  renderPortfolio();
+  const added=ensureTradePrices();
+  try{syncPortfolioJson();}catch{}
+  scheduleWorkingDraft();void refreshCurrentQuotes();
+  status.textContent='선택한 '+opening.name+'을(를) 가상거래 시작값에 자동 적용했습니다 · 보유 '+
+    opening.positions.length+'종목 · 현금 USD '+opening.cash.toLocaleString('ko-KR')+
+    (added?' · 전략 전용 종목 '+added+'개 목표 주가 확인 필요':'')+
+    ' · 기존 전략과 예상 주가는 유지 · 실제 원장 변경 없음';
+ }catch(error){status.textContent='계좌 자동 적용 실패: '+String(error.message||error)+' · 기존 입력은 유지했습니다.';}
+}
+byId('pilotLedgerAccount').addEventListener('change',applySelectedOnlineAccountToSimulator);
 async function refreshOnlineAccountLedger(){
  if(onlineLedgerBusy)return;onlineLedgerBusy=true;
  try{
@@ -794,7 +865,7 @@ async function refreshOnlineAccountLedger(){
   if(changedUser){
    onlineLedgerOwnerChanged=true;onlineLedgerUserEdited=true;
    onlineAccountLedger=null;
-   byId('pilotLedgerLoadStatus').textContent='TEST 로그인 계정이 변경되었습니다. 이전 가상매매 입력과 임시작업은 보존하지만 새 사용자 원장으로 자동 교체하지 않습니다. 계좌·초안을 확인한 후 명시적으로 적용하세요.';
+   byId('pilotLedgerLoadStatus').textContent='TEST 로그인 계정이 변경되었습니다. 이전 가상거래 입력과 임시작업은 보존하지만 새 사용자 원장으로 자동 교체하지 않습니다. 계좌·초안을 확인한 후 명시적으로 적용하세요.';
   }
   lastVerifiedOnlineUserId=userId;
   const firstRead=!onlineAccountLedger;
@@ -820,53 +891,12 @@ async function refreshOnlineAccountLedger(){
    scheduleWorkingDraft();void refreshCurrentQuotes();
    byId('pilotLedgerLoadStatus').textContent='첫 방문: TEST 원장 '+opening.name+'의 시작 보유·현금 자동 적용'+(missing?' · 가정주가 입력 필요':'')+' · 실제 원장 변경 없음';
   }else if(opening){
-   byId('pilotLedgerLoadStatus').textContent=onlineLedgerOwnerChanged?'TEST 로그인 계정 변경 · 기존 가상매매/임시작업 보존 · 새 사용자 원장 적용 시 명시적 확인 필요':'TEST 원장 자동 조회 완료 · 기존 전략/임시작업 보존 · 필요하면 위 적용 버튼을 누르세요.';
+   byId('pilotLedgerLoadStatus').textContent=onlineLedgerOwnerChanged?'TEST 로그인 계정 변경 · 기존 사용자 자료 분리 · 계좌를 직접 선택하면 새 시작값을 적용합니다.':'TEST 원장 자동 조회 완료 · 계좌를 선택하면 시작 보유·현금이 즉시 적용됩니다. 기존 전략/임시작업은 보존합니다.';
   }
  }catch(e){byId('onlineLedgerPreviewStatus').textContent='TEST 온라인 원장 조회 실패: '+e.message+' · 현재 입력 유지';}
  finally{onlineLedgerBusy=false;}
 }
 
-byId('loadPilotLedgerCloud').addEventListener('click',async()=>{
- const status=byId('pilotLedgerLoadStatus'),button=byId('loadPilotLedgerCloud');
- button.disabled=true;status.textContent='TEST 서버 원장 조회 중…';
- try{
-  const url='https://gopofxyezhwpfxbecrxd.supabase.co';
-  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
-  if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role'))throw Error('통합원장에서 최신 TEST 코드로 다시 로그인하세요.');
-  if(!window.supabase?.createClient)throw Error('Supabase 라이브러리를 불러오지 못했습니다.');
-  const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
-  const {data:auth,error:authError}=await client.auth.getUser();
-  if(authError||!auth?.user?.id)throw Error('통합원장에서 TEST 계정 로그인이 필요합니다.');
-  const userId=auth.user.id;
-  const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',userId).maybeSingle();
-  if(error)throw Error('서버 원장 조회 실패: '+error.message);
-  if(!remote)throw Error('TEST 서버에 저장된 본인 원장이 없습니다.');
-  const ledger=remote.payload;
-  if(ledger?.version!==1||!Array.isArray(ledger.accounts)||!Array.isArray(ledger.entries))throw Error('서버 원장 형식이 올바르지 않습니다.');
-  validateLedger(ledger);
-  if(differentVerifiedUser(lastVerifiedOnlineUserId,userId)){onlineLedgerOwnerChanged=true;onlineLedgerUserEdited=true;}
-  lastVerifiedOnlineUserId=userId;
-  onlineAccountLedger={ledger,userId,updatedAt:remote.updated_at};refreshPilotLedgerAccountOptions();
-  const selectedAccount=byId('pilotLedgerAccount').value;
-  const accountId=selectedAccount==='ALL'||ledger.accounts.some(a=>a.id===selectedAccount)?selectedAccount:'ALL';
-  const result=projectLedger(ledger,accountId);
-  if(!result.holdings.length&&result.cash.USD<=0)throw Error('서버 원장에 보유종목과 USD 현금이 없습니다.');
-  if(!Number.isFinite(result.cash.USD)||result.cash.USD<0)throw Error('서버 USD 현금잔고가 올바르지 않습니다.');
-  const positions=result.holdings.map(h=>({ticker:h.symbol,quantity:h.qty,averageCost:h.averageCost}));
-  if(!positions.every(p=>/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.ticker)&&Number.isFinite(p.quantity)&&p.quantity>0&&Number.isFinite(p.averageCost)&&p.averageCost>=0))throw Error('서버 보유종목 정보가 올바르지 않습니다.');
-  const {data:verify,error:verifyError}=await client.auth.getUser();
-  if(verifyError||verify?.user?.id!==userId)throw Error('조회 중 로그인 계정이 변경되었습니다.');
-  if(!confirm('TEST 서버 원장 ('+(accountId==='ALL'?'전체 계좌':ledger.accounts.find(a=>a.id===accountId)?.name)+')의 보유종목 '+positions.length+'개와 USD 현금 '+result.cash.USD.toLocaleString('ko-KR')+'을 가상거래 시작값으로 적용할까요? 기존 전략과 가정 주가는 유지하며 서버 원장은 변경하지 않습니다.')){status.textContent='서버 원장 적용을 취소했습니다.';return;}
-  simulatorInputRevision++;invalidateCalculatedResults();
-  portfolioState.positions=positions;byId('cash').value=String(result.cash.USD);
-  const known=new Set(portfolioState.prices.map(p=>String(p.ticker).trim().toUpperCase()));
-  for(const p of positions)if(!known.has(p.ticker)){portfolioState.prices.push({ticker:p.ticker,price:''});known.add(p.ticker);}
-  renderPortfolio();const added=ensureTradePrices();testOnlineBaseline=positions.map(p=>({...p}));
-  try{syncPortfolioJson();}catch{}scheduleWorkingDraft();void refreshCurrentQuotes();
-  status.textContent='TEST 서버 원장에서 '+positions.length+'개 종목과 USD 현금을 가져왔습니다. 기존 전략 유지'+(added?' · 가정 주가 입력 필요':'')+' · 서버 데이터 변경 없음.';
- }catch(error){status.textContent='서버 원장 가져오기 실패: '+String(error.message??error);}
- finally{button.disabled=false;}
-});
 byId('loadPilotLedgerPositions').addEventListener('click',()=>{
  const status=byId('pilotLedgerLoadStatus');
  try{
@@ -924,9 +954,13 @@ function readStrategies(){
    const value=key=>row.querySelector('[data-field="'+key+'"]').value;
    const ticker=value('ticker').trim().toUpperCase();
    for(const key of ['quantity','price'])if(value(key).trim()===''||!Number.isFinite(Number(value(key)))||Number(value(key))<0)throw Error(name+' '+(i+1)+'번 거래의 '+key+'는 0 이상의 숫자여야 합니다.');
-   return {side:value('side'),ticker,quantity:Number(value('quantity')),price:Number(value('price')),fee:0};
+   const priceBasis=value('priceBasis');
+   return {side:value('side'),ticker,quantity:Number(value('quantity')),price:Number(value('price')),fee:0,
+    ...(priceBasis==='bear'||priceBasis==='bull'?{priceBasis}:{})};
   });
-  return {name,trades,targetCash:Number(card.querySelector('input[aria-label="전략 목표 잔여 현금 USD"]')?.value??0),terminalPrices:strategyState[[...editor.querySelectorAll('.strategy-card')].indexOf(card)]?.terminalPrices??{}};
+  return {name,trades,targetCash:Number(card.querySelector('input[aria-label="전략 목표 잔여 현금 USD"]')?.value??0),
+   terminalPrices:strategyState[[...editor.querySelectorAll('.strategy-card')].indexOf(card)]?.terminalPrices??{},
+   forecastPrices:forecastSnapshot(portfolioState.prices)};
  });
 }
 byId('compareAccountScenarios').addEventListener('click',()=>{const root=byId('accountScenarioComparison');root.replaceChildren();try{if(!selectedOpeningReview)throw Error('원장 대조 JSON 파일을 먼저 선택하세요');const ids=[...byId('accountOpeningSelect').selectedOptions].map(o=>o.value);if(!ids.length)throw Error('비교할 계좌를 하나 이상 선택하세요');const groups=ids.map(id=>[id]);if(ids.length>1)groups.push(ids);const scenarios=readStrategies();const terminalPrices={};for(const p of portfolioState.prices){const ticker=String(p.ticker).trim().toUpperCase();if(!ticker||p.price===''||!Number.isFinite(Number(p.price))||Number(p.price)<0)continue;terminalPrices[ticker]=Number(p.price)}const compared=compareAccountScenarios({saved:selectedOpeningReview,accountGroups:groups,scenarios,terminalPrices});const csvButton=document.createElement('button');csvButton.type='button';csvButton.textContent='거래 단계별 현금흐름 CSV 저장';csvButton.addEventListener('click',()=>{const csv=accountScenarioStepsCsv(compared);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='investlab-test-account-scenario-steps.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)});root.append(csvButton);const summaryCsvButton=document.createElement('button');summaryCsvButton.type='button';summaryCsvButton.textContent='계좌별 비교 요약 CSV 저장';summaryCsvButton.addEventListener('click',()=>{const csv=accountScenarioSummaryCsv(compared);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='investlab-test-account-scenario-summary.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)});root.append(summaryCsvButton);const presentation=summarizeAccountScenarioResults(compared);const summary=document.createElement('p');summary.textContent='실행 가능 '+presentation.available+'건 · 실행 불가 '+presentation.unavailable+'건 · 최대 보유 유지 대비 '+(presentation.bestDelta===null?'—':presentation.bestDelta.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD');root.append(summary);const comparisons=compareAccountRealizedGains(compared);if(comparisons.length){const heading=document.createElement('h4');heading.textContent='계좌별 실현손익 합계와 통합 가중평균 기준 비교';root.append(heading);const note=document.createElement('p');note.className='hint';note.textContent='통합 가중평균 취득단가로 계산한 가상 실현손익은 개별 계좌별 실현손익 합계와 다를 수 있습니다. 아래 차이는 통합 기준 − 계좌별 합계이며, 세금 신고용 손익이나 실제 계좌 간 손익통산 결과가 아닙니다.';root.append(note);const list=document.createElement('ul');for(const item of comparisons){const li=document.createElement('li');const fmt=n=>(n>0?'+':'')+n.toLocaleString('ko-KR',{maximumFractionDigits:2});li.textContent=item.scenario+' · '+item.accounts+' · 계좌별 합계 '+fmt(item.accountSumRealizedPnL)+' USD / 통합 기준 '+fmt(item.blendedRealizedPnL)+' USD / 차이 '+fmt(item.difference)+' USD'+(item.hasDifference?' (취득단가 합산 방식 차이 가능)':' (차이 없음)');list.append(li)}root.append(list)}const taxNotice=document.createElement('p');taxNotice.className='notice';taxNotice.textContent='세금 추정 안내: 위 계좌별 실현손익은 USD 기준 가상 계산값입니다. ISA·연금 등 계좌 유형에 따라 과세 방식이 다를 수 있으며, 계좌별 합계 또는 통합 가중평균 손익을 세금 신고용 원화 손익으로 자동 적용하지 않습니다. 세금 추정에는 실제 과세 대상 거래의 원화 기준 취득·양도금액과 적용 환율을 별도로 확인해야 합니다.';root.append(taxNotice);const table=document.createElement('table');table.style.width='100%';table.style.minWidth='1100px';table.style.borderCollapse='collapse';const head=table.insertRow();for(const label of ['계좌','계산 기준','전략','실행 상태','최종 평가액 USD','보유 유지 대비 USD','시작 현금 USD','최종 현금 USD','현금 증감 USD','실현손익 USD (계좌 기준)','수량 변화']){const th=document.createElement('th');th.textContent=label;th.style.padding='8px';th.style.textAlign='left';th.style.whiteSpace='nowrap';head.append(th)}for(const result of presentation.rows){const tr=table.insertRow();const combinedBasis=result.accountBasis==='전체 합산 (가중평균)';tr.dataset.accountBasis=combinedBasis?'combined':'individual';tr.style.borderTop=combinedBasis?'2px solid currentColor':'1px solid rgba(128,128,128,.3)';const available=result.status==='CALCULATED';const delta=result.deltaVsHold;const values=[result.account,result.accountBasis,result.name,available?'실행 가능':result.diagnostic?'실행 불가 · '+result.diagnostic.tradeNumber+'단계 '+result.diagnostic.ticker+' '+(result.diagnostic.kind==='CASH'?'현금':'수량')+' 부족 '+result.diagnostic.shortfall.toLocaleString('ko-KR',{maximumFractionDigits:8})+(result.diagnostic.kind==='CASH'?' USD':'주')+' (필요 '+result.diagnostic.required.toLocaleString('ko-KR',{maximumFractionDigits:8})+', 보유 '+result.diagnostic.available.toLocaleString('ko-KR',{maximumFractionDigits:8})+')':'실행 불가: '+result.reason,available?result.terminalValue.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available?(delta>0?'+':'')+delta.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',result.openingCash.toLocaleString('ko-KR',{maximumFractionDigits:2}),available?result.finalCash.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available?(result.cashChange>0?'+':'')+result.cashChange.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available&&result.realizedPnL!==null?(result.realizedPnL>0?'+':'')+result.realizedPnL.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available?(result.quantityChanges.length?result.quantityChanges.map(p=>p.ticker+' '+(p.change>0?'+':'')+p.change.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · '):'변동 없음'):'—'];for(const [index,value] of values.entries()){const cell=tr.insertCell();cell.textContent=value;cell.style.padding='8px';cell.style.verticalAlign='top';if(index>=4&&index<=9){cell.style.textAlign='right';cell.style.fontVariantNumeric='tabular-nums';cell.style.whiteSpace='nowrap'}if(index===0||index===1){cell.style.fontWeight=combinedBasis?'700':'400'}if(index===3){cell.style.fontWeight='700';cell.style.color=available?'#71d7a0':'#ffb78a'}if(index===5&&available){cell.style.fontWeight='700';cell.style.color=delta>0?'#71d7a0':delta<0?'#ffb78a':'inherit'}}}root.append(table);const failureTitle=document.createElement('h4');failureTitle.textContent='실패 직전까지 실행 가능한 거래 내역';root.append(failureTitle);for(const result of presentation.rows){if(result.status!=='UNAVAILABLE'||!result.diagnostic)continue;const d=result.diagnostic;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent=result.account+' · '+result.name+' · '+d.tradeNumber+'단계 실패 (이전 '+d.completedSteps+'단계 계산 완료)';details.append(summary);const info=document.createElement('p');info.textContent='실패 직전 현금 '+d.cashBefore.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD · 보유 '+(Object.entries(d.positionsBefore).map(([ticker,quantity])=>ticker+' '+quantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'없음');details.append(info);if(result.adjustment){const a=result.adjustment;const tip=document.createElement('p');tip.textContent=a.kind==='CASH'?'실패 거래 조정안: 추가 현금 '+a.additionalCashUsd.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD 또는 매수수량 최대 '+a.maxAffordableQuantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주':'실패 거래 조정안: 매도수량 '+a.reduceQuantityBy.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주 감소 또는 최대 '+a.maxSellQuantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주 매도';details.append(tip);const note=document.createElement('small');note.textContent=a.note;details.append(note)}if(result.adjustmentPreview){const p=result.adjustmentPreview;const status=document.createElement('p');status.style.fontWeight='700';status.textContent=p.status==='CALCULATED'?'조정 후 전체 전략 실행 가능 · 최종 현금 '+p.finalCash.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD · 보유 유지 대비 '+p.deltaVsHold.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD · 최종 수량 '+(Object.entries(p.finalPositions).map(([ticker,qty])=>ticker+' '+qty.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'없음'):p.status==='STILL_UNAVAILABLE'?'조정 후에도 실행 불가'+(p.nextFailedTradeNumber?' ('+p.nextFailedTradeNumber+'단계)':'')+' · '+p.reason:'조정안으로 재계산 불가 · '+p.reason;details.append(status)}if(d.completedHistory.length){const table=document.createElement('table');table.style.width='100%';const header=table.insertRow();for(const label of ['단계','거래','종목','수량','거래 후 현금 USD','거래 후 보유수량']){const th=document.createElement('th');th.textContent=label;header.append(th)}for(const step of d.completedHistory){const tr=table.insertRow();for(const value of [step.index,step.side==='buy'?'매수':'매도',step.ticker,step.quantity.toLocaleString('ko-KR',{maximumFractionDigits:8}),step.cashAfter.toLocaleString('ko-KR',{maximumFractionDigits:2}),Object.entries(step.positionsAfter).map(([ticker,quantity])=>ticker+' '+quantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'없음']){const td=tr.insertCell();td.textContent=String(value);td.style.padding='6px'}}details.append(table)}else{const empty=document.createElement('p');empty.textContent='첫 거래에서 실패하여 앞서 완료된 거래가 없습니다.';details.append(empty)}root.append(details)}const stepTitle=document.createElement('h4');stepTitle.textContent='거래 단계별 현금흐름·보유수량';root.append(stepTitle);for(const result of presentation.rows){if(result.status!=='CALCULATED'||!result.steps.length)continue;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent=result.account+' · '+result.name+' ('+result.steps.length+'단계)';details.append(summary);const stepTable=document.createElement('table');stepTable.style.width='100%';const header=stepTable.insertRow();for(const label of ['단계','거래','종목','수량','체결가 USD','거래 후 현금 USD','실현손익 USD','거래 후 보유수량']){const th=document.createElement('th');th.textContent=label;header.append(th)}for(const step of result.steps){const tr=stepTable.insertRow();const holdings=Object.entries(step.positionsAfter).map(([ticker,quantity])=>ticker+' '+quantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'보유 없음';for(const value of [step.index,step.side==='buy'?'매수':'매도',step.ticker,step.quantity.toLocaleString('ko-KR',{maximumFractionDigits:8}),step.price.toLocaleString('ko-KR'),step.cashAfter.toLocaleString('ko-KR',{maximumFractionDigits:2}),step.realizedPnL.toLocaleString('ko-KR',{maximumFractionDigits:2}),holdings]){const td=tr.insertCell();td.textContent=String(value);td.style.padding='6px'}}details.append(stepTable);root.append(details)}byId('accountOpeningStatus').textContent='현재 전략의 계좌별 가상 결과를 읽기 전용으로 비교했습니다. 세금은 포함하지 않으며 기존 시작값·전략은 변경하지 않았습니다.'}catch(e){byId('accountOpeningStatus').textContent='전략 비교 실패: '+String(e.message??e)}});
@@ -983,7 +1017,7 @@ function renderEditor(){
   remove.addEventListener('click',()=>{if(!confirm('이 전략과 포함된 거래 전체를 편집 화면에서 삭제하시겠습니까? 저장된 전략은 유지됩니다.'))return;strategyState.splice(si,1);simulatorInputRevision++;invalidateCalculatedResults();renderEditor();scheduleWorkingDraft();});
   management.append(remove);card.append(management);
   const columns=document.createElement('div');columns.className='trade-head';
-  for(const label of ['구분','종목코드','수량 (주)','체결가 ($)','']){const cell=document.createElement('span');cell.textContent=label;columns.append(cell);}
+  for(const label of ['구분','종목코드','수량 (주)','체결가 산정 · USD','']){const cell=document.createElement('span');cell.textContent=label;columns.append(cell);}
   card.append(columns);
   const reserveBar=document.createElement('div');reserveBar.className='buy-helper';
   const reserveLabel=document.createElement('label');reserveLabel.textContent='마지막 매수 후 남길 목표 현금 (USD)';
@@ -1006,14 +1040,52 @@ function renderEditor(){
      const symbols=[...new Set([...portfolioState.positions.map(p=>p.ticker),...portfolioState.prices.map(p=>p.ticker),...[...document.querySelectorAll('#managedSymbolOptions option')].map(p=>p.value),trade.ticker].map(t=>String(t||'').trim().toUpperCase()).filter(Boolean))].sort();
      for(const symbol of symbols){const option=document.createElement('option');option.value=symbol;option.textContent=symbol;select.append(option);}
      select.value=String(trade.ticker||'').trim().toUpperCase();
-     select.addEventListener('change',()=>{trade.ticker=select.value;});
+     select.addEventListener('change',()=>{
+       trade.ticker=select.value;
+       const phase=row.querySelector('[data-field="priceBasis"]');
+       if(phase&&phase.value!=='manual'){
+        trade.priceBasis='manual';phase.value='manual';
+        byId('editorStatus').textContent='종목을 변경했습니다. 기존 체결가는 유지되며 새 종목의 하락·상승 예상가를 다시 선택하세요.';
+       }
+      });
      const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;fieldWrap.append(select);row.append(fieldWrap);
      continue;
     }
     input.type='number';input.min='0';input.step='any';
     input.placeholder=label;input.value=trade[key]??(key==='fee'?0:'');
-    input.addEventListener('input',()=>{trade[key]=key==='ticker'?input.value:input.value===''?'':Number(input.value);});
-    const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;fieldWrap.append(input);row.append(fieldWrap);
+    input.addEventListener('input',()=>{
+      trade[key]=input.value===''?'':Number(input.value);
+      if(key==='price'){
+       const selector=row.querySelector('[data-field="priceBasis"]');
+       if(selector&&selector.value!=='manual'){trade.priceBasis='manual';selector.value='manual';}
+      }
+     });
+    const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;
+     if(key==='price'){
+      fieldWrap.classList.add('trade-price-wrap');
+      const phase=document.createElement('select');phase.dataset.field='priceBasis';
+      phase.setAttribute('aria-label','체결가 산정 방식');
+      for(const [value,name] of [['manual','직접 입력'],['bear','하락 예상가 적용'],['bull','상승 예상가 적용']]){
+       const option=document.createElement('option');option.value=value;option.textContent=name;phase.append(option);
+      }
+      phase.value=['bear','bull'].includes(trade.priceBasis)?trade.priceBasis:'manual';
+      phase.addEventListener('change',()=>{
+       if(phase.value==='manual'){trade.priceBasis='manual';return;}
+       try{
+        const resolved=assignForecastToTrade(trade,portfolioState.prices,phase.value);
+        trade.price=resolved.price;trade.priceBasis=resolved.priceBasis;
+        input.value=String(resolved.price);
+        byId('editorStatus').textContent=trade.ticker+' '+(phase.value==='bear'?'하락':'상승')+
+         ' 목표가 USD '+fmt(resolved.price)+'을(를) 이 거래 단계에 적용했습니다.';
+        syncAdvanced();simulatorInputRevision++;invalidateCalculatedResults();scheduleWorkingDraft();
+       }catch(error){
+        phase.value=['bear','bull'].includes(trade.priceBasis)?trade.priceBasis:'manual';
+        byId('editorStatus').textContent='목표가 적용 실패: '+error.message+' · 기존 체결가는 유지했습니다.';
+       }
+      });
+      fieldWrap.append(phase);
+     }
+     fieldWrap.append(input);row.append(fieldWrap);
    }
    const actions=document.createElement('div');actions.className='trade-actions mobile-field';actions.dataset.label='거래 순서 · 삭제';
    for(const [direction,label] of [[-1,'위로'],[1,'아래로']]){
@@ -1222,9 +1294,11 @@ function validateSavedStrategy(value){
   if(!item||typeof item.name!=='string'||!item.name.trim()||!Array.isArray(item.trades)||item.trades.length>100)throw Error('전략 데이터가 유효하지 않습니다.');
   if(item.name.length>80)throw Error('전략 이름은 80자를 초과할 수 없습니다. 이름을 줄인 뒤 다시 시도하세요.');
   if(item.targetCash!==undefined&&(!Number.isFinite(Number(item.targetCash))||Number(item.targetCash)<0))throw Error('목표 잔여 현금은 0 이상의 숫자여야 합니다.');
-  return {name:item.name,targetCash:Number(item.targetCash??0),terminalPrices:validateScenarioPrices(item.terminalPrices),trades:item.trades.map(t=>{
-   if(!t||!['buy','sell'].includes(t.side)||typeof t.ticker!=='string'||!/^[A-Z0-9.^_-]{1,20}$/.test(t.ticker)||!Number.isFinite(t.quantity)||t.quantity<=0||!Number.isFinite(t.price)||t.price<=0||!Number.isFinite(t.fee??0)||(t.fee??0)<0)throw Error('거래 데이터가 유효하지 않습니다.');
-   return {side:t.side,ticker:t.ticker,quantity:t.quantity,price:t.price,fee:t.fee??0};
+  return {name:item.name,targetCash:Number(item.targetCash??0),terminalPrices:validateScenarioPrices(item.terminalPrices),
+    forecastPrices:validateForecastSnapshot(item.forecastPrices),trades:item.trades.map(t=>{
+   if(!t||!['buy','sell'].includes(t.side)||typeof t.ticker!=='string'||!/^[A-Z0-9.^_-]{1,20}$/.test(t.ticker)||!Number.isFinite(t.quantity)||t.quantity<=0||!Number.isFinite(t.price)||t.price<=0||!Number.isFinite(t.fee??0)||(t.fee??0)<0||(t.priceBasis!==undefined&&!['manual','bear','bull'].includes(t.priceBasis)))throw Error('거래 데이터가 유효하지 않습니다.');
+   return {side:t.side,ticker:t.ticker,quantity:t.quantity,price:t.price,fee:t.fee??0,
+     ...(['bear','bull'].includes(t.priceBasis)?{priceBasis:t.priceBasis}:{})};
   })};
  });
 }
@@ -1292,7 +1366,14 @@ byId('loadScenario').addEventListener('click',()=>storageAction(()=>{
   byId('scenarioStorageStatus').textContent='불러오기를 취소했습니다. 현재 편집 내용은 유지됩니다.';
   return;
  }
- strategyState=clone(strategies);renderEditor();ensureTradePrices();
+ strategyState=clone(strategies);
+  if(Object.keys(strategies[0]?.forecastPrices||{}).length){
+   // Restoring a saved strategy is user-confirmed. Transfer the two explicitly
+   // stored forecast targets, never change real holdings or the ledger.
+   portfolioState.prices=restoreForecastSnapshot(portfolioState.prices,strategies[0].forecastPrices);
+   renderPortfolio();
+  }
+  renderEditor();ensureTradePrices();
  simulatorInputRevision++;invalidateCalculatedResults();
  byId('scenarioStorageStatus').textContent='저장된 전략을 불러왔습니다: '+name+' · 기존 시작 보유종목·현금은 그대로 유지됩니다. 기준값을 확인한 뒤 다시 계산하세요.';
  updateStrategySaveState();
@@ -1496,8 +1577,9 @@ function validWorkingDraft(d){
  if(![d.cash,d.priorTax,d.deduction,d.taxRate].every(v=>v===undefined||v===null||typeof v==='string'||typeof v==='number'))return false;
  const validSymbol=v=>typeof v==='string'&&v.length<=40;
  if(!d.positions.every(p=>p&&validSymbol(p.ticker)&&Number.isFinite(Number(p.quantity))&&Number(p.quantity)>=0&&Number.isFinite(Number(p.averageCost))&&Number(p.averageCost)>=0))return false;
- if(!d.prices.every(p=>p&&validSymbol(p.ticker)&&Number.isFinite(Number(p.price))&&Number(p.price)>=0))return false;
- if(!d.strategies.every(x=>x&&typeof x.name==='string'&&x.name.length<=200&&(x.targetCash===undefined||(x.targetCash!==''&&Number.isFinite(Number(x.targetCash))&&Number(x.targetCash)>=0))&&(()=>{try{validateScenarioPrices(x.terminalPrices);return true;}catch{return false;}})()&&Array.isArray(x.trades)&&x.trades.length<=300&&x.trades.every(t=>t&&['buy','sell'].includes(t.side)&&validSymbol(t.ticker)&&Number.isFinite(Number(t.quantity))&&Number(t.quantity)>=0&&Number.isFinite(Number(t.price))&&Number(t.price)>=0)))return false;
+ if(!d.prices.every(p=>p&&validSymbol(p.ticker)&&Number.isFinite(Number(p.price))&&Number(p.price)>=0&&
+   ['bearPrice','bullPrice'].every(k=>p[k]===undefined||p[k]===''||validForecastPrice(p[k]))))return false;
+ if(!d.strategies.every(x=>x&&typeof x.name==='string'&&x.name.length<=200&&(x.targetCash===undefined||(x.targetCash!==''&&Number.isFinite(Number(x.targetCash))&&Number(x.targetCash)>=0))&&(()=>{try{validateScenarioPrices(x.terminalPrices);validateForecastSnapshot(x.forecastPrices);return true;}catch{return false;}})()&&Array.isArray(x.trades)&&x.trades.length<=300&&x.trades.every(t=>t&&['buy','sell'].includes(t.side)&&validSymbol(t.ticker)&&Number.isFinite(Number(t.quantity))&&Number(t.quantity)>=0&&Number.isFinite(Number(t.price))&&Number(t.price)>=0&&(t.priceBasis===undefined||['manual','bear','bull'].includes(t.priceBasis)))))return false;
  return true;
 }
 function applyWorkingDraft(draft){

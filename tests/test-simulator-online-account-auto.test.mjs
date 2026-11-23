@@ -5,11 +5,15 @@ import {readFileSync} from 'node:fs';
 const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
 
 test('TEST online ledger account selector is visible and unique',()=>{
- for(const id of ['pilotLedgerAccount','loadPilotLedgerCloud','pilotLedgerLoadStatus','onlineLedgerPreviewStatus'])
+ for(const id of ['pilotLedgerAccount','pilotLedgerLoadStatus','onlineLedgerPreviewStatus'])
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id+' must be unique');
  assert.match(html,/<section class="panel quick-panel"><h2>현재 투자현황<\/h2><label id="pilotLedgerAccountLabel" for="pilotLedgerAccount">/);
  assert.match(html,/onlineAccountLedger\?\.ledger\|\|null/);
- assert.match(html,/byId\('pilotLedgerAccount'\)\.addEventListener\('change'/);
+ assert.match(html,/byId\('pilotLedgerAccount'\)\.addEventListener\('change',applySelectedOnlineAccountToSimulator\)/);
+ assert.doesNotMatch(html,/id="loadPilotLedgerCloud"/);
+ assert.match(html,/function applySelectedOnlineAccountToSimulator\(\)/);
+ assert.match(html,/portfolioState\.positions=opening\.positions\.map/);
+ assert.match(html,/onlineAccountLedger\.userId!==activeSimulatorOwnerId/);
 });
 test('only authenticated TEST owner ledger is read for automatic opening',()=>{
  assert.match(html,/async function refreshOnlineAccountLedger\(\)/);

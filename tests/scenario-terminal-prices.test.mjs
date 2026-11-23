@@ -21,7 +21,7 @@ test('legacy scenarios use common price and different trades retain independent 
 });
 test('UI includes independent strategy price editor and visible holdings',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
- assert.match(html,/class="secondary-settings" open/);
+ assert.match(html,/const priceDetails=document.createElement\('details'\)/);
  assert.match(html,/이 전략만의 최종 가정 주가/);
  assert.match(html,/terminalPrices:validateScenarioPrices/);
 });

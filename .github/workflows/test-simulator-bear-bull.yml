@@ -1,0 +1,30 @@
+name: TEST virtual trade bear/bull target prices (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'virtual-trade-simulator.html'
+      - 'src/simulator/bear-bull-target-prices.mjs'
+      - 'tests/simulator-bear-bull-targets.test.mjs'
+      - 'tests/test-simulator-online-account-auto.test.mjs'
+      - '.github/workflows/test-simulator-bear-bull.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  forecast-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JS module syntax
+        run: node --check src/simulator/bear-bull-target-prices.mjs
+      - name: Verify forecast price selection, account auto-application and existing strategy compatibility
+        run: |
+          node --test tests/simulator-bear-bull-targets.test.mjs tests/test-simulator-online-account-auto.test.mjs tests/scenario-terminal-prices.test.mjs tests/simulator-price-details-collapse.test.mjs tests/simulator-desktop-layout.test.mjs tests/simulator-staged-switch-regression.test.mjs tests/scenario-backup.test.mjs
+      - name: Read-only TEST boundary
+        run: echo "No Supabase writes, no Pages deployment, no merge in this workflow"
