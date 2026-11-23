@@ -1013,7 +1013,7 @@ function renderEditor(){
   remove.addEventListener('click',()=>{if(!confirm('이 전략과 포함된 거래 전체를 편집 화면에서 삭제하시겠습니까? 저장된 전략은 유지됩니다.'))return;strategyState.splice(si,1);simulatorInputRevision++;invalidateCalculatedResults();renderEditor();scheduleWorkingDraft();});
   management.append(remove);card.append(management);
   const columns=document.createElement('div');columns.className='trade-head';
-  for(const label of ['구분','종목코드','수량 (주)','체결가 ($)','']){const cell=document.createElement('span');cell.textContent=label;columns.append(cell);}
+  for(const label of ['구분','종목코드','수량 (주)','체결가 산정 · USD','']){const cell=document.createElement('span');cell.textContent=label;columns.append(cell);}
   card.append(columns);
   const reserveBar=document.createElement('div');reserveBar.className='buy-helper';
   const reserveLabel=document.createElement('label');reserveLabel.textContent='마지막 매수 후 남길 목표 현금 (USD)';
@@ -1036,14 +1036,52 @@ function renderEditor(){
      const symbols=[...new Set([...portfolioState.positions.map(p=>p.ticker),...portfolioState.prices.map(p=>p.ticker),...[...document.querySelectorAll('#managedSymbolOptions option')].map(p=>p.value),trade.ticker].map(t=>String(t||'').trim().toUpperCase()).filter(Boolean))].sort();
      for(const symbol of symbols){const option=document.createElement('option');option.value=symbol;option.textContent=symbol;select.append(option);}
      select.value=String(trade.ticker||'').trim().toUpperCase();
-     select.addEventListener('change',()=>{trade.ticker=select.value;});
+     select.addEventListener('change',()=>{
+       trade.ticker=select.value;
+       const phase=row.querySelector('[data-field="priceBasis"]');
+       if(phase&&phase.value!=='manual'){
+        trade.priceBasis='manual';phase.value='manual';
+        byId('editorStatus').textContent='종목을 변경했습니다. 기존 체결가는 유지되며 새 종목의 하락·상승 예상가를 다시 선택하세요.';
+       }
+      });
      const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;fieldWrap.append(select);row.append(fieldWrap);
      continue;
     }
     input.type='number';input.min='0';input.step='any';
     input.placeholder=label;input.value=trade[key]??(key==='fee'?0:'');
-    input.addEventListener('input',()=>{trade[key]=key==='ticker'?input.value:input.value===''?'':Number(input.value);});
-    const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;fieldWrap.append(input);row.append(fieldWrap);
+    input.addEventListener('input',()=>{
+      trade[key]=input.value===''?'':Number(input.value);
+      if(key==='price'){
+       const selector=row.querySelector('[data-field="priceBasis"]');
+       if(selector&&selector.value!=='manual'){trade.priceBasis='manual';selector.value='manual';}
+      }
+     });
+    const fieldWrap=document.createElement('div');fieldWrap.className='mobile-field';fieldWrap.dataset.label=label;
+     if(key==='price'){
+      fieldWrap.classList.add('trade-price-wrap');
+      const phase=document.createElement('select');phase.dataset.field='priceBasis';
+      phase.setAttribute('aria-label','체결가 산정 방식');
+      for(const [value,name] of [['manual','직접 입력'],['bear','하락 예상가 적용'],['bull','상승 예상가 적용']]){
+       const option=document.createElement('option');option.value=value;option.textContent=name;phase.append(option);
+      }
+      phase.value=['bear','bull'].includes(trade.priceBasis)?trade.priceBasis:'manual';
+      phase.addEventListener('change',()=>{
+       if(phase.value==='manual'){trade.priceBasis='manual';return;}
+       try{
+        const resolved=assignForecastToTrade(trade,portfolioState.prices,phase.value);
+        trade.price=resolved.price;trade.priceBasis=resolved.priceBasis;
+        input.value=String(resolved.price);
+        byId('editorStatus').textContent=trade.ticker+' '+(phase.value==='bear'?'하락':'상승')+
+         ' 목표가 USD '+fmt(resolved.price)+'을(를) 이 거래 단계에 적용했습니다.';
+        syncAdvanced();simulatorInputRevision++;invalidateCalculatedResults();scheduleWorkingDraft();
+       }catch(error){
+        phase.value=['bear','bull'].includes(trade.priceBasis)?trade.priceBasis:'manual';
+        byId('editorStatus').textContent='목표가 적용 실패: '+error.message+' · 기존 체결가는 유지했습니다.';
+       }
+      });
+      fieldWrap.append(phase);
+     }
+     fieldWrap.append(input);row.append(fieldWrap);
    }
    const actions=document.createElement('div');actions.className='trade-actions mobile-field';actions.dataset.label='거래 순서 · 삭제';
    for(const [direction,label] of [[-1,'위로'],[1,'아래로']]){
