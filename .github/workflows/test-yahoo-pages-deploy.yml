@@ -31,7 +31,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/pilot-phase1-market-trends-20261123
+          ref: feature/pilot-virtual-trade-bear-bull-20261123
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
