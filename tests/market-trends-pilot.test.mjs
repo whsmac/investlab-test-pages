@@ -5,7 +5,7 @@ import {MARKET_INDICATORS,MARKET_SECTORS,MARKET_SYMBOLS,parseMarketTrendsReport,
 import {loadPublishedMarketTrends} from "../src/market/load-published-market-trends.mjs";
 
 const today=new Date("2026-11-23T00:00:00Z");
-const rows=[...Array.from({length:260},(_,i)=>({ticker:"XLK",source_symbol:"XLK",trading_date:new Date(Date.UTC(2025,11,1+i)).toISOString().slice(0,10),close_price:String(100+i),currency:"USD",price_basis:"unadjusted_close"})),
+const rows=[...Array.from({length:260},(_,i)=>({ticker:"XLK",source_symbol:"XLK",trading_date:new Date(Date.UTC(2026,10,23-(259-i))).toISOString().slice(0,10),close_price:String(100+i),currency:"USD",price_basis:"unadjusted_close"})),
  ...Array.from({length:35},(_,i)=>({ticker:"^TNX",source_symbol:"^TNX",trading_date:new Date(Date.UTC(2026,9,20+i)).toISOString().slice(0,10),close_price:"42.4",currency:"USD",price_basis:"unadjusted_close"}))];
 const fresh=rows.filter(r=>r.trading_date<="2026-11-23");
 const report={mode:"MARKET_TRENDS_REVIEW_ONLY",source:"Yahoo Finance",database_writes:0,writes_performed:0,generated_on:"2026-11-23",observations:fresh,row_count:fresh.length};
