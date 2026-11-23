@@ -2,6 +2,9 @@ name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # Runs on default branch; reads reviewed TEST feature code. No Supabase access.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/test-yahoo-pages-deploy.yml']
   schedule:
     - cron: '35 23 * * 1-5'
 
@@ -26,7 +29,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/test-navigation-20261112
+          ref: feature/pilot-phase1-market-trends-20261123
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -40,12 +43,71 @@ jobs:
           python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
           python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
+      - name: Fetch official SEC quarterly data when a contact identity is configured
+        # Secret value is not stored in source, logs, or the public site.
+        env:
+          INVESTLAB_SEC_USER_AGENT: ${{ secrets.INVESTLAB_SEC_USER_AGENT }}
+        run: |
+          if [ -n "$INVESTLAB_SEC_USER_AGENT" ]; then
+            if ! python scripts/sec_quarterly_financials_test.py --output "${RUNNER_TEMP}/sec-quarterly-financials.json"; then
+              rm -f "${RUNNER_TEMP}/sec-quarterly-financials.json"
+              echo "::warning::SEC collection unavailable; continue with verified price data only"
+            fi
+          else
+            echo "::notice::SEC contact identity is not configured; official financial collection skipped"
+          fi
+      - name: Fetch real NASDAQ 100 and S&P 500 index levels (optional, read-only)
+        run: |
+          if ! python -m scripts.yahoo_market_indices_test --output "${RUNNER_TEMP}/market-index-benchmarks.json"; then
+            rm -f "${RUNNER_TEMP}/market-index-benchmarks.json"
+            echo "::warning::Benchmark source unavailable; do not substitute ETF or stale levels"
+          fi
+      - name: Probe daily market trends for 11 sectors and three indicators (optional, read-only)
+        run: |
+          if ! python -m scripts.yahoo_market_trends_test --output "${RUNNER_TEMP}/market-trends-public-review.json"; then
+            rm -f "${RUNNER_TEMP}/market-trends-public-review.json"
+            echo "::warning::TEST market trends source unavailable; do not publish invented prices"
+          fi
       - name: Stage reviewed public-only data
         run: python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-staged
       - name: Assemble and validate complete TEST website (no partial publishing)
         run: |
           python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-staged --output "${RUNNER_TEMP}/investlab-test-pages-site"
           python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+          if [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
+            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
+            cp "${RUNNER_TEMP}/sec-quarterly-financials.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
+            # SEC figures are optional preliminary context. If only those figures
+            # fail site validation, discard them and revalidate the complete
+            # five-year Yahoo site; never publish a partial or unchecked bundle.
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::Unverified SEC quarterly preview excluded; validated Yahoo site retained"
+            fi
+          fi
+      - name: Stage and validate optional index data
+        run: |
+          if [ -s "${RUNNER_TEMP}/market-index-benchmarks.json" ]; then
+            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
+            cp "${RUNNER_TEMP}/market-index-benchmarks.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/market-index-benchmarks.json"
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/market-index-benchmarks.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::Invalid index asset excluded from TEST website"
+            fi
+          fi
+      - name: Stage and validate optional market trends observations
+        run: |
+          if [ -s "${RUNNER_TEMP}/market-trends-public-review.json" ]; then
+            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
+            cp "${RUNNER_TEMP}/market-trends-public-review.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/market-trends-public-review.json"
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/market-trends-public-review.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::Invalid market trends observations excluded from TEST site"
+            fi
+          fi
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload complete validated site to GitHub Pages
