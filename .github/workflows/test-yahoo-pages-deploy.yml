@@ -31,7 +31,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/pilot-simulator-strategy-workflow-20261123
+          ref: feature/company-chart-tooltip-finance-responsive-20261124
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
