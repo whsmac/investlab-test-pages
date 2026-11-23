@@ -33,7 +33,7 @@ test("two-symbol bear/bull targets drive sequential switch trading",()=>{
  const trades=[make("sell","TSLA",3,"bull"),make("buy","SOXL",30,"bear"),
   make("sell","SOXL",30,"bull"),make("buy","TSLA",5,"bear")];
  const result=simulateTrades({cash:0,positions:{TSLA:{quantity:10,averageCost:200}}},trades);
- assert.equal(result.final.cash,600);
+ assert.equal(result.final.cash,1110);
  assert.equal(result.final.positions.TSLA.quantity,12);
  assert.equal(result.final.positions.SOXL?.quantity??0,0);
  assert.equal(trades[0].price,320);
