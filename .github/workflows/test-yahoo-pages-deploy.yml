@@ -1,6 +1,7 @@
 name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # Runs on default branch; reads reviewed TEST feature code. No Supabase access.
 # 2026-11-23: Refresh TEST pages after fixing ^TNX Yahoo yield percent (do not divide by 10).
+# Re-run from a fresh Actions run to avoid duplicate github-pages artifact from prior failed retry.
 on:
   workflow_dispatch:
   push:
