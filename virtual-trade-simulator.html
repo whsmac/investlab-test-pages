@@ -974,6 +974,29 @@ const presets={
  dip:{name:'하락장 재매수',trades:[{side:'sell',ticker:'TSLA',quantity:5,price:200},{side:'buy',ticker:'TSLA',quantity:10,price:100}]}
 };
 const clone=o=>JSON.parse(JSON.stringify(o));
+// Creating a new strategy changes only the editor. Already saved strategies,
+// account opening, forecasts and actual ledgers are never overwritten.
+byId('newScenario').addEventListener('click',()=>{
+ const hasEdits=strategyState.some(item=>item.trades.length>0||
+  item.name!=='가상 거래 1'||Number(item.targetCash||0)>0||
+  Object.keys(item.terminalPrices||{}).length>0);
+ if(hasEdits&&!confirm('새 전략을 작성하면 현재 편집 중인 전략이 빈 전략으로 바뀝니다. 저장하지 않은 거래는 사라질 수 있습니다. 기존 저장 전략과 계좌 시작값은 그대로 유지합니다. 계속하시겠습니까?'))return;
+ let saved={};
+ try{saved=getSavedScenarios();}catch(error){
+  byId('scenarioStorageStatus').textContent='새 전략 준비 실패: 저장 전략 목록을 확인하세요. '+error.message;return;
+ }
+ const used=new Set([...Object.keys(saved),...strategyState.map(item=>item.name)]);
+ const base='새 가상거래 전략';
+ let name=base,count=2;
+ while(used.has(name))name=base+' '+count++;
+ strategyState=[{name,trades:[],terminalPrices:{}}];
+ lastDeletedTrade=null;showTradeUndo();
+ simulatorInputRevision++;invalidateCalculatedResults();
+ renderEditor();scheduleWorkingDraft();updateStrategySaveState();
+ byId('scenarioStorageStatus').textContent='새 전략 편집을 시작했습니다. 거래를 추가하고 하단 계산·저장 버튼을 이용하세요. 기존 저장 전략은 유지됩니다.';
+ editor.querySelector('.strategy-name')?.focus({preventScroll:true});
+ editor.scrollIntoView({block:'start',behavior:'auto'});
+});
 function readStrategies(){
  const cards=[...editor.querySelectorAll('.strategy-card')];
  if(!cards.length)throw Error('전략을 하나 이상 추가하세요.');
