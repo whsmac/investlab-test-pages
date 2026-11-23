@@ -1,6 +1,8 @@
 // TEST Pilot market-trends: all data is public daily close, no database calls.
+// Yahoo Finance ^TNX already reports the ten-year Treasury yield in percent
+// (e.g. 4.912 means 4.912%). Do NOT divide by 10.
 export const MARKET_INDICATORS=Object.freeze([
- {ticker:"^TNX",title:"미국 10년물 국채금리",unit:"%",divisor:10,decimals:2},
+ {ticker:"^TNX",title:"미국 10년물 국채금리",unit:"%",divisor:1,decimals:2},
  {ticker:"GC=F",title:"금 선물",unit:"USD/트로이온스",divisor:1,decimals:0},
  {ticker:"CL=F",title:"WTI 원유 선물",unit:"USD/배럴",divisor:1,decimals:2}
 ]);
