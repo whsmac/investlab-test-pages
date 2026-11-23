@@ -111,5 +111,8 @@ test("latest TEST UI contains controls, dates, extrema, tooltips and financial c
  assert.match(page,/high\.close/);
  assert.match(page,/low\.close/);
  assert.match(page,/index\?"주가 · 선택기간 시작 100 기준":"주가 · USD 종가"/);
- assert.match(page,/delta\("qoq"\),delta\("yoy"\)/);
+ assert.match(page,/\["전분기",r\.qoq\]/);
+ assert.match(page,/\["전년동기",r\.yoy\]/);
+ assert.match(page,/class="finance-table"/);
+ assert.doesNotMatch(page,/<th>전분기 변화\(QoQ\)<\/th>/);
 });
