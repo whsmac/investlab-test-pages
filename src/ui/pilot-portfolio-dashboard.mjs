@@ -17,44 +17,71 @@ function pricedSummary(ledger,prices,fx){
  return {value,cost:pricedCost,profit,rate,missing,complete,usdCash:ledger.cash.USD||0,krwCash:ledger.cash.KRW||0,
   totalKrw:complete&&Number.isFinite(fx)?(value+ledger.cash.USD)*fx+ledger.cash.KRW:null};
 }
-export function renderPortfolioDashboard({data,prices,fx,fxDate,selected}){
+export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,displayCurrency='KRW'}){
+ const mode=displayCurrency==='USD'?'USD':'KRW';
+ const haveFx=Number.isFinite(fx)&&fx>0;
  const all=projectLedger(data,'ALL'),allSummary=pricedSummary(all,prices,fx);
- const krwValue=(v)=>Number.isFinite(v)?'₩ '+krw(v):'—';
- const profitKrw=allSummary.complete&&Number.isFinite(fx)?allSummary.profit*fx:null;
- $('dashboardTotal').textContent=krwValue(allSummary.totalKrw);
- $('dashboardGain').textContent=profitKrw===null?'—':(profitKrw>=0?'+':'−')+'₩ '+krw(Math.abs(profitKrw));
- $('dashboardGain').className=profitKrw===null?'':profitKrw>=0?'positive':'negative';
+ const format=(n)=>!Number.isFinite(n)?'—':mode==='KRW'?'KRW '+krw(n):'USD '+fmt(n);
+ const signedMoney=(n)=>!Number.isFinite(n)?'—':(n<0?'−':'+')+(mode==='KRW'?'KRW '+krw(Math.abs(n)):'USD '+fmt(Math.abs(n)));
+ const fromUsd=(n)=>mode==='USD'?n:haveFx?n*fx:null;
+ const combinedCash=(summary)=>mode==='KRW'
+  ?haveFx?summary.usdCash*fx+summary.krwCash:summary.usdCash===0?summary.krwCash:null
+  :haveFx?summary.usdCash+summary.krwCash/fx:summary.krwCash===0?summary.usdCash:null;
+ const portfolioTotal=(summary)=>{
+  if(!summary.complete)return null;
+  const cash=combinedCash(summary),stocks=fromUsd(summary.value);
+  return Number.isFinite(cash)&&Number.isFinite(stocks)?stocks+cash:null;
+ };
+ const gain=(summary)=>summary.complete?fromUsd(summary.profit):null;
+ document.querySelector('.total-label').textContent='전체 투자자산 ('+mode+')';
+ $('dashboardTotal').textContent=format(portfolioTotal(allSummary));
+ const totalGain=gain(allSummary);
+ $('dashboardGain').textContent=signedMoney(totalGain);
+ $('dashboardGain').className=totalGain===null?'':totalGain>=0?'positive':'negative';
  $('dashboardRate').textContent=allSummary.complete?pct(all.cost?100*allSummary.profit/all.cost:0):'—';
  $('dashboardRate').className=allSummary.complete?(allSummary.profit>=0?'positive':'negative'):'';
- $('dashboardStocks').textContent=allSummary.complete&&Number.isFinite(fx)?krwValue(allSummary.value*fx):'—';
- $('dashboardCash').textContent=Number.isFinite(fx)?krwValue((allSummary.usdCash*fx)+allSummary.krwCash):'—';
+ $('dashboardStocks').textContent=allSummary.complete?format(fromUsd(allSummary.value)):'—';
+ $('dashboardCash').textContent=format(combinedCash(allSummary));
  $('dashboardCashBreakdown').textContent='USD '+fmt(allSummary.usdCash)+' · KRW '+krw(allSummary.krwCash);
- $('dashboardFx').textContent=Number.isFinite(fx)?'적용환율 1 USD = '+fmt(fx,2)+' KRW'+(fxDate?' · '+fxDate+' 기준':''):'원화 총자산 계산을 위해 공개 환율을 불러오는 중이거나 조회에 실패했습니다.';
+ $('dashboardFx').textContent=haveFx?'적용환율 1 USD = '+fmt(fx,2)+' KRW'+(fxDate?' · '+fxDate+' 기준':''):
+  '환율 미조회: 통화 전환이 필요한 금액은 표시하지 않습니다. (원본 통화 금액은 유지)';
+ for(const id of ['accountTotalHeader','accountGainHeader']){
+  const el=$(id);if(el)el.textContent=(id==='accountTotalHeader'?'총자산':'평가손익')+' ('+mode+')';
+ }
+ for(const [id,label] of [['holdingAverageHeader','평균단가'],['holdingCloseHeader','최근 종가'],
+  ['holdingValueHeader','평가금액'],['holdingGainHeader','평가손익']]){
+  const el=$(id);if(el)el.textContent=label+' '+mode;
+ }
  const accountBody=$('dashboardAccounts');accountBody.replaceChildren();
  for(const a of data.accounts){
   const ledger=projectLedger(data,a.id),p=pricedSummary(ledger,prices,fx),tr=document.createElement('tr');
   const name=cell(tr,a.name);name.style.fontWeight='650';
   if(a.id===selected)tr.classList.add('selected-row');
-  cell(tr,krwValue(p.totalKrw));
-  const gain=p.complete&&Number.isFinite(fx)?p.profit*fx:null;
-  cell(tr,gain===null?'—':(gain>=0?'+':'−')+'₩ '+krw(Math.abs(gain)),gain===null?'':gain>=0?'positive':'negative');
+  cell(tr,format(portfolioTotal(p)));
+  const accountGain=gain(p);
+  cell(tr,signedMoney(accountGain),accountGain===null?'':accountGain>=0?'positive':'negative');
   cell(tr,p.complete?pct(ledger.cost?100*p.profit/ledger.cost:0):'—',p.profit>=0?'positive':'negative');
   tr.style.cursor='pointer';tr.title='클릭하면 이 계좌의 종목만 표시합니다.';
   tr.onclick=()=>{$('account').value=a.id;$('account').dispatchEvent(new Event('change'));};
   accountBody.append(tr);
  }
  const totalRow=document.createElement('tr');totalRow.className='total-row';
- cell(totalRow,'전체 합계');cell(totalRow,krwValue(allSummary.totalKrw));
- cell(totalRow,profitKrw===null?'—':(profitKrw>=0?'+':'−')+'₩ '+krw(Math.abs(profitKrw)),profitKrw===null?'':profitKrw>=0?'positive':'negative');
+ cell(totalRow,'전체 합계');cell(totalRow,format(portfolioTotal(allSummary)));
+ cell(totalRow,signedMoney(totalGain),totalGain===null?'':totalGain>=0?'positive':'negative');
  cell(totalRow,allSummary.complete?pct(all.cost?100*allSummary.profit/all.cost:0):'—',allSummary.profit>=0?'positive':'negative');
  accountBody.append(totalRow);
  const chosen=projectLedger(data,selected),holdingsBody=$('dashboardHoldings');holdingsBody.replaceChildren();
  for(const h of chosen.holdings){
-  const tr=document.createElement('tr'),q=prices.get(h.symbol),valid=fresh(q),gain=valid?h.qty*Number(q.close)-h.cost:null,rate=valid&&h.cost>0?100*gain/h.cost:null;
-  cell(tr,h.symbol,'stock-label');cell(tr,fmt(h.qty,6));cell(tr,fmt(h.averageCost,4));
-  cell(tr,valid?fmt(q.close,4):'—');cell(tr,valid?fmt(h.qty*q.close):'—');
-  cell(tr,gain===null?'—':signed(gain),gain===null?'':gain>=0?'positive':'negative');
-  cell(tr,rate===null?'—':pct(rate),rate===null?'':gain>=0?'positive':'negative');
+  const tr=document.createElement('tr'),q=prices.get(h.symbol),valid=fresh(q),
+   value=valid?h.qty*Number(q.close):null,gainUsd=valid?value-h.cost:null,
+   rate=valid&&h.cost>0?100*gainUsd/h.cost:null;
+  cell(tr,h.symbol,'stock-label');cell(tr,fmt(h.qty,6));
+  cell(tr,format(fromUsd(h.averageCost)));
+  cell(tr,valid?format(fromUsd(Number(q.close))):'—');
+  cell(tr,valid?format(fromUsd(value)):'—');
+  const convertedGain=gainUsd===null?null:fromUsd(gainUsd);
+  cell(tr,signedMoney(convertedGain),convertedGain===null?'':gainUsd>=0?'positive':'negative');
+  cell(tr,rate===null?'—':pct(rate),rate===null?'':gainUsd>=0?'positive':'negative');
   holdingsBody.append(tr);
  }
  if(!chosen.holdings.length){const tr=document.createElement('tr'),td=cell(tr,'선택한 계좌에 보유종목이 없습니다.');td.colSpan=7;holdingsBody.append(tr);}
