@@ -61,7 +61,7 @@ def validate_preview(site: Path):
         if not candidate.is_file():
             continue
         relative = candidate.relative_to(site)
-        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json"}:
+        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json"}:
             continue
         if not public_asset(relative):
             raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
@@ -114,6 +114,34 @@ def validate_preview(site: Path):
             coverage[ticker].append(day)
         if any(len(days)<20 for days in coverage.values()):
             raise ValueError("Incomplete benchmark coverage")
+    optional_trends = site / "data/market-trends-public-review.json"
+    if optional_trends.exists():
+        if optional_trends.is_symlink() or optional_trends.stat().st_size > 2_000_000:
+            raise ValueError("Unsafe market trends file")
+        trends = json.loads(optional_trends.read_text(encoding="utf-8"))
+        rows = trends.get("observations")
+        if (trends.get("mode") != "MARKET_TRENDS_REVIEW_ONLY"
+            or trends.get("source") != "Yahoo Finance"
+            or trends.get("database_writes") != 0 or trends.get("writes_performed") != 0
+            or not isinstance(rows,list) or not 1 <= len(rows) <= 20000
+            or trends.get("row_count") != len(rows)):
+            raise ValueError("Invalid market trends metadata")
+        from math import isfinite
+        from scripts.yahoo_market_trends_test import SYMBOLS
+        seen=set()
+        for row in rows:
+            sym=row.get("ticker")
+            day=row.get("trading_date")
+            try:
+                close=float(row.get("close_price"))
+                if date.fromisoformat(day).isoformat()!=day:raise ValueError("Not ISO")
+            except (TypeError,ValueError):
+                raise ValueError("Invalid trends close or date")
+            if (sym not in SYMBOLS or row.get("source_symbol") != sym
+                or row.get("currency") != "USD" or row.get("price_basis") != "unadjusted_close"
+                or not isfinite(close) or close <= 0 or (sym,day) in seen):
+                raise ValueError("Invalid market trends observation")
+            seen.add((sym,day))
     data = json.loads((site / "data/yahoo-public-review.json").read_text(encoding="utf-8"))
     if (data.get("mode") != "REVIEW_ONLY" or data.get("source") != "Yahoo Finance"
             or data.get("database_insert_authorized") is not False
@@ -155,7 +183,12 @@ def validate_preview(site: Path):
         target = site / import_path.removeprefix("./")
         if not target.is_file():
             raise ValueError("Broken TEST portfolio module import: " + import_path)
+    if not (site / "market-trends.html").is_file():
+        raise ValueError("Pilot market-trends.html missing")
+    if 'href="./market-trends.html"' not in (site / "index.html").read_text(encoding="utf-8"):
+        raise ValueError("Market Trends home navigation missing")
     checked_modules = check_transitive_modules(site, "test-my-portfolio-ledger.html") + check_transitive_modules(site, "test-yahoo-price-review.html")
+    checked_modules += check_transitive_modules(site, "market-trends.html")
     # The live Pilot company chart imports an additional alignment module.
     # Validate its full import chain before publishing the TEST site.
     if (site / "company-investment-analysis.html").is_file():

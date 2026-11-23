@@ -10,9 +10,11 @@
 #dashboardNotice{font-size:13px;color:#e6c78d;line-height:1.6}#dashboardFx{font-size:12px;color:#bccce4}
 @media(max-width:750px){.hero{padding:15px}.portfolio-grid{gap:8px}.hero .metric{padding:12px}.hero .metric strong{font-size:17px}.portfolio-section-head label{width:100%}.portfolio-section-head select{flex:1;min-width:0}}
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
-<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
+<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상매매 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
 <div id="portfolioPrivate" hidden><p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
-<section class="hero" aria-label="전체 투자자산"><span class="total-label">전체 투자자산 (KRW 환산)</span><div id="dashboardTotal" class="total-amount">—</div>
+<section class="hero" aria-label="전체 투자자산">
+<div class="portfolio-section-head" style="margin-bottom:12px"><strong>전체 투자자산</strong><label for="displayCurrency">표시 통화 <select id="displayCurrency" aria-label="내 투자현황 표시 통화"><option value="KRW" selected>KRW (원화)</option><option value="USD">USD (미국 달러)</option></select></label></div>
+<span class="total-label">전체 투자자산 (KRW)</span><div id="dashboardTotal" class="total-amount">—</div>
 <div class="portfolio-grid">
 <div class="metric"><span>총 평가손익</span><strong id="dashboardGain">—</strong></div>
 <div class="metric"><span>총 평가수익률</span><strong id="dashboardRate">—</strong></div>
@@ -20,10 +22,10 @@
 <div class="metric"><span>현금잔고</span><strong id="dashboardCash">—</strong><span id="dashboardCashBreakdown">USD 0 · KRW 0</span></div>
 </div><p id="dashboardFx">환율 조회 중…</p></section>
 <section class="panel portfolio-tables"><h2>계좌별 투자현황</h2>
-<div class="scroll"><table><thead><tr><th>계좌</th><th>총자산 (KRW)</th><th>평가손익 (KRW)</th><th>수익률</th></tr></thead><tbody id="dashboardAccounts"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>계좌</th><th id="accountTotalHeader">총자산 (KRW)</th><th id="accountGainHeader">평가손익 (KRW)</th><th>수익률</th></tr></thead><tbody id="dashboardAccounts"></tbody></table></div>
 <p class="muted">계좌를 클릭하면 아래에서 해당 계좌의 보유종목을 확인할 수 있습니다.</p></section>
 <section class="panel portfolio-tables"><div class="portfolio-section-head"><h2>보유종목별 투자현황</h2><label>계좌 선택 <select id="account"><option value="ALL">전체 계좌</option></select></label></div>
-<div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th>평균단가 USD</th><th>최근 종가 USD</th><th>평가금액 USD</th><th>평가손익 USD</th><th>수익률</th></tr></thead><tbody id="dashboardHoldings"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th id="holdingAverageHeader">평균단가 KRW</th><th id="holdingCloseHeader">최근 종가 KRW</th><th id="holdingValueHeader">평가금액 KRW</th><th id="holdingGainHeader">평가손익 KRW</th><th>수익률</th></tr></thead><tbody id="dashboardHoldings"></tbody></table></div>
 <p id="dashboardNotice" role="status">시세를 확인 중입니다.</p></section>
 </div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
@@ -65,7 +67,7 @@ $('coverage').textContent=!pricesLoaded?'주가를 조회해야 평가액을 계
 $('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){const tr=document.createElement('tr');for(const v of [r.symbol,fmt(r.sellCount,0),fmt(r.proceedsUsd),fmt(r.disposedCostUsd),fmt(r.realizedUsd)])cell(tr,v);$('realizedSymbols').append(tr);}
 $('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
 $('status').textContent=data.accounts.length?'저장된 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건 기준입니다.':'등록된 계좌가 없습니다. 계좌·매매 기록 관리에서 등록하세요.';
- renderPortfolioDashboard({data,prices,fx:portfolioFx,fxDate:portfolioFxDate,selected});
+ renderPortfolioDashboard({data,prices,fx:portfolioFx,fxDate:portfolioFxDate,selected,displayCurrency:$('displayCurrency').value});
 }
 async function diagnoseConnection(){
  const output=$('diagnostics'),lines=['TEST 연결 진단 (읽기 전용)'];
@@ -251,6 +253,7 @@ async function loadPrices(){
   if(pricePending){pricePending=false;void loadPrices();}
  }
 }
+$('displayCurrency').addEventListener('change',()=>render());
 account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;render();$('priceStatus').textContent='계좌 변경 · 해당 계좌 가격 재조회 필요';void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 // Use the authenticated TEST ledger as the display source; never overwrite unsynced local entries.
 let displayedCloudLedgerRevision=null,displayedCloudLedgerOwnerId=null;
