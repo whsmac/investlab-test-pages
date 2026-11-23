@@ -1,0 +1,48 @@
+name: TEST Pilot phase-1 Market Trends and Currency (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'market-trends.html'
+      - 'my-portfolio.html'
+      - 'index.html'
+      - 'company-investment-analysis.html'
+      - 'src/market/market-trends-model.mjs'
+      - 'src/market/load-published-market-trends.mjs'
+      - 'src/ui/pilot-portfolio-dashboard.mjs'
+      - 'scripts/yahoo_market_trends_test.py'
+      - 'scripts/validate_yahoo_test_site_preview.py'
+      - 'tests/market-trends-pilot.test.mjs'
+      - 'tests/portfolio-display-currency.test.mjs'
+      - '.github/workflows/test-pilot-phase1-market-trends.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate JavaScript modules and safe page imports
+        run: |
+          node --check src/ui/pilot-portfolio-dashboard.mjs
+          node --check src/market/market-trends-model.mjs
+          node --check src/market/load-published-market-trends.mjs
+          python -m py_compile scripts/yahoo_market_trends_test.py scripts/validate_yahoo_test_site_preview.py
+      - name: Run Pilot market-trends, currency, price-comparison and regression checks
+        run: |
+          node --test tests/market-trends-pilot.test.mjs tests/portfolio-display-currency.test.mjs tests/company-chart-phase1.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-financial-overlay.test.mjs tests/company-online-price-first.test.mjs
+      - name: Offline public feed validation
+        run: python -m unittest discover -s tests -p 'test_market_trends_collector.py' -v
+      - name: Confirm isolated Pilot review boundary
+        run: echo "No deployment, Supabase write, or PR merge in validation"
