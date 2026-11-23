@@ -18,7 +18,7 @@ export function forecastSnapshot(prices){
   const ticker=String(row?.ticker||"").trim().toUpperCase();
   if(!SYMBOL.test(ticker))continue;
   const bear=validForecastPrice(row.bearPrice)?Number(row.bearPrice):null;
-  const bull=validForecastPrice(row.bullPrice)?Number(row.bullPrice):null;
+  const bull=validForecastPrice(row.bullPrice)?Number(row.bullPrice):(row.bullPrice===undefined&&validForecastPrice(row.price)?Number(row.price):null);
   if(bear===null&&bull===null)continue;
   result[ticker]={...(bear===null?{}:{bear}),...(bull===null?{}:{bull})};
  }
