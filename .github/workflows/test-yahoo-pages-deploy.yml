@@ -59,6 +59,12 @@ jobs:
             rm -f "${RUNNER_TEMP}/market-index-benchmarks.json"
             echo "::warning::Benchmark source unavailable; do not substitute ETF or stale levels"
           fi
+      - name: Probe daily market trends for 11 sectors and three indicators (optional, read-only)
+        run: |
+          if ! python -m scripts.yahoo_market_trends_test --output "${RUNNER_TEMP}/market-trends-public-review.json"; then
+            rm -f "${RUNNER_TEMP}/market-trends-public-review.json"
+            echo "::warning::TEST market trends source unavailable; do not publish invented prices"
+          fi
       - name: Stage reviewed public-only data
         run: python -m scripts.stage_yahoo_test_pages_asset --source yahoo-public-review.json --directory yahoo-staged
       - name: Assemble and validate complete TEST website (no partial publishing)
@@ -86,6 +92,17 @@ jobs:
               rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/market-index-benchmarks.json"
               python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
               echo "::warning::Invalid index asset excluded from TEST website"
+            fi
+          fi
+      - name: Stage and validate optional market trends observations
+        run: |
+          if [ -s "${RUNNER_TEMP}/market-trends-public-review.json" ]; then
+            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
+            cp "${RUNNER_TEMP}/market-trends-public-review.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/market-trends-public-review.json"
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/market-trends-public-review.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::Invalid market trends observations excluded from TEST site"
             fi
           fi
       - name: Configure GitHub Pages
