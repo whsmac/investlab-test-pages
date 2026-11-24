@@ -1,0 +1,24 @@
+name: TEST SEC offline evidence and coverage audit (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/sec_fsds_evidence_audit.py'
+      - 'scripts/sec_fsds_quarterly_review.py'
+      - 'tests/test_sec_fsds_evidence_audit.py'
+      - '.github/workflows/test-sec-fsds-evidence-audit.yml'
+permissions:
+  contents: read
+jobs:
+  offline-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m py_compile scripts/sec_fsds_evidence_audit.py scripts/sec_fsds_quarterly_review.py
+          python -m unittest discover -s tests -p 'test_sec*.py' -v

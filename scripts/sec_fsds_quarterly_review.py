@@ -4,6 +4,7 @@ import argparse
 import calendar
 import csv
 import io
+import hashlib
 import json
 import os
 import re
@@ -133,6 +134,13 @@ def scan_archive(path, as_of):
     return [(key, values, url) for key, values in facts.items()]
 
 
+def _hash_stream(stream):
+    h = hashlib.sha256()
+    for chunk in iter(lambda: stream.read(1024*1024), b""):
+        h.update(chunk)
+    return h.hexdigest()
+
+
 def build_preview(paths, as_of):
     paths = list(paths)
     if not paths or len({Path(p).stem for p in paths}) != len(paths):
@@ -156,7 +164,7 @@ def build_preview(paths, as_of):
             return None
         filed,acc,tag,_,url,fy,fq = sorted(group,key=lambda x:x[4])[0]
         return next(iter(vals)), {"accession":acc,"tag":tag,"filed":filed.isoformat(),
-            "archive_url":url,"period_end":end.isoformat(),"qtrs":qtrs,
+            "archive_url":url,"period_end":end.isoformat(),"qtrs":qtrs,"value_usd":str(next(iter(vals))),
             "filing_url":f"https://www.sec.gov/Archives/edgar/data/{int(ISSUERS[ticker][0])}/{acc.replace('-','')}/"}
     rows = []
     for ticker,end in sorted({(k[0],k[1]) for k in candidates}):
@@ -189,7 +197,12 @@ def build_preview(paths, as_of):
     # Coverage is per metric; actual filing quarter is distinct from archive quarter.
     coverage={t:{f:sum(r["ticker"]==t and r[f] is not None for r in rows)
                  for f in (*FIELDS.values(),"operating_margin_pct")} for t in ISSUERS}
-    return {"format":"INVESTLAB_SEC_FSDS_REVIEW_V1","source":"SEC Financial Statement Data Sets",
+    archive_manifest = {}
+    for path in paths:
+        with Path(path).open("rb") as stream:
+            digest = hashlib.file_digest(stream,"sha256").hexdigest() if hasattr(hashlib,"file_digest") else _hash_stream(stream)
+        archive_manifest[Path(path).stem] = {"sha256":digest,"bytes":Path(path).stat().st_size}
+    return {"archive_manifest":archive_manifest,"format":"INVESTLAB_SEC_FSDS_REVIEW_V1","source":"SEC Financial Statement Data Sets",
             "as_of":as_of.isoformat(),"archives":sorted(Path(p).stem for p in paths),
             "status":"review_only_not_filing_reconciled","database_writes":0,
             "coverage":coverage,"rows":rows}
