@@ -60,7 +60,14 @@ let db={version:1,accounts:[],entries:[]};
 try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.version===1&&Array.isArray(x.accounts)&&Array.isArray(x.entries))db=x;}catch{}
 const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 const val=id=>$(id).value.trim(),num=id=>Number(val(id)),msg=s=>$('message').textContent=s;
-const save=(sync=true)=>{localStorage.setItem(KEY,JSON.stringify(db));render();if(sync)queueAutomaticCloudSave();};
+const save=(sync=true)=>{
+ localStorage.setItem(KEY,JSON.stringify(db));render();
+ if(sync){
+  if(cloud&&cloudUser)cloudStatus('이 기기 저장 완료 · TEST 서버 자동 저장 진행 중… 다른 모듈은 서버 저장 후 동기화됩니다.');
+  else cloudStatus('이 기기에만 저장됨 · TEST 로그인/서버 연결 상태를 확인하세요. 다른 기기에는 아직 반영되지 않았습니다.');
+  queueAutomaticCloudSave();
+ }
+};
 // Validate every account chronologically, including future effects of backdated edits.
 
 let editingId=null;

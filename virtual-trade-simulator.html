@@ -66,7 +66,7 @@
 <body><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html" aria-current="page">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><details style="margin:0 0 14px;padding:10px 14px;border:1px solid #34425c;border-radius:10px"><summary style="cursor:pointer;color:#b4c1d6">개발용 점검 도구</summary><button id="legacyScenarioPreviewButton" type="button">기존 전략 중복 저장 항목 점검 (읽기 전용)</button><p id="legacyScenarioPreviewStatus" class="hint" role="status">가상 거래 단계만 변환 가능성 확인 · 기존 전략·원장 변경 없음</p></details><h1>가상거래 시뮬레이터</h1><p>하락장 재매수·종목 전환과 상승장 단계별 매도를 시험합니다. 기존 포트폴리오 보유정보를 읽기 전용으로 불러와 가상 거래에 사용합니다. 실제 포트폴리오와 매매원장은 변경하지 않습니다.</p>
 <details class="panel secondary-settings" style="margin-bottom:16px"><summary>기존 포트폴리오 종목 선택 · 연결 상태</summary><p class="hint" id="managedSymbolStatus">종목 목록 확인 중…</p><p id="savedQuoteStatus" class="hint" role="status"></p><button type="button" id="refreshManagedSymbols" style="max-width:240px">종목 목록 새로고침</button><datalist id="managedSymbolOptions"></datalist><p class="hint">이 화면은 기존 종목관리 정보를 읽기만 합니다. 종목 등록·수정은 기존 종목관리에서 수행하세요. 다른 도메인이나 기기의 목록은 자동 연결되지 않습니다.</p></details>
 <div class="layout">
-<section class="panel quick-panel"><h2>현재 투자현황</h2><label id="pilotLedgerAccountLabel" for="pilotLedgerAccount">계좌 기준</label><select id="pilotLedgerAccount" style="width:100%;padding:10px;margin:7px 0"><option value="ALL">전체 계좌</option></select><p id="onlineLedgerPreviewStatus" class="hint" role="status">TEST 서버의 최신 계좌·보유종목·현금을 자동 확인합니다.</p><p id="pilotLedgerLoadStatus" class="hint" role="status">저장된 임시작업은 자동으로 덮어쓰지 않습니다.</p><div id="compactPortfolioOverview" style="overflow-x:auto"></div><p class="hint compact-price-note">현재 주가는 TEST 서버 또는 자동수집된 최근 USD 종가를 사용합니다. 실시간 체결가는 아니며 최종 가정 주가는 오른쪽 가상 거래에만 적용됩니다.</p><span id="currentQuotesStatus" class="hint" aria-live="polite">최근 종가 자동 조회 준비 중</span><details class="secondary-settings"><summary>원장 연결·보유정보 다시 가져오기 (고급)</summary><input id="cash" type="hidden" value="0"><div id="positionEditor" hidden></div><p class="hint">시작 현금과 보유종목은 위 현재 투자현황과 동일한 원장 기준값을 사용합니다. 이 화면에서 별도로 입력하지 않습니다.</p><details><summary>계좌별 초기잔고 검토 파일에서 가져오기 (오프라인)</summary><p class="hint">계좌별 배정·취득원가를 확인하고 저장한 원장 대조 JSON 파일을 선택하세요. 이 브라우저에서만 시작 보유정보를 변경하며, 서버에 저장하지 않습니다.</p><input id="accountOpeningFile" type="file" accept=".json,application/json"><label for="accountOpeningSelect">가져올 계좌</label><select id="accountOpeningSelect" multiple size="4" style="width:100%;padding:10px"></select><p class="hint">Ctrl(Windows) 또는 Command(Mac)를 누르고 여러 계좌를 선택할 수 있습니다. 동일 종목은 수량가중평균 취득단가로 합산합니다.</p><button id="compareAccountOpenings" type="button">개별 계좌·전체 합산 비교</button><button id="compareAccountScenarios" type="button">현재 전략을 계좌별로 비교 계산</button><div id="accountScenarioComparison" style="overflow-x:auto"></div><div id="accountOpeningComparison" style="overflow-x:auto"></div><button id="loadAccountOpening" type="button">선택 계좌를 시뮬레이터 시작값에 반영</button><p id="accountOpeningStatus" role="status" class="hint"></p></details><button type="button" id="loadPilotLedgerPositions">브라우저 원장 보유·현금 가져오기 (오프라인)</button><button type="button" id="loadPortfolioPositions">현재 포트폴리오 보유정보 다시 불러오기</button><p id="positionLoadStatus" class="hint" role="status"></p><button class="small-add" type="button" id="addPosition" hidden>+ 보유종목 추가</button><div id="initialValuation" hidden></div><details><summary>고급 입력: 보유정보·최종가격 JSON</summary><label for="positions">보유종목 JSON</label><textarea id="positions" spellcheck="false">{"TSLA":{"quantity":10,"averageCost":100}}</textarea><label for="terminal">최종 가정 주가 JSON</label><textarea id="terminal" spellcheck="false">{"TSLA":150,"SOXL":40}</textarea><button id="applyPortfolioJson" type="button">JSON 입력 반영</button></details><p id="portfolioStatus" class="hint" role="status"></p></details><p class="simple-caption"><strong>종목별 예상 목표 주가 (USD)</strong> · 하락장과 상승장 목표가를 각각 입력하세요. 거래 단계에서 선택하면 체결가에 적용됩니다. 상승 목표가는 최종 평가주가 기본값으로 사용합니다. 기존 최종가격은 상승 목표가에 이어 표시됩니다.</p><div id="priceEditor"></div><button class="small-add" type="button" id="addPrice">+ 종목 가격 추가</button></section>
+<section class="panel quick-panel"><h2>현재 투자현황</h2><label id="pilotLedgerAccountLabel" for="pilotLedgerAccount">계좌 기준</label><select id="pilotLedgerAccount" style="width:100%;padding:10px;margin:7px 0"><option value="ALL">전체 계좌</option></select><p id="onlineLedgerPreviewStatus" class="hint" role="status">TEST 서버의 최신 계좌·보유종목·현금을 자동 확인합니다.</p><p id="pilotLedgerLoadStatus" class="hint" role="status">저장된 임시작업은 자동으로 덮어쓰지 않습니다.</p><button id="syncPilotLedgerStart" type="button" hidden style="margin:6px 0 12px;background:#27416a;border:1px solid #6080ae">최신 원장 보유종목·현금 반영 (전략 유지)</button><div id="compactPortfolioOverview" style="overflow-x:auto"></div><p class="hint compact-price-note">현재 주가는 TEST 서버 또는 자동수집된 최근 USD 종가를 사용합니다. 실시간 체결가는 아니며 최종 가정 주가는 오른쪽 가상 거래에만 적용됩니다.</p><span id="currentQuotesStatus" class="hint" aria-live="polite">최근 종가 자동 조회 준비 중</span><details class="secondary-settings"><summary>원장 연결·보유정보 다시 가져오기 (고급)</summary><input id="cash" type="hidden" value="0"><div id="positionEditor" hidden></div><p class="hint">시작 현금과 보유종목은 위 현재 투자현황과 동일한 원장 기준값을 사용합니다. 이 화면에서 별도로 입력하지 않습니다.</p><details><summary>계좌별 초기잔고 검토 파일에서 가져오기 (오프라인)</summary><p class="hint">계좌별 배정·취득원가를 확인하고 저장한 원장 대조 JSON 파일을 선택하세요. 이 브라우저에서만 시작 보유정보를 변경하며, 서버에 저장하지 않습니다.</p><input id="accountOpeningFile" type="file" accept=".json,application/json"><label for="accountOpeningSelect">가져올 계좌</label><select id="accountOpeningSelect" multiple size="4" style="width:100%;padding:10px"></select><p class="hint">Ctrl(Windows) 또는 Command(Mac)를 누르고 여러 계좌를 선택할 수 있습니다. 동일 종목은 수량가중평균 취득단가로 합산합니다.</p><button id="compareAccountOpenings" type="button">개별 계좌·전체 합산 비교</button><button id="compareAccountScenarios" type="button">현재 전략을 계좌별로 비교 계산</button><div id="accountScenarioComparison" style="overflow-x:auto"></div><div id="accountOpeningComparison" style="overflow-x:auto"></div><button id="loadAccountOpening" type="button">선택 계좌를 시뮬레이터 시작값에 반영</button><p id="accountOpeningStatus" role="status" class="hint"></p></details><button type="button" id="loadPilotLedgerPositions">브라우저 원장 보유·현금 가져오기 (오프라인)</button><button type="button" id="loadPortfolioPositions">현재 포트폴리오 보유정보 다시 불러오기</button><p id="positionLoadStatus" class="hint" role="status"></p><button class="small-add" type="button" id="addPosition" hidden>+ 보유종목 추가</button><div id="initialValuation" hidden></div><details><summary>고급 입력: 보유정보·최종가격 JSON</summary><label for="positions">보유종목 JSON</label><textarea id="positions" spellcheck="false">{"TSLA":{"quantity":10,"averageCost":100}}</textarea><label for="terminal">최종 가정 주가 JSON</label><textarea id="terminal" spellcheck="false">{"TSLA":150,"SOXL":40}</textarea><button id="applyPortfolioJson" type="button">JSON 입력 반영</button></details><p id="portfolioStatus" class="hint" role="status"></p></details><p class="simple-caption"><strong>종목별 예상 목표 주가 (USD)</strong> · 하락장과 상승장 목표가를 각각 입력하세요. 거래 단계에서 선택하면 체결가에 적용됩니다. 상승 목표가는 최종 평가주가 기본값으로 사용합니다. 기존 최종가격은 상승 목표가에 이어 표시됩니다.</p><div id="priceEditor"></div><button class="small-add" type="button" id="addPrice">+ 종목 가격 추가</button></section>
 <section class="panel" id="portfolioBulkHandoff" hidden><h2>보유종목 일괄 가져오기 · 검토</h2><p class="notice">선택한 계좌 범위의 수량입니다. 취득단가는 각 종목마다 직접 입력해야 하며 실제 원장은 변경되지 않습니다.</p><label for="portfolioBulkAccountFile">계좌별 취득단가 검토 보고서 JSON (선택)</label><input id="portfolioBulkAccountFile" type="file" accept=".json,application/json"><button id="portfolioBulkAccountSuggest" type="button">계좌별 가중평균 단가 확인</button><p id="portfolioBulkAccountStatus" role="status"></p><label for="portfolioBulkLegacyFile">기존 포트폴리오 보유종목 JSON (선택)</label><input id="portfolioBulkLegacyFile" type="file" accept=".json,application/json"><button id="portfolioBulkSuggest" type="button">평균단가 일치 여부 확인</button><p id="portfolioBulkCostStatus" role="status">계좌별 취득단가는 검증되지 않았습니다. 파일의 종목과 수량이 정확히 일치하는 경우에만 참고값을 표시합니다.</p><div id="portfolioBulkRows"></div><div id="portfolioBulkMissingShortcuts" class="bulk-missing-shortcuts" role="group" aria-label="평균취득단가 미입력 종목 바로가기" hidden></div><div id="portfolioBulkReview" role="status" aria-live="polite"></div><div class="bulk-apply-panel" aria-label="시뮬레이터 반영 확인"><strong>검토 후 반영</strong><p id="portfolioBulkReady" role="status" aria-live="polite">선택 종목과 평균취득단가를 확인하세요.</p><label class="simple-row"><input id="portfolioBulkPricesApply" type="checkbox"> 가정주가도 함께 반영 (선택)</label><p id="portfolioBulkPricesStatus" role="status"></p><button id="portfolioBulkApply" type="button">선택 종목을 시뮬레이터에 반영</button><p id="portfolioBulkStatus" role="status"></p></div><div id="portfolioBulkPriceDifferences" role="status" aria-live="polite"></div></section>
 <section class="panel" id="testOnlineSimulatorImport" hidden><h2>TEST 온라인 원장 보유종목 가져오기</h2><p class="hint">TEST 원장에서 가져온 참고값입니다. 기존 시뮬레이터 입력값을 바꾸기 전 확인이 필요합니다. 실제 원장에는 쓰지 않습니다.</p><div id="testOnlineSimulatorPreview" role="status"></div><button id="testOnlineSimulatorApply" type="button">확인 후 시뮬레이터 시작값으로 적용</button><button id="testOnlineSimulatorCancel" type="button">가져오기 취소</button><p id="testOnlineSimulatorStatus" role="status"></p></section><section class="panel" id="portfolioHandoff" hidden><h2>My Portfolio에서 가져온 종목</h2><p id="portfolioHandoffSummary"></p><label for="portfolioHandoffCost">평균취득단가 (USD, 직접 확인 후 입력)</label><input id="portfolioHandoffCost" type="number" min="0" step="any" placeholder="평균취득단가 입력"><button id="portfolioHandoffApply" type="button">보유종목에 반영</button><p id="portfolioHandoffStatus" role="status"></p><p class="notice">이 화면의 변경은 가상 시뮬레이션에만 적용됩니다. 실제 원장이나 Supabase에는 반영하지 않습니다.</p></section>
 <section class="panel primary-trade-panel"><h2>가상 거래</h2><p class="hint">아래 전략 편집기에서 거래를 추가·삭제하고 가격과 수량을 직접 수정하세요.</p><div class="strategy-quickbar" role="group" aria-label="전략 새 작성 및 불러오기">
@@ -88,6 +88,7 @@
 import {compareScenarios} from './src/simulator/scenario-comparison.mjs';
 import {forecastTarget,forecastSnapshot,validateForecastSnapshot,restoreForecastSnapshot,assignForecastToTrade,validForecastPrice} from './src/simulator/bear-bull-target-prices.mjs';
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
+import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey,TEST_LEDGER_KEY,TEST_LEDGER_OWNER_KEY} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {previewBulkImportValuation} from './src/simulator/bulk-import-valuation.mjs';
 import {compareBulkAssumedPrices} from './src/simulator/bulk-price-difference.mjs';
@@ -843,6 +844,21 @@ function getOnlineAccountOpening(){
  byId('onlineLedgerPreviewStatus').textContent='TEST 서버 '+name+' · 보유 '+positions.length+'종목 · 현금 USD '+result.cash.USD.toLocaleString('ko-KR')+' · 갱신 '+(onlineAccountLedger.updatedAt||'미확인')+' · 읽기 전용';
  return {positions,cash:result.cash.USD,name};
 }
+function updateOnlineLedgerApplyPrompt(opening){
+ const button=byId('syncPilotLedgerStart');
+ if(!button)return;
+ if(!opening||!onlineAccountLedger||onlineAccountLedger.userId!==activeSimulatorOwnerId){
+  button.hidden=true;return;
+ }
+ const normalize=list=>(Array.isArray(list)?list:[]).map(p=>({
+  ticker:String(p.ticker||'').toUpperCase(),quantity:Number(p.quantity),averageCost:Number(p.averageCost)
+ })).sort((a,b)=>a.ticker.localeCompare(b.ticker));
+ const current=normalize(portfolioState.positions),fresh=normalize(opening.positions);
+ const equalPositions=JSON.stringify(current)===JSON.stringify(fresh);
+ const equalCash=Number.isFinite(Number(byId('cash').value))&&Math.abs(Number(byId('cash').value)-opening.cash)<1e-7;
+ button.hidden=equalPositions&&equalCash;
+}
+byId('syncPilotLedgerStart').addEventListener('click',applySelectedOnlineAccountToSimulator);
 function applySelectedOnlineAccountToSimulator(){
  const status=byId('pilotLedgerLoadStatus');
  try{
@@ -865,7 +881,7 @@ function applySelectedOnlineAccountToSimulator(){
   }
   testOnlineBaseline=opening.positions.map(p=>({...p}));
   currentQuotePrices.clear();currentQuoteDates.clear();
-  renderPortfolio();
+  renderPortfolio();updateOnlineLedgerApplyPrompt(opening);
   const added=ensureTradePrices();
   try{syncPortfolioJson();}catch{}
   scheduleWorkingDraft();void refreshCurrentQuotes();
@@ -885,12 +901,24 @@ async function refreshOnlineAccountLedger(){
   const {client,userId}=connection;
   const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',userId).maybeSingle();
   if(error)throw Error(error.message);
-  if(!remote){onlineAccountLedger=null;refreshPilotLedgerAccountOptions();byId('onlineLedgerPreviewStatus').textContent='TEST 서버에 본인 원장이 없습니다. 통합원장에서 등록하세요.';return;}
-  const ledger=remote.payload;
-  if(ledger?.version!==1||!Array.isArray(ledger.accounts)||!Array.isArray(ledger.entries))throw Error('서버 원장 형식 오류');
-  validateLedger(ledger);
   const verify=await client.auth.getUser();
   if(verify.error||verify.data?.user?.id!==userId)throw Error('조회 중 계정이 변경되었습니다.');
+  // Use the newer unsynced browser copy only when it belongs to this verified
+  // account AND its baseline equals the exact fetched server revision.
+  const localOwnerId=localStorage.getItem(TEST_LEDGER_OWNER_KEY);
+  const localRaw=localOwnerId===userId?localStorage.getItem(TEST_LEDGER_KEY):
+   localStorage.getItem(TEST_LEDGER_KEY+':'+userId);
+  const resolved=resolveVerifiedPilotLedger({
+   userId,remote,localOwnerId,localRaw,
+   baselineRaw:localStorage.getItem(cloudLedgerBaselineKey(userId))
+  });
+  if(!resolved.payload){
+   onlineAccountLedger=null;refreshPilotLedgerAccountOptions();
+   updateOnlineLedgerApplyPrompt(null);
+   byId('onlineLedgerPreviewStatus').textContent=resolved.notice;return;
+  }
+  const ledger=resolved.payload;
+  validateLedger(ledger); // Defense in depth for same-owner local drafts and SEC-independent server data.
   const changedUser=differentVerifiedUser(lastVerifiedOnlineUserId,userId);
   if(changedUser){
    onlineLedgerOwnerChanged=true;onlineLedgerUserEdited=true;
@@ -899,9 +927,10 @@ async function refreshOnlineAccountLedger(){
   }
   lastVerifiedOnlineUserId=userId;
   const firstRead=!onlineAccountLedger;
-  onlineAccountLedger={ledger,userId,updatedAt:remote.updated_at};
+  onlineAccountLedger={ledger,userId,updatedAt:resolved.source==='LOCAL_PENDING'?'이 기기 원장 · 서버 동기화 대기':remote.updated_at};
   refreshPilotLedgerAccountOptions();
   const opening=getOnlineAccountOpening();
+  byId('onlineLedgerPreviewStatus').textContent+=' · '+resolved.notice;
   // Never replace an existing draft, handoff, or in-progress edit on page entry.
   const explicitHandoff=new URLSearchParams(location.search).has('source')||Boolean(location.hash);
   if(mayAutoApplyTestLedger({
@@ -921,8 +950,9 @@ async function refreshOnlineAccountLedger(){
    scheduleWorkingDraft();void refreshCurrentQuotes();
    byId('pilotLedgerLoadStatus').textContent='첫 방문: TEST 원장 '+opening.name+'의 시작 보유·현금 자동 적용'+(missing?' · 가정주가 입력 필요':'')+' · 실제 원장 변경 없음';
   }else if(opening){
-   byId('pilotLedgerLoadStatus').textContent=onlineLedgerOwnerChanged?'TEST 로그인 계정 변경 · 기존 사용자 자료 분리 · 계좌를 직접 선택하면 새 시작값을 적용합니다.':'TEST 원장 자동 조회 완료 · 계좌를 선택하면 시작 보유·현금이 즉시 적용됩니다. 기존 전략/임시작업은 보존합니다.';
+   byId('pilotLedgerLoadStatus').textContent=onlineLedgerOwnerChanged?'TEST 로그인 계정 변경 · 이전 사용자 입력을 분리했습니다. 새 계좌를 직접 확인하세요.':'TEST 원장 조회 완료 · 현재 시작 보유자료와 차이가 있으면 [최신 원장 보유종목·현금 반영]을 누르세요. 기존 전략은 보존됩니다.';
   }
+  updateOnlineLedgerApplyPrompt(opening);
  }catch(e){byId('onlineLedgerPreviewStatus').textContent='TEST 온라인 원장 조회 실패: '+e.message+' · 현재 입력 유지';}
  finally{onlineLedgerBusy=false;}
 }
@@ -2034,8 +2064,14 @@ document.addEventListener('change',()=>{onlineLedgerUserEdited=true;},{capture:t
 window.addEventListener('pageshow',()=>{void refreshOnlineAccountLedger();});
 window.addEventListener('focus',()=>{void refreshOnlineAccountLedger();void loadScenariosOnline().catch(()=>{});});
 window.addEventListener('storage',event=>{
- if(['investlab_shared_data_auth_v1','investlab_shared_data_connection_v1'].includes(event.key)){void refreshOnlineAccountLedger();void loadScenariosOnline().catch(()=>{});}
+ if(['investlab_shared_data_auth_v1','investlab_shared_data_connection_v1'].includes(event.key)){
+  void refreshOnlineAccountLedger();void loadScenariosOnline().catch(()=>{});
+ }else if([TEST_LEDGER_KEY,TEST_LEDGER_OWNER_KEY].includes(event.key)||
+  (typeof event.key==='string'&&event.key.startsWith('investlab_pilot_ledger_cloud_base_v1:'))){
+  void refreshOnlineAccountLedger();
+ }
 });
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshOnlineAccountLedger();});
 setInterval(()=>{if(!document.hidden)void refreshOnlineAccountLedger();},15*60*1000);
 updateStrategySaveState();
 document.addEventListener('input',scheduleWorkingDraft);
