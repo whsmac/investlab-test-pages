@@ -9,7 +9,7 @@ from unittest.mock import patch
 from scripts.sec_fsds_quarterly_review import build_preview, zip_url, download_one
 
 SUB = ["adsh","cik","form","period","filed","fy","fp"]
-PRE = ["adsh","tag","version","stmt","inpth"]
+PRE = ["adsh","tag","version","stmt","inpth","plabel"]
 NUM = ["adsh","tag","version","ddate","qtrs","uom","coreg","segments","value"]
 REV = "RevenueFromContractWithCustomerExcludingAssessedTax"
 OP = "OperatingIncomeLoss"
@@ -25,8 +25,8 @@ def facts(sub,tag,qtrs,value,**changes):
     row.update(changes)
     return [row[k] for k in NUM]
 
-def make_zip(path,subs,nums,omit_segments=False):
-    pre = sorted({(r[0],r[1],r[2],"CF" if r[1]==CAP else "IS","0") for r in nums})
+def make_zip(path,subs,nums,omit_segments=False,productive_label="Purchases of property and equipment"):
+    pre = sorted({(r[0],r[1],r[2],"CF" if r[1] in (CAP,"PaymentsToAcquireProductiveAssets") else "IS","0",productive_label if r[1]=="PaymentsToAcquireProductiveAssets" else "") for r in nums})
     with zipfile.ZipFile(path,"w") as z:
         for name,header,rows in [("sub.txt",SUB,subs),("pre.txt",PRE,pre),("num.txt",NUM,nums)]:
             if omit_segments and name=="num.txt":
@@ -101,6 +101,17 @@ class TestFSDS(unittest.TestCase):
         other=submission(3,"20260630","20260725","Q2",cik=42)
         p=make_zip(self.dir/"2026q3.zip",[q,other],[facts(q,REV,1,25*B),facts(other,REV,1,99*B)])
         self.assertEqual(build_preview([p],ASOF)["rows"],[])
+
+    def test_observed_amazon_productive_assets_requires_exact_primary_label(self):
+        tag="PaymentsToAcquireProductiveAssets"
+        amzn=submission(1,"20260630","20260731","Q2",cik=1018724)
+        p=make_zip(self.dir/"2026q3.zip",[amzn],[facts(amzn,REV,1,200*B),facts(amzn,tag,1,54*B)])
+        self.assertEqual(build_preview([p],ASOF)["rows"][0]["capex_usd_bn"],54)
+        p=make_zip(p,[amzn],[facts(amzn,REV,1,200*B),facts(amzn,tag,1,54*B)],productive_label="Other productive assets")
+        self.assertIsNone(build_preview([p],ASOF)["rows"][0]["capex_usd_bn"])
+        other=submission(2,"20260630","20260731","Q2",cik=1318605)
+        p=make_zip(p,[other],[facts(other,REV,1,20*B),facts(other,tag,1,3*B)])
+        self.assertIsNone(build_preview([p],ASOF)["rows"][0]["capex_usd_bn"])
 
     def test_download_rejects_bad_quarter_or_missing_contact(self):
         with self.assertRaises(ValueError):
