@@ -8,6 +8,15 @@
 .portfolio-section-head{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
 .portfolio-section-head h2{margin:0}.portfolio-section-head label{display:flex;gap:10px;align-items:center}
 #dashboardNotice{font-size:13px;color:#e6c78d;line-height:1.6}#dashboardFx{font-size:12px;color:#bccce4}
+.portfolio-access{background:#172843;border-color:#5877a7;color:#e7efff}
+.portfolio-access strong{display:block;font-size:17px}
+.portfolio-access p{font-size:14px;line-height:1.7;color:#c6d7ef;margin:9px 0}
+.portfolio-access-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0 6px}
+.portfolio-access-actions a,.portfolio-access-actions button{display:inline-flex;justify-content:center;align-items:center;padding:11px 15px;min-height:44px;border-radius:9px;border:1px solid #789ad0;color:white;background:#315581;text-decoration:none;font:inherit;font-weight:650;cursor:pointer}
+.portfolio-access-actions button{background:#142a49}
+.portfolio-access-actions a:focus-visible,.portfolio-access-actions button:focus-visible{outline:2px solid #a9caff;outline-offset:2px}
+.portfolio-access-note{font-size:12px!important;color:#a8bad4!important}
+@media(max-width:500px){.portfolio-access-actions>a,.portfolio-access-actions button{flex:1 1 100%}}
 .allocation-panel{margin-top:16px}
 .allocation-title{margin:0 0 5px;font-weight:750}
 .allocation-intro{margin:3px 0 0}
@@ -29,6 +38,15 @@
 @media(max-width:750px){.hero{padding:15px}.portfolio-grid{gap:8px}.hero .metric{padding:12px}.hero .metric strong{font-size:17px}.portfolio-section-head label{width:100%}.portfolio-section-head select{flex:1;min-width:0}}
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
 <body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
+<section id="portfolioAccess" class="panel portfolio-access" aria-label="TEST 계정 로그인 및 투자현황 연결 안내" role="status">
+ <strong id="portfolioAccessTitle">TEST 계정 연결 확인</strong>
+ <p id="portfolioAccessStatus">이 브라우저에서 계정 인증을 확인하고 있습니다. 개인 원장은 로그인한 사용자에게만 표시됩니다.</p>
+ <div class="portfolio-access-actions">
+  <a href="./index.html#login" id="portfolioLoginLink">TEST 홈에서 로그인</a>
+  <button id="portfolioRetry" type="button">연결 상태 다시 확인</button>
+ </div>
+ <p class="portfolio-access-note">휴대폰·회사 PC·집 PC는 브라우저별로 한 번씩 로그인해야 합니다. 같은 TEST 계정을 사용하면 서버에 저장된 보유자료를 불러옵니다. 원장을 다시 입력하지 마세요.</p>
+</section>
 <div id="portfolioPrivate" hidden><p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
 <p id="portfolioSyncBanner" role="status" style="color:#c5d7f5;font-size:13px;padding:10px 12px;background:#172842;border:1px solid #415d86;border-radius:8px;">계좌별 원장 연결 상태 확인 중…</p>
 <section class="hero" aria-label="전체 투자자산">
@@ -78,6 +96,20 @@ const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_led
 let data={version:1,accounts:[],entries:[]}; // Never show unverified browser data to a signed-out visitor.
 const account=$('account');
 let portfolioFx=null,portfolioFxDate='';
+function setPortfolioAccessState(state,message){
+ const panel=$('portfolioAccess'),title=$('portfolioAccessTitle');
+ const status=$('portfolioAccessStatus');
+ const text={
+  checking:'TEST 계정 연결 확인',
+  login:'이 브라우저의 로그인이 필요합니다',
+  configuration:'TEST 연결 설정 확인 필요',
+  empty:'TEST 계정의 원장을 찾지 못했습니다',
+  error:'TEST 투자현황 조회 오류'
+ };
+ title.textContent=text[state]||'TEST 계정 연결 확인';
+ status.textContent=message||'TEST 계정 로그인 상태를 확인해 주세요.';
+ panel.hidden=state==='ready'||(state==='checking'&&!$('portfolioPrivate').hidden);
+}
 function refreshAccountOptions(){
  const current=account.value;
  account.replaceChildren();
@@ -326,12 +358,14 @@ async function refreshOnlineLedgerDisplay(){
  if(cloudLedgerBusy)return;
  cloudLedgerBusy=true;
  const status=$('cloudLedgerStatus');
+ setPortfolioAccessState('checking','같은 TEST 계정의 저장된 투자현황을 확인 중입니다…');
  try{
   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
   const url='https://gopofxyezhwpfxbecrxd.supabase.co';
   if(cfg.url!==url||typeof cfg.key!=='string'||!cfg.key||cfg.key.startsWith('sb_secret_')||cfg.key.toLowerCase().includes('service_role')){
    resetVisiblePortfolio();
    status.textContent='TEST 계정 미연결 · 기존 브라우저 원장 데이터는 보존했습니다';
+   setPortfolioAccessState('configuration','이 브라우저에는 아직 TEST 연결 설정이 없습니다. 위 [TEST 홈에서 로그인]을 눌러 같은 계정으로 로그인하면 연결할 수 있습니다.');
    return;
   }
   if(!window.supabase?.createClient)throw Error('Supabase 라이브러리 로딩 실패');
@@ -339,6 +373,7 @@ async function refreshOnlineLedgerDisplay(){
   const {data:auth,error:authError}=await client.auth.getUser();
   if(authError||!auth?.user?.id){
    resetVisiblePortfolio();status.textContent='TEST 계정 로그인이 필요합니다 · 이전 계정의 보유현황은 숨겼습니다';
+   setPortfolioAccessState('login','이 브라우저에는 로그인한 TEST 계정이 없습니다. 위 [TEST 홈에서 로그인]을 눌러 PC에서 사용하시는 계정과 동일한 계정으로 로그인해 주세요.');
    return;
   }
   const ownerId=auth.user.id,localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
@@ -358,7 +393,9 @@ async function refreshOnlineLedgerDisplay(){
   });
   if(!selected.payload){
    resetVisiblePortfolio();$('portfolioPrivate').hidden=false;
-   status.textContent=selected.notice;return;
+   status.textContent=selected.notice;
+   setPortfolioAccessState('empty','로그인은 확인했지만 이 계정에서 조회 가능한 원장이 없습니다. 다른 계정으로 로그인한 것은 아닌지 홈에서 확인하거나 [계좌·매매 기록 관리]의 서버 저장 상태를 확인해 주세요.');
+   return;
   }
   validateLedger(selected.payload);
   projectLedger(selected.payload,'ALL');
@@ -367,13 +404,16 @@ async function refreshOnlineLedgerDisplay(){
   if(displayedCloudLedgerRevision!==revision||displayedCloudLedgerOwnerId!==ownerId)
    usePortfolioDisplay(selected.payload,revision,ownerId);
   status.textContent=selected.notice;
+  setPortfolioAccessState('ready','');
  }catch(error){
   status.textContent='TEST 서버 원장 조회 실패: '+error.message+' · 기존 원장은 변경하지 않았습니다';
+  setPortfolioAccessState('error','개인 투자정보를 불러오는 데 실패했습니다. 아래 [연결 상태 다시 확인]을 눌러 보시고, 문제가 계속되면 TEST 홈에서 로그인 상태를 확인해 주세요. 기존 원장 데이터는 변경하지 않았습니다.');
  }finally{
   cloudLedgerBusy=false;
   $('portfolioSyncBanner').textContent=status.textContent;
  }
 }
+$('portfolioRetry').addEventListener('click',()=>{void refreshOnlineLedgerDisplay();});
 window.addEventListener('pageshow',()=>{void refreshOnlineLedgerDisplay();});
 window.addEventListener('storage',event=>{
  if(['investlab_shared_data_auth_v1','investlab_shared_data_connection_v1',KEY,LOCAL_OWNER_KEY].includes(event.key)||
@@ -406,4 +446,6 @@ async function refreshPortfolioFx(){
 window.addEventListener('pageshow',()=>{void refreshPortfolioFx();});
 
 setInterval(()=>{if(!document.hidden)refreshPortfolioQuotesIfConnected();},15*60*1000);
+// Explicit initial call also covers iOS in-app webviews that restore or delay pageshow.
+void refreshOnlineLedgerDisplay();
 </script></body></html>

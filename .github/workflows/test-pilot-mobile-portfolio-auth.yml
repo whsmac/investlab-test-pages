@@ -1,0 +1,26 @@
+name: TEST My Portfolio mobile authentication empty-state (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'my-portfolio.html'
+      - 'tests/pilot-mobile-portfolio-auth-empty-state.test.mjs'
+      - '.github/workflows/test-pilot-mobile-portfolio-auth.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-auth-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify mobile first visit, account isolation, and portfolio valuation
+        run: |
+          node --test tests/pilot-mobile-portfolio-auth-empty-state.test.mjs tests/pilot-portfolio-allocation-donut.test.mjs tests/portfolio-display-currency.test.mjs
+      - name: No TEST user data or Supabase modifications
+        run: echo "Read-only mobile sign-in guidance; existing server ledger and Draft PRs untouched"
