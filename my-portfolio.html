@@ -77,7 +77,7 @@
 <p class="muted">계좌를 클릭하면 아래에서 해당 계좌의 보유종목을 확인할 수 있습니다.</p></section>
 <section class="panel portfolio-tables"><div class="portfolio-section-head"><h2>보유종목별 투자현황</h2><span class="muted">위 자산 배분의 계좌 선택과 연동</span></div>
 <div class="scroll"><table><thead><tr><th>종목</th><th>보유수량</th><th id="holdingAverageHeader">평균단가 KRW</th><th id="holdingCloseHeader">최근 종가 KRW</th><th id="holdingValueHeader">평가금액 KRW</th><th id="holdingGainHeader">평가손익 KRW</th><th>수익률</th></tr></thead><tbody id="dashboardHoldings"></tbody></table></div>
-<p id="dashboardNotice" role="status">시세를 확인 중입니다.</p></section>
+<p id="dashboardNotice" role="status">시세를 확인 중입니다.</p></section><section class="panel"><h2>관심종목 · 거래이력종목</h2><p id="portfolioWatchSymbols" class="muted"></p><p id="portfolioPastSymbols" class="muted"></p><p class="muted">등록·삭제는 <a href="./pilot-ledger.html#watchManagement">계좌·매매 기록 관리</a>에서만 수행합니다. 거래이력은 실제 원장에서 자동 생성됩니다.</p></section>
 </div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
 <button id="diagnose" type="button"></button><p id="diagnostics"></p><button id="loadCloudLedger" type="button"></button><button id="compareCloudLedger" type="button"></button>
@@ -86,6 +86,7 @@
 </div>
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
+import {ledgerManagedSymbols} from './src/ledger/pilot-managed-symbols.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
@@ -123,6 +124,9 @@ const todayIso=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth
 const ageDays=date=>{const parsed=Date.parse(date+'T00:00:00Z');return Number.isFinite(parsed)?Math.max(0,Math.floor((Date.parse(todayIso()+'T00:00:00Z')-parsed)/86400000)):null;};
 const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
 function render(){const selected=account.value,summary=projectLedger(data,selected);
+const managed=ledgerManagedSymbols(data);
+$('portfolioWatchSymbols').textContent='관심종목: '+(managed.filter(m=>m.categories.includes('관심')).map(m=>m.ticker).join(' · ')||'없음');
+$('portfolioPastSymbols').textContent='거래이력종목: '+(managed.filter(m=>m.categories.includes('거래이력')).map(m=>m.ticker).join(' · ')||'없음');
 $('realized').textContent='USD '+fmt(summary.realizedUsd);$('sales').textContent=fmt(summary.sellCount,0);
 $('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
 $('holdings').replaceChildren();let marketValue=0,marketCost=0,pricedCount=0,staleCount=0;const missing=[];
