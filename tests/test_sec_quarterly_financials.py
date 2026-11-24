@@ -51,9 +51,10 @@ class SecQuarterlyTests(unittest.TestCase):
         self.assertTrue(sec.valid_sec_user_agent(
             "INVESTLAB Research contact@investlab.dev"))
 
-    def test_five_sec_issuers_and_no_unverified_spcx_facts(self):
-        self.assertEqual(set(sec.ISSUERS),{"MSFT","GOOGL","AMZN","META","TSLA"})
-        self.assertNotIn("SPCX",sec.ISSUERS)
+    def test_six_verified_sec_issuers_including_spacex(self):
+        self.assertEqual(set(sec.ISSUERS),{"MSFT","GOOGL","AMZN","META","TSLA","SPCX"})
+        self.assertEqual(sec.ISSUERS["SPCX"][0],"0001181412")
+        self.assertEqual(sec.ISSUERS["SPCX"][1],"RevenueFromContractWithCustomerExcludingAssessedTax")
 
     def test_quarterly_cash_capex_is_derived_from_matching_ytd_only(self):
         rows = sec.extract(sample_facts(),"PaymentsToAcquirePropertyPlantAndEquipment")
