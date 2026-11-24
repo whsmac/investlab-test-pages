@@ -1,3 +1,4 @@
+import {createTickerChartButton,isChartTicker} from './pilot-tradingview-chart.mjs';
 import {ledgerManagedSymbols} from '../ledger/pilot-managed-symbols.mjs';
 
 // Presentation helpers only. All edits go through the parent page's existing validator and save flow.
@@ -55,7 +56,7 @@ export function createLedgerUi({getDb,save,msg,accountMsg=msg,watchMsg=msg,onEdi
   const history=$('pastSymbolList');if(history)history.textContent=symbols('past').join(' · ')||'거래이력 없음';
   for(const ticker of Array.isArray(db.watchlist)?db.watchlist:[]){
    const chip=document.createElement('div');chip.className='account-chip';
-   const label=document.createElement('span');label.textContent=ticker;
+   const label=createTickerChartButton(ticker);
    const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
    remove.onclick=()=>{if(!confirm(ticker+' 관심종목을 삭제하시겠습니까?'))return;db.watchlist=db.watchlist.filter(x=>x!==ticker);save();watchMsg(ticker+' 관심종목을 삭제했습니다.');};
    chip.append(label,remove);root.append(chip);
@@ -79,8 +80,8 @@ export function createLedgerUi({getDb,save,msg,accountMsg=msg,watchMsg=msg,onEdi
    const tr=document.createElement('tr'),name=db.accounts.find(a=>a.id===e.accountId)?.name||'미확인';
    const rate=e.type==='FX'?effectiveRate(e.currency,e.amount,e.toCurrency,e.toAmount):null;
    const amount=e.type==='FX'?fmt(e.amount)+' → '+fmt(e.toAmount):(['OPEN','BUY','SELL'].includes(e.type)?'—':fmt(e.amount));
-   for(const val of [name+' / '+e.date,ledgerTypeNames[e.type]||e.type,e.symbol||'—',e.qty?fmt(e.qty,6):'—',e.price?fmt(e.price,4):'—',amount,e.type==='FX'?e.currency+' → '+e.toCurrency:e.currency,rate?fmt(rate,4)+' KRW/USD':'—']){
-    const td=document.createElement('td');td.textContent=val;tr.append(td);
+   for(const [i,val] of [name+' / '+e.date,ledgerTypeNames[e.type]||e.type,e.symbol||'—',e.qty?fmt(e.qty,6):'—',e.price?fmt(e.price,4):'—',amount,e.type==='FX'?e.currency+' → '+e.toCurrency:e.currency,rate?fmt(rate,4)+' KRW/USD':'—'].entries()){
+    const td=document.createElement('td');if(i===2&&isChartTicker(e.symbol))td.append(createTickerChartButton(e.symbol));else td.textContent=val;tr.append(td);
    }
    const td=document.createElement('td');
    const edit=document.createElement('button');edit.type='button';edit.textContent='수정';edit.style.width='auto';edit.style.marginRight='6px';edit.onclick=()=>onEdit(e);
