@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium} from 'playwright';
-import {widgetSymbol,chartFrameUrl,isChartTicker} from '../src/ui/pilot-tradingview-chart.mjs';
+import {widgetSymbol,chartFrameUrl,isChartTicker,constrainChartBounds} from '../src/ui/pilot-tradingview-chart.mjs';
 test('qualified security symbols and no ambiguous currency mapping',()=>{
  for(const [t,s] of Object.entries({TSLA:'NASDAQ:TSLA',TQQQ:'NASDAQ:TQQQ',BITU:'AMEX:BITU',USD:'AMEX:USD',SPCX:'NASDAQ:SPCX'})){
   assert.equal(widgetSymbol(t),s);const url=new URL(chartFrameUrl(t)),settings=JSON.parse(decodeURIComponent(url.hash.slice(1)));
@@ -11,6 +11,10 @@ test('qualified security symbols and no ambiguous currency mapping',()=>{
  }
  assert.equal(widgetSymbol('UNKNOWN'),null);assert.throws(()=>chartFrameUrl('UNKNOWN'));
  assert.equal(isChartTicker('<script>'),false);
+});
+test('chart geometry clamps oversized and offscreen positions, including narrow mobile',()=>{
+ assert.deepEqual(constrainChartBounds({width:1500,height:1000,left:-50,top:900},{width:390,height:844}),{width:374,height:828,left:8,top:8});
+ assert.deepEqual(constrainChartBounds({width:640,height:420,left:120,top:40},{width:1280,height:850}),{width:640,height:420,left:120,top:40});
 });
 test('all five pages wire the common popup without replacing comparison selectors',async()=>{
  for(const [file,marker] of [
@@ -52,6 +56,22 @@ test('sandboxed widget lazy-loads, closes, restores focus and uses external fall
    await iframe.contentFrame().locator('#mock-widget').waitFor();
    assert.equal(await iframe.contentFrame().locator('#mock-widget').textContent(),'ISOLATED');
    assert.equal(await iframe.contentFrame().locator('html').getAttribute('data-origin'),'https://www.tradingview-widget.com');
+   // Resize using the visible grip, then move using the title (including touch-sized viewport).
+   const grip=dialog.getByRole('button',{name:'차트 창 크기 조절'}),title=dialog.locator('h2');
+   const original=await dialog.boundingBox(),g=await grip.boundingBox();
+   await page.mouse.move(g.x+g.width/2,g.y+g.height/2);
+   await page.mouse.down();await page.mouse.move(g.x+g.width/2-(width===1280?200:25),g.y+g.height/2-140,{steps:8});await page.mouse.up();
+   const smaller=await dialog.boundingBox();assert.ok(smaller.width<original.width-10);assert.ok(smaller.height<original.height-100);
+   const beforeFrame=await iframe.boundingBox();assert.ok(beforeFrame.height<original.height);
+   const h=await title.boundingBox();await page.mouse.move(h.x+Math.min(h.width/2,60),h.y+h.height/2);
+   await page.mouse.down();await page.mouse.move(h.x+Math.min(h.width/2,60)+70,h.y+h.height/2+60,{steps:8});await page.mouse.up();
+   const moved=await dialog.boundingBox();assert.ok(moved.x>smaller.x+5||moved.y>smaller.y+5);assert.ok(moved.x>=7&&moved.y>=7&&moved.x+moved.width<=width-7&&moved.y+moved.height<=844-7);
+   assert.equal(widgetRequests,1,'geometry changes do not reload chart');
+   await page.setViewportSize({width:320,height:550});
+   const fitted=await dialog.boundingBox();assert.ok(fitted.x>=7&&fitted.y>=7&&fitted.x+fitted.width<=313&&fitted.y+fitted.height<=543);
+   await page.setViewportSize({width,height:844});
+   await dialog.getByRole('button',{name:'초기 크기'}).click();
+   const reset=await dialog.boundingBox();assert.ok(Math.abs(reset.width-original.width)<2&&Math.abs(reset.height-original.height)<2);
    await dialog.getByRole('button',{name:'차트 다시 불러오기'}).click();
    await iframe.contentFrame().locator('#mock-widget').waitFor();
    assert.equal(widgetRequests,2);
