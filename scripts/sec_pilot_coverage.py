@@ -7,7 +7,7 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-ISSUERS=("MSFT","GOOGL","AMZN","META","TSLA")
+ISSUERS=("MSFT","GOOGL","AMZN","META","TSLA","SPCX")
 MEASURES=("revenue_usd_bn","capex_usd_bn","operating_income_usd_bn","operating_margin_pct")
 FORMAT="INVESTLAB_SEC_QUARTERLY_PREVIEW_V1"
 def summarize(payload=None,today=None):
