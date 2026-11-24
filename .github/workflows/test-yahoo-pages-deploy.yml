@@ -1,6 +1,7 @@
 name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # Runs on default branch; reads reviewed TEST feature code. No Supabase access.
-# 2026-11-24: Refresh TEST Pages using verified 6-company SEC CIK map and fixed Phase-1 CI suite.
+# 2026-11-24: TEST-only SEC review snapshot release, CI 5/5 passed.
+# Previous publisher d48715afde75f9ac20d5a8ddddf59a2844599c71 / implementation b91c0d4fa8d4b501a19ee0315ec8419ca9a64387 retained for rollback.
 # 2026-11-23: Refresh TEST pages after fixing ^TNX Yahoo yield percent (do not divide by 10).
 # Re-run from a fresh Actions run to avoid duplicate github-pages artifact from prior failed retry.
 # 2026-11-24: Recheck SEC collection after repository secret was corrected (TEST only).
@@ -33,7 +34,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/pilot-cross-device-readonly-audit-20261124
+          ref: 04bfe22214697c3ad8777893bcf79f55c22a6b54
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -47,28 +48,12 @@ jobs:
           python -m scripts.check_yahoo_publication_preflight --candidate yahoo-price-review-candidate.json --report yahoo-publication-preflight.json
           python -m scripts.build_gated_yahoo_public_review --candidate yahoo-price-review-candidate.json --output yahoo-public-review.json
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
-      - name: Fetch official SEC quarterly data when a contact identity is configured
-        # Secret value is not stored in source, logs, or the public site.
-        env:
-          INVESTLAB_SEC_USER_AGENT: ${{ secrets.INVESTLAB_SEC_USER_AGENT }}
+      - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          if [ -n "$INVESTLAB_SEC_USER_AGENT" ]; then
-            echo "::notice::Private SEC identification was provided; checking official SEC Company Facts for six issuers"
-            if ! python scripts/sec_quarterly_financials_test.py --output "${RUNNER_TEMP}/sec-quarterly-financials.json"; then
-              if [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
-                python -c 'import json,re,sys; p=json.load(open(sys.argv[1])); print("SEC issuer error categories (no contact):", {t: ("HTTP "+m.group(1) if (m:=re.search(r"HTTP Error (\d{3})",e)) else ("No comparable quarterly facts" if "No comparable" in e else e.split(":",1)[0])) for t,e in p.get("errors",{}).items()})' "${RUNNER_TEMP}/sec-quarterly-financials.json"
-              fi
-              rm -f "${RUNNER_TEMP}/sec-quarterly-financials.json"
-              echo "::warning::SEC collection unavailable; continue with verified price data only"
-            elif [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
-              echo "::notice::SEC preliminary observations collected; still subject to site validation before publication"
-            fi
-          else
-            echo "::notice::SEC contact identity is not configured; official financial collection skipped"
-          fi
-      - name: Report SEC official quarterly coverage for 3y and 5y (TEST, read-only)
-        run: |
-          python -m scripts.sec_pilot_coverage --source "${RUNNER_TEMP}/sec-quarterly-financials.json" --output sec-pilot-coverage.json --summary "$GITHUB_STEP_SUMMARY"
+          test "$(git rev-parse HEAD)" = "04bfe22214697c3ad8777893bcf79f55c22a6b54"
+          test -s data/sec-financial-review-20261124.txt
+          echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
+          echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
       - name: Collect public BITU TQQQ USD ETF closes for complete Pilot valuation (optional)
         run: |
           if ! python -m scripts.portfolio_etf_quotes_test --output "${RUNNER_TEMP}/portfolio-etf-quotes.json"; then
@@ -93,18 +78,8 @@ jobs:
         run: |
           python -m scripts.assemble_yahoo_test_site_preview --repo . --staging yahoo-staged --output "${RUNNER_TEMP}/investlab-test-pages-site"
           python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
-          if [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
-            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
-            cp "${RUNNER_TEMP}/sec-quarterly-financials.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
-            # SEC figures are optional preliminary context. If only those figures
-            # fail site validation, discard them and revalidate the complete
-            # five-year Yahoo site; never publish a partial or unchecked bundle.
-            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
-              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-quarterly-financials.json"
-              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
-              echo "::warning::Unverified SEC quarterly preview excluded; validated Yahoo site retained"
-            fi
-          fi
+          test -s "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-financial-review-20261124.txt"
+          echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  ${RUNNER_TEMP}/investlab-test-pages-site/data/sec-financial-review-20261124.txt" | sha256sum -c -
       - name: Stage and validate optional index data
         run: |
           if [ -s "${RUNNER_TEMP}/market-index-benchmarks.json" ]; then
@@ -160,6 +135,6 @@ jobs:
             yahoo-publication-preflight.json
             yahoo-feed-coverage.json
             yahoo-public-review.json
-            sec-pilot-coverage.json
+            data/sec-financial-review-20261124.txt
           if-no-files-found: warn
           retention-days: 7
