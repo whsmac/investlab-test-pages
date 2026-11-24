@@ -55,6 +55,9 @@ jobs:
           if [ -n "$INVESTLAB_SEC_USER_AGENT" ]; then
             echo "::notice::Private SEC identification was provided; checking official SEC Company Facts for six issuers"
             if ! python scripts/sec_quarterly_financials_test.py --output "${RUNNER_TEMP}/sec-quarterly-financials.json"; then
+              if [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
+                python -c 'import json,re,sys; p=json.load(open(sys.argv[1])); print("SEC issuer error categories (no contact):", {t: ("HTTP "+m.group(1) if (m:=re.search(r"HTTP Error (\\d{3})",e)) else ("No comparable quarterly facts" if "No comparable" in e else e.split(":",1)[0])) for t,e in p.get("errors",{}).items()})' "${RUNNER_TEMP}/sec-quarterly-financials.json"
+              fi
               rm -f "${RUNNER_TEMP}/sec-quarterly-financials.json"
               echo "::warning::SEC collection unavailable; continue with verified price data only"
             elif [ -s "${RUNNER_TEMP}/sec-quarterly-financials.json" ]; then
