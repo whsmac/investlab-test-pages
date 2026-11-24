@@ -17,6 +17,7 @@ ISSUERS = {
     "AMZN": ("0001018724", "SalesRevenueNet"),
     "META": ("0001326801", "RevenueFromContractWithCustomerExcludingAssessedTax"),
     "TSLA": ("0001318605", "RevenueFromContractWithCustomerExcludingAssessedTax"),
+    "SPCX": ("0001181412", "RevenueFromContractWithCustomerExcludingAssessedTax"),
 }
 METRICS = {
     "revenue": "revenue_usd_bn",
