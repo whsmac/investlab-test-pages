@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/ui/pilot-tradingview-chart.mjs'
       - 'tests/pilot-tradingview-chart.browser.test.mjs'
+      - 'tests/pilot-tradingview-live-smoke.mjs'
       - '.github/workflows/test-pilot-tradingview-chart.yml'
 permissions:
   contents: read
@@ -22,3 +23,6 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.56.1
           npx playwright install --with-deps chromium
       - run: node --test tests/pilot-tradingview-chart.browser.test.mjs tests/pilot-ledger-usage-order.browser.test.mjs
+      - name: Actual public BITU chart rendering (external network diagnostic)
+        continue-on-error: true
+        run: node tests/pilot-tradingview-live-smoke.mjs
