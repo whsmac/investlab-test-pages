@@ -16,6 +16,7 @@ test('simulator runs save gate before localStorage write',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  const start=html.indexOf("byId('saveScenario').addEventListener");
  const review=html.indexOf('reviewLocalScenarioSave(strategies)',start);
- const write=html.indexOf('localStorage.setItem(SCENARIO_STORAGE_KEY',start);
+ const write=html.indexOf('localStorage.setItem(ownerStorageKey(SCENARIO_STORAGE_KEY)',start);
+ assert.match(html.slice(start,write),/requireActiveScenarioOwner\(\)/);
  assert.ok(start>0&&review>start&&write>review);
 });

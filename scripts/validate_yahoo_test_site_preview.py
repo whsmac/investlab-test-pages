@@ -77,7 +77,7 @@ def validate_preview(site: Path):
             or not rows or len(rows) > 300):
             raise ValueError("Invalid TEST SEC quarterly financial preview")
         for row in rows:
-            if (row.get("ticker") not in {"MSFT", "GOOGL", "AMZN", "META", "TSLA"}
+            if (row.get("ticker") not in {"MSFT", "GOOGL", "AMZN", "META", "TSLA", "SPCX"}
                 or row.get("status") != "SEC_XBRL_PRELIMINARY"
                 or not re.fullmatch(r"\d{4}-Q[1-4]", row.get("fiscal_period", ""))
                 or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", row.get("period_end", ""))
