@@ -1,0 +1,46 @@
+name: TEST Phase-1 SEC and CI readiness (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/sec_quarterly_financials_test.py'
+      - 'scripts/sec_pilot_coverage.py'
+      - 'tests/test_sec*.py'
+      - 'tests/test_price_yahoo_preview_validation.py'
+      - 'tests/test-local-scenario-save-gate.test.mjs'
+      - 'tests/test-scenario-storage-location.test.mjs'
+      - '.github/workflows/test-pilot-sec-ci-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sec-readiness-and-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate Python source code
+        run: |
+          python -m py_compile scripts/sec_quarterly_financials_test.py scripts/sec_pilot_coverage.py
+          python -m py_compile tests/test_sec_quarterly_financials.py tests/test_sec_pilot_coverage.py
+      - name: Verify official SEC XBRL transformations and coverage WITHOUT SEC network calls
+        run: |
+          python -m unittest discover -s tests -p 'test_sec*.py' -v
+          python -m unittest discover -s tests -p 'test_price_yahoo_preview_validation.py' -v
+      - name: Verify legacy scenario tests against owner-isolated saved strategies
+        run: |
+          node --test tests/test-local-scenario-save-gate.test.mjs tests/test-scenario-storage-location.test.mjs tests/simulator-bear-bull-targets.test.mjs tests/simulator-strategy-workflow.test.mjs
+      - name: SEC absent-contact fixture reports missing coverage, never fakes data
+        run: |
+          python -m scripts.sec_pilot_coverage --source /tmp/investlab-sec-not-configured.json --output /tmp/sec-pilot-coverage.json --summary "$GITHUB_STEP_SUMMARY"
+          test -s /tmp/sec-pilot-coverage.json
+          python -c 'import json; p=json.load(open("/tmp/sec-pilot-coverage.json")); assert p["status"] == "missing_contact_or_source" and p["database_writes"] == 0'
+      - name: Confirm TEST-only and no deployment
+        run: echo "No SEC external calls, no Supabase operations, no Pages deployment and no PR merge"
