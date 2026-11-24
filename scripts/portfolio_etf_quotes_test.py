@@ -79,6 +79,12 @@ def main():
             sources[ticker]={"status":"error"}
             print("ETF",ticker,"not available:",type(exc).__name__)
     if args.history_output:
+        # Fixed public comparison universe; never read or transmit a user's watchlist.
+        for ticker in ('QLD','SOXL','TSLL'):
+            try:
+                sources[ticker]=fetch_chart(ticker)
+            except (OSError,ValueError,KeyError,TypeError) as exc:
+                print('Optional historical ETF unavailable:',ticker,type(exc).__name__)
         from scripts.portfolio_history_public import write_history
         try:
             write_history(sources,args.history_output)
