@@ -71,7 +71,7 @@ test('both accounts are valued when all company and ETF closing prices are prese
   'holdingCloseHeader','holdingValueHeader','holdingGainHeader'];
  const nodes=new Map(ids.map(id=>[id,el()]));
  const prior=globalThis.document;
- globalThis.document={getElementById:id=>nodes.get(id),createElement:el,querySelector:selector=>selector==='.total-label'?nodes.get('total-label')||nodes.set('total-label',el()).get('total-label'):null};
+ globalThis.document={getElementById:id=>nodes.get(id),createElement:el,createElementNS:(_ns,tag)=>el(tag),querySelector:selector=>selector==='.total-label'?nodes.get('total-label')||nodes.set('total-label',el()).get('total-label'):null};
  try{
   renderPortfolioDashboard({data,prices,fx:1300,fxDate:'test',selected:'ALL',displayCurrency:'KRW'});
   const asset=(3*12.25+4*72.5+2*51.75+5*320+250)*1300;
