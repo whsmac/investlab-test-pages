@@ -36,3 +36,16 @@ export function mergeScenarioBackup(current,incoming,{overwrite=false}={}){
  validateScenarioBackup({format:FORMAT,version:1,scenarios:result});
  return result;
 }
+
+ // Capture the owner and the session generation before any asynchronous file read.
+ // A logout and login as the same account must invalidate the old operation too.
+export function captureBackupOwner(ownerId,generation){
+ if(typeof ownerId!=='string'||!ownerId||!Number.isSafeInteger(generation)||generation<0)
+  throw Error('TEST 로그인 후 백업 작업을 시작하세요.');
+ return Object.freeze({ownerId,generation});
+}
+export function assertBackupOwner(ticket,ownerId,generation,verifiedUserId){
+ if(!ticket||ticket.ownerId!==ownerId||ticket.generation!==generation||ticket.ownerId!==verifiedUserId)
+  throw Error('백업 작업 중 TEST 계정이 변경되었습니다. 파일을 다시 선택하고 시작하세요.');
+ return true;
+}
