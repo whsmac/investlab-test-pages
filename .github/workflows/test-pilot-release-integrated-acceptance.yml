@@ -1,0 +1,62 @@
+name: TEST published Pilot integrated acceptance (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'tests/pilot-release-integrated-acceptance.test.mjs'
+      - 'tests/test-pilot-browser-smoke.mjs'
+      - '.github/workflows/test-pilot-release-integrated-acceptance.yml'
+permissions:
+  contents: read
+jobs:
+  cross-module:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify cross-module projection, account isolation and virtual trades
+        run: node --test tests/pilot-release-integrated-acceptance.test.mjs tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-ledger-validation.test.mjs tests/pilot-portfolio-allocation-donut.test.mjs tests/pilot-cross-device-audit.test.mjs tests/test-simulator-ledger-session-safety.test.mjs tests/sec-static-snapshot.test.mjs
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Assemble disposable site using synthetic price fixtures and actual reviewed SEC asset
+        run: |
+          python - <<'PY'
+          import json,os
+          from datetime import date,timedelta
+          from pathlib import Path
+          from scripts.export_yahoo_public_review import build_public_snapshot
+          rows=[]
+          for i,t in enumerate(('MSFT','GOOGL','AMZN','META','TSLA','SPCX')):
+              d=date(2026,6,12) if t=='SPCX' else date(2021,11,22)
+              while d<=date(2026,11,23):
+                  if d.weekday()<5:rows.append({'ticker':t,'trading_date':d.isoformat(),'close_price':str(100+i*10+(d-date(2021,11,22)).days%37),'currency':'USD','price_basis':'unadjusted_close'})
+                  d+=timedelta(days=1)
+          snapshot=build_public_snapshot({'mode':'REVIEW_ONLY','source':'Yahoo Finance','database_insert_authorized':False,'writes_performed':0,'observations':rows})
+          Path(os.environ['RUNNER_TEMP'],'synthetic-browser-only-prices.json').write_text(json.dumps(snapshot))
+          PY
+          python -m scripts.stage_yahoo_test_pages_asset --source "$RUNNER_TEMP/synthetic-browser-only-prices.json" --directory "$RUNNER_TEMP/pilot-staged"
+          python -m scripts.assemble_yahoo_test_site_preview --repo . --staging "$RUNNER_TEMP/pilot-staged" --output "$RUNNER_TEMP/pilot-site"
+          python -m scripts.validate_yahoo_test_site_preview --site "$RUNNER_TEMP/pilot-site"
+      - name: Install browser test dependency
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Offline desktop and mobile browser smoke (network blocked)
+        env:
+          INVESTLAB_TEST_SITE: ${{ runner.temp }}/pilot-site
+        run: node --test tests/test-pilot-browser-smoke.mjs
