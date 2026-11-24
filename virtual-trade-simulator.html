@@ -614,7 +614,7 @@ function renderCompactPortfolioOverview(){
  const effective=effectiveSimulatorQuotes(),prices=new Map([...effective].map(([ticker,q])=>[ticker,q.close]));
  const hasCurrent=[...effective.values()].some(q=>q.kind==='current_quote');
  const quoteHeader=hasCurrent?'현재가 / 종가 USD':'최근 종가 USD';
- const quoteLabel=t=>{const q=effective.get(t),v=formatCompactQuote(q?.close);return hasCurrent&&q?v+(q.kind==='current_quote'?' (현재)':' (종가)'):v;};
+ const quoteLabel=t=>{const q=effective.get(t),v=formatCompactQuote(q?.close);return hasCurrent&&q?v+(q.kind==='current_quote'?' (현재 '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false})+' KST)':' (종가)'):v;};
  const rows=positions.map(p=>{
   const t=String(p.ticker).trim().toUpperCase(),qty=Number(p.quantity),cost=Number(p.averageCost),price=prices.get(t);
   return [t,formatPortfolioNumber(qty),quoteLabel(t),formatPortfolioNumber(cost,1),Number.isFinite(price)?fmt(Math.round(qty*price)):'—'];
@@ -965,7 +965,7 @@ async function refreshOnlineAccountLedger(){
    baselineRaw:localStorage.getItem(cloudLedgerBaselineKey(userId))
   });
   if(!resolved.payload){
-   onlineAccountLedger=null;refreshManagedSymbols();refreshPilotLedgerAccountOptions();
+   onlineAccountLedger=null;disconnectSimulatorQuotes();refreshManagedSymbols();refreshPilotLedgerAccountOptions();
    updateOnlineLedgerApplyPrompt(null);
    byId('onlineLedgerPreviewStatus').textContent=resolved.notice;return;
   }
