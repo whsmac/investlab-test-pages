@@ -82,7 +82,7 @@ def main():
     for r in result["issuers"]:
         summary.append(f"|{r['ticker']}|{r['quarters']}|{'확보' if r['covers_3y'] else '미확보'}|"+
                        f"{'확보' if r['covers_5y'] else '미확보'}|{r['earliest'] or '—'}|{r['latest'] or '—'}|")
-    summary.append("SPCX는 SEC 공식 XBRL 기업 매핑 확인 전까지 수집 대상이 아닙니다.")
+    summary.append("SPCX는 SEC CIK 0001181412로 확인되었으며, 상장 전 기간의 결측치는 추정하지 않습니다.")
     summary.append("SEC 연락처는 공개 사이트·로그·리포트에 출력하지 않습니다.")
     report="\n".join(summary)+"\n"
     if args.summary:
