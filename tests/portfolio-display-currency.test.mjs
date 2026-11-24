@@ -4,7 +4,8 @@ import {readFileSync} from "node:fs";
 import {renderPortfolioDashboard} from "../src/ui/pilot-portfolio-dashboard.mjs";
 
 class Element {
- constructor(){this.children=[];this.textContent="";this.style={};this.classList={add:()=>{}};this.value="ALL";}
+ constructor(){this.children=[];this.textContent="";this.style={};this.attributes={};this.classList={add:()=>{}};this.value="ALL";}
+ setAttribute(key,value){this.attributes[key]=String(value);}
  append(...nodes){this.children.push(...nodes);}
  replaceChildren(){this.children=[];}
  dispatchEvent(){}
