@@ -1,0 +1,21 @@
+name: TEST shared symbols and USD display (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'src/ledger/pilot-managed-symbols.mjs'
+      - 'tests/pilot-managed-symbols-usd-display.test.mjs'
+      - '.github/workflows/test-pilot-managed-symbols-usd-display.yml'
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/pilot-managed-symbols-usd-display.test.mjs tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-ledger-validation.test.mjs tests/pilot-release-integrated-acceptance.test.mjs
