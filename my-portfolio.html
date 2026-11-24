@@ -94,7 +94,7 @@
 <h3>포트폴리오 구성비 변화</h3><div id="historyWeights"></div>
 <h3>시장지수 대비 운용성과 (시작 100)</h3><div id="historyPerformance" data-title="시장지수 대비 운용성과"></div>
 <h3>고점 대비 낙폭</h3><div id="historyDrawdown" data-title="고점 대비 낙폭"></div>
-<h3>기간 내 매수·매도 내역</h3><div class="scroll"><table><thead><tr><th>날짜</th><th>종목</th><th>구분</th><th>수량</th><th>체결가 USD</th></tr></thead><tbody id="historyTrades"></tbody></table></div></section>
+<h3>종목별 보유수량 및 매매 시점</h3><div class="history-controls"><label>종목 <select id="historyTradeTicker"></select></label></div><div id="historyQuantities" data-title="보유수량 변화"></div><div id="historyTradePrices" data-title="주가와 매매시점"></div><p class="muted">초록점 매수 · 분홍점 매도 · 실제 원장 체결가</p><h3>환율 변화</h3><div id="historyFx" data-title="환율 변화"></div><h3>기간 내 매수·매도 내역</h3><div class="scroll"><table><thead><tr><th>날짜</th><th>종목</th><th>구분</th><th>수량</th><th>체결가 USD</th></tr></thead><tbody id="historyTrades"></tbody></table></div></section>
 </div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
 <button id="diagnose" type="button"></button><p id="diagnostics"></p><button id="loadCloudLedger" type="button"></button><button id="compareCloudLedger" type="button"></button>
@@ -127,7 +127,7 @@ function clearHistory(){
  $('asOfDate').value='';$('historyStart').value='';$('historyEnd').value='';
  $('asOfStatus').textContent='현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영';
  $('historyStatus').textContent='기간을 선택하세요.';
- for(const id of ['historyAssets','historyWeights','historyPerformance','historyDrawdown','historyTrades'])$(id).replaceChildren();
+ for(const id of ['historyAssets','historyWeights','historyPerformance','historyDrawdown','historyTrades','historyQuantities','historyTradePrices','historyFx','historyTradeTicker'])$(id).replaceChildren();
 }
 function historyReady(){return !!displayedCloudLedgerOwnerId&&!$('portfolioPrivate').hidden;}
 function setHistoryDates(){
