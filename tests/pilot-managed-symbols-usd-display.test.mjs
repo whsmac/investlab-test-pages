@@ -37,7 +37,7 @@ test('active modules consume one projection and legacy auto-import is disabled',
  assert.doesNotMatch(sim,/managedSymbols=readPortfolioSimulatorSnapshot/);
  assert.doesNotMatch(sim,/\nloadPortfolioPositions\(\);/);
  assert.match(ui,/ledgerManagedSymbols\(getDb\(\)\)/);
- assert.match(portfolio,/ledgerManagedSymbols\(data\)/);
+ assert.doesNotMatch(portfolio,/id="portfolioWatchSymbols"/);
  assert.match(ledgerPage,/id="pastSymbolList"/);
- assert.match(portfolio,/pilot-ledger\.html#watchManagement/);
+ assert.doesNotMatch(portfolio,/id="portfolioPastSymbols"/);
 });
