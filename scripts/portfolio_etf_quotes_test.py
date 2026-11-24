@@ -67,6 +67,7 @@ def build_snapshot(source,today=None):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--output",type=Path,required=True)
+    parser.add_argument("--history-output",type=Path)
     args=parser.parse_args()
     args.output.unlink(missing_ok=True)
     sources={}
@@ -77,6 +78,12 @@ def main():
         except (OSError,ValueError,KeyError,TypeError) as exc:
             sources[ticker]={"status":"error"}
             print("ETF",ticker,"not available:",type(exc).__name__)
+    if args.history_output:
+        from scripts.portfolio_history_public import write_history
+        try:
+            write_history(sources,args.history_output)
+        except (ValueError,OSError,KeyError,TypeError) as exc:
+            print("History unavailable:",type(exc).__name__)
     snapshot=build_snapshot(sources)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(snapshot,ensure_ascii=False,separators=(",",":"))+"\n",encoding="utf-8")

@@ -61,10 +61,16 @@ def validate_preview(site: Path):
         if not candidate.is_file():
             continue
         relative = candidate.relative_to(site)
-        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json", "data/portfolio-etf-quotes.json"}:
+        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json", "data/portfolio-etf-quotes.json", "data/portfolio-public-history.json"}:
             continue
         if not public_asset(relative):
             raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
+    history = site / "data/portfolio-public-history.json"
+    if history.exists():
+        if history.is_symlink() or history.stat().st_size > 1_000_000:
+            raise ValueError("Unsafe history asset")
+        from scripts.portfolio_history_public import verify_history
+        verify_history(json.loads(history.read_text(encoding="utf-8")))
     optional_etf = site / "data/portfolio-etf-quotes.json"
     if optional_etf.exists():
         if optional_etf.is_symlink() or optional_etf.stat().st_size > 8_000:
