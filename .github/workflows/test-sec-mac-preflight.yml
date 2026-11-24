@@ -1,0 +1,27 @@
+name: TEST SEC Mac connectivity probe offline checks (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/sec_mac_connection_probe.py'
+      - 'tests/test_sec_mac_connection_probe.py'
+      - '.github/workflows/test-sec-mac-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-probe-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate syntax and SEC response handling (offline fixtures only)
+        run: |
+          python -m py_compile scripts/sec_mac_connection_probe.py tests/test_sec_mac_connection_probe.py
+          python -m unittest discover -s tests -p 'test_sec_mac_connection_probe.py' -v
+      - name: Confirm no live request, secret access or site deployment
+        run: echo 'Only offline fixtures; no SEC traffic, personal user data, Supabase or Pages deployment.'
