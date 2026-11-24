@@ -61,10 +61,19 @@ def validate_preview(site: Path):
         if not candidate.is_file():
             continue
         relative = candidate.relative_to(site)
-        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json"}:
+        if relative.as_posix() in {"data/yahoo-public-review.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json", "data/portfolio-etf-quotes.json"}:
             continue
         if not public_asset(relative):
             raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
+    optional_etf = site / "data/portfolio-etf-quotes.json"
+    if optional_etf.exists():
+        if optional_etf.is_symlink() or optional_etf.stat().st_size > 8_000:
+            raise ValueError("Unsafe TEST ETF public quotes asset")
+        from scripts.portfolio_etf_quotes_test import verify_snapshot
+        try:
+            verify_snapshot(json.loads(optional_etf.read_text(encoding="utf-8")))
+        except (ValueError,TypeError,KeyError,OverflowError) as exc:
+            raise ValueError("Invalid TEST ETF public quotes snapshot") from exc
     optional_sec = site / "data/sec-quarterly-financials.json"
     if optional_sec.exists():
         if optional_sec.is_symlink() or optional_sec.stat().st_size > 1_000_000:
@@ -193,6 +202,8 @@ def validate_preview(site: Path):
     # Validate its full import chain before publishing the TEST site.
     if (site / "company-investment-analysis.html").is_file():
         checked_modules += check_transitive_modules(site, "company-investment-analysis.html")
+    if (site / "my-portfolio.html").is_file():
+        checked_modules += check_transitive_modules(site, "my-portfolio.html")
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
     if "./data/yahoo-public-review.json" not in loader:
         raise ValueError("Published JSON path does not match preview asset")
