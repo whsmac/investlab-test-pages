@@ -33,7 +33,7 @@ class SECFinanceCoverageTests(unittest.TestCase):
         self.assertEqual(report["status"],"preliminary")
         self.assertTrue(all(r["covers_3y"] and r["covers_5y"] for r in report["issuers"]))
         self.assertEqual(report["database_writes"],0)
-        self.assertNotIn("SPCX",[r["ticker"] for r in report["issuers"]])
+        self.assertIn("SPCX",[r["ticker"] for r in report["issuers"]])
 
     def test_incomplete_company_is_reported_not_imputed(self):
         data=example()
