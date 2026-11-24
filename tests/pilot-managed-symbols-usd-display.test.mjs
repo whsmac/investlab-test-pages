@@ -30,9 +30,9 @@ test('active modules consume one projection and legacy auto-import is disabled',
  const sim=read('virtual-trade-simulator.html'),ledgerPage=read('pilot-ledger.html'),portfolio=read('my-portfolio.html'),ui=read('src/ui/pilot-ledger-ui.mjs');
  assert.match(sim,/refreshManagedSymbols\(verifiedLedgerSymbols\(onlineAccountLedger,activeSimulatorOwnerId,lastVerifiedOnlineUserId\)\)/);
  assert.match(sim,/tickers=compactQuoteTickers\(portfolioState.positions,managedSymbols\)/);
- assert.match(sim,/formatCompactQuote\(price\)/);
- assert.match(sim,/formatCompactQuote\(p\)/);
- assert.match(sim,/최근 종가 USD','평단 USD','평가금액 USD/);
+ assert.match(sim,/formatCompactQuote\(q\?\.close\)/);
+ assert.match(sim,/quoteLabel\(t\)/);
+ assert.match(sim,/quoteHeader,'평단 USD','평가금액 USD/);
  assert.match(sim,/Number\(p.quantity\)\*price/);
  assert.doesNotMatch(sim,/managedSymbols=readPortfolioSimulatorSnapshot/);
  assert.doesNotMatch(sim,/\nloadPortfolioPositions\(\);/);
