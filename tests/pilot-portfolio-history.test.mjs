@@ -24,7 +24,7 @@ test('cash-flow-adjusted index excludes deposit and preserves trade markers',()=
  const r=portfolioHistory(data,'2026-11-20','2026-11-24',market,'a','USD');
  assert.equal(r[0].index,100);assert.equal(r[1].total,350);assert.equal(r[1].index,100);assert.equal(r[1].capital,350);
  assert.ok(Math.abs(r[2].index-100*390/350)<1e-9);assert.equal(r[2].trades[0].type,'SELL');assert.equal(r[2].quantities.TSLA,1);
- assert.equal(r[2].ndx,110);assert.equal(r[4].ndx,110);
+ assert.ok(Math.abs(r[2].ndx-110)<1e-9);assert.ok(Math.abs(r[4].ndx-110)<1e-9);
 });
 test('missing and stale observations never become partial totals',()=>{
  assert.equal(priorObservation(market.get('TSLA'),'2026-12-02'),null);
