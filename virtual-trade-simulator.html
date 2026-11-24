@@ -107,6 +107,7 @@ import {differentVerifiedUser,mayAutoApplyTestLedger} from './src/simulator/test
 import {readSavedPortfolioQuotes} from './src/simulator/shared-market-snapshot.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
+import {loadPublishedEtfCloses} from './src/market/load-published-etf-closes.mjs';
 import {readPortfolioSimulatorSnapshot} from './src/simulator/portfolio-snapshot.mjs';
 import {extractSimulatorAccountOpening,extractSimulatorCombinedOpening} from './src/ledger/simulator-account-opening.mjs';
 import {compareSimulatorAccountOpenings} from './src/ledger/simulator-account-comparison.mjs';
@@ -622,7 +623,7 @@ async function refreshCurrentQuotes(){
  const ownerAtStart=activeSimulatorOwnerId,tickersAtStart=tickers.join('|');
  if(!tickers.length){currentQuotePrices.clear();renderCompactPortfolioOverview();status.textContent='보유종목 없음 · 원장 연결 후 최근 종가 자동 조회';return;}
  status.textContent='최근 종가 자동 조회 중…';
- const next=new Map();let dbError='',yahooError='',yahooCount=0,newest='';
+ const next=new Map();let dbError='',yahooError='',yahooCount=0,etfError='',etfCount=0,newest='';
  try{
   try{
    const url='https://gopofxyezhwpfxbecrxd.supabase.co',cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
@@ -656,6 +657,16 @@ async function refreshCurrentQuotes(){
     if(!old||p.tradingDate>old.date){next.set(p.ticker,{price:p.price,date:p.tradingDate});yahooCount++;}
    }
   }catch(error){yahooError=String(error.message||error);}
+  try{
+   // Only read the public ETF quotes snapshot. Do not use it to overwrite
+   // simulation target prices, manual assumptions or saved strategies.
+   const etfs=await loadPublishedEtfCloses({origin:location.href});
+   for(const [ticker,quote] of etfs){
+    if(!tickers.includes(ticker))continue;
+    const old=next.get(ticker);
+    if(!old||quote.date>old.date){next.set(ticker,{price:quote.close,date:quote.date});etfCount++;}
+   }
+  }catch(error){etfError=String(error.message||error);}
   // An old quote response cannot populate a newly selected account.
   if(ownerAtStart!==activeSimulatorOwnerId||
    tickersAtStart!==[...new Set(portfolioState.positions.map(p=>String(p.ticker||'').trim().toUpperCase()).filter(Boolean))].join('|')){
@@ -666,8 +677,9 @@ async function refreshCurrentQuotes(){
   for(const [ticker,row] of next){currentQuotePrices.set(ticker,row.price);if(row.date>newest)newest=row.date;}
   renderCompactPortfolioOverview();
   status.textContent='최근 종가 '+next.size+'/'+tickers.length+'종목 · 최종 거래일 '+(newest||'미확인')+
-   (yahooCount?' · 자동 수집 '+yahooCount+'종목 반영':'')+
-   (dbError?' · DB: '+dbError:'')+(yahooError?' · 자동수집: '+yahooError:'')+
+   (yahooCount?' · 기업 종가 '+yahooCount+'종목':'')+(etfCount?' · ETF 종가 '+etfCount+'종목':'')+
+   (dbError?' · DB: '+dbError:'')+(yahooError?' · 기업 수집: '+yahooError:'')+
+   (etfError&&tickers.some(t=>['BITU','TQQQ','USD'].includes(t))?' · ETF 수집: '+etfError:'')+
    ' · 실시간 체결가 아님';
  }catch(error){status.textContent='현재 종가 조회 실패: '+String(error.message||error);}
 }
