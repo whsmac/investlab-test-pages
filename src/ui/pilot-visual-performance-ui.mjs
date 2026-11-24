@@ -81,7 +81,7 @@ function draw(){
  const heat=$('visualMarketHeat');heat.replaceChildren();for(const ticker of tickers){const change=priceChange(market,ticker,first.date,row.date,currency),tile=el('button',undefined,'visual-market-tile');tile.type='button';tile.style.background=colorReturn(change);tile.append(el('strong',ticker),el('span',pct(change)));tile.title=finite(change)?'선택일 주가 변화 · '+currency:'가격 자료 미확보';tile.onclick=()=>{const sel=$('historyTradeTicker');sel.value=ticker;sel.onchange?.();};heat.append(tile);}
  renderReview();
 }
-export function renderReview(){if(!active)return;const ticker=$('historyTradeTicker').value,row=active.rows[active.index],first=active.rows[0],root=$('visualReview');root.replaceChildren();
+export function renderReview(){if(!active)return;const ticker=$('historyTradeTicker').value,row=active.rows[active.index],first=active.rows[0],root=$('visualReview');root.replaceChildren();if(!row||!first||!ticker){root.textContent='조회할 종목 없음';return;}
  const trades=active.rows.filter(r=>r.date<=row.date).flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date})));
  const start=first.quantities[ticker]||0,end=row.quantities[ticker]||0;
  root.append(el('div',ticker+' 보유수량 '+fmt(start)+' → '+fmt(end)+'주','visual-review-stat'),el('div','기간 주가 변화 '+pct(priceChange(active.market,ticker,first.date,row.date,'USD')),'visual-review-stat'));
@@ -94,11 +94,11 @@ export function renderVisualPerformance(rows,market,data,currency){
  const saved=active?.rows[active.index]?.date,oldChoices=new Set([...$('visualComparePicks').querySelectorAll('input:checked')].map(n=>n.value)),oldTicker=$('historyTradeTicker').value;
  const keys=assetKeys(rows),colors=Object.fromEntries(keys.map((k,i)=>[k,k==='현금'?'#8995a7':pal[i%pal.length]]));
  const tickers=[...new Set([...rows.flatMap(r=>[...Object.keys(r.quantities),...r.trades.map(t=>t.symbol)]),...(Array.isArray(data.watchlist)?data.watchlist:[])])].filter(t=>typeof t==='string'&&/^[A-Z][A-Z0-9.-]{0,15}$/.test(t)).sort();
- const oldIndex=rows.findIndex(r=>r.date===saved);
+ const oldIndex=rows.findIndex(r=>r.date===saved);if(!rows.length){clearVisualPerformance();$('visualHero').textContent='원장 기록 이후 조회 가능한 날짜가 없습니다.';return;}
  active={rows,market,currency,keys,colors,tickers,index:oldIndex>=0?oldIndex:Math.max(0,rows.length-1)};
- const slider=$('visualSlider');slider.max=String(Math.max(0,rows.length-1));slider.disabled=rows.length<2;slider.oninput=()=>{stopVisualPlayback();active.index=Number(slider.value);draw();};
- $('visualPrev').onclick=()=>{stopVisualPlayback();active.index=Math.max(0,active.index-1);draw();};$('visualNext').onclick=()=>{stopVisualPlayback();active.index=Math.min(rows.length-1,active.index+1);draw();};
- $('visualPlay').onclick=()=>{if(rows.length<2)return;if(playTimer){stopVisualPlayback();return;}if(active.index===rows.length-1)active.index=0;$('visualPlay').textContent='Ⅱ 정지';draw();playTimer=setInterval(()=>{if(!active||document.hidden||$('historyPanel').hidden||$('portfolioPrivate').hidden||active.index>=rows.length-1){stopVisualPlayback();return;}active.index++;draw();},600);};
+ const slider=$('visualSlider');slider.max=String(Math.max(0,rows.length-1));slider.disabled=rows.length<2;slider.oninput=()=>{stopVisualPlayback();if(!active)return;active.index=Number(slider.value);draw();};
+ $('visualPrev').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.max(0,active.index-1);draw();};$('visualNext').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.min(rows.length-1,active.index+1);draw();};
+ $('visualPlay').onclick=()=>{if(!active||rows.length<2)return;if(playTimer){stopVisualPlayback();return;}if(active.index===rows.length-1)active.index=0;$('visualPlay').textContent='Ⅱ 정지';draw();playTimer=setInterval(()=>{if(!active||document.hidden||$('historyPanel').hidden||$('portfolioPrivate').hidden||active.index>=rows.length-1){stopVisualPlayback();return;}active.index++;draw();},600);};
  $('visualGranularity').onchange=draw;
  const picks=$('visualComparePicks');picks.replaceChildren();
  for(const ticker of tickers){const label=el('label'),cb=el('input');cb.type='checkbox';cb.value=ticker;cb.checked=oldChoices.has(ticker);cb.onchange=()=>{const checked=picks.querySelectorAll('input:checked');if(checked.length>5){cb.checked=false;return;}draw();};label.append(cb,document.createTextNode(ticker+(market.has(ticker)?'':' (미확보)')));picks.append(label);}
