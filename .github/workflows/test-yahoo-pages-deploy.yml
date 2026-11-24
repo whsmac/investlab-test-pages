@@ -3,6 +3,7 @@ name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # 2026-11-24: Refresh TEST Pages using verified 6-company SEC CIK map and fixed Phase-1 CI suite.
 # 2026-11-23: Refresh TEST pages after fixing ^TNX Yahoo yield percent (do not divide by 10).
 # Re-run from a fresh Actions run to avoid duplicate github-pages artifact from prior failed retry.
+# 2026-11-24: Recheck SEC collection after repository secret was corrected (TEST only).
 on:
   workflow_dispatch:
   push:
