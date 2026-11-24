@@ -5,7 +5,7 @@ import {mergeTestDailyPrices} from '../src/market/merge-test-daily-prices.mjs';
 
 const html=readFileSync(new URL('../company-investment-analysis.html',import.meta.url),'utf8');
 const start=html.indexOf('async function loadAll(){');
-const end=html.indexOf('\n$("financialTicker").addEventListener("change"',start);
+const end=html.indexOf('\n$("secLocalReviewFile").addEventListener("change"',start);
 assert.ok(start>0&&end>start,'company page has a real async loadAll function');
 const loadSource=html.slice(start,end);
 const symbols=['MSFT','GOOGL','AMZN','META','TSLA','SPCX'];
