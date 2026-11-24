@@ -20,6 +20,7 @@ const MENUS=[
  ['내 투자현황','my-portfolio.html'],
  ['가상매매 시뮬레이터','virtual-trade-simulator.html'],
  ['기업 투자분석','company-investment-analysis.html'],
+ ['시장 동향','market-trends.html'],
  ['계좌·매매 기록 관리','pilot-ledger.html'],
 ];
 async function localRoute(route){
@@ -45,6 +46,8 @@ const setup=async(browser,viewport)=>{
  const context=await browser.newContext({viewport,serviceWorkers:'block'});
  await context.route('**/*',localRoute);
  const page=await context.newPage();
+ // Keep the offline fixture date deterministic even when the CI is rerun later.
+ await page.clock.setFixedTime(new Date('2026-11-24T09:00:00+09:00'));
  return {context,page};
 };
 const waitForQuotes=page=>page.waitForFunction(()=>{
@@ -60,7 +63,7 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
    const device=viewport.width<500?'mobile':'desktop';
    try{
     await page.goto(ROOT,{waitUntil:'domcontentloaded'});
-    assert.equal(await page.locator('a.card').count(),4,device+': four daily-use home modules');
+    assert.equal(await page.locator('a.card').count(),5,device+': five daily-use home modules');
     assert.equal(await page.locator('a.pilot-nav-settings[href="./data-management.html"]').count(),1,device+': backup accessible in settings');
     for(const [label,target] of MENUS){
      await page.goto(ROOT,{waitUntil:'domcontentloaded'});
@@ -75,25 +78,35 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
     await page.goto(ROOT+'company-investment-analysis.html',{waitUntil:'domcontentloaded'});
     await page.locator('#period').selectOption('5y');
     await waitForQuotes(page);
-    assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes(companyPeriodStart('5y')));
-    assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('5y')));
+    assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes('2021-11-24'));
+    assert.ok((await page.locator('#priceChart').textContent()).includes('2021-11-24'));
     assert.match(await page.locator('#lastDate').innerText(),/^20\d{2}-\d{2}-\d{2}$/);
     const tslaOnly=await page.locator('#priceChart path').count();
     assert.ok(tslaOnly>=1,device+': TSLA 5y SVG path');
-    console.log('PASS',device,'five-year chart',tslaOnly);
+    await page.waitForFunction(()=>document.querySelector('#financeStatus')?.textContent.includes('확보한 SEC 검토 자료'),null,{timeout:15000});
+    assert.equal(await page.locator('#financeRows tr').count(),19,device+': 19 actual TSLA quarters in five-year window as of 2026-11-24');
+    assert.match(await page.locator('#priceChart').textContent(),/영업이익률/);
+    console.log('PASS',device,'five-year price and actual SEC chart',tslaOnly);
 
     await page.locator('#tickerButtons button[aria-label^="SPCX"]').click();
     assert.match(await page.locator('#priceChartNote').innerText(),/SPCX.*각자 첫 거래일/);
     assert.match(await page.locator('#historyCoverageStatus').innerText(),/SPCX 2026-06-12부터/);
-    assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('5y')));
+    assert.ok((await page.locator('#priceChart').textContent()).includes('2021-11-24'));
     console.log('PASS',device,'TSLA five-year history retained with SPCX selected');
 
     await page.locator('#period').selectOption('3y');
     await waitForQuotes(page);
-    assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes(companyPeriodStart('3y')));
-    assert.ok((await page.locator('#priceChart').textContent()).includes(companyPeriodStart('3y')));
+    assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes('2023-11-24'));
+    assert.ok((await page.locator('#priceChart').textContent()).includes('2023-11-24'));
     assert.equal(await page.locator('#financialTicker').inputValue(),'SPCX');
-    console.log('PASS',device,'three-year period and selected financial ticker');
+    await page.waitForFunction(()=>document.querySelector('#financeStatus')?.textContent.startsWith('SPCX · 확보한 SEC 검토 자료'),null,{timeout:15000});
+    assert.equal(await page.locator('#financeRows tr').count(),4);
+    assert.match(await page.locator('#financeRows').textContent(),/미확보/);
+    await page.locator('#tickerButtons button[aria-label^="MSFT"]').click();
+    await page.waitForFunction(()=>document.querySelector('#financeStatus')?.textContent.startsWith('MSFT · 확보한 SEC 검토 자료'),null,{timeout:15000});
+    assert.equal(await page.locator('#financeRows tr').count(),12);
+    assert.match(await page.locator('#financeRows').textContent(),/92\.28/);
+    console.log('PASS',device,'three-year finance including SPCX gaps and MSFT');
     if(device==='mobile'){
      const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+4);
      assert.equal(overflow,false,'mobile horizontal overflow is confined to chart/table scroll containers');
