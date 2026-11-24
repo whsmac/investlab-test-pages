@@ -1,4 +1,5 @@
 import {projectLedger} from '../ledger/pilot-portfolio-projection.mjs';
+import {buildPortfolioAllocation,renderPortfolioAllocation} from './pilot-portfolio-allocation.mjs';
 const $=id=>document.getElementById(id);
 const fmt=(n,dec=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:dec});
 const krw=n=>Number(n).toLocaleString('ko-KR',{maximumFractionDigits:0});
@@ -70,6 +71,11 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
  cell(totalRow,signedMoney(totalGain),totalGain===null?'':totalGain>=0?'positive':'negative');
  cell(totalRow,allSummary.complete?pct(all.cost?100*allSummary.profit/all.cost:0):'—',allSummary.profit>=0?'positive':'negative');
  accountBody.append(totalRow);
+ const allocation=buildPortfolioAllocation({data,prices,fx,selected,displayCurrency:mode});
+ renderPortfolioAllocation(allocation,{
+  chart:$('allocationChart'),legend:$('allocationLegend'),
+  status:$('allocationStatus'),title:$('allocationAccount')
+ });
  const chosen=projectLedger(data,selected),holdingsBody=$('dashboardHoldings');holdingsBody.replaceChildren();
  for(const h of chosen.holdings){
   const tr=document.createElement('tr'),q=prices.get(h.symbol),valid=fresh(q),
