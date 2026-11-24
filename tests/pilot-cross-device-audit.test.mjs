@@ -59,6 +59,9 @@ test('PC/mobile with same verified cloud data get exactly the same server compar
  assert.equal(await cloudFingerprint(one.fingerprintInput,webcrypto),
   await cloudFingerprint(phone.fingerprintInput,webcrypto));
  assert.match(await cloudFingerprint(one.fingerprintInput,webcrypto),/^IL1-[0-9A-F]{16}$/);
+ const otherAccount=projectServerAudit(common({ownerId:other,localOwnerId:other,localRaw:null,localStrategiesRaw:null}));
+ assert.notEqual(await cloudFingerprint(one.fingerprintInput,webcrypto),
+  await cloudFingerprint(otherAccount.fingerprintInput,webcrypto),'different owner cannot share a comparison code');
 });
 test('unsynced local transactions are flagged but cloud fingerprint remains server-based',async()=>{
  const latest=initial();
