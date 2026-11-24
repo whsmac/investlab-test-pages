@@ -8,6 +8,7 @@ class Element {
  setAttribute(key,value){this.attributes[key]=String(value);}
  append(...nodes){this.children.push(...nodes);}
  replaceChildren(){this.children=[];}
+ addEventListener(){}
  dispatchEvent(){}
 }
 const elements=new Map();
