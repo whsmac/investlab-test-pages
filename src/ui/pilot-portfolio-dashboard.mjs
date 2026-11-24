@@ -1,3 +1,4 @@
+import {createTickerChartButton} from './pilot-tradingview-chart.mjs';
 import {formatPortfolioNumber} from '../market/pilot-personal-current-quotes.mjs';
 import {projectLedger} from '../ledger/pilot-portfolio-projection.mjs';
 import {buildPortfolioAllocation,renderPortfolioAllocation} from './pilot-portfolio-allocation.mjs';
@@ -84,7 +85,7 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
   const tr=document.createElement('tr'),q=prices.get(h.symbol),valid=fresh(q),
    value=valid?h.qty*Number(q.close):null,gainUsd=valid?value-h.cost:null,
    rate=valid&&h.cost>0?100*gainUsd/h.cost:null;
-  cell(tr,h.symbol,'stock-label');cell(tr,formatPortfolioNumber(h.qty));
+  cell(tr,'','stock-label').append(createTickerChartButton(h.symbol));cell(tr,formatPortfolioNumber(h.qty));
   cell(tr,tableMoney(fromUsd(h.averageCost),1));
   const quoteCell=cell(tr,valid?tableMoney(fromUsd(Number(q.close)),1):'—');
   if(valid&&q.kind==='current_quote')quoteCell.title='Finnhub 개인 시세 · '+new Date(q.quoteTime).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' KST · 통합 실시간 여부 미확인';
