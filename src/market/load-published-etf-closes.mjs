@@ -9,7 +9,8 @@ export function parsePublishedEtfCloses(payload,{now=new Date(),maxAgeDays=7}={}
   throw Error("ETF 공개시세 데이터 검증 실패");
  const stamp=Date.parse(payload.generated_on+"T00:00:00Z"),current=new Date(now);
  if(!/^\d{4}-\d{2}-\d{2}$/.test(payload.generated_on)||!Number.isFinite(stamp)||
-  !Number.isFinite(current.getTime())||Math.abs(Date.UTC(current.getUTCFullYear(),current.getUTCMonth(),current.getUTCDate())-stamp)>86400000)
+  !Number.isFinite(current.getTime())||(Date.UTC(current.getUTCFullYear(),current.getUTCMonth(),current.getUTCDate())-stamp)<0||
+  (Date.UTC(current.getUTCFullYear(),current.getUTCMonth(),current.getUTCDate())-stamp)>7*86400000)
   throw Error("ETF 시세 게시일 오류");
  if(!Number.isSafeInteger(maxAgeDays)||maxAgeDays<1||maxAgeDays>14)throw Error("ETF 시세 허용기간 오류");
  const result=new Map();
