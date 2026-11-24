@@ -1,4 +1,4 @@
-import {renderVisualPerformance,renderReview} from './pilot-visual-performance-ui.mjs';
+import {renderVisualPerformance,renderReview,selectedVisualDate,setVisualDate} from './pilot-visual-performance-ui.mjs';
 import {indexRows,portfolioHistory,priorObservation,firstLedgerDay} from '../ledger/pilot-portfolio-history.mjs';
 import {loadPublishedYahooReview} from '../market/load-published-yahoo-review.mjs';
 import {loadPublishedMarketIndices} from '../market/load-published-market-indices.mjs';
@@ -18,7 +18,7 @@ export async function loadPortfolioHistoryMarket(){
 const $=id=>document.getElementById(id),num=(n,d=0)=>Number.isFinite(n)?n.toLocaleString('ko-KR',{maximumFractionDigits:d}):'—';
 const colors=['#80b6ff','#61d7a8','#e9b66e','#b5a0f6','#f38b9e','#7bd4e9','#c1cbd9'];
 const svg=(tag,attrs={},text)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;return e;};
-function lineChart(id,rows,series,markers=[]){
+function lineChart(id,rows,series,markers=[],selected=null){
  const root=$(id);root.replaceChildren();
  const vals=[...rows.flatMap(r=>series.map(s=>r[s.key])),...markers.map(m=>m.price)].filter(Number.isFinite);
  if(!vals.length){root.textContent='조회 가능한 자료 없음';return;}
@@ -30,6 +30,7 @@ function lineChart(id,rows,series,markers=[]){
  for(const i of [...new Set([0,Math.floor((rows.length-1)/2),rows.length-1])])g.append(svg('text',{x:x(i),y:height-10,'text-anchor':i===0?'start':i===rows.length-1?'end':'middle',fill:'#c1cddd','font-size':12},rows[i].date));
  series.forEach((s,j)=>{let d='',active=false;rows.forEach((row,i)=>{const v=row[s.key];if(!Number.isFinite(v)){active=false;return;}d+=(active?'L':'M')+x(i)+' '+y(v)+' ';active=true;if(rows.length===1)g.append(svg('circle',{cx:x(i),cy:y(v),r:3,fill:colors[j%colors.length]}));});g.append(svg('path',{d,fill:'none',stroke:colors[j%colors.length],'stroke-width':2.3}));});
  for(const m of markers){const i=rows.findIndex(r=>r.date===m.date);if(i<0||!Number.isFinite(m.price))continue;const cy=y(m.price);if(cy<t||cy>height-b)continue;const e=svg('circle',{cx:x(i),cy,r:5,fill:m.type==='BUY'?'#61d7a8':'#f38b9e',stroke:'#101827','stroke-width':1.5});e.append(svg('title',{},m.date+' '+m.type+' '+m.qty+'주 · USD '+num(m.price,2)));g.append(e);}
+ if(selected){const i=rows.findIndex(r=>r.date===selected);if(i>=0)g.append(svg('line',{x1:x(i),x2:x(i),y1:t,y2:height-b,stroke:'#e3d7ff','stroke-dasharray':'4 4'}));g.style.cursor='crosshair';g.onclick=e=>{const rect=g.getBoundingClientRect(),px=(e.clientX-rect.left)/rect.width*width;const i=Math.max(0,Math.min(rows.length-1,Math.round((px-l)/(width-l-r)*Math.max(0,rows.length-1))));setVisualDate(rows[i].date);};}
  root.append(g);const legend=document.createElement('p');legend.className='muted';series.forEach((s,j)=>{const span=document.createElement('span');span.style.color=colors[j%colors.length];span.textContent='● '+s.label+'　';legend.append(span);});root.append(legend);
 }
 function weights(rows){
@@ -45,15 +46,15 @@ export function renderPortfolioHistory(data,market,start,end,selected,currency){
  const rows=portfolioHistory(data,start,end,market,selected,currency);
  const valid=rows.filter(r=>r.total!==null);
  $('historyStatus').textContent=(firstLedgerDay(data,selected)?'원장 기록 시작 '+firstLedgerDay(data,selected):'원장 기록 없음')+' · 평가 가능 '+valid.length+'/'+rows.length+'일 · 기준일 이전 최신 관측값(최대 7일). '+(valid.length<rows.length?'결측일은 그래프에서 연결하지 않습니다. ':'')+'기록된 원장만 재현합니다.';
- renderVisualPerformance(rows,market,data,currency);
  lineChart('historyDrawdown',rows,[{key:'mdd',label:'고점 대비 하락률 %'}]);
  const select=$('historyTradeTicker');
  const drawTicker=()=>{const ticker=select.value;
-  lineChart('historyQuantities',rows.map(r=>({date:r.date,qty:r.quantities[ticker]||0})),[{key:'qty',label:ticker+' 보유수량'}]);
+  lineChart('historyQuantities',rows.map(r=>({date:r.date,qty:r.quantities[ticker]||0})),[{key:'qty',label:ticker+' 보유수량'}],[],selectedVisualDate());
   const points=rows.map(r=>({date:r.date,price:priorObservation(market.get(ticker),r.date)?.close??null}));
   const markers=rows.flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date})));
-  lineChart('historyTradePrices',points,[{key:'price',label:ticker+' 종가 USD'}],markers);
+  lineChart('historyTradePrices',points,[{key:'price',label:ticker+' 종가 USD'}],markers,selectedVisualDate());
  };
+ renderVisualPerformance(rows,market,data,currency,()=>drawTicker());
  select.onchange=()=>{drawTicker();renderReview();};select.onchange();
  lineChart('historyFx',rows,[{key:'fx',label:'USD/KRW 적용환율'}]);
  const tradeRoot=$('historyTrades');tradeRoot.replaceChildren();
