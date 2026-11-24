@@ -33,7 +33,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/pilot-ledger-cross-module-consistency-20261124
+          ref: feature/pilot-etf-quote-coverage-20261124
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -69,6 +69,12 @@ jobs:
       - name: Report SEC official quarterly coverage for 3y and 5y (TEST, read-only)
         run: |
           python -m scripts.sec_pilot_coverage --source "${RUNNER_TEMP}/sec-quarterly-financials.json" --output sec-pilot-coverage.json --summary "$GITHUB_STEP_SUMMARY"
+      - name: Collect public BITU TQQQ USD ETF closes for complete Pilot valuation (optional)
+        run: |
+          if ! python -m scripts.portfolio_etf_quotes_test --output "${RUNNER_TEMP}/portfolio-etf-quotes.json"; then
+            rm -f "${RUNNER_TEMP}/portfolio-etf-quotes.json"
+            echo "::warning::ETF daily closing prices incomplete; keep conservative incomplete valuation, never use a stale value"
+          fi
       - name: Fetch real NASDAQ 100 and S&P 500 index levels (optional, read-only)
         run: |
           if ! python -m scripts.yahoo_market_indices_test --output "${RUNNER_TEMP}/market-index-benchmarks.json"; then
@@ -119,6 +125,17 @@ jobs:
               rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/market-trends-public-review.json"
               python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
               echo "::warning::Invalid market trends observations excluded from TEST site"
+            fi
+          fi
+      - name: Stage and validate public-only ETF closes (no holdings or user data)
+        run: |
+          if [ -s "${RUNNER_TEMP}/portfolio-etf-quotes.json" ]; then
+            mkdir -p "${RUNNER_TEMP}/investlab-test-pages-site/data"
+            cp "${RUNNER_TEMP}/portfolio-etf-quotes.json" "${RUNNER_TEMP}/investlab-test-pages-site/data/portfolio-etf-quotes.json"
+            if ! python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"; then
+              rm -f "${RUNNER_TEMP}/investlab-test-pages-site/data/portfolio-etf-quotes.json"
+              python -m scripts.validate_yahoo_test_site_preview --site "${RUNNER_TEMP}/investlab-test-pages-site"
+              echo "::warning::ETF quote snapshot did not pass publication gates and was excluded"
             fi
           fi
       - name: Configure GitHub Pages
