@@ -1,0 +1,33 @@
+name: TEST cross-module ledger consistency (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'src/ledger/pilot-ledger-readonly-consistency.mjs'
+      - 'my-portfolio.html'
+      - 'pilot-ledger.html'
+      - 'virtual-trade-simulator.html'
+      - 'tests/pilot-ledger-cross-module-consistency.test.mjs'
+      - '.github/workflows/test-pilot-cross-module-consistency.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-module-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authenticated cross-module ledger, no data mutation
+        run: |
+          node --test tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-ledger-validation.test.mjs tests/pilot-portfolio-projection.test.mjs tests/simulator-strategy-workflow.test.mjs
+      - name: Check module scripts syntax
+        run: |
+          node --check src/ledger/pilot-ledger-readonly-consistency.mjs
+          node --check src/ledger/pilot-ledger-validation.mjs
+      - name: Confirm read-only boundary
+        run: echo "No Supabase writes, no remote portfolio mutation, no PR merge, no Pages deployment"
