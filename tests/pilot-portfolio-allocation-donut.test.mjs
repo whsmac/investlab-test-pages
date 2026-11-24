@@ -21,7 +21,7 @@ test('existing account positions are aggregated: ticker USD is ETF, cash stays s
  const data=source(),copy=structuredClone(data);
  const model=buildPortfolioAllocation(args({data}));
  assert.equal(model.complete,true);
- assert.deepEqual(model.rows.map(x=>x.label),['TSLA','TQQQ','USD','현금']);
+ assert.deepEqual(model.rows.map(x=>x.label),['TSLA','TQQQ','현금','USD']);
  assert.equal(model.rows.find(x=>x.label==='USD').amount,150,'ticker USD = ETF shares, not dollar cash');
  assert.equal(model.rows.find(x=>x.label==='현금').amount,200,'cash includes USD100 and KRW130000/1300');
  assert.equal(model.total,1550);
