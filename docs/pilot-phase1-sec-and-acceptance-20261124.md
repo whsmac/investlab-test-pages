@@ -1,6 +1,6 @@
 # INVESTLAB 1단계 Pilot — SEC 분기 재무자료 자동수집 점검 (2026-11-24)
 
-**범위:** TEST GitHub Pages의 6개 기업 분석 화면 중 SEC에서 확인 가능한 미국 공시기업 5개(MSFT, GOOGL, AMZN, META, TSLA)의 과거 분기 매출·CAPEX·영업이익·영업이익률. 여섯 번째 `SPCX`는 확인된 SEC CIK/공식 XBRL 매핑이 없으므로 수치를 임의로 만들지 않습니다.
+**범위:** TEST GitHub Pages의 6개 기업 분석 화면 중 공식 SEC 공시로 식별한 6개 기업(MSFT, GOOGL, AMZN, META, TSLA, SPCX)의 과거 분기 매출·CAPEX·영업이익·영업이익률. **SPCX의 SEC CIK는 0001181412**이며 2026년 10월 22일 제출된 2026년 3분기 10-Q를 확인했습니다. 상장 전 3년·5년 전체 재무실적은 별도 확보 여부를 검증해야 하며 결측치를 추정하지 않습니다.
 
 ## 1. 현재 상태
 
