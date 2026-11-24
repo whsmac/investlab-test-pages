@@ -33,7 +33,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/pilot-phase1-ci-sec-readiness-20261124
+          ref: feature/pilot-ledger-cross-module-consistency-20261124
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
