@@ -24,7 +24,7 @@ jobs:
           node-version: '22'
       - name: Verify authenticated cross-module ledger, no data mutation
         run: |
-          node --test tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-ledger-validation.test.mjs tests/pilot-portfolio-projection.test.mjs tests/simulator-strategy-workflow.test.mjs
+          node --test tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-ledger-validation.test.mjs tests/ledger-portfolio-projection.test.mjs tests/simulator-strategy-workflow.test.mjs
       - name: Check module scripts syntax
         run: |
           node --check src/ledger/pilot-ledger-readonly-consistency.mjs
