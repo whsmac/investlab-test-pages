@@ -1,0 +1,35 @@
+name: TEST Pilot portfolio donut allocation (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'src/ui/pilot-portfolio-allocation.mjs'
+      - 'src/ui/pilot-portfolio-dashboard.mjs'
+      - 'my-portfolio.html'
+      - 'tests/pilot-portfolio-allocation-donut.test.mjs'
+      - 'tests/pilot-etf-portfolio-prices.test.mjs'
+      - 'tests/portfolio-display-currency.test.mjs'
+      - '.github/workflows/test-pilot-donut-allocation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  allocation-ui-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate portfolio donut model, same account selection and FX
+        run: |
+          node --check src/ui/pilot-portfolio-allocation.mjs
+          node --check src/ui/pilot-portfolio-dashboard.mjs
+          node --test tests/pilot-portfolio-allocation-donut.test.mjs tests/portfolio-display-currency.test.mjs tests/pilot-etf-portfolio-prices.test.mjs
+      - name: Validate My Portfolio inline script syntax without browser or login
+        run: |
+          node --input-type=module -e 'import {readFileSync} from "node:fs";import {spawnSync} from "node:child_process";const s=readFileSync("my-portfolio.html","utf8"),m=s.match(/<script type="module">([\s\S]*?)<\/script>/);if(!m)throw Error("inline script missing");const r=spawnSync(process.execPath,["--check","--input-type=module"],{input:m[1],encoding:"utf8"});if(r.status)throw Error(r.stderr);'
+      - name: Confirm sensitive data and actual ledger untouched
+        run: echo "TEST-only read-only donut; synthetic test holdings; no Supabase modification or Pages deployment"
