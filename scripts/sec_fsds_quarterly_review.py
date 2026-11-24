@@ -171,7 +171,7 @@ def build_preview(paths, as_of):
             value, evidence = None, None
             if direct:
                 value, evidence = direct[0], {"mode":"direct","facts":[direct[1]]}
-            elif (current and previous and fiscal(ticker,prior_end)==(fy,fq-1)
+            elif (not candidates.get((ticker,end,metric,1)) and current and previous and fiscal(ticker,prior_end)==(fy,fq-1)
                   and current[1]["tag"]==previous[1]["tag"]
                   and previous[1]["filed"]<=current[1]["filed"]):
                 value = current[0]-previous[0]
