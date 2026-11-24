@@ -3,7 +3,7 @@ from datetime import date
 from scripts.sec_pilot_coverage import summarize
 
 TODAY=date(2026,11,24)
-CIKS={"MSFT":"0000789019","GOOGL":"0001652044","AMZN":"0001018724","META":"0001326801","TSLA":"0001318605"}
+CIKS={"MSFT":"0000789019","GOOGL":"0001652044","AMZN":"0001018724","META":"0001326801","TSLA":"0001318605","SPCX":"0001181412"}
 
 def example():
     rows=[]
