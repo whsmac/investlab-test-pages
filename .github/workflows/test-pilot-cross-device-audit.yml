@@ -1,0 +1,30 @@
+name: TEST PC-Mobile read-only sync audit (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'data-management.html'
+      - 'src/sync/pilot-cross-device-audit.mjs'
+      - 'tests/pilot-cross-device-audit.test.mjs'
+      - '.github/workflows/test-pilot-cross-device-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-cross-device-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run account-isolated cloud reconciliation and mobile regression tests
+        run: |
+          node --test tests/pilot-cross-device-audit.test.mjs tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-mobile-portfolio-auth-empty-state.test.mjs
+      - name: Check pure helper syntax
+        run: |
+          node --check src/sync/pilot-cross-device-audit.mjs
+      - name: Confirm no authenticated storage write or TEST deploy
+        run: echo "Reads verified account's server ledger and strategies only. No database changes, no Pages deployment."
