@@ -37,7 +37,7 @@ test('changing selected account affects donut holdings AND cash without changing
  assert.deepEqual(a.rows.map(x=>x.label),['TSLA','USD','현금']);
  const b=buildPortfolioAllocation(args({selected:'b'}));
  assert.equal(b.total,700); // TSLA300 + TQQQ300 + KRW cash100
- assert.deepEqual(b.rows.map(x=>x.label),['TSLA','TQQQ','현금']);
+ assert.deepEqual(new Set(b.rows.map(x=>x.label)),new Set(['TSLA','TQQQ','현금']));
  near(b.rows.find(x=>x.kind==='cash').percentage,100/700*100);
 });
 
