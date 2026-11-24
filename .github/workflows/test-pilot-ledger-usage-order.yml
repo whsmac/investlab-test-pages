@@ -1,0 +1,29 @@
+name: TEST ledger usage order (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'pilot-ledger.html'
+      - 'src/ui/pilot-ledger-ui.mjs'
+      - 'tests/pilot-ledger-usage-order.browser.test.mjs'
+      - '.github/workflows/test-pilot-ledger-usage-order.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Existing ledger and cross-module tests
+        run: node --test tests/pilot-ledger-validation.test.mjs tests/pilot-ledger-cross-module-consistency.test.mjs tests/pilot-release-integrated-acceptance.test.mjs
+      - name: Install offline browser test dependency
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Desktop and mobile usage-order acceptance, mock auth and database only
+        run: node --test tests/pilot-ledger-usage-order.browser.test.mjs

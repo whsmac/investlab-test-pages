@@ -9,7 +9,7 @@ export function effectiveRate(currency,amount,toCurrency,toAmount){
  if(currency==='USD'&&toCurrency==='KRW')return to/from;
  return null;
 }
-export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
+export function createLedgerUi({getDb,save,msg,accountMsg=msg,watchMsg=msg,onEdit,onDelete}){
  const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
  let historyPage=0;
  function symbols(category){
@@ -48,10 +48,10 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
   for(const a of db.accounts){
    const wrap=document.createElement('div');wrap.className='account-chip';const title=document.createElement('span');title.textContent=a.name+' ('+a.type+')';wrap.append(title);
    const rename=document.createElement('button');rename.type='button';rename.textContent='이름 변경';
-   rename.onclick=()=>{const value=prompt('변경할 계좌 이름',a.name);if(value===null)return;const name=value.trim();if(!name||name===a.name)return;if(name.length>80||db.accounts.some(x=>x.id!==a.id&&x.name===name)){msg('계좌 이름이 중복되거나 너무 깁니다.');return;}a.name=name;save();msg('계좌 이름을 변경했습니다. 서버 저장 상태를 확인하세요.');};
+   rename.onclick=()=>{const value=prompt('변경할 계좌 이름',a.name);if(value===null)return;const name=value.trim();if(!name||name===a.name)return;if(name.length>80||db.accounts.some(x=>x.id!==a.id&&x.name===name)){accountMsg('계좌 이름이 중복되거나 너무 깁니다.');return;}a.name=name;save();accountMsg('계좌 이름을 변경했습니다. 서버 저장 상태를 확인하세요.');};
    const del=document.createElement('button');del.type='button';del.textContent='삭제';
    // Remove only accounts with no trades; retain the shared db object for the parent.
-   del.onclick=()=>{if(db.entries.some(e=>e.accountId===a.id)){msg('거래가 있는 계좌는 삭제할 수 없습니다.');return;}if(!confirm('거래가 없는 계좌 '+a.name+'을 삭제하시겠습니까?'))return;db.accounts.splice(db.accounts.findIndex(x=>x.id===a.id),1);save();msg('계좌를 삭제했습니다.');};
+   del.onclick=()=>{if(db.entries.some(e=>e.accountId===a.id)){accountMsg('거래가 있는 계좌는 삭제할 수 없습니다.');return;}if(!confirm('거래가 없는 계좌 '+a.name+'을 삭제하시겠습니까?'))return;db.accounts.splice(db.accounts.findIndex(x=>x.id===a.id),1);save();accountMsg('계좌를 삭제했습니다.');};
    wrap.append(rename,del);root.append(wrap);
   }
  }
@@ -61,7 +61,7 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
    const chip=document.createElement('div');chip.className='account-chip';
    const label=document.createElement('span');label.textContent=ticker;
    const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
-   remove.onclick=()=>{if(!confirm(ticker+' 관심종목을 삭제하시겠습니까?'))return;db.watchlist=db.watchlist.filter(x=>x!==ticker);save();};
+   remove.onclick=()=>{if(!confirm(ticker+' 관심종목을 삭제하시겠습니까?'))return;db.watchlist=db.watchlist.filter(x=>x!==ticker);save();watchMsg(ticker+' 관심종목을 삭제했습니다.');};
    chip.append(label,remove);root.append(chip);
   }
  }
@@ -95,10 +95,10 @@ export function createLedgerUi({getDb,save,msg,onEdit,onDelete}){
  function attach(){
   $('watchAdd').onclick=()=>{
    const db=getDb(),ticker=$('watchSymbol').value.trim().toUpperCase();
-   if(!/^[A-Z][A-Z0-9.-]{0,15}$/.test(ticker)){msg('관심종목 코드를 확인하세요.');return;}
+   if(!/^[A-Z][A-Z0-9.-]{0,15}$/.test(ticker)){watchMsg('관심종목 코드를 확인하세요.');return;}
    const watchlist=Array.isArray(db.watchlist)?db.watchlist:[];
-   if(watchlist.includes(ticker)){msg('이미 등록된 관심종목입니다.');return;}
-   db.watchlist=[...watchlist,ticker];$('watchSymbol').value='';save();msg('관심종목에 '+ticker+'을 추가했습니다.');
+   if(watchlist.includes(ticker)){watchMsg('이미 등록된 관심종목입니다.');return;}
+   db.watchlist=[...watchlist,ticker];$('watchSymbol').value='';save();watchMsg('관심종목에 '+ticker+'을 추가했습니다.');
   };
 
   $('historyAccount').onchange=()=>{historyPage=0;renderHistory();};
