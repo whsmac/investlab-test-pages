@@ -1,0 +1,56 @@
+{
+  "format": "INVESTLAB_SEC_MANUAL_REFERENCE_V1",
+  "period_end": "2026-06-30",
+  "unit": "USD million",
+  "review_only": true,
+  "rows": [
+    {
+      "ticker": "MSFT",
+      "revenue": 90007,
+      "operating_income": 40603,
+      "capex": 35802,
+      "url": "https://www.microsoft.com/en-us/investor/earnings/fy-2026-q4/press-release-webcast",
+      "capex_definition": "Additions to property and equipment, cash outflow magnitude"
+    },
+    {
+      "ticker": "GOOGL",
+      "revenue": 119796,
+      "operating_income": 40770,
+      "capex": 44924,
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000066/googexhibit991q22026.htm",
+      "capex_definition": "Purchases of property and equipment"
+    },
+    {
+      "ticker": "AMZN",
+      "revenue": 200606,
+      "operating_income": 27461,
+      "capex": 54208,
+      "url": "https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Second-Quarter-Results/default.aspx",
+      "capex_definition": "Purchases of property and equipment before proceeds/incentives"
+    },
+    {
+      "ticker": "META",
+      "revenue": 60801,
+      "operating_income": 18775,
+      "capex": 30116,
+      "url": "https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Second-Quarter-2026-Results/",
+      "capex_definition": "Purchases of property and equipment, excludes finance lease principal"
+    },
+    {
+      "ticker": "TSLA",
+      "revenue": 28236,
+      "operating_income": 398,
+      "capex": 5789,
+      "url": "https://ir.tesla.com/_flysystem/s3/sec/000162828026066738/tsla-20261021-gen.pdf",
+      "capex_definition": "Capital expenditures, financial summary Q2 2026"
+    },
+    {
+      "ticker": "SPCX",
+      "revenue": 7814,
+      "operating_income": -143,
+      "capex": null,
+      "url": "https://www.sec.gov/Archives/edgar/data/1181412/000162828026052535/spcx-20260630.htm",
+      "capex_definition": "Separate segment note 18369; six-month cash PP&E 28476. Do not fill quarterly cash PP&E without definition reconciliation."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+name: TEST official SEC reference review (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/sec_official_reference_review.py'
+      - 'tests/test_sec_official_reference_review.py'
+      - 'tests/fixtures/sec_q2_2026_official_reference_review.json'
+      - '.github/workflows/test-sec-official-reference-review.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_sec*.py' -v
