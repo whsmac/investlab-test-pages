@@ -54,6 +54,8 @@ function donut(row,keys,colors,max,currency,label){
  else g.append(svg('text',{x:100,y:103,'text-anchor':'middle',fill:'#b9c7df','font-size':13},'자료 없음'));
  box.append(g,el('b',money(row?.total,currency)));return box;
 }
+export function selectedVisualDate(){return active?.rows[active.index]?.date||null;}
+export function setVisualDate(date){stopVisualPlayback();setSelected(date);}
 function setSelected(date){if(!active)return;const i=active.rows.findIndex(r=>r.date===date);if(i>=0){active.index=i;$('visualSlider').value=String(i);draw();}}
 function draw(){
  if(!active)return;
@@ -80,6 +82,7 @@ function draw(){
  plot($('historyPerformance'),compare,[{key:'portfolio',label:'내 운용성과',color:'#a992ff'},{key:'ndx',label:'NASDAQ 100',color:'#70c8ee',dash:'6 3'},{key:'spx',label:'S&P 500',color:'#eac37e',dash:'3 4'},...choices.map((t,i)=>({key:'stock:'+t,label:t,color:pal[(i+3)%pal.length]}))],{selected:row.date,pick});
  const heat=$('visualMarketHeat');heat.replaceChildren();for(const ticker of tickers){const change=priceChange(market,ticker,first.date,row.date,currency),tile=el('button',undefined,'visual-market-tile');tile.type='button';tile.style.background=colorReturn(change);tile.append(el('strong',ticker),el('span',pct(change)));tile.title=finite(change)?'선택일 주가 변화 · '+currency:'가격 자료 미확보';tile.onclick=()=>{const sel=$('historyTradeTicker');sel.value=ticker;sel.onchange?.();};heat.append(tile);}
  renderReview();
+ if(typeof active.onDateChange==='function')active.onDateChange(row.date);
 }
 export function renderReview(){if(!active)return;const ticker=$('historyTradeTicker').value,row=active.rows[active.index],first=active.rows[0],root=$('visualReview');root.replaceChildren();if(!row||!first||!ticker){root.textContent='조회할 종목 없음';return;}
  const trades=active.rows.filter(r=>r.date<=row.date).flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date})));
@@ -89,13 +92,13 @@ export function renderReview(){if(!active)return;const ticker=$('historyTradeTic
  const last=trades.at(-1),after=reviewTrade(last,active.market,row.date);
  root.append(el('p',last.date+' '+(last.type==='BUY'?'매수':'매도')+' '+fmt(last.qty)+'주 · 체결가 USD '+fmt(last.price,2),'muted'),el('strong',after?'체결가 대비 '+after.date+' 종가 '+pct(after.change):'체결 이후 종가 미확보',after&&after.change>0?'positive':after&&after.change<0?'negative':''));
 }
-export function renderVisualPerformance(rows,market,data,currency){
+export function renderVisualPerformance(rows,market,data,currency,onDateChange){
  stopVisualPlayback();
  const saved=active?.rows[active.index]?.date,oldChoices=new Set([...$('visualComparePicks').querySelectorAll('input:checked')].map(n=>n.value)),oldTicker=$('historyTradeTicker').value;
  const keys=assetKeys(rows),colors=Object.fromEntries(keys.map((k,i)=>[k,k==='현금'?'#8995a7':pal[i%pal.length]]));
  const tickers=[...new Set([...rows.flatMap(r=>[...Object.keys(r.quantities),...r.trades.map(t=>t.symbol)]),...(Array.isArray(data.watchlist)?data.watchlist:[])])].filter(t=>typeof t==='string'&&/^[A-Z][A-Z0-9.-]{0,15}$/.test(t)).sort();
  const oldIndex=rows.findIndex(r=>r.date===saved);if(!rows.length){clearVisualPerformance();$('visualHero').textContent='원장 기록 이후 조회 가능한 날짜가 없습니다.';return;}
- active={rows,market,currency,keys,colors,tickers,index:oldIndex>=0?oldIndex:Math.max(0,rows.length-1)};
+ active={rows,market,currency,keys,colors,tickers,onDateChange,index:oldIndex>=0?oldIndex:Math.max(0,rows.length-1)};
  const slider=$('visualSlider');slider.max=String(Math.max(0,rows.length-1));slider.disabled=rows.length<2;slider.oninput=()=>{stopVisualPlayback();if(!active)return;active.index=Number(slider.value);draw();};
  $('visualPrev').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.max(0,active.index-1);draw();};$('visualNext').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.min(rows.length-1,active.index+1);draw();};
  $('visualPlay').onclick=()=>{if(!active||rows.length<2)return;if(playTimer){stopVisualPlayback();return;}if(active.index===rows.length-1)active.index=0;$('visualPlay').textContent='Ⅱ 정지';draw();playTimer=setInterval(()=>{if(!active||document.hidden||$('historyPanel').hidden||$('portfolioPrivate').hidden||active.index>=rows.length-1){stopVisualPlayback();return;}active.index++;draw();},600);};
