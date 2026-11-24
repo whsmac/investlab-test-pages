@@ -23,7 +23,8 @@ CIKS = {int(cik): ticker for ticker, (cik, _) in ISSUERS.items()}
 REVENUE = {"RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet", "Revenues"}
 TAGS = {**{t: ("revenue", "IS") for t in REVENUE},
         "OperatingIncomeLoss": ("operating", "IS"),
-        "PaymentsToAcquirePropertyPlantAndEquipment": ("capex", "CF")}
+        "PaymentsToAcquirePropertyPlantAndEquipment": ("capex", "CF"),
+        "PaymentsToAcquireProductiveAssets": ("capex", "CF")}
 FIELDS = {"revenue": "revenue_usd_bn", "operating": "operating_income_usd_bn", "capex": "capex_usd_bn"}
 MAX_ZIP = 250 * 1024**2
 MAX_MEMBER = 2 * 1024**3
@@ -103,8 +104,10 @@ def scan_archive(path, as_of):
                 raise ValueError("Duplicate SEC accession")
             submissions[accession] = (ticker, end, filed, fy, fq)
         presentation = set()
-        for row in read_table(z, "pre.txt", {"adsh","tag","version","stmt","inpth"}):
+        for row in read_table(z, "pre.txt", {"adsh","tag","version","stmt","inpth","plabel"}):
             if row["adsh"] in submissions and row["tag"] in TAGS and row["stmt"] == TAGS[row["tag"]][1] and row["inpth"] == "0":
+                if row["tag"] == "PaymentsToAcquireProductiveAssets" and (submissions[row["adsh"]][0] != "AMZN" or row["plabel"].strip().casefold() != "purchases of property and equipment"):
+                    continue
                 presentation.add((row["adsh"], row["tag"], row["version"]))
         for row in read_table(z, "num.txt", {"adsh","tag","version","ddate","qtrs","uom","coreg","segments","value"}):
             accession, tag = row["adsh"], row["tag"]

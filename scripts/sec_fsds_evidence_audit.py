@@ -11,7 +11,7 @@ from .sec_quarterly_financials_test import ISSUERS
 
 FIELDS = {"revenue_usd_bn":{"RevenueFromContractWithCustomerExcludingAssessedTax","SalesRevenueNet","Revenues"},
           "operating_income_usd_bn":{"OperatingIncomeLoss"},
-          "capex_usd_bn":{"PaymentsToAcquirePropertyPlantAndEquipment"}}
+          "capex_usd_bn":{"PaymentsToAcquirePropertyPlantAndEquipment","PaymentsToAcquireProductiveAssets"}}
 METRICS = (*FIELDS,"operating_margin_pct")
 BASE="https://www.sec.gov/files/dera/data/financial-statement-data-sets/"
 
@@ -75,6 +75,7 @@ def audit(payload, today=None):
                 expected=1 if mode=="direct" else fq-i
                 need(f["qtrs"]==expected and expected>=1,"Fact duration mismatch")
                 need(f["tag"] in tags and f["tag"]==facts[0]["tag"],"Inconsistent fact tag")
+                need(f["tag"]!="PaymentsToAcquireProductiveAssets" or t=="AMZN","Unsupported issuer-specific CAPEX tag")
                 filed=date.fromisoformat(f["filed"])
                 need(target<=filed<=asof,"Invalid filing date")
                 need(f["archive_url"] in {BASE+a+".zip" for a in archives},"Unknown archive")
