@@ -1,0 +1,26 @@
+name: TEST SEC refresh preservation and chart regressions (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'src/market/sec-refresh-review.mjs'
+      - 'scripts/sec-refresh-review.mjs'
+      - 'tests/sec-refresh-review.test.mjs'
+      - 'tests/company-financial-chart-date-axis.test.mjs'
+      - 'tests/company-online-price-first.test.mjs'
+      - '.github/workflows/test-sec-refresh-preservation.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check scripts/sec-refresh-review.mjs
+          node --test tests/sec-refresh-review.test.mjs tests/sec-local-chart-review.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-online-price-first.test.mjs

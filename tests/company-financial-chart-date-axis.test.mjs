@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {quarterPath} from '../src/market/sec-local-chart-review.mjs';
 
 const html=readFileSync(new URL('../company-investment-analysis.html',import.meta.url),'utf8');
 const start=html.indexOf('function node(name,props={},value){');
@@ -13,10 +14,10 @@ class Shape {
  append(...items){this.children.push(...items);}
  replaceChildren(...items){this.children=[...items];}
 }
-const svgFactory=new Function('document','selected','fmt',source+';return {chart};');
+const svgFactory=new Function('document','selected','fmt','quarterPath',source+';return {chart};');
 function render(sets,finance,from){
  const document={createElementNS:(_ns,name)=>new Shape(name)};
- const {chart}=svgFactory(document,'TSLA',(n,dec=2)=>Number(n).toFixed(dec));
+ const {chart}=svgFactory(document,'TSLA',(n,dec=2)=>Number(n).toFixed(dec),quarterPath);
  const svg=new Shape('svg');
  chart(svg,sets,{index:false,finance,from});
  return svg;
