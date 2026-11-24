@@ -12,6 +12,7 @@
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
 <body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
 <div id="portfolioPrivate" hidden><p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
+<p id="portfolioSyncBanner" role="status" style="color:#c5d7f5;font-size:13px;padding:10px 12px;background:#172842;border:1px solid #415d86;border-radius:8px;">계좌별 원장 연결 상태 확인 중…</p>
 <section class="hero" aria-label="전체 투자자산">
 <div class="portfolio-section-head" style="margin-bottom:12px"><strong>전체 투자자산</strong><label for="displayCurrency">표시 통화 <select id="displayCurrency" aria-label="내 투자현황 표시 통화"><option value="KRW" selected>KRW (원화)</option><option value="USD">USD (미국 달러)</option></select></label></div>
 <span class="total-label">전체 투자자산 (KRW)</span><div id="dashboardTotal" class="total-amount">—</div>
@@ -36,6 +37,7 @@
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
+import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
 import {renderPortfolioDashboard,fetchUsdKrwRate} from './src/ui/pilot-portfolio-dashboard.mjs';
@@ -289,53 +291,52 @@ async function refreshOnlineLedgerDisplay(){
   const client=window.supabase.createClient(url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
   const {data:auth,error:authError}=await client.auth.getUser();
   if(authError||!auth?.user?.id){
-   resetVisiblePortfolio();
-   status.textContent='TEST 계정 로그인이 필요합니다 · 다른 온라인 계정의 보유현황은 숨겼습니다';
+   resetVisiblePortfolio();status.textContent='TEST 계정 로그인이 필요합니다 · 이전 계정의 보유현황은 숨겼습니다';
    return;
   }
   const ownerId=auth.user.id,localOwner=localStorage.getItem(LOCAL_OWNER_KEY);
-  // Don't expose a different account's holdings while new user data loads.
-  if((displayedCloudLedgerOwnerId&&displayedCloudLedgerOwnerId!==ownerId)||
-     (!displayedCloudLedgerOwnerId&&localOwner!==ownerId&&(data.accounts.length||data.entries.length)))
-   resetVisiblePortfolio();
+  if(displayedCloudLedgerOwnerId&&displayedCloudLedgerOwnerId!==ownerId)resetVisiblePortfolio();
   const {data:remote,error}=await client.from('investlab_pilot_ledger_documents')
    .select('payload,updated_at').eq('user_id',ownerId).maybeSingle();
   if(error)throw Error(error.message);
   const {data:verified,error:verifyError}=await client.auth.getUser();
   if(verifyError||verified?.user?.id!==ownerId)throw Error('조회 도중 TEST 로그인 계정이 변경되었습니다');
-  if(!remote){
-   // Local fallback is permitted only for the same account's recorded draft.
-   // A sign-out or account switch parks each user's local ledger at KEY:userId.
-   // The user may view only their own parked copy when no server record exists.
-   const localRaw=localOwner===ownerId?localStorage.getItem(KEY):localStorage.getItem(KEY+':'+ownerId);
-   if(localRaw){
-    const stored=JSON.parse(localRaw);
-    if(stored?.version===1&&Array.isArray(stored.accounts)&&Array.isArray(stored.entries)){
-     validateLedger(stored);
-     if(displayedCloudLedgerOwnerId!==ownerId||displayedCloudLedgerRevision!==null)
-      usePortfolioDisplay(stored,null,ownerId);
-     status.textContent='본인 TEST 서버 원장 없음 · 동일 계정의 브라우저 보관 원장을 표시 중 (서버 미저장)';
-     return;
-    }
-   }
+  // Prefer a browser edit only when a verified user's stored base is EXACTLY
+  // the remote revision. Conflicting edits from other devices never overwrite
+  // the server or this device. The call is fully read-only.
+  const localRaw=localOwner===ownerId?localStorage.getItem(KEY):localStorage.getItem(KEY+':'+ownerId);
+  const selected=resolveVerifiedPilotLedger({
+   userId:ownerId,remote,localOwnerId:ownerId===localOwner?ownerId:localOwner,
+   localRaw,baselineRaw:localStorage.getItem(cloudLedgerBaselineKey(ownerId))
+  });
+  if(!selected.payload){
    resetVisiblePortfolio();$('portfolioPrivate').hidden=false;
-   status.textContent='이 TEST 계정에 서버 원장이 없습니다 · 다른 계정의 브라우저 자료는 화면에서 숨겼습니다';
-   return;
+   status.textContent=selected.notice;return;
   }
-  const payload=remote.payload;
-  if(payload?.version!==1||!Array.isArray(payload.accounts)||!Array.isArray(payload.entries))throw Error('원장 형식 오류');
-  validateLedger(payload);projectLedger(payload,'ALL');
-  for(const a of payload.accounts)projectLedger(payload,a.id);
-  const revision=ownerId+':'+remote.updated_at;
+  validateLedger(selected.payload);
+  projectLedger(selected.payload,'ALL');
+  for(const a of selected.payload.accounts)projectLedger(selected.payload,a.id);
+  const revision=ownerId+':'+selected.revision;
   if(displayedCloudLedgerRevision!==revision||displayedCloudLedgerOwnerId!==ownerId)
-   usePortfolioDisplay(payload,revision,ownerId);
-  status.textContent='본인 TEST 서버 원장 자동 연결 · '+payload.accounts.length+'계좌 / '+payload.entries.length+'거래 · 브라우저 원장은 변경하지 않았습니다';
+   usePortfolioDisplay(selected.payload,revision,ownerId);
+  status.textContent=selected.notice;
  }catch(error){
-  status.textContent='TEST 서버 원장 조회 실패: '+error.message+' · 저장된 원장은 변경하지 않았습니다';
- }finally{cloudLedgerBusy=false;}
+  status.textContent='TEST 서버 원장 조회 실패: '+error.message+' · 기존 원장은 변경하지 않았습니다';
+ }finally{
+  cloudLedgerBusy=false;
+  $('portfolioSyncBanner').textContent=status.textContent;
+ }
 }
 window.addEventListener('pageshow',()=>{void refreshOnlineLedgerDisplay();});
-window.addEventListener('storage',event=>{if(event.key==='investlab_shared_data_auth_v1'){resetVisiblePortfolio();void refreshOnlineLedgerDisplay();}});
+window.addEventListener('storage',event=>{
+ if(['investlab_shared_data_auth_v1','investlab_shared_data_connection_v1',KEY,LOCAL_OWNER_KEY].includes(event.key)||
+    (typeof event.key==='string'&&event.key.startsWith('investlab_pilot_ledger_cloud_base_v1:'))){
+  if(event.key==='investlab_shared_data_auth_v1')resetVisiblePortfolio();
+  void refreshOnlineLedgerDisplay();
+ }
+});
+window.addEventListener('focus',()=>{void refreshOnlineLedgerDisplay();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshOnlineLedgerDisplay();});
 setInterval(()=>{if(!document.hidden)void refreshOnlineLedgerDisplay();},15*60*1000);
 // Only read existing TEST auth/config; never create a session or write server data automatically.
 function refreshPortfolioQuotesIfConnected(){
