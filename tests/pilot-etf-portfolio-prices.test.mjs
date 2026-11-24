@@ -48,7 +48,8 @@ test('weekend grace period does not mislabel an old closing price as live',()=>{
  assert.throws(()=>parsePublishedEtfCloses(before,{now:new Date('2026-12-02T00:00:00Z')}),/게시일 오류/);
 });
 function el(name='div'){
- return {name,textContent:'',className:'',style:{},value:'ALL',children:[],
+ return {name,textContent:'',className:'',style:{},attributes:{},value:'ALL',children:[],
+  setAttribute(key,value){this.attributes[key]=String(value)}, 
   classList:{add(){}},append(...child){this.children.push(...child)},
   replaceChildren(...child){this.children=[...child]},
   dispatchEvent(){}};
@@ -67,10 +68,11 @@ test('both accounts are valued when all company and ETF closing prices are prese
  const ids=['dashboardTotal','dashboardGain','dashboardRate','dashboardStocks','dashboardCash',
   'dashboardCashBreakdown','dashboardFx','dashboardAccounts','dashboardHoldings',
   'dashboardNotice','account','accountTotalHeader','accountGainHeader','holdingAverageHeader',
-  'holdingCloseHeader','holdingValueHeader','holdingGainHeader'];
+  'holdingCloseHeader','holdingValueHeader','holdingGainHeader',
+  'allocationChart','allocationLegend','allocationStatus','allocationAccount'];
  const nodes=new Map(ids.map(id=>[id,el()]));
  const prior=globalThis.document;
- globalThis.document={getElementById:id=>nodes.get(id),createElement:el,querySelector:selector=>selector==='.total-label'?nodes.get('total-label')||nodes.set('total-label',el()).get('total-label'):null};
+ globalThis.document={getElementById:id=>nodes.get(id),createElement:el,createElementNS:(_ns,tag)=>el(tag),querySelector:selector=>selector==='.total-label'?nodes.get('total-label')||nodes.set('total-label',el()).get('total-label'):null};
  try{
   renderPortfolioDashboard({data,prices,fx:1300,fxDate:'test',selected:'ALL',displayCurrency:'KRW'});
   const asset=(3*12.25+4*72.5+2*51.75+5*320+250)*1300;
