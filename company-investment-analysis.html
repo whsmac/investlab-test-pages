@@ -53,7 +53,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <p class="muted">6개 기업의 일별 종가와 분기 매출·CAPEX·영업이익·영업이익률을 비교합니다. GitHub Pages의 자동수집 장기 종가를 우선 표시하고 부족한 구간만 TEST 서버 이력으로 보완합니다. 실시간 체결가는 아닙니다.</p>
 <section class="panel">
 <p class="muted" style="margin:0 0 9px">종목 버튼을 눌러 여러 기업을 선택하거나 제외할 수 있습니다. 최소 1개 종목은 유지됩니다.</p>
-<div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div>
+<div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div><div id="companyTickerChartLinks" class="muted" style="margin-top:8px" aria-label="개별 종목 차트"></div>
 <p class="muted" style="margin:14px 0 6px">시장지수 비교 (복수 선택 가능 · 선택 시 기준값 100 자동 전환)</p>
 <div class="tickers benchmarks" id="benchmarkButtons" aria-label="비교할 주요 시장지수 선택"></div>
 <p id="benchmarkStatus" class="muted" role="status">NASDAQ 100 · S&amp;P 500 데이터 확인 중…</p>
@@ -80,6 +80,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
 </main>
 <script type="module">
+import {createTickerChartButton} from "./src/ui/pilot-tradingview-chart.mjs";
 import {loadSecStaticSnapshot} from "./src/market/load-sec-static-snapshot.mjs";
 import {validateLocalSecChartReview,reviewRowsForTicker,reviewLabel,quarterPath} from "./src/market/sec-local-chart-review.mjs";
 import {readSharedPriceSeries} from "./src/market/read-shared-price-series.mjs";
@@ -299,6 +300,8 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
 }
 function renderSymbols(){
  const root=$("tickerButtons");root.replaceChildren();
+ const chartLinks=$("companyTickerChartLinks");chartLinks.replaceChildren(document.createTextNode("개별 주가 차트: "));
+ for(const ticker of SYMBOLS)chartLinks.append(createTickerChartButton(ticker));
  for(const ticker of SYMBOLS){
   const b=document.createElement("button");b.type="button";
   b.setAttribute("aria-pressed",String(selectedTickers.has(ticker)));
