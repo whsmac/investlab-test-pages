@@ -1,0 +1,49 @@
+name: TEST SEC quarterly refresh package (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'src/market/sec-quarterly-refresh-package.mjs'
+      - 'scripts/prepare-sec-quarterly-refresh.mjs'
+      - 'scripts/prepare_sec_quarterly_refresh.py'
+      - 'tests/sec-quarterly-refresh-package.test.mjs'
+      - '.github/workflows/test-sec-quarterly-refresh-package.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate actual pinned baseline and source-evidence model
+        run: node --test tests/sec-quarterly-refresh-package.test.mjs tests/sec-static-snapshot.test.mjs tests/sec-refresh-review.test.mjs
+      - name: Exercise full offline import pipeline with matching synthetic Company Facts
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          tags={}
+          for name,amount in [('RevenueFromContractWithCustomerExcludingAssessedTax',92279000000),('OperatingIncomeLoss',45915000000),('PaymentsToAcquirePropertyPlantAndEquipment',39367000000)]:
+              tags[name]={'units':{'USD':[{'start':'2026-07-01','end':'2026-09-30','filed':'2026-10-28','form':'10-Q','accn':'0001193125-26-436133','val':amount}]}}
+          Path(os.environ['RUNNER_TEMP'],'sec-fixture.json').write_text(json.dumps({'cik':789019,'facts':{'us-gaap':tags}}))
+          PY
+          python -m scripts.prepare_sec_quarterly_refresh "$RUNNER_TEMP/sec-fixture.json" --output-dir "$RUNNER_TEMP/sec-refresh"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'],'sec-refresh')
+          r=json.loads((p/'refresh-report.json').read_text())
+          assert r['status']=='KEEP_PREVIOUS' and r['retainedRows']==117 and r['candidateRows']==1 and not r['publication_allowed'] and not r['automatic_acquisition_verified']
+          assert not (p/'staged-review.json').exists()
+          print('OFFLINE_REFRESH_PIPELINE_OK')
+          PY
+      - name: Existing SEC extraction regression tests
+        run: python -m unittest discover -s tests -p 'test_sec*.py' -v
