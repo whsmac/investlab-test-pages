@@ -33,7 +33,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/pilot-portfolio-donut-allocation-20261124
+          ref: feature/pilot-mobile-auth-empty-state-20261124
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
