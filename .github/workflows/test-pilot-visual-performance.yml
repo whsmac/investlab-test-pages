@@ -1,0 +1,28 @@
+name: TEST visual portfolio performance (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'my-portfolio.html'
+      - 'src/ui/pilot-visual-performance*'
+      - 'src/market/pilot-visual-performance.mjs'
+      - 'src/ui/pilot-portfolio-history-ui.mjs'
+      - 'tests/pilot-visual-performance*'
+      - '.github/workflows/test-pilot-visual-performance.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/pilot-visual-performance.test.mjs tests/pilot-portfolio-history.test.mjs tests/pilot-personal-current-quotes.test.mjs
+      - run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: node --test tests/pilot-visual-performance.browser.test.mjs

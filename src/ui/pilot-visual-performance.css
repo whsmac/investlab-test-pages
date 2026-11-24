@@ -1,0 +1,43 @@
+/* Visual performance: responsive, no external UI libraries. */
+.visual-tabs{display:flex;gap:8px;margin:14px 0;border-bottom:1px solid #394762;padding-bottom:8px}
+.visual-tabs button,.visual-performance button,.visual-performance select{font:inherit;color:#eef2ff;background:#202d48;border:1px solid #425475;border-radius:8px;padding:9px 13px;cursor:pointer;min-height:40px}
+.visual-tabs button[aria-pressed=true]{background:linear-gradient(135deg,#394487,#7352be);border-color:#947ee1;font-weight:750}
+.visual-performance{padding:14px;background:#0e1628;border-color:#303b56}
+.visual-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.visual-heading h2{margin:0;font-size:clamp(23px,3vw,30px)}
+.visual-heading p{margin:4px 0}
+.visual-performance select{min-width:0;max-width:100%}
+.visual-card{background:linear-gradient(145deg,#19243a,#141e31);border:1px solid #354360;border-radius:13px;margin:12px 0;padding:15px;min-width:0}
+#historyPanel .visual-card h3{margin:0 0 5px;font-size:17px}
+.visual-card p{margin:6px 0}
+.visual-timeline{position:relative;background:#202a48}
+#visualDay{font-size:22px;color:#d6c7ff;font-variant-numeric:tabular-nums}
+#visualSlider{width:100%;accent-color:#a48aff;min-height:30px;cursor:pointer}
+#visualHero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr);align-items:center;gap:10px}
+.visual-donut{text-align:center;min-width:0}
+.visual-donut strong,.visual-donut small,.visual-donut b{display:block;overflow-wrap:anywhere}
+.visual-donut small{font-size:12px;color:#c5d0e6;margin-top:3px}
+.visual-donut svg{width:100%;max-width:210px;height:auto;display:block;margin:auto}
+.visual-donut b{font-size:clamp(13px,1.8vw,22px);font-variant-numeric:tabular-nums}
+.visual-metrics{display:grid;gap:7px}
+.visual-metrics>div{background:#111a2d;padding:9px 12px;border-radius:8px}
+.visual-metrics small,.visual-metrics strong{display:block}
+.visual-metrics small{color:#aebdd6;font-size:12px;margin-bottom:3px}
+.visual-metrics strong{font-size:clamp(15px,1.8vw,20px);overflow-wrap:anywhere}
+.visual-columns{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
+.visual-columns .visual-card{margin:0}
+.visual-svg{width:100%;height:auto;display:block;overflow:visible}
+.visual-legend{display:flex;gap:10px;flex-wrap:wrap;color:#c3cfe5;font-size:12px;margin-top:8px}
+.visual-legend span{display:inline-flex;gap:5px;align-items:center}
+.visual-legend i,.visual-holding i{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.visual-holding{display:grid;grid-template-columns:10px minmax(42px,.7fr) minmax(30px,.65fr) minmax(70px,1.3fr) minmax(40px,.5fr);align-items:center;gap:6px;font-size:12px;border-bottom:1px solid #34415b;padding:7px 0;font-variant-numeric:tabular-nums}
+.visual-holding span{text-align:right;overflow-wrap:anywhere}
+.visual-holding button{min-height:0;padding:1px 3px}
+.visual-picks{display:flex;flex-wrap:wrap;gap:7px}
+.visual-picks label{display:flex;align-items:center;gap:4px;padding:5px 8px;background:#202b43;border:1px solid #40506b;border-radius:7px;font-size:13px}
+.visual-picks input{accent-color:#a48aff}
+#visualMarketHeat{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px}
+.visual-market-tile strong,.visual-market-tile span{display:block;text-align:center}
+.visual-review-stat{display:inline-block;padding:9px;margin:4px;background:#25344f;border-radius:8px;font-size:14px;font-weight:650}
+.visual-performance summary{cursor:pointer;font-weight:650}
+@media(max-width:720px){.visual-performance{padding:8px}.visual-card{padding:10px}.visual-columns{grid-template-columns:1fr}.visual-columns .visual-card{margin:0}.visual-heading{gap:5px}.visual-heading .history-controls{margin:2px 0}.visual-tabs button{flex:1;min-height:44px}#visualHero{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.visual-metrics{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr))}.visual-metrics>div{padding:8px}.visual-holding{font-size:11px}.visual-legend{font-size:11px}#visualDay{font-size:17px}.visual-performance .history-controls button{padding:7px 10px}}

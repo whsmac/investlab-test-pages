@@ -2,7 +2,7 @@
 // Never pass ledger contents, account IDs, authentication or portfolio data.
 const groups={
  NASDAQ:'TSLA MSFT GOOGL GOOG AMZN META SPCX TQQQ TSLL AAPL NVDA AVGO COST LIN WMT QQQ',
- AMEX:'BITU USD SOXL SPY XLK XLF XLE XLI XLY XLP XLV XLC XLU XLB XLRE',
+ AMEX:'BITU USD QLD SOXL SPY XLK XLF XLE XLI XLY XLP XLV XLC XLU XLB XLRE',
  NYSE:'JPM BAC XOM CVX CAT GE LLY JNJ NEE DUK SHW PLD AMT',
 };
 const symbols=new Map(Object.entries(groups).flatMap(([exchange,tickers])=>tickers.split(' ').map(t=>[t,exchange+':'+t])));
