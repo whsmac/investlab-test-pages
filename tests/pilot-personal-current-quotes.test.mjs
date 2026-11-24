@@ -45,3 +45,14 @@ test('actual page has explicit opt-in and effective quote overlay, no credential
  assert.match(dashboard,/tableMoney\(fromUsd\(Number\(q.close\)\),1\)/);
  assert.match(dashboard,/h.qty\*Number\(q.close\)/);
 });
+
+test('both screens use same current quote adapter; disconnected simulator retains closing price and exact computation',()=>{
+ const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
+ assert.match(html,/fetchPersonalQuotes\(\{tickers,key:simQuoteKey/);
+ assert.match(html,/effectivePortfolioPrices\(closes,simulatorPersonalQuotes\)/);
+ assert.match(html,/formatPortfolioNumber\(cost,1\)/);
+ assert.match(html,/Number\(p.quantity\)\*price/);
+ assert.match(html,/simQuoteKey='';simQuoteOwner=null;simulatorPersonalQuotes.clear/);
+ assert.match(html,/currentQuoteDates.set\(ticker,row.date\)/);
+ assert.doesNotMatch(html,/(localStorage|sessionStorage)\.setItem\([^;\n]*simQuoteKey/);
+});
