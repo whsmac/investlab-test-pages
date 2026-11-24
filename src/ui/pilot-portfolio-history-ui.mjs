@@ -1,3 +1,4 @@
+import {renderVisualPerformance,renderReview} from './pilot-visual-performance-ui.mjs';
 import {indexRows,portfolioHistory,priorObservation,firstLedgerDay} from '../ledger/pilot-portfolio-history.mjs';
 import {loadPublishedYahooReview} from '../market/load-published-yahoo-review.mjs';
 import {loadPublishedMarketIndices} from '../market/load-published-market-indices.mjs';
@@ -44,21 +45,16 @@ export function renderPortfolioHistory(data,market,start,end,selected,currency){
  const rows=portfolioHistory(data,start,end,market,selected,currency);
  const valid=rows.filter(r=>r.total!==null);
  $('historyStatus').textContent=(firstLedgerDay(data,selected)?'원장 기록 시작 '+firstLedgerDay(data,selected):'원장 기록 없음')+' · 평가 가능 '+valid.length+'/'+rows.length+'일 · 기준일 이전 최신 관측값(최대 7일). '+(valid.length<rows.length?'결측일은 그래프에서 연결하지 않습니다. ':'')+'기록된 원장만 재현합니다.';
- lineChart('historyAssets',rows,[{key:'total',label:'총자산 '+currency},{key:'capital',label:'기간 시작 평가액 + 순외부유입'}]);
- lineChart('historyPerformance',rows,[{key:'index',label:'내 자산 (입출금 조정, 시작 100)'},{key:'ndx',label:'NASDAQ 100'},{key:'spx',label:'S&P 500'}]);
+ renderVisualPerformance(rows,market,data,currency);
  lineChart('historyDrawdown',rows,[{key:'mdd',label:'고점 대비 하락률 %'}]);
- weights(rows);
- const tickers=[...new Set(rows.flatMap(r=>[...Object.keys(r.quantities),...r.trades.map(t=>t.symbol)]))].sort();
- const previous=$('historyTradeTicker').value,select=$('historyTradeTicker');select.replaceChildren();
- for(const ticker of tickers){const o=document.createElement('option');o.value=ticker;o.textContent=ticker;select.append(o);}
- if(tickers.includes(previous))select.value=previous;
+ const select=$('historyTradeTicker');
  const drawTicker=()=>{const ticker=select.value;
   lineChart('historyQuantities',rows.map(r=>({date:r.date,qty:r.quantities[ticker]||0})),[{key:'qty',label:ticker+' 보유수량'}]);
   const points=rows.map(r=>({date:r.date,price:priorObservation(market.get(ticker),r.date)?.close??null}));
   const markers=rows.flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date})));
   lineChart('historyTradePrices',points,[{key:'price',label:ticker+' 종가 USD'}],markers);
  };
- select.onchange=drawTicker;drawTicker();
+ select.onchange=()=>{drawTicker();renderReview();};select.onchange();
  lineChart('historyFx',rows,[{key:'fx',label:'USD/KRW 적용환율'}]);
  const tradeRoot=$('historyTrades');tradeRoot.replaceChildren();
  for(const r of rows)for(const trade of r.trades){const tr=document.createElement('tr');for(const value of [r.date,trade.symbol,trade.type==='BUY'?'매수':'매도',num(trade.qty,6),num(trade.price,2)]){const td=document.createElement('td');td.textContent=value;tr.append(td);}tradeRoot.append(tr);}
