@@ -34,13 +34,13 @@ def number(v):
     need(type(v) in (float,int) and math.isfinite(v),"Invalid metric")
     return Decimal(str(v))
 
-def audit(payload):
+def audit(payload, today=None):
     need(payload.get("format")=="INVESTLAB_SEC_FSDS_REVIEW_V1" and
          payload.get("status")=="review_only_not_filing_reconciled" and
          payload.get("source")=="SEC Financial Statement Data Sets" and
          payload.get("database_writes")==0,"Unexpected source or review status")
     asof=date.fromisoformat(payload["as_of"])
-    need(asof<=date.today(),"Future review date")
+    need(asof<=(today or date.today()),"Future review date")
     archives=payload["archives"]
     manifest=payload["archive_manifest"]
     need(isinstance(archives,list) and archives and len(archives)==len(set(archives)) and set(archives)==set(manifest),"Archive manifest mismatch")
