@@ -1,0 +1,42 @@
+name: TEST portfolio historical valuation (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'my-portfolio.html'
+      - 'src/ledger/pilot-portfolio-history.mjs'
+      - 'src/ui/pilot-portfolio-history-ui.mjs'
+      - 'tests/pilot-portfolio-history.test.mjs'
+      - 'scripts/portfolio_history_public.py'
+      - '.github/workflows/test-pilot-portfolio-history.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node --test tests/pilot-portfolio-history.test.mjs tests/pilot-managed-symbols-usd-display.test.mjs tests/pilot-personal-current-quotes.test.mjs tests/pilot-portfolio-allocation-donut.test.mjs tests/pilot-release-integrated-acceptance.test.mjs
+      - name: Verify public history schema and parse official FX fixture
+        run: |
+          python - <<'PY'
+          from datetime import date
+          from scripts.portfolio_history_public import parse_fx,build_history,verify_history
+          today=date(2026,11,24)
+          fx=parse_fx("observation_date,DEXKOUS\n2026-11-20,1400.5\n2026-11-23,.\n",today)
+          assert len(fx)==1 and fx[0]["close"]==1400.5
+          data=build_history({"BITU":{"status":"ok","currency":"USD","price_basis":"unadjusted_close","observations":[{"trading_date":"2026-11-20","close_price":"7.75"}]}},fx,today)
+          assert len(data["rows"])==2
+          try:
+              verify_history({**data,"rows":[{**fx[0],"owner":"private"}]},today)
+          except ValueError: pass
+          else: raise AssertionError("private field accepted")
+          PY
