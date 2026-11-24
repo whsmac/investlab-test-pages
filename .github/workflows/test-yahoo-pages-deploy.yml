@@ -1,5 +1,6 @@
 name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # Runs on default branch; reads reviewed TEST feature code. No Supabase access.
+# 2026-11-24: ledger usage-order release, CI 3/3 passed; prior implementation 19e4e5589bb75c460fbbd2fe62033d9ae5a952b3 retained for rollback.
 # 2026-11-24: TEST backup safety release, CI 4/4 passed; previous implementation 04bfe22214697c3ad8777893bcf79f55c22a6b54 retained for rollback.
 # No actual server restore; review-only. Backup download retained.
 # Previous publisher d48715afde75f9ac20d5a8ddddf59a2844599c71 / implementation b91c0d4fa8d4b501a19ee0315ec8419ca9a64387 retained for rollback.
@@ -35,7 +36,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 19e4e5589bb75c460fbbd2fe62033d9ae5a952b3
+          ref: 5b48a14acfc812a44b3842442bba23f5a2e5fa6e
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -51,7 +52,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "19e4e5589bb75c460fbbd2fe62033d9ae5a952b3"
+          test "$(git rev-parse HEAD)" = "5b48a14acfc812a44b3842442bba23f5a2e5fa6e"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
@@ -82,6 +83,7 @@ jobs:
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/data/sec-financial-review-20261124.txt"
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ledger/pilot-backup-restore-review.mjs"
           grep -q "서버 복원 사전점검" "${RUNNER_TEMP}/investlab-test-pages-site/data-management.html"
+          python -c 'from pathlib import Path; import sys; s=Path(sys.argv[1]).read_text(); ids=[s.index("id="+chr(34)+x+chr(34)) for x in ["entryPanel","historyPanel","accountManagement","watchManagement"]]; assert ids==sorted(ids)' "${RUNNER_TEMP}/investlab-test-pages-site/pilot-ledger.html"
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  ${RUNNER_TEMP}/investlab-test-pages-site/data/sec-financial-review-20261124.txt" | sha256sum -c -
       - name: Stage and validate optional index data
         run: |
