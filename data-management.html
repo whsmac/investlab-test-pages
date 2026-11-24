@@ -1,7 +1,50 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB | 데이터 백업·복원</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#edf3ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:980px;margin:auto;padding:20px 16px 55px}h1{font-size:clamp(24px,4vw,34px)}a{color:#a6caff}.panel{background:#161f32;border:1px solid #35425b;border-radius:14px;padding:18px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.metric{padding:14px;background:#101b2d;border-radius:10px}.metric strong{font-size:24px;display:block}.metric span,.muted{color:#b2c0d8;font-size:13px;line-height:1.7}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,.file{border:1px solid #526684;border-radius:9px;background:#263e64;color:white;padding:11px 16px;cursor:pointer;font:inherit}.file input{display:none}.warn{color:#f6cf83}#status{white-space:pre-wrap;min-height:25px}@media(max-width:650px){.grid{grid-template-columns:1fr}.actions>*{width:100%;text-align:center}}[hidden]{display:none!important}.file{display:inline-flex;gap:10px;align-items:center}.settings-note{color:#b5c5dc;line-height:1.65;font-size:14px}</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head><body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" aria-current="page" class="pilot-nav-settings">설정 · 백업</a></nav>
+<style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#edf3ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:980px;margin:auto;padding:20px 16px 55px}h1{font-size:clamp(24px,4vw,34px)}a{color:#a6caff}.panel{background:#161f32;border:1px solid #35425b;border-radius:14px;padding:18px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.metric{padding:14px;background:#101b2d;border-radius:10px}.metric strong{font-size:24px;display:block}.metric span,.muted{color:#b2c0d8;font-size:13px;line-height:1.7}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,.file{border:1px solid #526684;border-radius:9px;background:#263e64;color:white;padding:11px 16px;cursor:pointer;font:inherit}.file input{display:none}.warn{color:#f6cf83}#status{white-space:pre-wrap;min-height:25px}@media(max-width:650px){.grid{grid-template-columns:1fr}.actions>*{width:100%;text-align:center}}[hidden]{display:none!important}.file{display:inline-flex;gap:10px;align-items:center}.settings-note{color:#b5c5dc;line-height:1.65;font-size:14px}
+.sync-panel{border-color:#5474a8;background:#17243a}
+.sync-panel h2{margin-top:0}
+.sync-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.sync-metric{padding:12px;border-radius:9px;background:#0d1b31;border:1px solid #344867}
+.sync-metric strong{display:block;margin-top:6px;font-size:19px}
+.sync-line{margin:8px 0;color:#d2dff4;line-height:1.65;font-size:14px}
+.sync-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em;word-break:break-all;font-size:19px;color:#d7f8ee}
+.sync-summary{overflow-x:auto}
+.sync-summary table{width:100%;border-collapse:collapse;font-size:13px}
+.sync-summary th,.sync-summary td{text-align:left;padding:10px;border-bottom:1px solid #354760;vertical-align:top}
+.sync-summary td{overflow-wrap:anywhere}
+.sync-summary caption{text-align:left;font-weight:700;margin:10px 0}
+.sync-actions a{display:inline-flex;align-items:center;padding:10px 14px;min-height:42px;background:#243d65;border:1px solid #5979a8;color:white;text-decoration:none;border-radius:8px}
+@media(max-width:650px){.sync-grid{grid-template-columns:1fr 1fr}.sync-actions>*{width:100%}.sync-summary table{font-size:12px}}
+</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head><body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" aria-current="page" class="pilot-nav-settings">설정 · 백업</a></nav>
 <h1>설정 · 데이터 백업·복원</h1>
 <p class="settings-note">개인 계좌·거래·가상매매 전략은 로그인한 계정의 서버에 저장합니다. 필요할 때만 전체 자료를 파일로 백업하거나 복원하세요.</p>
+<section class="panel sync-panel" aria-label="PC·모바일 TEST 데이터 동기화 진단">
+ <h2>PC·모바일 데이터 일치 확인</h2>
+ <p class="muted">로그인한 <strong>같은 TEST 계정</strong>의 서버 원장·계좌별 보유수량·현금·저장 전략을 읽기 전용으로 점검합니다. 어떤 데이터도 저장하거나 덮어쓰지 않습니다.</p>
+ <div class="actions sync-actions">
+  <button type="button" id="syncCheck">서버에서 최신 상태 확인</button>
+  <a href="./index.html#login">TEST 계정 로그인</a>
+ </div>
+ <p id="syncStatus" role="status" class="sync-line">현재 기기의 TEST 계정 연결을 확인해 주세요.</p>
+ <div id="syncResults" hidden>
+  <div class="sync-grid">
+   <div class="sync-metric"><span class="muted">서버 계좌</span><strong id="syncAccountCount">—</strong></div>
+   <div class="sync-metric"><span class="muted">서버 거래원장</span><strong id="syncEntryCount">—</strong></div>
+   <div class="sync-metric"><span class="muted">서버 저장 전략</span><strong id="syncStrategyCount">—</strong></div>
+  </div>
+  <p class="sync-line"><strong>원장 동기화:</strong> <span id="syncLedgerState">—</span></p>
+  <p class="sync-line"><strong>가상거래 전략:</strong> <span id="syncStrategyState">—</span></p>
+  <p class="sync-line"><strong>이 기기 미저장 초안:</strong> <span id="syncDraftState">—</span></p>
+  <p class="sync-line"><strong>서버 저장자료 일치코드:</strong> <span class="sync-code" id="syncCloudCode">—</span></p>
+  <p class="muted">동일 계정으로 PC·휴대폰 각각 조회했을 때 일치코드와 아래 보유수량·현금·전략 목록이 같아야 합니다. 코드는 <strong>서버 자료 기준</strong>이며, 이 기기의 미동기화 변경은 위 상태로 별도 경고합니다. 코드는 로그인 비밀번호가 아닙니다.</p>
+  <div class="sync-summary"><table>
+   <caption>서버 계좌별 보유수량·현금 (평가액 아닌 원장 기준)</caption>
+   <thead><tr><th>계좌</th><th>보유종목 · 수량</th><th>현금 USD</th><th>현금 KRW</th></tr></thead>
+   <tbody id="syncAccountRows"></tbody>
+  </table></div>
+  <p class="sync-line"><strong>서버에 저장된 전략:</strong> <span id="syncStrategyNames">—</span></p>
+  <p class="muted" id="syncUpdated">최근 서버 저장 시각 확인 중…</p>
+ </div>
+</section>
 <section class="panel"><h2>내 데이터 백업</h2><p class="muted">계좌·거래·저장 전략 및 이 기기의 임시 작업을 JSON 파일로 내려받습니다. 비밀번호와 접속 키는 포함하지 않습니다.</p><div class="actions"><button id="exportOnline" type="button">백업 파일 저장</button></div><p id="onlineStatus" class="muted" role="status">서버 백업을 실행하려면 HOME에서 로그인하세요.</p></section>
 <section class="panel"><h2>백업 자료 복원</h2><p class="muted">내 계정의 기존 자료를 변경할 수 있습니다. 파일 내용을 먼저 확인하고, 현재 자료를 별도 백업한 후 복원하세요.</p>
 <div class="actions"><label class="file">백업 파일 선택 <input id="import" type="file" accept=".json,application/json"></label><button id="restoreOnline" type="button" disabled>서버에 복원</button></div>
@@ -11,6 +54,8 @@
 <button id="export" type="button"></button><button id="restore" type="button"></button>
 </div>
 </main><script type="module">
+import {projectServerAudit,cloudFingerprint,ledgerStatusText,strategyStatusText} from './src/sync/pilot-cross-device-audit.mjs';
+import {TEST_LEDGER_KEY,TEST_LEDGER_OWNER_KEY,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 const KEYS={ledger:'investlab_pilot_ledger_local_v1',scenarios:'investlab_simulator_saved_scenarios_v1',draft:'investlab_simulator_working_draft_v1'},$=id=>document.getElementById(id),MAX=5*1024*1024;
 let pending=null,pendingOnline=null,pendingOwnerId=null,currentUserId=null;
 const OWNER_KEY='investlab_pilot_ledger_local_owner_v1';
@@ -76,6 +121,87 @@ async function authenticatedTestClient(){
  if(error||!data?.user?.id)throw Error('TEST 사용자 로그인이 필요합니다.');
  return {client,userId:data.user.id};
 }
+// All diagnostics are read-only. They never call upsert/insert/update/delete.
+let crossDeviceBusy=false,crossDeviceVerifiedOwner=null;
+function clearCrossDeviceAudit(message='TEST 계정 연결 상태를 확인해 주세요.'){
+ crossDeviceVerifiedOwner=null;
+ $('syncResults').hidden=true;
+ $('syncAccountRows').replaceChildren();
+ $('syncStrategyNames').textContent='—';
+ $('syncCloudCode').textContent='—';
+ $('syncStatus').textContent=message;
+}
+const displayNumber=value=>Number(value).toLocaleString('ko-KR',{maximumFractionDigits:8});
+function renderCrossDeviceAudit(report,code){
+ $('syncResults').hidden=false;
+ $('syncAccountCount').textContent=displayNumber(report.accountCount)+'개';
+ $('syncEntryCount').textContent=displayNumber(report.transactionCount)+'건';
+ $('syncStrategyCount').textContent=displayNumber(report.strategyCount)+'개';
+ $('syncLedgerState').textContent=ledgerStatusText[report.ledgerStatus]||'상태 확인 필요';
+ $('syncStrategyState').textContent=(strategyStatusText[report.strategiesStatus]||'상태 확인 필요')+
+   (report.localExtraStrategies||report.localChangedStrategies
+    ?' · 이 기기 미동기화 가능 '+(report.localExtraStrategies+report.localChangedStrategies)+'개':'');
+ $('syncDraftState').textContent=report.hasLocalDraft?'있음 · 초안은 다른 기기에 자동 공유되지 않습니다':'이 기기의 저장된 작업 초안 없음';
+ $('syncCloudCode').textContent=code;
+ const target=$('syncAccountRows');target.replaceChildren();
+ for(const account of report.accountRows){
+  const row=document.createElement('tr');
+  const cols=[account.name,
+   account.holdings.length?account.holdings.map(p=>p.ticker+' '+displayNumber(p.quantity)+'주').join(' · '):'보유 종목 없음',
+   displayNumber(account.cashUSD),displayNumber(account.cashKRW)];
+  for(const value of cols){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+  target.append(row);
+ }
+ $('syncStrategyNames').textContent=report.serverStrategyNames.length
+  ?report.serverStrategyNames.join(' · '):'저장된 전략 없음';
+ $('syncUpdated').textContent='서버 원장 최종 수정: '+(report.serverLedgerUpdatedAt
+  ?new Date(report.serverLedgerUpdatedAt).toLocaleString('ko-KR'):'미게시')+
+  ' · 최신 서버 전략 수정: '+(report.latestStrategyUpdateAt
+   ?new Date(report.latestStrategyUpdateAt).toLocaleString('ko-KR'):'미게시');
+ $('syncStatus').textContent=report.warning
+  ?'확인 필요 · 서버 자료는 조회했지만 이 기기에 미동기화 원장 또는 전략이 있을 수 있습니다. 원장·시뮬레이터에서 저장 상태를 확인하세요. 자동 수정은 하지 않았습니다.'
+  :'읽기 전용 확인 완료 · 서버 저장값을 조회했습니다. 다른 기기에서도 같은 코드를 확인해야 기기 간 데이터 일치 검증이 끝납니다.';
+}
+async function checkCrossDeviceSync(){
+ if(crossDeviceBusy)return;
+ crossDeviceBusy=true;
+ const button=$('syncCheck');button.disabled=true;
+ clearCrossDeviceAudit('같은 TEST 계정의 서버 원장과 전략을 읽고 있습니다…');
+ try{
+  const {client,userId}=await authenticatedTestClient();
+  // Never send browser drafts or account positions to any public endpoint.
+  const [l,s]=await Promise.all([
+   client.from('investlab_pilot_ledger_documents').select('payload,updated_at')
+    .eq('user_id',userId).maybeSingle(),
+   client.from('investlab_simulator_strategies').select('name,strategies,updated_at')
+    .eq('user_id',userId).order('name',{ascending:true}).limit(101)
+  ]);
+  if(l.error)throw Error('TEST 서버 원장 조회 실패: '+l.error.message);
+  if(s.error)throw Error('TEST 서버 전략 조회 실패: '+s.error.message);
+  const {data:verified,error:verifyError}=await client.auth.getUser();
+  if(verifyError||verified?.user?.id!==userId)throw Error('조회 중 로그인 계정이 변경되었습니다');
+  const localOwner=localStorage.getItem(TEST_LEDGER_OWNER_KEY);
+  const localRaw=localOwner===userId?localStorage.getItem(TEST_LEDGER_KEY):
+   localStorage.getItem(TEST_LEDGER_KEY+':'+userId);
+  const report=projectServerAudit({
+   ownerId:userId,remote:l.data||null,strategies:s.data||[],
+   localOwnerId:localOwner===userId?localOwner:(localRaw?userId:localOwner),
+   localRaw,baselineRaw:localStorage.getItem(cloudLedgerBaselineKey(userId)),
+   localStrategiesRaw:localStorage.getItem(KEYS.scenarios+':'+userId),
+   localDraftRaw:localStorage.getItem(KEYS.draft+':'+userId)
+  });
+  const code=await cloudFingerprint(report.fingerprintInput);
+  const finalUser=await client.auth.getUser();
+  if(finalUser.error||finalUser.data?.user?.id!==userId)
+   throw Error('조회 종료 시 TEST 계정이 변경되었습니다');
+  crossDeviceVerifiedOwner=userId;
+  renderCrossDeviceAudit(report,code);
+ }catch(error){
+  clearCrossDeviceAudit('점검 불가: '+error.message+
+   ' · 기존 개인 데이터는 변경하지 않았습니다. TEST 홈에서 로그인 상태를 확인하세요.');
+ }finally{crossDeviceBusy=false;button.disabled=false;}
+}
+$('syncCheck').addEventListener('click',()=>{void checkCrossDeviceSync();});
 $('exportOnline').onclick=async()=>{
  const button=$('exportOnline'),status=$('onlineStatus');
  button.disabled=true;status.textContent='TEST 서버 개인 데이터 백업 중…';
@@ -184,10 +310,22 @@ render();
 async function refreshCurrentLogin(){
  try{
   const {userId}=await authenticatedTestClient();
-  if(currentUserId!==userId){currentUserId=userId;render();}
- }catch{if(currentUserId!==null){currentUserId=null;render();}}
+  if(currentUserId!==userId){
+   currentUserId=userId;render();
+   clearCrossDeviceAudit('TEST 계정 연결됨 · [서버에서 최신 상태 확인]을 눌러 읽기 전용으로 검증할 수 있습니다.');
+  }
+ }catch{
+  if(currentUserId!==null){currentUserId=null;render();}
+  clearCrossDeviceAudit('이 브라우저에서는 TEST 로그인이 필요합니다. [TEST 계정 로그인]으로 이동하세요.');
+ }
 }
 window.addEventListener('pageshow',()=>{void refreshCurrentLogin();});
 window.addEventListener('focus',()=>{void refreshCurrentLogin();});
+window.addEventListener('storage',event=>{
+ if(event.key==='investlab_shared_data_auth_v1'||event.key==='investlab_shared_data_connection_v1'){
+  clearCrossDeviceAudit('TEST 계정 변경 감지 · 다시 조회해 주세요');
+  void refreshCurrentLogin();
+ }
+});
 void refreshCurrentLogin();
 </script></body></html>
