@@ -1,0 +1,23 @@
+name: TEST release backup safety (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'data-management.html'
+      - 'src/ledger/pilot-backup-restore-review.mjs'
+      - 'tests/pilot-ledger-backup-restore-review.test.mjs'
+      - '.github/workflows/test-pilot-release-backup-safety.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify no-write restore review and existing backup compatibility
+        run: node --test tests/pilot-ledger-backup-restore-review.test.mjs tests/pilot-ledger-validation.test.mjs tests/scenario-backup.test.mjs tests/pilot-cross-device-audit.test.mjs tests/pilot-release-integrated-acceptance.test.mjs
