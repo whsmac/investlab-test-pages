@@ -3,14 +3,13 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium} from 'playwright';
-import {widgetSymbol,chartDocument,isChartTicker} from '../src/ui/pilot-tradingview-chart.mjs';
+import {widgetSymbol,chartFrameUrl,isChartTicker} from '../src/ui/pilot-tradingview-chart.mjs';
 test('qualified security symbols and no ambiguous currency mapping',()=>{
  for(const [t,s] of Object.entries({TSLA:'NASDAQ:TSLA',TQQQ:'NASDAQ:TQQQ',BITU:'AMEX:BITU',USD:'AMEX:USD',SPCX:'NASDAQ:SPCX'})){
-  assert.equal(widgetSymbol(t),s);const doc=chartDocument(t);
-  assert.ok(doc.includes('"symbol":"'+s+'"'));assert.match(doc,/embed-widget-advanced-chart\.js/);
-  assert.match(doc,/by TradingView/);assert.doesNotMatch(doc,/localStorage|supabase|user_id|portfolio/);
+  assert.equal(widgetSymbol(t),s);const url=new URL(chartFrameUrl(t)),settings=JSON.parse(decodeURIComponent(url.hash.slice(1)));
+  assert.equal(url.origin,'https://www.tradingview-widget.com');assert.equal(url.pathname,'/embed-widget/advanced-chart/');assert.equal(settings.symbol,s);assert.equal(settings.theme,'dark');assert.doesNotMatch(JSON.stringify(settings),/localStorage|supabase|user_id|portfolio/);
  }
- assert.equal(widgetSymbol('UNKNOWN'),null);assert.throws(()=>chartDocument('UNKNOWN'));
+ assert.equal(widgetSymbol('UNKNOWN'),null);assert.throws(()=>chartFrameUrl('UNKNOWN'));
  assert.equal(isChartTicker('<script>'),false);
 });
 test('all five pages wire the common popup without replacing comparison selectors',async()=>{
@@ -36,8 +35,8 @@ test('sandboxed widget lazy-loads, closes, restores focus and uses external fall
      await route.fulfill({contentType:'text/html',body:'<!doctype html><input id="draft" value="unsaved"><div id="buttons"></div><script type="module">import {createTickerChartButton} from "./src/ui/pilot-tradingview-chart.mjs";for(const t of ["TSLA","USD","UNKNOWN"])document.querySelector("#buttons").append(createTickerChartButton(t));</script>'});return;
     }
     if(url===base+'src/ui/pilot-tradingview-chart.mjs'){await route.fulfill({contentType:'text/javascript',body:source});return;}
-    if(url==='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'){
-     widgetRequests++;await route.fulfill({contentType:'text/javascript',headers:{'access-control-allow-origin':'*'},body:'const result=document.createElement("p");result.id="mock-widget";try{parent.document.body;result.textContent="FAIL"}catch{result.textContent="ISOLATED"}document.body.append(result);'});return;
+    if(url.startsWith('https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=kr')){
+     widgetRequests++;await route.fulfill({contentType:'text/html',body:'<!doctype html><p id="mock-widget"></p><script>const result=document.querySelector("#mock-widget");try{parent.document.body;result.textContent="FAIL"}catch{result.textContent="ISOLATED"}document.documentElement.dataset.origin=location.origin;</script>'});return;
     }
     await route.abort();
    });
@@ -47,16 +46,21 @@ test('sandboxed widget lazy-loads, closes, restores focus and uses external fall
    await first.click();const dialog=page.locator('#investlabTradingViewDialog');
    assert.equal(await dialog.isVisible(),true);
    const iframe=dialog.locator('iframe');
-   assert.equal(await iframe.getAttribute('sandbox'),'allow-scripts allow-popups allow-popups-to-escape-sandbox');
-   assert.match(await iframe.getAttribute('srcdoc'),/NASDAQ:TSLA/);
+   assert.equal(await iframe.getAttribute('sandbox'),'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+   assert.equal(await iframe.getAttribute('srcdoc'),null);
+   assert.equal(JSON.parse(decodeURIComponent(new URL(await iframe.getAttribute('src')).hash.slice(1))).symbol,'NASDAQ:TSLA');
    await iframe.contentFrame().locator('#mock-widget').waitFor();
    assert.equal(await iframe.contentFrame().locator('#mock-widget').textContent(),'ISOLATED');
+   assert.equal(await iframe.contentFrame().locator('html').getAttribute('data-origin'),'https://www.tradingview-widget.com');
+   await dialog.getByRole('button',{name:'차트 다시 불러오기'}).click();
+   await iframe.contentFrame().locator('#mock-widget').waitFor();
+   assert.equal(widgetRequests,2);
    await dialog.getByRole('button',{name:'닫기'}).click();
    assert.equal(await dialog.isVisible(),false);assert.equal(await iframe.count(),0);
    assert.equal(await first.evaluate(el=>document.activeElement===el),true);
    assert.equal(await page.locator('#draft').inputValue(),'unsaved');
    await page.getByRole('button',{name:'USD 주가 차트 열기'}).click();
-   assert.match(await dialog.locator('iframe').getAttribute('srcdoc'),/AMEX:USD/);
+   assert.equal(JSON.parse(decodeURIComponent(new URL(await dialog.locator('iframe').getAttribute('src')).hash.slice(1))).symbol,'AMEX:USD');
    await dialog.getByRole('button',{name:'닫기'}).click();
    await page.getByRole('button',{name:'UNKNOWN 주가 차트 열기'}).click();
    assert.equal(await dialog.locator('iframe').count(),0);
