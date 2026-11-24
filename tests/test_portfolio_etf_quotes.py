@@ -34,7 +34,8 @@ class ETFQuoteTests(unittest.TestCase):
     def test_stale_future_and_tampered_quotes_fail(self):
         for day in ("2026-10-01","2026-11-25"):
             sample=source()
-            sample["BITU"]["observations"][-1]["trading_date"]=day
+            for row in sample["BITU"]["observations"]:
+                row["trading_date"]=day
             with self.assertRaisesRegex(ValueError,"date|stale|future"):
                 build_snapshot(sample,today=TODAY)
         sample=build_snapshot(source(),today=TODAY)
