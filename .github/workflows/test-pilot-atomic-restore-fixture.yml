@@ -1,0 +1,26 @@
+name: TEST atomic restore isolated PostgreSQL (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'tests/postgres/atomic_restore_fixture_*.sql'
+      - '.github/workflows/test-pilot-atomic-restore-fixture.yml'
+permissions:
+  contents: read
+jobs:
+  disposable-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run SQL inside disposable PostgreSQL only
+        run: |
+          set -eu
+          docker run --rm -d --name investlab-restore-fixture -e POSTGRES_PASSWORD=fixture-local-only -v "$PWD/tests/postgres:/fixture:ro" postgres:16
+          trap 'docker rm -f investlab-restore-fixture >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if docker exec investlab-restore-fixture pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec investlab-restore-fixture psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /fixture/atomic_restore_fixture_test.sql
