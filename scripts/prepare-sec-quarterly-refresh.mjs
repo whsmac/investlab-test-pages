@@ -1,0 +1,23 @@
+// Offline staging only: use the exact deployed review asset as baseline.
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {resolve,relative,isAbsolute,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {decodeSecSnapshot,SNAPSHOT_SHA256} from '../src/market/load-sec-static-snapshot.mjs';
+import {prepareQuarterlyRefresh} from '../src/market/sec-quarterly-refresh-package.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const [reviewPath,outDir]=process.argv.slice(2);
+if(!reviewPath||!outDir)throw Error('Usage: node scripts/prepare-sec-quarterly-refresh.mjs extracted-review.json new-output-directory');
+const target=resolve(outDir);
+const rel=relative(root,target);
+if(!rel||(!rel.startsWith('..')&&!isAbsolute(rel)))throw Error('Output must be outside the repository');
+const raw=readFileSync(join(root,'data/sec-financial-review-20261124.txt'));
+if(createHash('sha256').update(raw).digest('hex')!==SNAPSHOT_SHA256)throw Error('Previous snapshot integrity mismatch');
+const previous={format:'INVESTLAB_SEC_LOCAL_CHART_REVIEW_V1',source:'SEC Company Facts / user supplied archive',as_of:'2026-11-24',publication_allowed:false,database_writes:0,rows:decodeSecSnapshot(raw.toString('utf8'))};
+const input=readFileSync(reviewPath);
+if(input.length>2*1024*1024)throw Error('Extracted review size limit');
+const {report,snapshot}=prepareQuarterlyRefresh(previous,JSON.parse(input.toString('utf8')));
+writeFileSync(join(target,'refresh-report.json'),JSON.stringify(report,null,2)+'\n',{flag:'wx'});
+if(snapshot)writeFileSync(join(target,'staged-review.json'),JSON.stringify(snapshot,null,2)+'\n',{flag:'wx'});
+console.log(report.status+'; retained='+report.retainedRows+'; new='+report.newRows.length+'; publication_allowed=false');
+process.exitCode=report.conflicts.length?2:0;
