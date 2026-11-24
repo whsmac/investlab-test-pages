@@ -1,0 +1,41 @@
+name: TEST SEC Windows PowerShell diagnostic syntax (NO NETWORK)
+on:
+  pull_request:
+    paths:
+      - 'scripts/test_sec_windows_readonly.ps1'
+      - '.github/workflows/test-sec-windows-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  powershell-parse-only:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Parse PowerShell code without executing SEC requests
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/test_sec_windows_readonly.ps1'),
+            [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host 'Windows PowerShell diagnostic syntax OK. No SEC requests performed.'
+      - name: Verify read-only API and no persisted contact
+        shell: pwsh
+        run: |
+          $source = Get-Content 'scripts/test_sec_windows_readonly.ps1' -Raw
+          foreach ($required in @('data.sec.gov/api/xbrl/companyfacts/CIK0001318605.json','data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json','-UserAgent $ua','-MaximumRedirection 0')) {
+            if (-not $source.Contains($required)) { throw "Expected SEC diagnostic guard missing" }
+          }
+          foreach ($forbidden in @('Invoke-RestMethod -Method Post','Set-Content','Out-File','supabase.co','secrets.INVESTLAB_SEC_USER_AGENT')) {
+            if ($source.Contains($forbidden)) { throw "Unexpected persistent write or private credential reference" }
+          }
+          Write-Host 'No persistent writes, no real ledger calls, no contact disclosure.'
