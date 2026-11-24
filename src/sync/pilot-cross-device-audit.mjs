@@ -85,7 +85,7 @@ export function projectServerAudit({ownerId,remote,strategies,localOwnerId,local
   localMissingStrategies:missingLocal,hasLocalDraft:Boolean(localDraftRaw),
   // Fingerprint always uses *verified cloud data*, never an unsaved browser draft.
   fingerprintInput:stablePilotLedger({
-   version:1,ledger:serverLedger,
+   version:1,ownerId,ledger:serverLedger,
    strategies:safeStrategies.map(r=>({name:r.name,strategies:r.strategies}))
   })
  };
