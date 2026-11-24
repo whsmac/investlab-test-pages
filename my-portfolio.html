@@ -36,6 +36,7 @@
 @media(max-width:750px){.allocation-layout{grid-template-columns:1fr;gap:6px}.allocation-chart{min-height:210px}.allocation-chart svg{max-width:235px}.allocation-item{grid-template-columns:11px minmax(70px,1fr) minmax(85px,auto) 58px;gap:7px;padding:10px 3px}.allocation-amount{font-size:12px}.allocation-percent{font-size:13px}}
 @media(max-width:390px){.allocation-item{grid-template-columns:10px minmax(60px,1fr) minmax(75px,auto) 48px;gap:5px}.allocation-amount{font-size:11px}.allocation-percent{font-size:12px}}
 @media(max-width:750px){.hero{padding:15px}.portfolio-grid{gap:8px}.hero .metric{padding:12px}.hero .metric strong{font-size:17px}.portfolio-section-head label{width:100%}.portfolio-section-head select{flex:1;min-width:0}}
+.history-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}.history-controls label{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.history-controls input,.history-controls button{min-height:38px;border:1px solid #4a5b78;border-radius:8px;padding:8px;background:#101b2e;color:inherit;font:inherit}.history-controls button{background:#315581;cursor:pointer}#historyPanel h3{margin-top:25px;font-size:17px}
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"></head>
 <body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
 <section id="portfolioAccess" class="panel portfolio-access" aria-label="TEST 계정 로그인 및 투자현황 연결 안내" role="status">
@@ -49,7 +50,7 @@
 </section>
 <div id="portfolioPrivate" hidden><p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
 <p id="portfolioSyncBanner" role="status" style="color:#c5d7f5;font-size:13px;padding:10px 12px;background:#172842;border:1px solid #415d86;border-radius:8px;">계좌별 원장 연결 상태 확인 중…</p>
-<section class="hero" aria-label="전체 투자자산">
+<section class="panel"><div class="history-controls"><label for="asOfDate">조회 기준일 <input type="date" id="asOfDate"></label><button id="asOfQuery" type="button">기준일 조회</button><button id="asOfToday" type="button">현재로 돌아가기</button></div><p id="asOfStatus" class="muted" role="status">현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영</p></section><section class="hero" aria-label="전체 투자자산">
 <div class="portfolio-section-head" style="margin-bottom:12px"><strong>전체 투자자산</strong><label for="displayCurrency">표시 통화 <select id="displayCurrency" aria-label="내 투자현황 표시 통화"><option value="KRW" selected>KRW (원화)</option><option value="USD">USD (미국 달러)</option></select></label></div>
 <span class="total-label">전체 투자자산 (KRW)</span><div id="dashboardTotal" class="total-amount">—</div>
 <div class="portfolio-grid">
@@ -84,7 +85,16 @@
 <label for="personalQuoteKey">본인 API 키</label> <input id="personalQuoteKey" type="password" autocomplete="off" spellcheck="false" maxlength="128" placeholder="개인용 키 (저장하지 않음)">
 <label style="display:block;margin:8px 0"><input id="personalQuoteConsent" type="checkbox" style="width:auto"> 본인 개인용 시세 이용권한이 있으며, 종목코드 전송에 동의합니다.</label>
 <button id="connectPersonalQuotes" type="button">개인 시세 연결</button> <button id="refreshPersonalQuotes" type="button" disabled>현재가 갱신</button> <button id="disconnectPersonalQuotes" type="button" disabled>연결 해제</button>
-</details></section><section class="panel"><h2>관심종목 · 거래이력종목</h2><p id="portfolioWatchSymbols" class="muted"></p><p id="portfolioPastSymbols" class="muted"></p><p class="muted">등록·삭제는 <a href="./pilot-ledger.html#watchManagement">계좌·매매 기록 관리</a>에서만 수행합니다. 거래이력은 실제 원장에서 자동 생성됩니다.</p></section>
+</details></section><section class="panel" id="historyPanel"><h2>투자자산 및 포트폴리오 변화</h2>
+<div class="history-controls"><label>시작일 <input type="date" id="historyStart"></label><label>종료일 <input type="date" id="historyEnd"></label><button type="button" id="historyQuery">기간 조회</button></div>
+<div class="history-controls" id="historyPresets"><button type="button" data-days="30">1개월</button><button type="button" data-days="90">3개월</button><button type="button" data-days="180">6개월</button><button type="button" data-days="365">1년</button><button type="button" data-days="1095">3년</button><button type="button" data-days="1830">5년</button></div>
+<p class="muted">위 계좌 선택·표시 통화와 연동 · 일별 종가 및 미 연준 H.10 환율 기준 · 초기 보유등록 및 입출금은 외부유입으로 분리합니다. 배당금은 현금에 반영됩니다. 자산성과는 일말 현금흐름 가정의 근사치이며, 지수는 배당 제외 가격지수입니다. 주식분할 전후 수량·단가가 일치하는 원장만 정확하게 평가됩니다.</p>
+<p id="historyStatus" class="muted" role="status">기간을 선택하세요.</p>
+<h3>총자산과 순외부유입 기준 추세</h3><div id="historyAssets" data-title="총자산 추세"></div>
+<h3>포트폴리오 구성비 변화</h3><div id="historyWeights"></div>
+<h3>시장지수 대비 운용성과 (시작 100)</h3><div id="historyPerformance" data-title="시장지수 대비 운용성과"></div>
+<h3>고점 대비 낙폭</h3><div id="historyDrawdown" data-title="고점 대비 낙폭"></div>
+<h3>기간 내 매수·매도 내역</h3><div class="scroll"><table><thead><tr><th>날짜</th><th>종목</th><th>구분</th><th>수량</th><th>체결가 USD</th></tr></thead><tbody id="historyTrades"></tbody></table></div></section>
 </div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
 <button id="diagnose" type="button"></button><p id="diagnostics"></p><button id="loadCloudLedger" type="button"></button><button id="compareCloudLedger" type="button"></button>
@@ -93,8 +103,8 @@
 </div>
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
-import {createTickerChartButton} from './src/ui/pilot-tradingview-chart.mjs';
-import {ledgerManagedSymbols} from './src/ledger/pilot-managed-symbols.mjs';
+import {firstLedgerDay,historicalSnapshot,validDay} from './src/ledger/pilot-portfolio-history.mjs';
+import {loadPortfolioHistoryMarket,renderPortfolioHistory} from './src/ui/pilot-portfolio-history-ui.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
@@ -106,6 +116,45 @@ const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_led
 let data={version:1,accounts:[],entries:[]}; // Never show unverified browser data to a signed-out visitor.
 const account=$('account');
 let portfolioFx=null,portfolioFxDate='';
+let historyMarket=null,historyLoad=null,historyGeneration=0,asOf=null,historyRange=null;
+async function getHistoryMarket(){
+ if(historyMarket)return historyMarket;
+ if(!historyLoad)historyLoad=loadPortfolioHistoryMarket().then(m=>{historyMarket=m;return m;}).finally(()=>{historyLoad=null;});
+ return historyLoad;
+}
+function clearHistory(){
+ ++historyGeneration;asOf=null;historyRange=null;
+ $('asOfDate').value='';$('historyStart').value='';$('historyEnd').value='';
+ $('asOfStatus').textContent='현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영';
+ $('historyStatus').textContent='기간을 선택하세요.';
+ for(const id of ['historyAssets','historyWeights','historyPerformance','historyDrawdown','historyTrades'])$(id).replaceChildren();
+}
+function historyReady(){return !!displayedCloudLedgerOwnerId&&!$('portfolioPrivate').hidden;}
+function setHistoryDates(){
+ const today=todayIso(),first=firstLedgerDay(data);
+ for(const id of ['asOfDate','historyStart','historyEnd']){$(id).max=today;$(id).min=first||'';}
+ if(!$('asOfDate').value)$('asOfDate').value=today;
+ if(!$('historyStart').value)$('historyStart').value=first&&first>new Date(Date.now()-90*86400000).toISOString().slice(0,10)?first:new Date(Date.now()-90*86400000).toISOString().slice(0,10);
+ if(!$('historyEnd').value)$('historyEnd').value=today;
+}
+async function queryAsOf(){
+ const date=$('asOfDate').value,first=firstLedgerDay(data);
+ if(!historyReady()||!validDay(date)||date>todayIso()||!first||date<first){$('asOfStatus').textContent='원장 기록 시작일 이후의 유효한 날짜를 선택하세요. 현재 표시 상태는 유지합니다.';return;}
+ const gen=++historyGeneration,owner=displayedCloudLedgerOwnerId;
+ $('asOfStatus').textContent='과거 주가·환율 확인 중…';
+ try{await getHistoryMarket();if(gen!==historyGeneration||owner!==displayedCloudLedgerOwnerId)return;asOf=date;render();}
+ catch{if(gen===historyGeneration)$('asOfStatus').textContent='과거 데이터 조회 실패 · 기존 표시 유지';}
+}
+async function queryHistory(){
+ const start=$('historyStart').value,end=$('historyEnd').value;
+ if(!historyReady()||!validDay(start)||!validDay(end)||end>todayIso()||start>end){$('historyStatus').textContent='유효한 시작일·종료일을 선택하세요.';return;}
+ const gen=++historyGeneration,owner=displayedCloudLedgerOwnerId;
+ $('historyStatus').textContent='기간 자료 확인 중…';
+ try{await getHistoryMarket();if(gen!==historyGeneration||owner!==displayedCloudLedgerOwnerId)return;historyRange={start,end};drawHistory();}
+ catch(error){if(gen===historyGeneration)$('historyStatus').textContent=String(error.message||error);}
+}
+function drawHistory(){if(historyRange&&historyMarket&&historyReady())try{renderPortfolioHistory(data,historyMarket,historyRange.start,historyRange.end,account.value,$('displayCurrency').value);}catch(error){$('historyStatus').textContent=error.message;}}
+
 function setPortfolioAccessState(state,message){
  const panel=$('portfolioAccess'),title=$('portfolioAccessTitle');
  const status=$('portfolioAccessStatus');
@@ -168,8 +217,6 @@ const todayIso=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth
 const ageDays=date=>{const parsed=Date.parse(date+'T00:00:00Z');return Number.isFinite(parsed)?Math.max(0,Math.floor((Date.parse(todayIso()+'T00:00:00Z')-parsed)/86400000)):null;};
 const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
 function render(){const selected=account.value,summary=projectLedger(data,selected);
-const managed=ledgerManagedSymbols(data);
-for(const [id,category] of [['portfolioWatchSymbols','관심'],['portfolioPastSymbols','거래이력']]){const root=$(id),items=managed.filter(m=>m.categories.includes(category));root.replaceChildren(document.createTextNode(category+'종목: '));if(!items.length)root.append(document.createTextNode('없음'));for(const m of items)root.append(createTickerChartButton(m.ticker));}
 $('realized').textContent='USD '+fmt(summary.realizedUsd);$('sales').textContent=fmt(summary.sellCount,0);
 $('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
 $('holdings').replaceChildren();let marketValue=0,marketCost=0,pricedCount=0,staleCount=0;const missing=[];
@@ -181,7 +228,13 @@ $('coverage').textContent=!pricesLoaded?'주가를 조회해야 평가액을 계
 $('realizedSymbols').replaceChildren();for(const r of summary.realizedBySymbol){const tr=document.createElement('tr');for(const v of [r.symbol,fmt(r.sellCount,0),fmt(r.proceedsUsd),fmt(r.disposedCostUsd),fmt(r.realizedUsd)])cell(tr,v);$('realizedSymbols').append(tr);}
 $('accounts').replaceChildren();for(const a of data.accounts){const s=projectLedger(data,a.id),tr=document.createElement('tr');for(const v of [a.name,fmt(s.holdings.length,0),fmt(s.cost),fmt(s.cash.USD),fmt(s.cash.KRW,0),fmt(s.realizedUsd)])cell(tr,v);$('accounts').append(tr);}
 $('status').textContent=data.accounts.length?'저장된 계좌 '+data.accounts.length+'개 · 거래 '+data.entries.length+'건 기준입니다.':'등록된 계좌가 없습니다. 계좌·매매 기록 관리에서 등록하세요.';
- renderPortfolioDashboard({data,prices:effectivePortfolioPrices(prices,personalQuotes),fx:portfolioFx,fxDate:portfolioFxDate,selected,displayCurrency:$('displayCurrency').value});
+ if(asOf&&historyMarket){
+  const snapshot=historicalSnapshot(data,asOf,historyMarket,'ALL',$('displayCurrency').value);
+  if(snapshot.available){renderPortfolioDashboard({data:snapshot.ledger,prices:snapshot.prices,fx:snapshot.fx,fxDate:snapshot.fxDate,selected,displayCurrency:$('displayCurrency').value,asOf});
+   $('asOfStatus').textContent=asOf+' 기준 · 원장 재현 · 종가·환율 실제 관측일 적용'+(snapshot.missing.length?' · 미확보: '+snapshot.missing.join(', '):'')+' · 현재 시세는 사용하지 않습니다.';}
+  else{$('asOfStatus').textContent=snapshot.reason;asOf=null;renderPortfolioDashboard({data,prices:effectivePortfolioPrices(prices,personalQuotes),fx:portfolioFx,fxDate:portfolioFxDate,selected,displayCurrency:$('displayCurrency').value});}
+ }else renderPortfolioDashboard({data,prices:effectivePortfolioPrices(prices,personalQuotes),fx:portfolioFx,fxDate:portfolioFxDate,selected,displayCurrency:$('displayCurrency').value});
+ drawHistory();
 }
 async function diagnoseConnection(){
  const output=$('diagnostics'),lines=['TEST 연결 진단 (읽기 전용)'];
@@ -387,6 +440,7 @@ account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;
 let displayedCloudLedgerRevision=null,displayedCloudLedgerOwnerId=null;
 let cloudLedgerBusy=false;
 function resetVisiblePortfolio(){
+ clearHistory();
  disconnectPersonalQuotes('개인 시세 연결 해제 · 최근 종가 표시',false);
  $('portfolioPrivate').hidden=true;
  // Account isolation affects the screen only. Unsent local ledger data stays intact.
@@ -397,7 +451,8 @@ function resetVisiblePortfolio(){
 }
 function usePortfolioDisplay(payload,revision,ownerId){
  $('portfolioPrivate').hidden=false;
- data=payload;displayedCloudLedgerRevision=revision;displayedCloudLedgerOwnerId=ownerId;
+ if(displayedCloudLedgerOwnerId!==ownerId)clearHistory();
+ data=payload;displayedCloudLedgerRevision=revision;displayedCloudLedgerOwnerId=ownerId;setHistoryDates();
  priceRequestVersion++;prices=new Map();pricesLoaded=false;
  refreshAccountOptions();render();
  if(payload.accounts.length)void loadPrices();
@@ -462,6 +517,10 @@ async function refreshOnlineLedgerDisplay(){
  }
 }
 $('portfolioRetry').addEventListener('click',()=>{void refreshOnlineLedgerDisplay();});
+$('asOfQuery').onclick=()=>void queryAsOf();
+$('asOfToday').onclick=()=>{++historyGeneration;asOf=null;$('asOfDate').value=todayIso();$('asOfStatus').textContent='현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영';render();void refreshPersonalQuotes();};
+$('historyQuery').onclick=()=>void queryHistory();
+$('historyPresets').addEventListener('click',e=>{const days=Number(e.target.dataset.days);if(!days)return;const end=todayIso(),first=firstLedgerDay(data),start=new Date(Date.parse(end+'T00:00:00Z')-days*86400000).toISOString().slice(0,10);$('historyStart').value=first&&first>start?first:start;$('historyEnd').value=end;void queryHistory();});
 $('connectPersonalQuotes').addEventListener('click',async()=>{
  const owner=displayedCloudLedgerOwnerId,key=$('personalQuoteKey').value.trim();
  if(!owner||$('portfolioPrivate').hidden||!$('personalQuoteConsent').checked||!(/^[A-Za-z0-9_-]{10,128}$/.test(key))){$('personalQuoteStatus').textContent='로그인·본인 키·개인용 이용 동의를 확인하세요.';return;}
