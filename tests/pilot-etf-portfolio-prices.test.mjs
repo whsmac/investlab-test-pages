@@ -68,7 +68,8 @@ test('both accounts are valued when all company and ETF closing prices are prese
  const ids=['dashboardTotal','dashboardGain','dashboardRate','dashboardStocks','dashboardCash',
   'dashboardCashBreakdown','dashboardFx','dashboardAccounts','dashboardHoldings',
   'dashboardNotice','account','accountTotalHeader','accountGainHeader','holdingAverageHeader',
-  'holdingCloseHeader','holdingValueHeader','holdingGainHeader'];
+  'holdingCloseHeader','holdingValueHeader','holdingGainHeader',
+  'allocationChart','allocationLegend','allocationStatus','allocationAccount'];
  const nodes=new Map(ids.map(id=>[id,el()]));
  const prior=globalThis.document;
  globalThis.document={getElementById:id=>nodes.get(id),createElement:el,createElementNS:(_ns,tag)=>el(tag),querySelector:selector=>selector==='.total-label'?nodes.get('total-label')||nodes.set('total-label',el()).get('total-label'):null};
