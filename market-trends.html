@@ -48,6 +48,7 @@ button:focus-visible{outline:2px solid #b5d0ff;outline-offset:2px}
 <p class="muted">출처: Yahoo Finance 공개 일별 종가(자동수집 파일). 업종 수익률은 종가의 단순 가격 변화로 배당은 제외합니다. 미수집·오래된 데이터는 대체 수치로 채우지 않습니다. 본 모듈은 개인 원장과 Supabase에 읽기·쓰기 요청을 하지 않습니다.</p>
 </main>
 <script type="module">
+import {createTickerChartButton} from "./src/ui/pilot-tradingview-chart.mjs";
 import {MARKET_INDICATORS,MARKET_SECTORS,indicatorHistory,periodChange,heatColor} from "./src/market/market-trends-model.mjs";
 import {loadPublishedMarketTrends} from "./src/market/load-published-market-trends.mjs";
 const $=id=>document.getElementById(id);
@@ -124,7 +125,7 @@ function tile(ticker,name,rows,sessions,weight,isEtf){
  const change=rows&&rows.length>sessions?periodChange(rows,sessions):null;
  const div=document.createElement("div");div.className="tile";div.style.background=heatColor(change);
  div.style.flexGrow=String(weight);div.title=name+" ("+ticker+") · "+pct(change);
- const heading=document.createElement("strong");heading.textContent=ticker;
+ const heading=document.createElement("strong");heading.append(createTickerChartButton(ticker));
  const description=document.createElement("small");description.textContent=name+(isEtf?" ETF":"");
  const number=document.createElement("span");number.className="change";number.textContent=pct(change);
  div.append(heading,description,number);return div;
