@@ -153,13 +153,35 @@ def collect_company(ticker, cik, revenue_tag, user_agent):
         result.append(row)
     return result[-24:]
 
+def valid_sec_user_agent(value):
+    """SEC asks for an identifying app/organization and a real contact email.
+
+    The string stays in a GitHub repository secret, not in public JSON or HTML.
+    """
+    if not isinstance(value, str) or not 15 <= len(value.strip()) <= 250:
+        return False
+    label = value.strip()
+    if any(char in label for char in ("\r", "\n", "\t")):
+        return False
+    email = re.search(r"[^\s@]+@[^\s@]+\.[^\s@]+", label)
+    if not email:
+        return False
+    name = label[:email.start()].strip(" ()<>[]")
+    if len(name) < 3:
+        return False
+    domain = email.group().rsplit("@", 1)[-1].lower()
+    if domain in {"example.com", "example.org", "example.net", "example.invalid"}:
+        return False
+    return True
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("sec-quarterly-financials.json"))
     args = parser.parse_args()
     agent = os.getenv("INVESTLAB_SEC_USER_AGENT", "").strip()
-    if not agent or not re.search(r"[^\s@]+@[^\s@]+\.[^\s@]+", agent):
+    if not valid_sec_user_agent(agent):
         raise SystemExit("SEC contact User-Agent not configured: no requests or financial data published")
     result = {"format": "INVESTLAB_SEC_QUARTERLY_PREVIEW_V1", "source": "SEC Company Facts",
               "generated_at": datetime.now(timezone.utc).isoformat(), "rows": [], "errors": {},
