@@ -17,9 +17,9 @@ export async function loadPortfolioHistoryMarket(){
 const $=id=>document.getElementById(id),num=(n,d=0)=>Number.isFinite(n)?n.toLocaleString('ko-KR',{maximumFractionDigits:d}):'—';
 const colors=['#80b6ff','#61d7a8','#e9b66e','#b5a0f6','#f38b9e','#7bd4e9','#c1cbd9'];
 const svg=(tag,attrs={},text)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;return e;};
-function lineChart(id,rows,series){
+function lineChart(id,rows,series,markers=[]){
  const root=$(id);root.replaceChildren();
- const vals=rows.flatMap(r=>series.map(s=>r[s.key])).filter(Number.isFinite);
+ const vals=[...rows.flatMap(r=>series.map(s=>r[s.key])),...markers.map(m=>m.price)].filter(Number.isFinite);
  if(!vals.length){root.textContent='조회 가능한 자료 없음';return;}
  const lo=Math.min(...vals),hi=Math.max(...vals),span=hi-lo||Math.max(Math.abs(hi)*0.05,1);
  const width=700,height=230,l=90,r=20,t=12,b=36;
@@ -28,6 +28,7 @@ function lineChart(id,rows,series){
  for(let k=0;k<=4;k++){const v=lo+span*k/4,yy=y(v);g.append(svg('line',{x1:l,y1:yy,x2:width-r,y2:yy,stroke:'#34415b'}),svg('text',{x:l-5,y:yy+4,'text-anchor':'end',fill:'#c1cddd','font-size':12},num(v,1)));}
  for(const i of [...new Set([0,Math.floor((rows.length-1)/2),rows.length-1])])g.append(svg('text',{x:x(i),y:height-10,'text-anchor':i===0?'start':i===rows.length-1?'end':'middle',fill:'#c1cddd','font-size':12},rows[i].date));
  series.forEach((s,j)=>{let d='',active=false;rows.forEach((row,i)=>{const v=row[s.key];if(!Number.isFinite(v)){active=false;return;}d+=(active?'L':'M')+x(i)+' '+y(v)+' ';active=true;if(rows.length===1)g.append(svg('circle',{cx:x(i),cy:y(v),r:3,fill:colors[j%colors.length]}));});g.append(svg('path',{d,fill:'none',stroke:colors[j%colors.length],'stroke-width':2.3}));});
+ for(const m of markers){const i=rows.findIndex(r=>r.date===m.date);if(i<0||!Number.isFinite(m.price))continue;const cy=y(m.price);if(cy<t||cy>height-b)continue;const e=svg('circle',{cx:x(i),cy,r:5,fill:m.type==='BUY'?'#61d7a8':'#f38b9e',stroke:'#101827','stroke-width':1.5});e.append(svg('title',{},m.date+' '+m.type+' '+m.qty+'주 · USD '+num(m.price,2)));g.append(e);}
  root.append(g);const legend=document.createElement('p');legend.className='muted';series.forEach((s,j)=>{const span=document.createElement('span');span.style.color=colors[j%colors.length];span.textContent='● '+s.label+'　';legend.append(span);});root.append(legend);
 }
 function weights(rows){
@@ -47,6 +48,18 @@ export function renderPortfolioHistory(data,market,start,end,selected,currency){
  lineChart('historyPerformance',rows,[{key:'index',label:'내 자산 (입출금 조정, 시작 100)'},{key:'ndx',label:'NASDAQ 100'},{key:'spx',label:'S&P 500'}]);
  lineChart('historyDrawdown',rows,[{key:'mdd',label:'고점 대비 하락률 %'}]);
  weights(rows);
+ const tickers=[...new Set(rows.flatMap(r=>[...Object.keys(r.quantities),...r.trades.map(t=>t.symbol)]))].sort();
+ const previous=$('historyTradeTicker').value,select=$('historyTradeTicker');select.replaceChildren();
+ for(const ticker of tickers){const o=document.createElement('option');o.value=ticker;o.textContent=ticker;select.append(o);}
+ if(tickers.includes(previous))select.value=previous;
+ const drawTicker=()=>{const ticker=select.value;
+  lineChart('historyQuantities',rows.map(r=>({date:r.date,qty:r.quantities[ticker]||0})),[{key:'qty',label:ticker+' 보유수량'}]);
+  const points=rows.map(r=>({date:r.date,price:priorObservation(market.get(ticker),r.date)?.close??null}));
+  const markers=rows.flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date})));
+  lineChart('historyTradePrices',points,[{key:'price',label:ticker+' 종가 USD'}],markers);
+ };
+ select.onchange=drawTicker;drawTicker();
+ lineChart('historyFx',rows,[{key:'fx',label:'USD/KRW 적용환율'}]);
  const tradeRoot=$('historyTrades');tradeRoot.replaceChildren();
  for(const r of rows)for(const trade of r.trades){const tr=document.createElement('tr');for(const value of [r.date,trade.symbol,trade.type==='BUY'?'매수':'매도',num(trade.qty,6),num(trade.price,2)]){const td=document.createElement('td');td.textContent=value;tr.append(td);}tradeRoot.append(tr);}
  if(!tradeRoot.children.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='기간 내 매수·매도 기록 없음';tr.append(td);tradeRoot.append(tr);}
