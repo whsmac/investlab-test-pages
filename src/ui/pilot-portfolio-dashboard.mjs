@@ -20,7 +20,7 @@ function pricedSummary(ledger,prices,fx){
  return {value,cost:pricedCost,profit,rate,missing,complete,usdCash:ledger.cash.USD||0,krwCash:ledger.cash.KRW||0,
   totalKrw:complete&&Number.isFinite(fx)?(value+ledger.cash.USD)*fx+ledger.cash.KRW:null};
 }
-export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,displayCurrency='KRW'}){
+export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,displayCurrency='KRW',asOf=null}){
  const mode=displayCurrency==='USD'?'USD':'KRW';
  const haveFx=Number.isFinite(fx)&&fx>0;
  const all=projectLedger(data,'ALL'),allSummary=pricedSummary(all,prices,fx);
@@ -38,7 +38,7 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
   return Number.isFinite(cash)&&Number.isFinite(stocks)?stocks+cash:null;
  };
  const gain=(summary)=>summary.complete?fromUsd(summary.profit):null;
- document.querySelector('.total-label').textContent='전체 투자자산 ('+mode+')';
+ document.querySelector('.total-label').textContent=(asOf?asOf+' 기준 ':'')+'전체 투자자산 ('+mode+')';
  $('dashboardTotal').textContent=format(portfolioTotal(allSummary));
  const totalGain=gain(allSummary);
  $('dashboardGain').textContent=signedMoney(totalGain);
@@ -53,7 +53,7 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
  for(const id of ['accountTotalHeader','accountGainHeader']){
   const el=$(id);if(el)el.textContent=(id==='accountTotalHeader'?'총자산':'평가손익')+' ('+mode+')';
  }
- for(const [id,label] of [['holdingAverageHeader','평균단가'],['holdingCloseHeader',all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote')?'현재가 / 종가':'최근 종가'],
+ for(const [id,label] of [['holdingAverageHeader','평균단가'],['holdingCloseHeader',asOf?'기준일 종가':all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote')?'현재가 / 종가':'최근 종가'],
   ['holdingValueHeader','평가금액'],['holdingGainHeader','평가손익']]){
   const el=$(id);if(el)el.textContent=label+' '+mode;
  }
@@ -89,7 +89,7 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
   cell(tr,tableMoney(fromUsd(h.averageCost),1));
   const quoteCell=cell(tr,valid?tableMoney(fromUsd(Number(q.close)),1):'—');
   if(valid&&q.kind==='current_quote')quoteCell.title='Finnhub 개인 시세 · '+new Date(q.quoteTime).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' KST · 통합 실시간 여부 미확인';
-  if(valid&&all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote')){const tag=document.createElement('small');tag.style.display='block';tag.style.fontSize='11px';tag.style.color='#a9bdd5';tag.textContent=q.kind==='current_quote'?'현재 시세 · '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' KST':'종가 · '+(q.date||'기준일 미확인');quoteCell.append(tag);}
+  if(valid&&(asOf||all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote'))){const tag=document.createElement('small');tag.style.display='block';tag.style.fontSize='11px';tag.style.color='#a9bdd5';tag.textContent=q.kind==='current_quote'?'현재 시세 · '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' KST':'종가 · '+(q.date||'기준일 미확인');quoteCell.append(tag);}
   cell(tr,valid?tableMoney(fromUsd(value)):'—');
   const convertedGain=gainUsd===null?null:fromUsd(gainUsd);
   cell(tr,tableGain(convertedGain),convertedGain===null?'':gainUsd>=0?'positive':'negative');
@@ -100,7 +100,7 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
  $('dashboardNotice').textContent=allSummary.missing.length
   ?'주의: 최근 종가 미조회 '+allSummary.missing.join(', ')+' · 총자산·수익률은 불완전한 가격으로 계산하지 않습니다.'
   :!data.accounts.length?'계좌가 없습니다. 계좌·매매 기록 관리에서 먼저 등록하세요.'
-  :(all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote')?'현재 시세 및 대체 종가 기준 평가손익입니다. 시세 제공 범위와 지연 여부는 공급자에 따릅니다.':'최근 종가 기준 평가손익입니다.')+' 실제 체결가가 아니며 실현손익·배당·세금은 포함하지 않습니다.';
+  :(asOf?'기준일 이전 최근 관측 종가로 재현한 평가손익입니다.':all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote')?'현재 시세 및 대체 종가 기준 평가손익입니다. 시세 제공 범위와 지연 여부는 공급자에 따릅니다.':'최근 종가 기준 평가손익입니다.')+' 실제 체결가가 아니며 실현손익·배당·세금은 포함하지 않습니다.';
 }
 export async function fetchUsdKrwRate(){
  const response=await fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'});
