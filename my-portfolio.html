@@ -93,6 +93,7 @@
 </div>
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
+import {createTickerChartButton} from './src/ui/pilot-tradingview-chart.mjs';
 import {ledgerManagedSymbols} from './src/ledger/pilot-managed-symbols.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
@@ -163,8 +164,7 @@ const ageDays=date=>{const parsed=Date.parse(date+'T00:00:00Z');return Number.is
 const cell=(tr,value)=>{const td=document.createElement('td');td.textContent=value;tr.append(td);};
 function render(){const selected=account.value,summary=projectLedger(data,selected);
 const managed=ledgerManagedSymbols(data);
-$('portfolioWatchSymbols').textContent='관심종목: '+(managed.filter(m=>m.categories.includes('관심')).map(m=>m.ticker).join(' · ')||'없음');
-$('portfolioPastSymbols').textContent='거래이력종목: '+(managed.filter(m=>m.categories.includes('거래이력')).map(m=>m.ticker).join(' · ')||'없음');
+for(const [id,category] of [['portfolioWatchSymbols','관심'],['portfolioPastSymbols','거래이력']]){const root=$(id),items=managed.filter(m=>m.categories.includes(category));root.replaceChildren(document.createTextNode(category+'종목: '));if(!items.length)root.append(document.createTextNode('없음'));for(const m of items)root.append(createTickerChartButton(m.ticker));}
 $('realized').textContent='USD '+fmt(summary.realizedUsd);$('sales').textContent=fmt(summary.sellCount,0);
 $('symbols').textContent=fmt(summary.holdings.length,0);$('cost').textContent='USD '+fmt(summary.cost);$('usd').textContent='USD '+fmt(summary.cash.USD);$('krw').textContent='KRW '+fmt(summary.cash.KRW,0);
 $('holdings').replaceChildren();let marketValue=0,marketCost=0,pricedCount=0,staleCount=0;const missing=[];
