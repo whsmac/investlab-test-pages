@@ -98,7 +98,7 @@ test('strategy differences and unsaved editor drafts are reported independently'
  assert.match(strategyStatusText.LOCAL_DIFFERENCE,/덮어쓰지/);
 });
 test('server-only strategy not yet loaded on mobile is not falsely reported as lost',()=>{
- const report=projectServerAudit(common({localStrategiesRaw:'{"상승 부분매도":[{"name":"상승 부분매도","trades":[]}]'}));
+ const report=projectServerAudit(common({localStrategiesRaw:'{"상승 부분매도":[{"name":"상승 부분매도","trades":[]}]}'}));
  assert.equal(report.strategiesStatus,'CLOUD_NOT_DOWNLOADED');
  assert.equal(report.localMissingStrategies,1);
  assert.equal(report.warning,false);
