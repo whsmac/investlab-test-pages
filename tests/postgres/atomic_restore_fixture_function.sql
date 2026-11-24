@@ -43,6 +43,8 @@ begin
    raise exception 'invalid strategy count' using errcode='22023';
   end if;
  end loop;
+ perform restore_fixture.validate_ledger_domain(p_ledger);
+ perform restore_fixture.validate_strategy_domain(p_strategies);
  -- Existing clients write directly, so advisory locking alone is insufficient.
  -- Table-level locking is intentionally coarse for the small-user fixture.
  -- NOWAIT means a concurrent writer causes an error, not a silent overwrite.
