@@ -14,7 +14,8 @@ const elements=new Map();
 global.document={
  getElementById:(id)=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},
  querySelector:()=>{if(!elements.has("total-label"))elements.set("total-label",new Element());return elements.get("total-label");},
- createElement:()=>new Element()
+ createElement:()=>new Element(),
+ createElementNS:()=>new Element()
 };
 const el=id=>document.getElementById(id);
 const data={version:1,accounts:[{id:"a",name:"일반계좌",type:"brokerage"}],entries:[
