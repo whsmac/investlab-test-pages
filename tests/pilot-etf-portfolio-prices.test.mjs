@@ -48,7 +48,8 @@ test('weekend grace period does not mislabel an old closing price as live',()=>{
  assert.throws(()=>parsePublishedEtfCloses(before,{now:new Date('2026-12-02T00:00:00Z')}),/게시일 오류/);
 });
 function el(name='div'){
- return {name,textContent:'',className:'',style:{},value:'ALL',children:[],
+ return {name,textContent:'',className:'',style:{},attributes:{},value:'ALL',children:[],
+  setAttribute(key,value){this.attributes[key]=String(value)}, 
   classList:{add(){}},append(...child){this.children.push(...child)},
   replaceChildren(...child){this.children=[...child]},
   dispatchEvent(){}};
