@@ -7,7 +7,7 @@ export async function loadPortfolioHistoryMarket(){
   loadPublishedYahooReview({origin:location.href}),
   loadPublishedMarketIndices({origin:location.href}),
   (async()=>{const r=await fetch('./data/portfolio-public-history.json',{credentials:'omit',cache:'no-store',redirect:'error'});if(!r.ok)throw Error('ETF·환율 이력 미게시');const p=await r.json();
-   if(p.format!=='PILOT_PUBLIC_HISTORY_V1'||p.source!=='Yahoo Finance / Federal Reserve H.10 DEXKOUS'||p.database_writes!==0||!Array.isArray(p.rows)||p.rows.length>8000||p.rows.some(x=>!['BITU','TQQQ','USD','USDKRW'].includes(x.ticker)))throw Error('과거 시세 형식 오류');return p.rows;})()
+   if(p.format!=='PILOT_PUBLIC_HISTORY_V1'||p.source!=='Yahoo Finance / Federal Reserve H.10 DEXKOUS'||p.database_writes!==0||!Array.isArray(p.rows)||p.rows.length>12000||p.rows.some(x=>!['BITU','TQQQ','USD','QLD','SOXL','TSLL','USDKRW'].includes(x.ticker)))throw Error('과거 시세 형식 오류');return p.rows;})()
  ]);
  const rows=[];
  if(results[0].status==='fulfilled')for(const r of results[0].value.observations)if(r.currency==='USD'&&r.price_basis==='unadjusted_close')rows.push({ticker:r.ticker,date:r.trading_date,close:Number(r.close_price)});
