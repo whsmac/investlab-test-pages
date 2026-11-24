@@ -1,0 +1,25 @@
+name: TEST SEC static snapshot and existing chart regressions (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'data/sec-financial-review-20261124.txt'
+      - 'src/market/load-sec-static-snapshot.mjs'
+      - 'company-investment-analysis.html'
+      - 'tests/sec-static-snapshot.test.mjs'
+      - '.github/workflows/test-sec-static-snapshot.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --test tests/sec-static-snapshot.test.mjs tests/sec-local-chart-review.test.mjs tests/sec-refresh-review.test.mjs tests/company-financial-chart-date-axis.test.mjs tests/company-online-price-first.test.mjs
+          python -m py_compile scripts/assemble_yahoo_test_site_preview.py scripts/validate_yahoo_test_site_preview.py
