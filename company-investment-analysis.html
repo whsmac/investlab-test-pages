@@ -71,6 +71,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <section class="panel">
 <h2 id="financeTitle">분기 매출·CAPEX·영업이익</h2>
 <p id="financeStatus" class="muted" role="status">기업 분기 재무자료 조회 중…</p>
+<details><summary>개발 검토용 SEC 자료 (읽기 전용)</summary><p class="muted">검토 파일은 이 탭 메모리에서만 표시합니다. 기존 서버 자료와 섞거나 저장하지 않습니다.</p><label>검토 JSON 선택 <input id="secLocalReviewFile" type="file" accept=".json,application/json"></label> <button id="secLocalReviewClear" type="button">기존 자료로 돌아가기</button><p id="secLocalReviewStatus" class="muted" role="status"></p></details>
 <p class="muted">매출·CAPEX·영업이익·영업이익률 변화를 주가와 같은 날짜 축에서 비교합니다. 각 재무항목은 독립 축척을 사용하며, 영업이익률 단위는 %입니다.</p>
 <div class="scroll"><table class="finance-table"><thead><tr><th>분기</th><th>매출 (십억 USD)</th><th>CAPEX (십억 USD)</th><th>영업이익 (십억 USD)</th><th>영업이익률 (%)</th></tr></thead><tbody id="financeRows"></tbody></table></div>
 <p class="muted">각 금액 아래에 <strong>전분기(QoQ)</strong>와 <strong>전년동기(YoY)</strong>를 표시합니다. 영업이익률의 변화는 퍼센트포인트(%p)이며, 비교 자료가 없으면 — 로 표시합니다.</p>
@@ -79,6 +80,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
 </main>
 <script type="module">
+import {validateLocalSecChartReview,reviewRowsForTicker,reviewLabel,quarterPath} from "./src/market/sec-local-chart-review.mjs";
 import {readSharedPriceSeries} from "./src/market/read-shared-price-series.mjs";
 import {loadPublishedYahooReview} from "./src/market/load-published-yahoo-review.mjs";
 import {mergeTestDailyPrices} from "./src/market/merge-test-daily-prices.mjs";
@@ -206,14 +208,14 @@ function chart(svg,sets,{index=false,finance=[],from}={}){
   const yy=v=>bottom-(v-low)/(high-low)*(bottom-top);
   svg.append(node("text",{x:left-9,y:top+8,fill:"#a7b6cf","text-anchor":"end","font-size":11},fmt(high,1)));
   svg.append(node("text",{x:left-9,y:bottom+4,fill:"#a7b6cf","text-anchor":"end","font-size":11},fmt(low,1)));
-  const d=pairs.map((p,i)=>(i?"L":"M")+x(Date.parse(p.date+"T00:00:00Z")).toFixed(2)+","+yy(p.val).toFixed(2)).join(" ");
+  const d=quarterPath(pairs,p=>x(Date.parse(p.date+"T00:00:00Z")),p=>yy(p.val));
   svg.append(node("path",{d,fill:"none",stroke:color,"stroke-width":2.5,"stroke-linejoin":"round"}));
   for(let i=0;i<pairs.length;i++){
    const p=pairs[i],px=x(Date.parse(p.date+"T00:00:00Z")),cy=yy(p.val);
    const dot=node("circle",{cx:px,cy,r:4.5,fill:color,stroke:"#131d30","stroke-width":1.5});
    const detail=selected+" · "+p.date+" · "+label+" "+fmt(p.val)+(percent?"%":"십억 USD")+
      " · QoQ "+changeText(change(p.row,field,"QoQ"))+" · YoY "+changeText(change(p.row,field,"YoY"))+
-     " · 영업이익률 "+(p.row.operating_margin_pct==null?"—":fmt(p.row.operating_margin_pct,1)+"%");
+     " · 영업이익률 "+(p.row.operating_margin_pct==null?"—":fmt(p.row.operating_margin_pct,1)+"%")+(p.row.status==="SEC_LOCAL_REVIEW"?" · "+reviewLabel[p.row.metric_status[field]]:"");
    dot.append(node("title",{},detail));svg.append(dot);
    const textY=Math.max(top+10,Math.min(bottom-4,cy+(i%2?13:-10)));
    svg.append(node("text",{x:px,y:textY,fill:color,"font-size":9.5,"text-anchor":"middle"},fmt(p.val,1)+(percent?"%":"")));
@@ -415,6 +417,7 @@ function renderPrices(){
   label.append(mark,document.createTextNode(title+" · 하단 분기 자료"));legend.append(label);
  }
 }
+let localSecReview=null,localReviewSequence=0;
 function drawFinance(rows){
  $("financeRows").replaceChildren();
  const from=isoDate($("period").value);
@@ -428,6 +431,9 @@ function drawFinance(rows){
   if(r.status==="SEC_XBRL_PRELIMINARY"){
    const tag=document.createElement("span");tag.className="finance-preliminary";tag.textContent="SEC 예비";period.append(tag);
   }
+  if(r.status==="SEC_LOCAL_REVIEW"){
+   const tag=document.createElement("span");tag.className="finance-preliminary";tag.textContent="SEC 검토용";period.append(tag);
+  }
   tr.append(period);
   for(const [field,title,key,isMargin] of [
    ["revenue_usd_bn","매출액","revenue",false],
@@ -439,6 +445,12 @@ function drawFinance(rows){
    const main=document.createElement("div");main.className="finance-main";
    main.textContent=r[field]==null?"—":fmt(r[field],2)+(isMargin?"%":"");
    td.append(main);
+   if(r.status==="SEC_LOCAL_REVIEW"){
+    const note=document.createElement("div");note.className="finance-change";note.textContent=reviewLabel[r.metric_status[field]];td.append(note);
+    for(const [i,url] of (r.filing_urls[field]||[]).entries()){
+     const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="공시 "+(i+1);td.append(link);
+    }
+   }
    for(const [label,source] of [["전분기",r.qoq],["전년동기",r.yoy]]){
     const row=document.createElement("span");row.className="finance-change";
     const tag=document.createElement("span");tag.className="tag";tag.textContent=label;
@@ -474,6 +486,13 @@ async function loadFinance(){
  const request=++latestRequest,ticker=selected,name=companies.get(ticker)?.company_name||ticker;
  $("financeTitle").textContent=name+" · 분기 매출·CAPEX·영업이익";
  $("financeStatus").textContent="분기 재무자료 자동 조회 중…";
+ if(localSecReview){
+  const rows=reviewRowsForTicker(localSecReview,ticker);
+  financeCache.set(ticker,rows);drawFinance(rows);
+  const within=rows.filter(r=>r.period_end>=isoDate($("period").value));
+  $("financeStatus").textContent=ticker+" · 로컬 SEC 검토용 "+within.length+"분기 · 기존 서버 자료와 분리 · 원문 전체 검증 전 · 누락값 미표시";
+  return;
+ }
  const combined=new Map();
  let stored=0,official=0,serverError="",secError="";
  try{
@@ -575,6 +594,22 @@ async function loadAll(){
   if(reloadPending){reloadPending=false;void loadAll();}
  }
 }
+$("secLocalReviewFile").addEventListener("change",async event=>{
+ const seq=++localReviewSequence,file=event.target.files?.[0];
+ if(!file)return;
+ try{
+  if(file.size>1024*1024)throw Error("검토 파일 1MB 초과");
+  const rows=validateLocalSecChartReview(JSON.parse(await file.text()));
+  if(seq!==localReviewSequence)return;
+  localSecReview=rows;financeCache.clear();
+  $("secLocalReviewStatus").textContent="검토용 자료 "+rows.length+"건 · 이 탭에서만 표시 · 서버 변경 없음";
+  await loadFinance();
+ }catch(error){if(seq===localReviewSequence)$("secLocalReviewStatus").textContent="검토 파일 읽기 중단: "+error.message+" · 이전 자료 유지";}
+});
+$("secLocalReviewClear").addEventListener("click",()=>{
+ ++localReviewSequence;localSecReview=null;financeCache.clear();$("secLocalReviewFile").value="";
+ $("secLocalReviewStatus").textContent="기존 자료 조회 모드";void loadFinance();
+});
 $("financialTicker").addEventListener("change",event=>{
  const ticker=event.target.value;
  if(!selectedTickers.has(ticker))return;
