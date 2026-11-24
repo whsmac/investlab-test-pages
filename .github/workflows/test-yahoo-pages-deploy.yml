@@ -1,5 +1,6 @@
 name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # Runs on default branch; reads reviewed TEST feature code. No Supabase access.
+# 2026-11-24: movable/resizable chart popup; browser checks and live BITU rendering passed. Prior implementation 7df25bf309d2a17f11c722d100db135cbc7de4b1 retained for rollback.
 # 2026-11-24: fix hosted TradingView chart frame; offline browser and actual BITU canvas smoke passed. Prior implementation 1b805805d851daac68fa62f8c1d25426e00eb837 retained for rollback.
 # 2026-11-24: integrated chart/symbol/quote display release, CI 18/18 passed. Prior implementation 5b48a14acfc812a44b3842442bba23f5a2e5fa6e retained for rollback.
 # 2026-11-24: ledger usage-order release, CI 3/3 passed; prior implementation 19e4e5589bb75c460fbbd2fe62033d9ae5a952b3 retained for rollback.
@@ -38,7 +39,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 7df25bf309d2a17f11c722d100db135cbc7de4b1
+          ref: 5504c99f0a4be21402ecd4d0f3a942647f22a2a1
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -54,7 +55,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "7df25bf309d2a17f11c722d100db135cbc7de4b1"
+          test "$(git rev-parse HEAD)" = "5504c99f0a4be21402ecd4d0f3a942647f22a2a1"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
