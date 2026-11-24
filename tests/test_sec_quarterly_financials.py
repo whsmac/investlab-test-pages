@@ -42,6 +42,15 @@ class FakeResponse:
     def read(self,_):return self.payload
 
 class SecQuarterlyTests(unittest.TestCase):
+    def test_sec_agent_requires_identifying_name_and_nonplaceholder_contact(self):
+        self.assertFalse(sec.valid_sec_user_agent(""))
+        self.assertFalse(sec.valid_sec_user_agent("bad"))
+        self.assertFalse(sec.valid_sec_user_agent("contact@investlab.dev"))
+        self.assertFalse(sec.valid_sec_user_agent("INVESTLAB Research contact@example.com"))
+        self.assertFalse(sec.valid_sec_user_agent("INVESTLAB\\ncontact@investlab.dev"))
+        self.assertTrue(sec.valid_sec_user_agent(
+            "INVESTLAB Research contact@investlab.dev"))
+
     def test_five_sec_issuers_and_no_unverified_spcx_facts(self):
         self.assertEqual(set(sec.ISSUERS),{"MSFT","GOOGL","AMZN","META","TSLA"})
         self.assertNotIn("SPCX",sec.ISSUERS)
