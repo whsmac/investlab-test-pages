@@ -918,6 +918,7 @@ async function refreshOnlineAccountLedger(){
    byId('onlineLedgerPreviewStatus').textContent=resolved.notice;return;
   }
   const ledger=resolved.payload;
+  validateLedger(ledger); // Defense in depth for same-owner local drafts and SEC-independent server data.
   const changedUser=differentVerifiedUser(lastVerifiedOnlineUserId,userId);
   if(changedUser){
    onlineLedgerOwnerChanged=true;onlineLedgerUserEdited=true;
