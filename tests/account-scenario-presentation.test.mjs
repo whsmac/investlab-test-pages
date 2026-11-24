@@ -67,7 +67,7 @@ test('TEST home exposes five primary menus and separates offline tools',()=>{
  assert.doesNotMatch(main,/href="\.\/data-management\.html"/, 'backup/settings remains separate from five primary modules');
  assert.match(main,/href="\.\/company-investment-analysis\.html"/);
  assert.match(main,/TEST 원장 자동 저장·불러오기/);
- assert.match(main,/TEST 온라인 데이터 백업·복원/);
+ assert.match(main,/시장지표 자동수집/);
  assert.doesNotMatch(html,/보조 검증 도구 펼치기/);
 });
 
