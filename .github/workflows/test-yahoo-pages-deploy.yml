@@ -31,7 +31,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: feature/company-chart-tooltip-finance-responsive-20261124
+          ref: feature/pilot-phase1-ci-sec-readiness-20261124
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -58,6 +58,9 @@ jobs:
           else
             echo "::notice::SEC contact identity is not configured; official financial collection skipped"
           fi
+      - name: Report SEC official quarterly coverage for 3y and 5y (TEST, read-only)
+        run: |
+          python -m scripts.sec_pilot_coverage --source "${RUNNER_TEMP}/sec-quarterly-financials.json" --output sec-pilot-coverage.json --summary "$GITHUB_STEP_SUMMARY"
       - name: Fetch real NASDAQ 100 and S&P 500 index levels (optional, read-only)
         run: |
           if ! python -m scripts.yahoo_market_indices_test --output "${RUNNER_TEMP}/market-index-benchmarks.json"; then
@@ -132,5 +135,6 @@ jobs:
             yahoo-publication-preflight.json
             yahoo-feed-coverage.json
             yahoo-public-review.json
+            sec-pilot-coverage.json
           if-no-files-found: warn
           retention-days: 7
