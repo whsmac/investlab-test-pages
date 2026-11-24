@@ -97,7 +97,7 @@ import {sortBulkImpactRows} from './src/simulator/bulk-impact-sort.mjs';
 import {topBulkImpactMovers} from './src/simulator/bulk-impact-top-movers.mjs';
 import {matchLegacyCosts} from './src/simulator/legacy-cost-suggestions.mjs';
 import {matchAccountCosts} from './src/simulator/account-cost-suggestions.mjs';
-import {makeScenarioBackup,validateScenarioBackup,mergeScenarioBackup} from './src/ledger/scenario-backup.mjs';
+import {makeScenarioBackup,validateScenarioBackup,mergeScenarioBackup,captureBackupOwner,assertBackupOwner} from './src/ledger/scenario-backup.mjs';
 import {simulateTrades} from './src/simulator/virtual-trade-engine.mjs';
 import {summarizeTradeOutcome} from './src/simulator/trade-outcome-summary.mjs';
 import {rankStrategyOutcomes,compareRankedOutcomes} from './src/simulator/strategy-outcome-ranking.mjs';
@@ -1268,6 +1268,7 @@ strategyState=[{name:'가상 거래 1',trades:[]}];renderEditor();ensureTradePri
 
 const SCENARIO_STORAGE_KEY='investlab_simulator_saved_scenarios_v1'; // legacy key retained
 let activeSimulatorOwnerId=null;
+let scenarioOwnerGeneration=0;
 function ownerStorageKey(base){
  if(!activeSimulatorOwnerId)throw Error('TEST 로그인 후 사용자별 저장이 가능합니다. 로그인 전에는 JSON 백업을 이용하세요.');
  return base+':'+activeSimulatorOwnerId;
@@ -1405,8 +1406,8 @@ function storageAction(action){
   byId('scenarioStorageStatus').textContent=quota?'저장 공간이 부족해 전략을 저장하지 못했습니다. 현재 편집 내용과 기존 저장 전략은 유지됩니다. 브라우저 저장 공간을 확인하세요.':'저장 작업 실패: '+error.message;
  }
 }
-byId('exportScenarios').addEventListener('click',()=>storageAction(()=>{const backup=makeScenarioBackup(getSavedScenarios(),new Date().toISOString());const url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='investlab-simulator-scenarios.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);byId('scenarioStorageStatus').textContent='저장 전략 JSON 백업 파일을 생성했습니다. 서버에는 전송하지 않았습니다.'}));
-byId('importScenarios').addEventListener('click',async()=>{try{const file=byId('scenarioBackupFile').files?.[0];if(!file||file.size>1048576)throw Error('1MiB 이하의 백업 JSON 파일을 선택하세요.');let parsed;try{parsed=JSON.parse(await file.text());}catch{throw Error('JSON 형식이 올바르지 않습니다. 백업 파일을 확인하세요. 기존 저장 전략은 유지됩니다.');}const incoming=validateScenarioBackup(parsed);await requireActiveScenarioOwner();const current=getSavedScenarios();const collisions=Object.keys(incoming).filter(name=>Object.hasOwn(current,name)&&JSON.stringify(current[name])!==JSON.stringify(incoming[name]));const unchanged=Object.keys(incoming).filter(name=>Object.hasOwn(current,name)&&JSON.stringify(current[name])===JSON.stringify(incoming[name]));if(collisions.length&&!confirm('내용이 다른 기존 전략 '+collisions.length+'개를 덮어씁니다.\n대상: '+collisions.slice(0,5).join(', ')+(collisions.length>5?' 외 '+(collisions.length-5)+'개':'')+'\n계속하시겠습니까?'))return;const added=Object.keys(incoming).filter(name=>!Object.hasOwn(current,name));if(!collisions.length&&!added.length){byId('scenarioStorageStatus').className='hint';byId('scenarioStorageStatus').textContent='이미 동일한 전략 '+unchanged.length+'개가 저장되어 있습니다. 변경 없이 유지했습니다.';updateStrategySaveState();return;}const merged=mergeScenarioBackup(current,incoming,{overwrite:true});localStorage.setItem(ownerStorageKey(SCENARIO_STORAGE_KEY),JSON.stringify(merged));refreshSavedScenarioList();updateStrategySaveState();byId('scenarioStorageStatus').className='hint';byId('scenarioStorageStatus').textContent='전략 '+Object.keys(incoming).length+'개를 가져왔습니다'+(unchanged.length?' · 동일 내용 '+unchanged.length+'개 유지':'')+(collisions.length?' · 변경된 기존 전략 '+collisions.length+'개 덮어씀':'')+'. 현재 편집 내용은 유지됩니다.'}catch(error){const quota=error&&(['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error.name)||error.code===22||error.code===1014);byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent=quota?'저장 공간이 부족해 백업을 가져오지 못했습니다. 기존 저장 전략은 유지됩니다. 브라우저 저장 공간을 확인한 뒤 같은 파일로 다시 시도하세요.':'전략 백업 가져오기 실패: '+String(error.message??error)+' · 파일을 확인한 뒤 다시 시도하세요. 기존 저장 전략은 자동 삭제하지 않습니다.'}});
+byId('exportScenarios').addEventListener('click',async()=>{try{const ticket=captureBackupOwner(activeSimulatorOwnerId,scenarioOwnerGeneration);const connection=await requireActiveScenarioOwner();assertBackupOwner(ticket,activeSimulatorOwnerId,scenarioOwnerGeneration,connection.userId);const backup=makeScenarioBackup(getSavedScenarios(),new Date().toISOString());const url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='investlab-simulator-scenarios.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);byId('scenarioStorageStatus').className='hint';byId('scenarioStorageStatus').textContent='저장 전략 JSON 백업 파일을 생성했습니다. 서버에는 전송하지 않았습니다.'}catch(error){byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent='백업 생성 중단: '+String(error.message??error);}});
+byId('importScenarios').addEventListener('click',async()=>{try{const ticket=captureBackupOwner(activeSimulatorOwnerId,scenarioOwnerGeneration);const file=byId('scenarioBackupFile').files?.[0];if(!file||file.size>1048576)throw Error('1MiB 이하의 백업 JSON 파일을 선택하세요.');let parsed;try{parsed=JSON.parse(await file.text());}catch{throw Error('JSON 형식이 올바르지 않습니다. 백업 파일을 확인하세요. 기존 저장 전략은 유지됩니다.');}const incoming=validateScenarioBackup(parsed);const connection=await requireActiveScenarioOwner();assertBackupOwner(ticket,activeSimulatorOwnerId,scenarioOwnerGeneration,connection.userId);const current=getSavedScenarios();const collisions=Object.keys(incoming).filter(name=>Object.hasOwn(current,name)&&JSON.stringify(current[name])!==JSON.stringify(incoming[name]));const unchanged=Object.keys(incoming).filter(name=>Object.hasOwn(current,name)&&JSON.stringify(current[name])===JSON.stringify(incoming[name]));if(collisions.length&&!confirm('내용이 다른 기존 전략 '+collisions.length+'개를 덮어씁니다.\n대상: '+collisions.slice(0,5).join(', ')+(collisions.length>5?' 외 '+(collisions.length-5)+'개':'')+'\n계속하시겠습니까?'))return;const added=Object.keys(incoming).filter(name=>!Object.hasOwn(current,name));if(!collisions.length&&!added.length){byId('scenarioStorageStatus').className='hint';byId('scenarioStorageStatus').textContent='이미 동일한 전략 '+unchanged.length+'개가 저장되어 있습니다. 변경 없이 유지했습니다.';updateStrategySaveState();return;}const merged=mergeScenarioBackup(current,incoming,{overwrite:true});assertBackupOwner(ticket,activeSimulatorOwnerId,scenarioOwnerGeneration,connection.userId);localStorage.setItem(ownerStorageKey(SCENARIO_STORAGE_KEY),JSON.stringify(merged));refreshSavedScenarioList();updateStrategySaveState();byId('scenarioStorageStatus').className='hint';byId('scenarioStorageStatus').textContent='전략 '+Object.keys(incoming).length+'개를 가져왔습니다'+(unchanged.length?' · 동일 내용 '+unchanged.length+'개 유지':'')+(collisions.length?' · 변경된 기존 전략 '+collisions.length+'개 덮어씀':'')+'. 현재 편집 내용은 유지됩니다.'}catch(error){const quota=error&&(['QuotaExceededError','NS_ERROR_DOM_QUOTA_REACHED'].includes(error.name)||error.code===22||error.code===1014);byId('scenarioStorageStatus').className='error';byId('scenarioStorageStatus').textContent=quota?'저장 공간이 부족해 백업을 가져오지 못했습니다. 기존 저장 전략은 유지됩니다. 브라우저 저장 공간을 확인한 뒤 같은 파일로 다시 시도하세요.':'전략 백업 가져오기 실패: '+String(error.message??error)+' · 파일을 확인한 뒤 다시 시도하세요. 기존 저장 전략은 자동 삭제하지 않습니다.'}});
 function updateStrategySaveState(){
  const label=byId('strategySaveState');
  try{
@@ -1726,6 +1727,7 @@ function switchVerifiedSimulatorOwner(nextId){
  const prior=activeSimulatorOwnerId;
  if(prior){clearTimeout(draftTimer);draftTimer=null;saveWorkingDraft();}
  activeSimulatorOwnerId=nextId;
+ scenarioOwnerGeneration++;
  if(prior){
   clearTimeout(draftTimer);draftTimer=null;
   portfolioState.positions=[];portfolioState.prices=[];
@@ -1740,7 +1742,7 @@ function switchVerifiedSimulatorOwner(nextId){
  byId('adoptLegacySimulator').hidden=!nextId||(!localStorage.getItem(DRAFT_KEY)&&!localStorage.getItem(SCENARIO_STORAGE_KEY));
  byId('scenarioStorageLocation').textContent=nextId
   ?'TEST 로그인 확인 · 전략과 임시작업을 사용자별로 분리하여 보관합니다.'
-  :'TEST 로그인이 필요합니다. 다른 계정의 저장자료는 표시하지 않습니다. JSON 백업은 가능합니다.';
+  :'TEST 로그인이 필요합니다. 다른 계정의 저장자료는 표시하지 않습니다. 로그인 후 JSON 백업을 이용하세요.';
  if(prior&&prior!==nextId)byId('scenarioStorageStatus').textContent='TEST 계정 변경 · 이전 작업 보존, 새 계정 화면 초기화';
 }
 byId('adoptLegacySimulator').addEventListener('click',async()=>{
