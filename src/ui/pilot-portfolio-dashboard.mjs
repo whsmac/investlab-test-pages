@@ -1,3 +1,4 @@
+import {createTickerChartButton} from './pilot-tradingview-chart.mjs';
 import {projectLedger} from '../ledger/pilot-portfolio-projection.mjs';
 import {buildPortfolioAllocation,renderPortfolioAllocation} from './pilot-portfolio-allocation.mjs';
 const $=id=>document.getElementById(id);
@@ -81,7 +82,7 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
   const tr=document.createElement('tr'),q=prices.get(h.symbol),valid=fresh(q),
    value=valid?h.qty*Number(q.close):null,gainUsd=valid?value-h.cost:null,
    rate=valid&&h.cost>0?100*gainUsd/h.cost:null;
-  cell(tr,h.symbol,'stock-label');cell(tr,fmt(h.qty,6));
+  cell(tr,'','stock-label').append(createTickerChartButton(h.symbol));cell(tr,fmt(h.qty,6));
   cell(tr,format(fromUsd(h.averageCost)));
   cell(tr,valid?format(fromUsd(Number(q.close))):'—');
   cell(tr,valid?format(fromUsd(value)):'—');
