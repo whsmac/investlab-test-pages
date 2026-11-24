@@ -89,13 +89,19 @@ test('Offline Pilot browser navigation and 3y/5y charts work on desktop and mobi
     console.log('PASS',device,'five-year price and actual SEC chart',tslaOnly);
 
     await page.locator('#tickerButtons button[aria-label^="SPCX"]').click();
-    assert.match(await page.locator('#priceChartNote').innerText(),/SPCX.*각자 첫 거래일/);
+    // With no market index selected, multiple companies remain in raw USD mode.
+    // Late listing coverage is stated separately, not in the base-100 note.
+    await page.waitForFunction(()=>document.querySelector('#historyCoverageStatus')?.textContent.includes('SPCX 2026-06-12부터'),null,{timeout:15000});
+    assert.match(await page.locator('#priceChartNote').innerText(),/실제 USD 종가/);
+    assert.match(await page.locator('#legend').innerText(),/TSLA/);
+    assert.match(await page.locator('#legend').innerText(),/SPCX/);
     assert.match(await page.locator('#historyCoverageStatus').innerText(),/SPCX 2026-06-12부터/);
     assert.ok((await page.locator('#priceChart').textContent()).includes('2021-11-24'));
     console.log('PASS',device,'TSLA five-year history retained with SPCX selected');
 
     await page.locator('#period').selectOption('3y');
     await waitForQuotes(page);
+    await page.waitForFunction(()=>document.querySelector('#historyCoverageStatus')?.textContent.includes('2023-11-24'),null,{timeout:15000});
     assert.ok((await page.locator('#historyCoverageStatus').innerText()).includes('2023-11-24'));
     assert.ok((await page.locator('#priceChart').textContent()).includes('2023-11-24'));
     assert.equal(await page.locator('#financialTicker').inputValue(),'SPCX');
