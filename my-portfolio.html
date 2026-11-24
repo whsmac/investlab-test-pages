@@ -145,6 +145,11 @@ async function refreshPersonalQuotes(){
  personalQuoteAbort=controller;personalQuoteBusy=true;
  const timeout=setTimeout(()=>controller.abort(),15000);
  try{
+  const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
+  if(cfg.url!=='https://gopofxyezhwpfxbecrxd.supabase.co'||!cfg.key||cfg.key.startsWith('sb_secret_')||String(cfg.key).toLowerCase().includes('service_role')){disconnectPersonalQuotes();return;}
+  const client=window.supabase.createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'investlab_shared_data_auth_v1'}});
+  const verified=await client.auth.getUser();if(request!==personalQuoteRequest)return;
+  if(verified.error||verified.data?.user?.id!==owner){disconnectPersonalQuotes();return;}
   const result=await fetchPersonalQuotes({tickers,key:personalQuoteKey,signal:controller.signal});
   if(request!==personalQuoteRequest||owner!==displayedCloudLedgerOwnerId||owner!==personalQuoteOwner)return;
   if(tickers.join('|')!==projectLedger(data,'ALL').holdings.map(h=>h.symbol).sort().join('|'))return;
