@@ -26,13 +26,15 @@ function buildDialog(){
  style(d,{width:'min(960px, calc(100vw - 24px))',maxWidth:'none',maxHeight:'90dvh',overflow:'auto',background:'#161f32',color:'#edf3ff',border:'1px solid #52637e',borderRadius:'12px',padding:'12px',boxSizing:'border-box',colorScheme:'dark'});
  const head=style(document.createElement('div'),{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'8px'});
  heading=document.createElement('h2');heading.id='investlabTradingViewTitle';style(heading,{margin:'0',fontSize:'18px'});
- const close=style(document.createElement('button'),{width:'auto',padding:'8px 12px',margin:'0'});close.type='button';close.textContent='닫기';close.onclick=()=>d.close();head.append(heading,close);
+ const close=style(document.createElement('button'),{width:'auto',padding:'8px 12px',margin:'0'});close.type='button';close.textContent='닫기';close.onclick=()=>{d.close();clear();};head.append(heading,close);
  status=style(document.createElement('p'),{fontSize:'13px',lineHeight:'1.5',color:'#becde1',margin:'8px 0'});
  frameHost=style(document.createElement('div'),{width:'100%',minWidth:'0'});
  external=style(document.createElement('a'),{display:'inline-block',marginTop:'8px',color:'#a4c6ff'});external.target='_blank';external.rel='noopener noreferrer';external.textContent='TradingView에서 직접 확인';
  d.append(head,status,frameHost,external);document.body.append(d);
- d.addEventListener('close',()=>{frameHost.replaceChildren();returnFocus?.focus({preventScroll:true});returnFocus=null;});
- d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}});
+ const clear=()=>{frameHost.replaceChildren();returnFocus?.focus({preventScroll:true});returnFocus=null;};
+ d.addEventListener('close',()=>{if(!d.open)clear();});
+ d.addEventListener('cancel',e=>{e.preventDefault();d.close();clear();});
+ d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){d.close();clear();}}});
  return d;
 }
 export function openTradingViewChart(ticker,trigger=null){
