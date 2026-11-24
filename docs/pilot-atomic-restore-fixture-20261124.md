@@ -1,0 +1,13 @@
+# Pilot atomic restoration — isolated PostgreSQL prototype (not deployable)
+PR #22 four workflows passed. Existing TEST UI proposal remains read-only.
+The fixture uses PostgreSQL 16, synthetic A/B IDs, a mock auth.uid(), RLS on both fixture tables, and SECURITY INVOKER with empty search_path. The mock identity is NOT Supabase JWT authentication and must never be installed on any real project. The fixture is rolled back and container removed. No credentials from the project are used.
+The function compares the full owner-scoped ledger and strategy snapshots including revisions after acquiring NOWAIT table locks. Locks intentionally cover both tables because existing clients write directly; they block concurrent writes across users for the transaction duration. Evaluate contention before deployment and consider a consistent per-owner locking protocol in all writers instead. Full snapshots are sensitive; never log them or send them outside the authenticated database path.
+SQL NULL ledger means preserve. Incoming named strategies replace matching names, add new names and leave other names intact. No deletion of unrelated strategies. A failing write must propagate so the previous ledger write rolls back. The test injects a strategy constraint violation after the ledger write and compares original values and timestamps.
+## Remaining gates
+- This is an envelope-only database prototype, NOT full server-side ledger chronology/balance validation or complete strategy validation. Port and test authoritative domain validation (dates, quantities, cash, nested assumptions, limits) before any real RPC.
+- Confirm actual TEST schema, privileges, RLS, constraints and Supabase version by read-only catalog review with separate scope approval; never assume fixture equals live schema.
+- Test multi-connection lock contention, concurrent writers, request retry/idempotency and lost response handling. A stale snapshot simulation is not a concurrent integration test.
+- Preserve verified current backup and bind a reviewed snapshot to the actual confirmed request; integrate UI only after all gates pass.
+- Independently verify real disposable TEST A/B/anonymous sessions with approved synthetic fixtures, server-side rollback, and restore/backup browser behavior. No live writes or installation authorized by this draft.
+- Existing Draft PRs remain unmerged; no Pages deployment, no production or Supabase changes. Do not execute fixture SQL outside its disposable CI container.
+References: https://supabase.com/docs/guides/database/functions and https://www.postgresql.org/docs/current/sql-lock.html
