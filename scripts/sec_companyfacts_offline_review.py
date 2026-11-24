@@ -3,6 +3,9 @@ No HTTP, no authentication, no database writes, no publication.
 """
 import argparse
 import hashlib
+import html
+import plistlib
+from urllib.parse import urlsplit
 import json
 import re
 from collections import defaultdict
@@ -24,9 +27,24 @@ def load_json(path):
         raw=f.read(MAX_BYTES+1)
     if len(raw)>MAX_BYTES:
         raise ValueError("Input too large")
-    return json.loads(raw,parse_float=Decimal),hashlib.sha256(raw).hexdigest()
+    if Path(path).suffix.lower()=='.webarchive':
+        resource=plistlib.loads(raw)['WebMainResource']
+        url=urlsplit(resource['WebResourceURL'])
+        match=re.fullmatch(r'/api/xbrl/companyfacts/CIK(\d{10})\.json',url.path)
+        if url.scheme!='https' or url.netloc!='data.sec.gov' or not match or resource.get('WebResourceMIMEType')!='application/json':
+            raise ValueError('Unexpected archived source')
+        content=resource['WebResourceData'].decode('utf-8')
+        if content.lstrip().startswith('<'):
+            wrapper=re.fullmatch(r'<html>.*?<pre[^>]*>(.*?)</pre>.*?</html>',content,re.S)
+            if not wrapper:raise ValueError('Unexpected archived JSON wrapper')
+            content=html.unescape(wrapper.group(1))
+        payload=json.loads(content,parse_float=Decimal)
+        if str(payload.get('cik','')).zfill(10)!=match.group(1):raise ValueError('Archived issuer mismatch')
+    else:
+        payload=json.loads(raw,parse_float=Decimal)
+    return payload,hashlib.sha256(raw).hexdigest()
 
-def collect(payload, asof):
+def collect(payload, asof, *, amazon_candidate=False):
     cik=str(payload.get("cik","")).zfill(10)
     ticker=next((t for t,(c,_) in ISSUERS.items() if c==cik),None)
     if not ticker:
@@ -36,6 +54,8 @@ def collect(payload, asof):
         raise ValueError("Invalid US GAAP facts")
     candidates=defaultdict(list)
     for metric,tags in METRICS.items():
+        if amazon_candidate and ticker=='AMZN' and metric=='capex_usd_bn':
+            tags=(*tags,'PaymentsToAcquireProductiveAssets')
         # Broader productive-assets tag is not assumed equivalent to PP&E.
         # FSDS primary-statement evidence is needed before adopting this tag.
         for tag in tags:
@@ -57,15 +77,21 @@ def collect(payload, asof):
                     candidates[(metric,start,end)].append(evidence)
                 except (KeyError,TypeError,ValueError):
                     continue
-    def select(key):
-        options=candidates.get(key,[])
+    def select(key, cutoff=None, tag=None):
+        options=[x for x in candidates.get(key,[]) if (cutoff is None or x['filed']<=cutoff) and (tag is None or x['tag']==tag)]
         if not options:
             return None
         newest=max(x["filed"] for x in options)
         options=[x for x in options if x["filed"]==newest]
-        if len({(x["tag"],Decimal(x["value_usd"]),x["accession"]) for x in options})!=1:
+        if len({Decimal(x['value_usd']) for x in options})!=1:
             return None
-        return options[0]
+        if len({x['accession'] for x in options})!=1:
+            return None
+        priority=METRICS[key[0]]+('PaymentsToAcquireProductiveAssets',)
+        chosen=dict(min(options,key=lambda x:priority.index(x['tag'])))
+        aliases=sorted({x['tag'] for x in options})
+        if len(aliases)>1:chosen['equal_value_tags']=aliases
+        return chosen
     rows=[]
     for end in sorted({k[2] for k in candidates}):
         fy,fq=fiscal(ticker,end)
@@ -83,7 +109,7 @@ def collect(payload, asof):
                 proof={"mode":"direct","facts":[direct]}
             elif direct_key not in candidates and fq>1:
                 current=select((metric,fiscal_start,end))
-                prior=select((metric,fiscal_start,prev))
+                prior=select((metric,fiscal_start,prev),current['filed'],current['tag']) if current else None
                 if current and prior and current["tag"]==prior["tag"] and prior["filed"]<=current["filed"]:
                     value=Decimal(current["value_usd"])-Decimal(prior["value_usd"])
                     proof={"mode":"same_start_ytd_delta_unreconciled","facts":[current,prior]}
@@ -91,6 +117,8 @@ def collect(payload, asof):
                 value=None; proof=None
             row[metric]=float(value/Decimal("1e9")) if value is not None else None
             if proof:
+                if any(f['tag']=='PaymentsToAcquireProductiveAssets' for f in proof['facts']):
+                    proof['definition_status']='AMZN_productive_assets_candidate_not_period_reconciled'
                 row["provenance"][metric]=proof
         rev,op=row["revenue_usd_bn"],row["operating_income_usd_bn"]
         if rev is None:
@@ -120,11 +148,11 @@ def compare(rows, baseline):
                            "company_facts":a,"fsds":b,"status":status})
     return result
 
-def build(paths,asof,baseline=None):
+def build(paths,asof,baseline=None,*,amazon_candidate=False):
     rows=[]; manifest={}
     for p in paths:
         payload,digest=load_json(p)
-        ticker,found=collect(payload,asof)
+        ticker,found=collect(payload,asof,amazon_candidate=amazon_candidate)
         if ticker in manifest:
             raise ValueError("Duplicate issuer input")
         manifest[ticker]={"sha256":digest,"bytes":Path(p).stat().st_size}
@@ -152,11 +180,12 @@ def main():
     p.add_argument("inputs",nargs="+",type=Path)
     p.add_argument("--baseline",type=Path)
     p.add_argument("--output",type=Path,required=True)
+    p.add_argument('--amazon-candidate',action='store_true',help='Review-only productive assets candidate; not approved PP&E')
     a=p.parse_args()
     if a.output.name=="sec-quarterly-financials.json" or a.output.exists():
         p.error("Use a new review filename")
     baseline=json.loads(a.baseline.read_text()) if a.baseline else None
-    result=build(a.inputs,date.today(),baseline)
+    result=build(a.inputs,date.today(),baseline,amazon_candidate=a.amazon_candidate)
     with a.output.open("x",encoding="utf-8") as f:
         json.dump(result,f,ensure_ascii=False,allow_nan=False,indent=2)
     print("REVIEW_ONLY",len(result["rows"]),"rows;",len(result["comparison"]),"comparisons")
