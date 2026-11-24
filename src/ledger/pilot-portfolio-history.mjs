@@ -69,7 +69,7 @@ export function portfolioHistory(data,start,end,market,account='ALL',currency='K
   }
   if(index!==null)peak=Math.max(peak,index);
   const ndx=priorObservation(market.get('NDX'),date),spx=priorObservation(market.get('SPX'),date);
-  result.push({date,total:s.total,components:s.total===null?null:s.components,flow:flowKnown?flow:null,capital:base!==null&&capitalKnown?base+cumulative:null,index,mdd:index!==null&&peak>0?100*(index/peak-1):null,ndx:ndx&&(currency==='USD'||positive(s.fx))?ndx.close*(currency==='KRW'?s.fx:1):null,spx:spx&&(currency==='USD'||positive(s.fx))?spx.close*(currency==='KRW'?s.fx:1):null,missing:s.missing||[],trades:(byDate.get(date)||[]).filter(e=>['BUY','SELL'].includes(e.type)).map(e=>({symbol:e.symbol,type:e.type,qty:e.qty,price:e.price}))});
+  result.push({date,total:s.total,components:s.total===null?null:s.components,quantities:Object.fromEntries(s.holdings.map(h=>[h.symbol,h.qty])),fx:s.fx,flow:flowKnown?flow:null,capital:base!==null&&capitalKnown?base+cumulative:null,index,mdd:index!==null&&peak>0?100*(index/peak-1):null,ndx:ndx&&(currency==='USD'||positive(s.fx))?ndx.close*(currency==='KRW'?s.fx:1):null,spx:spx&&(currency==='USD'||positive(s.fx))?spx.close*(currency==='KRW'?s.fx:1):null,missing:s.missing||[],trades:(byDate.get(date)||[]).filter(e=>['BUY','SELL'].includes(e.type)).map(e=>({symbol:e.symbol,type:e.type,qty:e.qty,price:e.price}))});
   previous=s;
  }
  const baseRow=result.find(r=>r.index===100),benchmarkBase=baseRow?{ndx:baseRow.ndx,spx:baseRow.spx}:{};
