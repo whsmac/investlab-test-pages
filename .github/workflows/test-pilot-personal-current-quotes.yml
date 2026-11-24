@@ -1,0 +1,21 @@
+name: TEST portfolio current quote and formatting (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'src/market/pilot-personal-current-quotes.mjs'
+      - 'tests/pilot-personal-current-quotes.test.mjs'
+      - '.github/workflows/test-pilot-personal-current-quotes.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/pilot-personal-current-quotes.test.mjs tests/pilot-portfolio-allocation-donut.test.mjs tests/pilot-managed-symbols-usd-display.test.mjs tests/pilot-release-integrated-acceptance.test.mjs

@@ -52,7 +52,7 @@ function el(name='div'){
   setAttribute(key,value){this.attributes[key]=String(value)}, 
   classList:{add(){}},append(...child){this.children.push(...child)},
   replaceChildren(...child){this.children=[...child]},
-  dispatchEvent(){}};
+  addEventListener(){},dispatchEvent(){}};
 }
 test('both accounts are valued when all company and ETF closing prices are present',()=>{
  const data={version:1,accounts:[{id:'a',name:'Broker A',type:'일반'},{id:'b',name:'Broker B',type:'일반'}],entries:[

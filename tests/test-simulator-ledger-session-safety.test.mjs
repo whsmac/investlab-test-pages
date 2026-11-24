@@ -25,7 +25,7 @@ test('drafts, explicit handoffs, editing and user change each block auto replace
 test('TEST simulator clears owner cache on logout, rechecks session on focus, and fences shared account preview',()=>{
  const html=readFileSync(new URL('../virtual-trade-simulator.html',import.meta.url),'utf8');
  assert.match(html,/getOnlineAccountOpening\(\)\{\s*if\(!onlineAccountLedger\|\|onlineAccountLedger\.userId!==lastVerifiedOnlineUserId\)return null/);
- assert.match(html,/if\(!connection\)\{onlineAccountLedger=null;refreshPilotLedgerAccountOptions\(\)/);
+ assert.match(html,/if\(!connection\)\{onlineAccountLedger=null;disconnectSimulatorQuotes\(\);refreshManagedSymbols\(\);refreshPilotLedgerAccountOptions\(\)/);
  assert.match(html,/differentVerifiedUser\(lastVerifiedOnlineUserId,userId\)/);
  assert.match(html,/mayAutoApplyTestLedger\(\{/);
  assert.match(html,/ownerChanged:onlineLedgerOwnerChanged/);

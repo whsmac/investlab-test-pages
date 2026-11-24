@@ -65,7 +65,7 @@ export function buildPortfolioAllocation({data,prices,fx,selected='ALL',displayC
    notice:'평가금액과 현금잔고가 없어 표시할 자산 배분이 없습니다'};
  return {complete:true,mode,selected,total,rows:rows.map((row,i)=>({
   ...row,percentage:row.amount/total*100,color:ALLOCATION_COLORS[i%ALLOCATION_COLORS.length]
- })),notice:'최근 종가와 현금잔고 기준 · 실제 체결가 아님'};
+ })),notice:holdings.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote')?'현재 시세 및 대체 종가와 현금잔고 기준 · 실제 체결가 아님':'최근 종가와 현금잔고 기준 · 실제 체결가 아님'};
 }
 
 function element(tag,cls,text){
