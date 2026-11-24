@@ -21,6 +21,14 @@ class TestYahooPreviewValidation(unittest.TestCase):
             file = root / path
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_text("test", encoding="utf-8")
+        # The Pilot homepage links to the independent Market Trends page.
+        # The offline fixture must include it to reach the intended price and
+        # nested-import failure paths, rather than fail the unrelated nav gate.
+        (root / "index.html").write_text(
+            '<a href="./market-trends.html">시장 동향</a>', encoding="utf-8")
+        (root / "market-trends.html").write_text(
+            'import {read} from "./src/market/load-published-yahoo-review.mjs";',
+            encoding="utf-8")
         (root / "test-yahoo-price-review.html").write_text(
             'import {a} from "./src/market/load-published-yahoo-review.mjs"; '
             'loadPublishedYahooReview({origin:location.href}); '
@@ -68,6 +76,24 @@ class TestYahooPreviewValidation(unittest.TestCase):
             data["observations"][0]["user_email"] = "private@example.invalid"
             asset.write_text(json.dumps(data))
             with self.assertRaisesRegex(ValueError, "unexpected or unsanitized"):
+                validate_preview(root)
+
+    def test_missing_pilot_market_trends_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            (root / "market-trends.html").unlink()
+            with self.assertRaisesRegex(ValueError, "market-trends.html missing"):
+                validate_preview(root)
+
+    def test_market_trends_missing_transitive_import_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            (root / "market-trends.html").write_text(
+                'import {x} from "./src/market/unknown-trends.mjs";',
+                encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Broken transitive module import"):
                 validate_preview(root)
 
     def test_missing_module_is_rejected(self):
