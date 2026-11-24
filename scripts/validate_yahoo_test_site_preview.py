@@ -74,6 +74,10 @@ def validate_preview(site: Path):
             verify_snapshot(json.loads(optional_etf.read_text(encoding="utf-8")))
         except (ValueError,TypeError,KeyError,OverflowError) as exc:
             raise ValueError("Invalid TEST ETF public quotes snapshot") from exc
+    review_snapshot = site / "data/sec-financial-review-20261124.txt"
+    if review_snapshot.exists():
+        if review_snapshot.is_symlink() or review_snapshot.stat().st_size != 8425 or hashlib.sha256(review_snapshot.read_bytes()).hexdigest() != "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8":
+            raise ValueError("SEC initial review snapshot integrity mismatch")
     optional_sec = site / "data/sec-quarterly-financials.json"
     if optional_sec.exists():
         if optional_sec.is_symlink() or optional_sec.stat().st_size > 1_000_000:

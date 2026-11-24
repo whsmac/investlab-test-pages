@@ -13,7 +13,7 @@ PUBLIC_DIRS = {"src", "assets", "css", "js", "images"}
 def public_asset(relative: Path) -> bool:
     if any(part.startswith(".") or part in {"node_modules", "__pycache__", "tests", "scripts"} for part in relative.parts):
         return False
-    if relative.as_posix() in {"data/sec-quarterly-financials.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json"}:
+    if relative.as_posix() in {"data/sec-financial-review-20261124.txt", "data/sec-quarterly-financials.json", "data/market-index-benchmarks.json", "data/market-trends-public-review.json"}:
         return True
     if len(relative.parts) == 1:
         return relative.suffix.lower() in ROOT_EXTENSIONS
