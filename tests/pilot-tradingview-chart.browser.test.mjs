@@ -68,6 +68,8 @@ test('sandboxed widget lazy-loads, closes, restores focus and uses external fall
    const moved=await dialog.boundingBox();assert.ok(moved.x>smaller.x+5||moved.y>smaller.y+5);assert.ok(moved.x>=7&&moved.y>=7&&moved.x+moved.width<=width-7&&moved.y+moved.height<=844-7);
    assert.equal(widgetRequests,1,'geometry changes do not reload chart');
    await page.setViewportSize({width:320,height:550});
+   // Chromium delivers viewport resize events asynchronously.
+   await page.waitForFunction(()=>{const r=document.querySelector('#investlabTradingViewDialog').getBoundingClientRect();return r.x>=7&&r.y>=7&&r.right<=313&&r.bottom<=543;},null,{timeout:5000});
    const fitted=await dialog.boundingBox();assert.ok(fitted.x>=7&&fitted.y>=7&&fitted.x+fitted.width<=313&&fitted.y+fitted.height<=543);
    await page.setViewportSize({width,height:844});
    await dialog.getByRole('button',{name:'초기 크기'}).click();
