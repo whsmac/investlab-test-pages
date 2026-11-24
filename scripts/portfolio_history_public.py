@@ -2,7 +2,7 @@
 import csv,io,json,math,urllib.request
 from datetime import date,timedelta
 from pathlib import Path
-ETF={"BITU","TQQQ","USD"}
+ETF={"BITU","TQQQ","USD","QLD","SOXL","TSLL"}
 FX_URL="https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXKOUS"
 def parse_fx(raw,today=None):
     today=today or date.today()
@@ -22,7 +22,7 @@ def verify_history(payload,today=None):
         raise ValueError("Invalid public history metadata")
     seen=set()
     rows=payload["rows"]
-    if not isinstance(rows,list) or not 1<=len(rows)<=8000:raise ValueError("Invalid row count")
+    if not isinstance(rows,list) or not 1<=len(rows)<=12000:raise ValueError("Invalid row count")
     for r in rows:
         if set(r)!={"ticker","date","close"} or r["ticker"] not in ETF|{"USDKRW"}:raise ValueError("Unexpected field")
         d=date.fromisoformat(r["date"])
