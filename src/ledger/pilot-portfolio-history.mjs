@@ -72,7 +72,7 @@ export function portfolioHistory(data,start,end,market,account='ALL',currency='K
   result.push({date,total:s.total,components:s.total===null?null:s.components,flow:flowKnown?flow:null,capital:base!==null&&capitalKnown?base+cumulative:null,index,mdd:index!==null&&peak>0?100*(index/peak-1):null,ndx:ndx?.close??null,spx:spx?.close??null,missing:s.missing||[],trades:(byDate.get(date)||[]).filter(e=>['BUY','SELL'].includes(e.type)).map(e=>({symbol:e.symbol,type:e.type,qty:e.qty,price:e.price}))});
   previous=s;
  }
- const baseRow=result.find(r=>r.index===100);
- for(const r of result){for(const name of ['ndx','spx'])r[name]=baseRow?.[name]>0&&r.date>=baseRow.date&&r[name]!==null?r[name]/baseRow[name]*100:null;}
+ const baseRow=result.find(r=>r.index===100),benchmarkBase=baseRow?{ndx:baseRow.ndx,spx:baseRow.spx}:{};
+ for(const r of result){for(const name of ['ndx','spx'])r[name]=benchmarkBase[name]>0&&r.date>=baseRow.date&&r[name]!==null?r[name]/benchmarkBase[name]*100:null;}
  return result;
 }
