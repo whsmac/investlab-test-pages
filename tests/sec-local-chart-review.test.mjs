@@ -25,6 +25,6 @@ test('local review mode is independent of server and never writes storage',()=>{
  assert.match(section,/validateLocalSecChartReview\(JSON.parse\(await file.text\(\)\)\)/);
  assert.doesNotMatch(section,/localStorage|\.upsert\(|\.insert\(|\.update\(|\.rpc\(/);
  const finance=html.slice(html.indexOf('async function loadFinance()'),html.indexOf('async function loadAll()'));
- assert.ok(finance.indexOf('if(localSecReview)')<finance.indexOf('if(!client)await connect()'));
+ assert.ok(finance.indexOf('if(localSecReview||(useStaticSec&&staticSecReview))')<finance.indexOf('if(!client)await connect()'));
  assert.match(html,/quarterPath\(pairs/);
 });
