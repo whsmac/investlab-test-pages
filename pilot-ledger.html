@@ -43,8 +43,8 @@
 <div class="history-pager"><button id="historyPrev" type="button">이전 5건</button><span id="historyPageLabel" class="small-note">1 / 1</span><button id="historyNext" type="button">다음 5건</button></div></section>
 <details class="panel management-panel" id="accountManagement"><summary>계좌 관리</summary><div class="management-body"><form id="accountForm" class="grid"><label class="wide">계좌 이름<input id="accountName" required maxlength="80" placeholder="예: 해외주식 A, ISA"></label><label>계좌 종류<select id="accountType"><option value="일반">일반</option><option value="ISA">ISA</option><option value="연금">연금</option></select></label><button type="submit">계좌 추가</button></form><div id="accounts" class="account-list" role="status"></div>
 <p id="accountMessage" class="management-message small-note" role="status"></p></div></details>
-<details class="panel management-panel" id="watchManagement"><summary>관심종목 관리 (선택)</summary><div class="management-body"><p class="small-note">로그인한 계정에 저장되며 거래 시 '관심종목' 목록에서 선택할 수 있습니다.</p>
-<div class="account-row"><label>관심종목 코드<input id="watchSymbol" maxlength="16" placeholder="예: TQQQ"></label><button id="watchAdd" type="button">관심종목 추가</button></div><div id="watchList" class="account-list"></div><p id="watchMessage" class="management-message small-note" role="status"></p></div></details>
+<details class="panel management-panel" id="watchManagement"><summary>종목 관리 · 관심종목 / 거래이력</summary><div class="management-body"><p class="small-note">관심종목은 이곳에서만 등록·삭제합니다. 거래이력종목은 실제 매매 기록에서 자동 생성되며 별도 등록하지 않습니다.</p>
+<div class="account-row"><label>관심종목 코드<input id="watchSymbol" maxlength="16" placeholder="예: TQQQ"></label><button id="watchAdd" type="button">관심종목 추가</button></div><div id="watchList" class="account-list"></div><p id="watchMessage" class="management-message small-note" role="status"></p><h3 style="font-size:14px">거래이력종목 (자동)</h3><p id="pastSymbolList" class="small-note"></p></div></details>
 </div>
 <div hidden aria-hidden="true" id="legacyCompatibility">
 <input id="cloudKey" type="password"><input id="cloudEmail" type="text"><input id="cloudPassword" type="password">
@@ -101,6 +101,7 @@ function render(){
  $('entryAccount').value=db.accounts.some(a=>a.id===previous)?previous:(db.accounts[0]?.id||'');
  $('viewAccount').value=db.accounts.some(a=>a.id===view)?view:'ALL';
  $('noAccountHint').hidden=db.accounts.length>0;
+ if(location.hash==='#watchManagement')$('watchManagement').open=true;
  ui.renderAccounts();ui.renderWatchlist();ui.refreshSymbols();
  const selected=val('viewAccount'),byAccount=new Map(),cash={USD:0,KRW:0};let realized=0,sellCount=0;
  for(const e of [...db.entries].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)){
