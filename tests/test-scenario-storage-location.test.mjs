@@ -7,7 +7,7 @@ test('personal online strategy storage is enabled without a redundant save butto
  assert.match(html,/id="scenarioStorageLocation"/);
  assert.match(html,/await saveScenarioOnline\(name,strategies,connection\)/);
  assert.match(html,/localStorage\.setItem\(ownerStorageKey\(SCENARIO_STORAGE_KEY\)/);
- assert.match(html,/await deleteScenarioOnline\(name\)/);
+ assert.match(html,/await deleteScenarioOnline\(name,connection\)/);
  assert.match(html,/loadScenariosOnline\(\)/);
  assert.match(html,/reviewLocalScenarioSave\(strategies\)/);
 });
