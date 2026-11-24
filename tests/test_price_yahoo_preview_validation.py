@@ -52,6 +52,36 @@ class TestYahooPreviewValidation(unittest.TestCase):
                 {"ticker": t, "trading_date": "2026-11-13", "close_price": "100", "currency": "USD", "price_basis": "unadjusted_close"} for t in ("MSFT", "GOOGL", "AMZN", "META", "TSLA")]}))
         return asset
 
+    def test_optional_complete_etf_quote_asset_is_validated(self):
+        from scripts.portfolio_etf_quotes_test import build_snapshot
+        from datetime import date
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            today=date.today()
+            sources={ticker:{"status":"ok","currency":"USD","price_basis":"unadjusted_close",
+                "observations":[{"trading_date":today.isoformat(),"close_price":"50.25"}]}
+                for ticker in ("BITU","TQQQ","USD")}
+            asset=root / "data/portfolio-etf-quotes.json"
+            asset.write_text(json.dumps(build_snapshot(sources,today=today)))
+            self.assertTrue(validate_preview(root)["checks_passed"])
+
+    def test_optional_etf_with_private_holdings_is_rejected(self):
+        from scripts.portfolio_etf_quotes_test import build_snapshot
+        from datetime import date
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.prepare(root)
+            today=date.today()
+            sources={ticker:{"status":"ok","currency":"USD","price_basis":"unadjusted_close",
+                "observations":[{"trading_date":today.isoformat(),"close_price":"50"}]}
+                for ticker in ("BITU","TQQQ","USD")}
+            payload=build_snapshot(sources,today=today)
+            payload["quotes"][0]["owner_id"]="private-account-id"
+            (root / "data/portfolio-etf-quotes.json").write_text(json.dumps(payload))
+            with self.assertRaisesRegex(ValueError, "Invalid TEST ETF"):
+                validate_preview(root)
+
     def test_complete_preview_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

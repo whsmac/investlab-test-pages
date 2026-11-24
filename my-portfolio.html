@@ -40,6 +40,7 @@ import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
+import {loadPublishedEtfCloses} from './src/market/load-published-etf-closes.mjs';
 import {renderPortfolioDashboard,fetchUsdKrwRate} from './src/ui/pilot-portfolio-dashboard.mjs';
 const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_ledger_local_owner_v1',$=id=>document.getElementById(id),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d});
 let data={version:1,accounts:[],entries:[]}; // Never show unverified browser data to a signed-out visitor.
@@ -207,7 +208,7 @@ async function loadPrices(){
  const holdings=projectLedger(data,'ALL').holdings;
  const tickers=new Set(holdings.map(h=>h.symbol));
  const next=new Map();
- let serverError='',feedError='',feedCount=0;
+ let serverError='',feedError='',feedCount=0,etfError='',etfCount=0;
  try{
   try{
    const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
@@ -246,10 +247,24 @@ async function loadPrices(){
     if(!prev||row.tradingDate>prev.date){next.set(row.ticker,{date:row.tradingDate,close:row.price,currency:'USD',source:'YAHOO_TEST'});feedCount++;}
    }
   }catch(error){feedError=error.message||String(error);}
+  try{
+   // Officially listed BITU, TQQQ and USD (the USD ETF, not dollar cash).
+   // The public ETF snapshot is a fixed ticker allowlist; no holdings are sent
+   // to Yahoo or committed to the static TEST website.
+   const etfPrices=await loadPublishedEtfCloses({origin:location.href});
+   for(const [ticker,quote] of etfPrices){
+    if(!tickers.has(ticker))continue;
+    const prior=next.get(ticker);
+    if(!prior||quote.date>prior.date){next.set(ticker,quote);etfCount++;}
+   }
+  }catch(error){etfError=error.message||String(error);}
   if(requestVersion!==priceRequestVersion)return;
   prices=next;pricesLoaded=true;render();
-  status.textContent='종가 확인 '+next.size+'/'+tickers.size+'종목'+(feedCount?' · TEST 자동수집 '+feedCount+'종목 반영':'')+
-   (serverError?' · DB: '+serverError:'')+(feedError?' · 자동수집: '+feedError:'')+' · 최근 거래일 종가(실시간 체결가 아님)';
+  status.textContent='종가 확인 '+next.size+'/'+tickers.size+'종목'+(feedCount?' · TEST 기업시세 '+feedCount+'종목':'')+
+   (etfCount?' · ETF 시세 '+etfCount+'종목':'')+
+   (serverError?' · DB: '+serverError:'')+(feedError?' · 기업시세: '+feedError:'')+
+   (etfError&&[...tickers].some(t=>['BITU','TQQQ','USD'].includes(t))?' · ETF 조회: '+etfError:'')+
+   ' · 최근 거래일 종가(실시간 체결가 아님)';
  }finally{
   priceLoading=false;
   if(pricePending){pricePending=false;void loadPrices();}

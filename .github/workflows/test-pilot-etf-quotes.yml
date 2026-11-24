@@ -1,0 +1,40 @@
+name: TEST Pilot ETF portfolio closing-price coverage (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/portfolio_etf_quotes_test.py'
+      - 'src/market/load-published-etf-closes.mjs'
+      - 'my-portfolio.html'
+      - 'virtual-trade-simulator.html'
+      - 'scripts/validate_yahoo_test_site_preview.py'
+      - 'tests/test_portfolio_etf_quotes.py'
+      - 'tests/test_price_yahoo_preview_validation.py'
+      - 'tests/pilot-etf-portfolio-prices.test.mjs'
+      - '.github/workflows/test-pilot-etf-quotes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-public-etf-quotes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline ETF quote verification and site security
+        run: |
+          python -m unittest discover -s tests -p 'test_portfolio_etf_quotes.py' -v
+          python -m unittest discover -s tests -p 'test_price_yahoo_preview_validation.py' -v
+      - name: Shared UI valuation with synthetic two-account holdings only
+        run: |
+          node --test tests/pilot-etf-portfolio-prices.test.mjs tests/pilot-ledger-cross-module-consistency.test.mjs
+          node --check src/market/load-published-etf-closes.mjs
+      - name: No private positions or TEST database writes
+        run: echo "Public BITU/TQQQ/USD closing prices only, no private holdings, no TEST Pages deploy"
