@@ -24,7 +24,7 @@ class SECFinanceCoverageTests(unittest.TestCase):
     def test_missing_contact_does_not_claim_live_financials(self):
         report=summarize(None,today=TODAY)
         self.assertEqual(report["status"],"missing_contact_or_source")
-        self.assertEqual(len(report["missing_issuer_facts"]),5)
+        self.assertEqual(len(report["missing_issuer_facts"]),6)
         self.assertTrue(all(row["quarters"]==0 and not row["covers_3y"]
                             for row in report["issuers"]))
 
