@@ -34,7 +34,7 @@ test('missing and stale observations never become partial totals',()=>{
 });
 test('date and trend controls use authenticated ledger, not current prices or hidden symbol duplicates',()=>{
  const h=readFileSync(new URL('../my-portfolio.html',import.meta.url),'utf8');
- for(const id of ['asOfDate','asOfQuery','historyStart','historyEnd','historyAssets','historyWeights','historyPerformance','historyDrawdown','historyTradePrices','historyFx'])assert.ok(h.includes('id="'+id+'"'));
+ for(const id of ['asOfDate','asOfQuery','historyStart','historyEnd','historyAssets','assetAmountMode','assetWeightMode','visualMarketHeat','historyPerformance','historyDrawdown','historyTradePrices','historyFx'])assert.ok(h.includes('id="'+id+'"'));
  assert.match(h,/historicalSnapshot\(data,asOf,historyMarket/);
  assert.match(h,/prices:snapshot.prices,fx:snapshot.fx/);
  assert.match(h,/if\(gen!==historyGeneration\|\|owner!==displayedCloudLedgerOwnerId\)return/);

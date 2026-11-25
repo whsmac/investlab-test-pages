@@ -79,3 +79,28 @@ export function periodSummary(rows,selectedDate){
   spxExcess:canCompare&&finite(row.index)&&finite(row.spx)?row.index-row.spx:null,
   missing:row?.missing??[]};
 }
+
+/** Period buckets use actual published observations; no weekend/holiday zero returns.
+ * First and last buckets may be partial. Baseline is the last close before bucket
+ * start, at most seven days old; end must have an observation inside the bucket.
+ */
+export function defaultHeatMode(rows){return rows.length<=31?'day':rows.length<=93?'week':'month';}
+const prevDay=d=>new Date(Date.parse(d+'T00:00:00Z')-86400000).toISOString().slice(0,10);
+export function heatPeriods(rows,market,tickers,mode='day'){
+ if(!rows.length)return [];
+ const start=rows[0].date,end=rows.at(-1).date,groups=new Map();
+ const keyOf=d=>{if(mode==='month')return d.slice(0,7);if(mode==='week'){const dt=new Date(d+'T00:00:00Z');dt.setUTCDate(dt.getUTCDate()-((dt.getUTCDay()+6)%7));return dt.toISOString().slice(0,10);}return d;};
+ for(const r of rows){const key=keyOf(r.date),g=groups.get(key);if(g)g.end=r.date;else groups.set(key,{key,start:r.date,end:r.date});}
+ const observations=new Set(tickers.flatMap(t=>(market.get(t)||[]).filter(q=>q.date>=start&&q.date<=end).map(q=>q.date)));
+ return [...groups.values()].filter(p=>{if(mode==='day')return observations.has(p.start);for(const d of observations)if(d>=p.start&&d<=p.end)return true;return false;});
+}
+export function heatReturn(market,ticker,period,currency='USD'){
+ const a=priorObservation(market.get(ticker),prevDay(period.start)),b=priorObservation(market.get(ticker),period.end);
+ if(!a||!b||b.date<period.start||b.date===a.date)return null;
+ let first=a.close,last=b.close;
+ if(currency==='KRW'){
+  const x=priorObservation(market.get('USDKRW'),a.date),y=priorObservation(market.get('USDKRW'),b.date);
+  if(!x||!y)return null;first*=x.close;last*=y.close;
+ }
+ return {change:100*(last/first-1),startDate:a.date,endDate:b.date,first,last};
+}

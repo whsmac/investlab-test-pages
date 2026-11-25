@@ -40,15 +40,6 @@ function lineChart(id,rows,series,markers=[],selected=null){
  if(selected){const i=rows.findIndex(r=>r.date===selected);if(i>=0)g.append(svg('line',{x1:x(i),x2:x(i),y1:t,y2:height-b,stroke:'#e3d7ff','stroke-dasharray':'4 4'}));g.style.cursor='crosshair';g.onclick=e=>{const rect=g.getBoundingClientRect(),px=(e.clientX-rect.left)/rect.width*width;const i=Math.max(0,Math.min(rows.length-1,Math.round((px-l)/(width-l-r)*Math.max(0,rows.length-1))));setVisualDate(rows[i].date);};}
  root.append(g);const legend=document.createElement('p');legend.className='muted';series.forEach((s,j)=>{const span=document.createElement('span');span.style.color=colors[j%colors.length];span.textContent='● '+s.label+'　';legend.append(span);});root.append(legend);
 }
-function weights(rows){
- const root=$('historyWeights');root.replaceChildren();
- const available=rows.filter(r=>r.components&&r.total>0);
- if(!available.length){root.textContent='자산 구성비 계산 자료 없음';return;}
- const selected=available.filter((_,i)=>i===0||i===available.length-1||i%Math.max(1,Math.ceil(available.length/10))===0);
- const tickers=[...new Set(available.flatMap(r=>Object.keys(r.components)))].sort();
- const legend=document.createElement('p');legend.className='muted';tickers.forEach((t,i)=>{const e=document.createElement('span');e.style.color=colors[i%colors.length];e.textContent='● '+t+'　';legend.append(e);});root.append(legend);
- for(const row of selected){const wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0';const label=document.createElement('span');label.style.cssText='font-size:12px;min-width:82px';label.textContent=row.date;const bar=document.createElement('div');bar.style.cssText='display:flex;flex:1;height:18px;overflow:hidden;border-radius:5px;background:#27334b';tickers.forEach((t,i)=>{const val=row.components[t]||0;if(val<=0)return;const e=document.createElement('span');e.style.cssText='background:'+colors[i%colors.length]+';width:'+100*val/row.total+'%';e.title=t+' '+num(100*val/row.total,1)+'%';bar.append(e);});wrap.append(label,bar);root.append(wrap);}
-}
 export function renderPortfolioHistory(data,market,start,end,selected,currency){
  const rows=portfolioHistory(data,start,end,market,selected,currency);
  const valid=rows.filter(r=>r.total!==null);
