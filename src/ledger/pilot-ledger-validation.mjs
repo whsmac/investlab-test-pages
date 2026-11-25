@@ -14,6 +14,7 @@ export function validateLedger(candidate){
   const imported=isBrokerageEntry(e),proof=e.brokerage;
   if(e.brokerage!==undefined&&(!imported||!Number.isInteger(proof.page)||proof.page<1||!Number.isInteger(proof.seq)||proof.seq<1||!proof.postCash||typeof proof.postCash!=='object'||Array.isArray(proof.postCash)))throw Error('증권사 원본 검산정보 오류');
   if(e.settlementAmount!==undefined&&(!imported||!['BUY','SELL'].includes(e.type)||typeof e.settlementAmount!=='number'||!Number.isFinite(e.settlementAmount)||e.settlementAmount<=0))throw Error('실제 정산금액 오류');
+  if(e.feeUsd!==undefined&&(imported||e.executionPrice!==undefined||e.commissionUsd!==undefined||!['BUY','SELL'].includes(e.type)||typeof e.feeUsd!=='number'||!Number.isFinite(e.feeUsd)||e.feeUsd<0||!Number.isFinite(tradeSettlement(e))||tradeSettlement(e)<0))throw Error('수수료 또는 정산금액 오류');
   if(!imported&&!['OPEN','BUY','SELL','DEPOSIT','WITHDRAW','DIVIDEND','FX'].includes(e.type))throw Error('증권사 원본 거래만 지원');
   const touched=new Set();
   const amount=Number(e.amount),qty=Number(e.qty),price=Number(e.price);

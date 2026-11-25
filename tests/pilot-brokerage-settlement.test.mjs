@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {projectLedger} from '../src/ledger/pilot-portfolio-projection.mjs';
+import {tradeSettlement,tradeExecutionPrice,tradeFeeUsd} from '../src/ledger/pilot-brokerage-settlement.mjs';
 import {validateLedger} from '../src/ledger/pilot-ledger-validation.mjs';
 import {portfolioHistory,indexRows} from '../src/ledger/pilot-portfolio-history.mjs';
 const mk=(id,date,type,fields,postCash,postQty)=>({id,accountId:'a',date,type,currency:'USD',created:Number(id),...fields,brokerage:{format:'STATEMENT_V1',page:1,seq:Number(id),postCash,...(postQty===undefined?{}:{postQty})}});
@@ -33,4 +34,19 @@ test('linked flows count only at brokerage boundary; dividend and tax are not ex
  const r=portfolioHistory(db,'2025-01-02','2025-01-04',market,'ALL','USD');
  assert.equal(r[1].flow,-1);assert.equal(r[1].total,100);assert.equal(r[1].index,101);
  assert.equal(r[2].flow,0);assert.equal(r[2].total,119.5);
+});
+
+test('manual buy and sell fees change cash, cost basis and realized return exactly once',()=>{
+ const entry=(id,type,extra)=>({id,accountId:'a',date:'2025-01-02',created:Number(id),type,currency:'USD',...extra});
+ const fund=entry('1','DEPOSIT',{amount:1000}),buy=entry('2','BUY',{symbol:'AAA',qty:5,price:100,feeUsd:2}),sell=entry('3','SELL',{symbol:'AAA',qty:2,price:120,feeUsd:1});
+ const ledger={version:1,accounts:[{id:'a',name:'Synthetic'}],entries:[fund,buy,sell]};
+ assert.equal(validateLedger(ledger),true);const p=projectLedger(ledger);
+ assert.equal(p.cash.USD,737);assert.ok(Math.abs(p.holdings[0].averageCost-100.4)<1e-8);assert.ok(Math.abs(p.realizedUsd-38.2)<1e-8);
+ const legacy={...buy,price:100.4,executionPrice:100,commissionUsd:2};delete legacy.feeUsd;
+ assert.equal(tradeSettlement(legacy),tradeSettlement(buy));assert.equal(tradeExecutionPrice(legacy),100);assert.equal(tradeFeeUsd(legacy),2);
+ assert.deepEqual(projectLedger({...ledger,entries:[fund,legacy,sell]}),p);
+ for(const bad of [{...buy,feeUsd:-1},{...buy,feeUsd:'2'},{...buy,feeUsd:Infinity},{...buy,executionPrice:100},{...sell,feeUsd:241}]) {
+  assert.throws(()=>validateLedger({...ledger,entries:bad.type==='SELL'?[fund,buy,bad]:[fund,bad]}),/수수료/);
+ }
+ assert.throws(()=>validateLedger({...ledger,entries:[{...fund,amount:501},buy]}),/현금잔고/);
 });
