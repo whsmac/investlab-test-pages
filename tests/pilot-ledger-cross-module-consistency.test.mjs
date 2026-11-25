@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolveVerifiedPilotLedger,stablePilotLedger,cloudLedgerBaselineKey} from '../src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {projectLedger} from '../src/ledger/pilot-portfolio-projection.mjs';
+import {compareLedgerOpening} from '../src/simulator/test-ledger-session-safety.mjs';
 const owner='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
 const revision='2026-11-24T05:00:00.000Z';
 const base=()=>({version:1,accounts:[{id:'acc',name:'TEST account',type:'일반'}],entries:[
@@ -72,4 +73,22 @@ test('read-only shared resolver and relevant modules are wired to refresh withou
  assert.match(simulator,/id="syncPilotLedgerStart"[^>]*hidden/);
  assert.match(simulator,/updateOnlineLedgerApplyPrompt\(opening\)/);
  assert.match(ledger,/이 기기 저장 완료 · TEST 서버 자동 저장 진행 중/);
+});
+
+test('simulator opening detects updated account quantities, weighted basis and USD cash without mutating a draft',()=>{
+ const ledger=base();
+ ledger.accounts.push({id:'b',name:'Synthetic B'});
+ ledger.entries.push({id:'other',accountId:'b',date:'2026-11-23',created:20,type:'OPEN',symbol:'TSLA',qty:3,price:150,currency:'USD',amount:0},
+  {id:'fund',accountId:'b',date:'2026-11-23',created:21,type:'DEPOSIT',currency:'USD',amount:200});
+ const before=projectLedger(ledger),opening=p=>p.holdings.map(h=>({ticker:h.symbol,quantity:h.qty,averageCost:h.averageCost}));
+ const draft=opening(before),original=JSON.stringify(draft);
+ assert.equal(before.holdings[0].averageCost,118.75);
+ ledger.entries.push({id:'fee-buy',accountId:'b',date:'2026-11-24',created:22,type:'BUY',symbol:'TSLA',qty:1,price:100,feeUsd:1,currency:'USD',amount:0});
+ const fresh=projectLedger(ledger);
+ assert.equal(fresh.holdings[0].qty,9);assert.equal(fresh.cash.USD,599);
+ assert.deepEqual(compareLedgerOpening({currentPositions:draft,currentCash:before.cash.USD,freshPositions:opening(fresh),freshCash:fresh.cash.USD}),{matches:false,changedTickers:['TSLA'],cashChanged:true});
+ assert.equal(JSON.stringify(draft),original);
+ assert.deepEqual(compareLedgerOpening({currentPositions:opening(fresh),currentCash:fresh.cash.USD+1e-10,freshPositions:opening(fresh),freshCash:fresh.cash.USD}),{matches:true,changedTickers:[],cashChanged:false});
+ assert.equal(projectLedger(ledger,'acc').holdings[0].qty,5);
+ assert.equal(projectLedger(ledger,'b').holdings[0].qty,4);
 });
