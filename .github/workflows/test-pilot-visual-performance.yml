@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'my-portfolio.html'
+      - 'investment-performance.html'
+      - 'src/ui/pilot-investment-performance-page.mjs'
       - 'src/ui/pilot-visual-performance*'
       - 'src/market/pilot-visual-performance.mjs'
       - 'src/ui/pilot-portfolio-history-ui.mjs'

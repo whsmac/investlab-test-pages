@@ -214,6 +214,9 @@ def validate_preview(site: Path):
         checked_modules += check_transitive_modules(site, "company-investment-analysis.html")
     if (site / "my-portfolio.html").is_file():
         checked_modules += check_transitive_modules(site, "my-portfolio.html")
+    if (site / "investment-performance.html").is_file():
+        checked_modules += check_transitive_modules(site, "investment-performance.html")
+        checked_modules += check_transitive_modules(site, "src/ui/pilot-investment-performance-page.mjs")
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
     if "./data/yahoo-public-review.json" not in loader:
         raise ValueError("Published JSON path does not match preview asset")
