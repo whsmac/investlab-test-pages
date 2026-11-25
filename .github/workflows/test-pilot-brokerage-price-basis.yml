@@ -1,0 +1,52 @@
+name: TEST brokerage historical price basis (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/portfolio_split_basis.py'
+      - 'scripts/portfolio_history_public.py'
+      - 'scripts/portfolio_etf_quotes_test.py'
+      - 'src/ledger/pilot-portfolio-history.mjs'
+      - 'tests/pilot-brokerage-price-basis.test.mjs'
+      - '.github/workflows/test-pilot-brokerage-price-basis.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node --test tests/pilot-brokerage-price-basis.test.mjs tests/pilot-brokerage-settlement.test.mjs tests/pilot-portfolio-history.test.mjs tests/pilot-visual-performance.test.mjs
+      - name: Verify split and reverse-split calculations
+        run: |
+          python - <<'PY'
+          from scripts.portfolio_split_basis import apply_split_basis
+          from decimal import Decimal
+          rows=[{"trading_date":"2025-01-02","close_price":"10"},{"trading_date":"2025-01-03","close_price":"20"},{"trading_date":"2025-01-06","close_price":"30"}]
+          splits=[{"date":"2025-01-03","numerator":"4","denominator":"1"},{"date":"2025-01-06","numerator":"1","denominator":"2"}]
+          assert [Decimal(r["as_traded_close"]) for r in apply_split_basis(rows,splits)]==[Decimal(20),Decimal(10),Decimal(30)]
+          PY
+      - name: Collect actual public price and FX coverage (no user data)
+        run: |
+          python -m scripts.portfolio_etf_quotes_test --output /tmp/etf.json --history-output /tmp/history.json
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from datetime import date
+          rows=json.load(open("/tmp/history.json"))["rows"]
+          for ticker in ("BITU","TQQQ","USD","QLD","SOXL","TSLL","PLTR","TSLA","USDKRW"):
+              a=sorted((r for r in rows if r["ticker"]==ticker),key=lambda r:r["date"])
+              if not a or len(a)<500 or a[0]["date"]>"2024-08-16" or (date.today()-date.fromisoformat(a[-1]["date"])).days>7:
+                  raise ValueError("Incomplete history "+ticker)
+              if ticker!="USDKRW" and any("as_traded_close" not in r or "split_factor" not in r for r in a):raise ValueError("Missing price basis "+ticker)
+              changes=[(y["date"],x.get("split_factor"),y.get("split_factor")) for x,y in zip(a,a[1:]) if x.get("split_factor")!=y.get("split_factor")]
+              print("PUBLIC_COVERAGE",ticker,len(a),a[0]["date"],a[-1]["date"],"SPLITS",changes)
+          PY
