@@ -1,3 +1,4 @@
+import {tradeSettlement,CREDIT_TYPES,DEBIT_TYPES} from './pilot-brokerage-settlement.mjs';
 // Shared projection for INVESTLAB local-first Pilot ledger (no database writes).
 export function projectLedger(data, accountId='ALL') {
  const accounts=Array.isArray(data?.accounts)?data.accounts:[];
@@ -11,12 +12,12 @@ export function projectLedger(data, accountId='ALL') {
   const currency=e.currency==='KRW'?'KRW':'USD',qty=Number(e.qty)||0,price=Number(e.price)||0,amount=Number(e.amount)||0;
   if(['OPEN','BUY','SELL'].includes(e.type)){
    const key=e.accountId+'|'+e.symbol,p=positions.get(key)||{symbol:e.symbol,qty:0,cost:0};
-   if(e.type==='SELL'){const avg=p.qty>0?p.cost/p.qty:0;const gain=qty*(price-avg);realizedUsd+=gain;sellCount++;const prior=realizedBySymbol.get(e.symbol)||{symbol:e.symbol,realizedUsd:0,sellCount:0,proceedsUsd:0,disposedCostUsd:0};prior.realizedUsd+=gain;prior.sellCount++;prior.proceedsUsd+=qty*price;prior.disposedCostUsd+=qty*avg;realizedBySymbol.set(e.symbol,prior);p.qty-=qty;p.cost-=qty*avg;cash[currency]+=qty*price;}
-   else{p.qty+=qty;p.cost+=qty*price;if(e.type==='BUY')cash[currency]-=qty*price;}
+   if(e.type==='SELL'){const avg=p.qty>0?p.cost/p.qty:0;const settlement=tradeSettlement(e),gain=settlement-qty*avg;realizedUsd+=gain;sellCount++;const prior=realizedBySymbol.get(e.symbol)||{symbol:e.symbol,realizedUsd:0,sellCount:0,proceedsUsd:0,disposedCostUsd:0};prior.realizedUsd+=gain;prior.sellCount++;prior.proceedsUsd+=settlement;prior.disposedCostUsd+=qty*avg;realizedBySymbol.set(e.symbol,prior);p.qty-=qty;p.cost-=qty*avg;cash[currency]+=settlement;}
+   else{const settlement=e.type==='BUY'?tradeSettlement(e):qty*price;p.qty+=qty;p.cost+=settlement;if(e.type==='BUY')cash[currency]-=settlement;}
    if(Math.abs(p.qty)<1e-9){p.qty=0;p.cost=0;}
    positions.set(key,p);
-  }else if(e.type==='DEPOSIT'||e.type==='DIVIDEND')cash[currency]+=amount;
-  else if(e.type==='WITHDRAW')cash[currency]-=amount;
+  }else if(CREDIT_TYPES.includes(e.type))cash[currency]+=amount;
+  else if(DEBIT_TYPES.includes(e.type))cash[currency]-=amount;
   else if(e.type==='FX'){cash[currency]-=amount;if(e.toCurrency==='USD'||e.toCurrency==='KRW')cash[e.toCurrency]+=Number(e.toAmount)||0;}
  }
  const grouped=new Map();
