@@ -1,0 +1,58 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INVESTLAB | 투자성과 분석</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1020;color:#edf2ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1150px;margin:auto;padding:20px 16px 55px}a{color:#9fc4ff}h1{font-size:clamp(24px,4vw,34px)}.panel{background:#161f32;border:1px solid #35425c;border-radius:14px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{background:#0f192b;border:1px solid #34415b;border-radius:11px;padding:15px}.metric span{display:block;color:#b2c0d7;font-size:12px}.metric strong{display:block;margin-top:6px;font-size:21px}select{padding:10px;background:#101b2e;color:inherit;border:1px solid #4a5b78;border-radius:9px;min-width:190px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}td,th{text-align:right;padding:11px;border-bottom:1px solid #34415b}td:first-child,th:first-child{text-align:left}.muted{color:#adbad0;font-size:13px;line-height:1.6}.warn{color:#f4d18b}@media(max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:14px 10px 35px}td,th{padding:9px}}[hidden]{display:none!important}.portfolio-head{margin-bottom:10px}.portfolio-head h1{margin:6px 0}.portfolio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hero{background:#172843;border:1px solid #4d6d9d;padding:22px;border-radius:15px;margin:16px 0}.hero .total-label{color:#b8cce9;font-size:14px}.hero .total-amount{font-size:clamp(27px,4.5vw,42px);font-weight:800;line-height:1.4;margin:6px 0 18px}
+.hero .metric{background:#0c1729}.hero .metric strong{font-size:clamp(17px,2vw,22px);font-variant-numeric:tabular-nums}
+.positive{color:#6ee3ae!important}.negative{color:#ff9da8!important}.portfolio-tables table{font-variant-numeric:tabular-nums}
+.stock-label{font-weight:750}.total-row{background:#1c3050;font-weight:750}.selected-row{background:#1e365b}
+.portfolio-section-head{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.portfolio-section-head h2{margin:0}.portfolio-section-head label{display:flex;gap:10px;align-items:center}
+#dashboardNotice{font-size:13px;color:#e6c78d;line-height:1.6}#dashboardFx{font-size:12px;color:#bccce4}
+.portfolio-access{background:#172843;border-color:#5877a7;color:#e7efff}
+.portfolio-access strong{display:block;font-size:17px}
+.portfolio-access p{font-size:14px;line-height:1.7;color:#c6d7ef;margin:9px 0}
+.portfolio-access-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0 6px}
+.portfolio-access-actions a,.portfolio-access-actions button{display:inline-flex;justify-content:center;align-items:center;padding:11px 15px;min-height:44px;border-radius:9px;border:1px solid #789ad0;color:white;background:#315581;text-decoration:none;font:inherit;font-weight:650;cursor:pointer}
+.portfolio-access-actions button{background:#142a49}
+.portfolio-access-actions a:focus-visible,.portfolio-access-actions button:focus-visible{outline:2px solid #a9caff;outline-offset:2px}
+.portfolio-access-note{font-size:12px!important;color:#a8bad4!important}
+@media(max-width:500px){.portfolio-access-actions>a,.portfolio-access-actions button{flex:1 1 100%}}
+.allocation-panel{margin-top:16px}
+.allocation-title{margin:0 0 5px;font-weight:750}
+.allocation-intro{margin:3px 0 0}
+.allocation-layout{display:grid;grid-template-columns:minmax(215px,0.95fr) minmax(290px,1.45fr);gap:24px;align-items:center;margin-top:14px}
+.allocation-chart{min-height:245px;display:flex;align-items:center;justify-content:center}
+.allocation-chart svg{width:100%;max-width:270px;height:auto;display:block}
+.allocation-placeholder{color:#aebdd5;font-size:14px;text-align:center}
+.allocation-legend{list-style:none;margin:0;padding:0}
+.allocation-item{display:grid;grid-template-columns:13px minmax(95px,1fr) minmax(105px,auto) 66px;gap:10px;align-items:center;padding:11px 8px;border-bottom:1px solid #34415b;font-variant-numeric:tabular-nums}
+.allocation-item:last-child{border-bottom:0}
+.allocation-swatch{width:11px;height:11px;border-radius:50%;display:block}
+.allocation-name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.allocation-breakdown{display:block;color:#aebed8;font-size:11px;font-weight:400;margin-top:3px}
+.allocation-amount{text-align:right;font-size:13px}
+.allocation-percent{text-align:right;font-size:15px;white-space:nowrap}
+#allocationStatus{margin-top:12px;line-height:1.55}
+@media(max-width:750px){.allocation-layout{grid-template-columns:1fr;gap:6px}.allocation-chart{min-height:210px}.allocation-chart svg{max-width:235px}.allocation-item{grid-template-columns:11px minmax(70px,1fr) minmax(85px,auto) 58px;gap:7px;padding:10px 3px}.allocation-amount{font-size:12px}.allocation-percent{font-size:13px}}
+@media(max-width:390px){.allocation-item{grid-template-columns:10px minmax(60px,1fr) minmax(75px,auto) 48px;gap:5px}.allocation-amount{font-size:11px}.allocation-percent{font-size:12px}}
+@media(max-width:750px){.hero{padding:15px}.portfolio-grid{gap:8px}.hero .metric{padding:12px}.hero .metric strong{font-size:17px}.portfolio-section-head label{width:100%}.portfolio-section-head select{flex:1;min-width:0}}
+.history-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}.history-controls label{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.history-controls input,.history-controls button{min-height:38px;border:1px solid #4a5b78;border-radius:8px;padding:8px;background:#101b2e;color:inherit;font:inherit}.history-controls button{background:#315581;cursor:pointer}#historyPanel h3{margin-top:25px;font-size:17px}
+</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"><link rel="stylesheet" href="./src/ui/pilot-visual-performance.css"></head><body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./investment-performance.html" aria-current="page">투자성과 분석</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>투자성과 분석</h1><section id="portfolioAccess" class="panel portfolio-access" aria-label="TEST 계정 로그인 및 투자성과 분석 연결 안내" role="status">
+ <strong id="portfolioAccessTitle">TEST 계정 연결 확인</strong>
+ <p id="portfolioAccessStatus">이 브라우저에서 계정 인증을 확인하고 있습니다. 개인 원장은 로그인한 사용자에게만 표시됩니다.</p>
+ <div class="portfolio-access-actions">
+  <a href="./index.html#login" id="portfolioLoginLink">TEST 홈에서 로그인</a>
+  <button id="portfolioRetry" type="button">연결 상태 다시 확인</button>
+ </div>
+ <p class="portfolio-access-note">휴대폰·회사 PC·집 PC는 브라우저별로 한 번씩 로그인해야 합니다. 같은 TEST 계정을 사용하면 서버에 저장된 보유자료를 불러옵니다. 원장을 다시 입력하지 마세요.</p>
+</section>
+<div id="portfolioPrivate" hidden><p id="portfolioSyncBanner" role="status" class="muted"></p><section class="panel visual-performance" id="historyPanel"><div class="visual-heading"><div><h2>기간 및 조회 범위</h2><p class="muted">자산 변화 · 포트폴리오 변화 · 시장 대비 운용성과</p></div><div class="history-controls"><label>계좌 <select id="visualAccount"></select></label><label>통화 <select id="visualCurrency"><option value="KRW">KRW</option><option value="USD">USD</option></select></label></div></div>
+<div class="history-controls"><label>시작일 <input type="date" id="historyStart"></label><label>종료일 <input type="date" id="historyEnd"></label><button type="button" id="historyQuery">기간 조회</button></div>
+<div class="history-controls" id="historyPresets"><button type="button" data-period="ytd">올해 (YTD)</button><button type="button" data-days="30">1개월</button><button type="button" data-days="90">3개월</button><button type="button" data-days="180">6개월</button><button type="button" data-days="365">1년</button><button type="button" data-days="1095">3년</button><button type="button" data-days="1830">5년</button></div>
+<p class="muted">계좌 선택·표시 통화와 연동 · 일별 종가 및 미 연준 H.10 환율 기준 · 초기 보유등록 및 입출금은 외부유입으로 분리합니다. 배당금은 현금에 반영됩니다. 자산성과는 일말 현금흐름 가정의 근사치이며, 지수는 배당 제외 가격지수입니다. 주식분할 전후 수량·단가가 일치하는 원장만 정확하게 평가됩니다.</p>
+<p id="historyStatus" class="muted" role="status">기간을 선택하세요.</p><p id="visualPeriodSummary" class="muted" role="status"></p>
+<div class="visual-card visual-timeline"><div class="visual-heading"><strong id="visualDay">—</strong><div class="history-controls"><button id="visualPrev" type="button" aria-label="이전 날짜">‹</button><button id="visualPlay" type="button">▶ 재생</button><button id="visualNext" type="button" aria-label="다음 날짜">›</button><select id="visualGranularity" aria-label="그래프 표시 간격"><option value="day">일별</option><option value="week">주별</option><option value="month">월별</option></select></div></div><input type="range" id="visualSlider" min="0" max="0" value="0" disabled aria-label="투자현황 날짜 선택"><p class="muted">날짜 슬라이더 또는 그래프를 클릭하면 도넛·히트맵·수익률이 함께 바뀝니다. 일·주·월은 그래프 표시 간격이며 계산은 일별로 유지합니다.</p></div>
+<h3 class="performance-question">1. 내 투자자산은 어떻게 변했는가?</h3><div class="visual-card" id="visualHero"></div>
+<div class="visual-card"><h3>투자자산 · 포트폴리오 변화</h3><p id="assetChartHint" class="muted">전체 높이 = 총자산 · 각 색상 두께 = 실제 종목 평가액 · 초록/분홍점 = 매수/매도일</p><div id="historyAssets" data-title="종목별 누적 평가금액"></div><div id="assetDateDetail" class="visual-date-detail" aria-live="off"></div></div>
+<h3 class="performance-question">2. 내 포트폴리오 구성은 어떻게 변했는가?</h3><div class="visual-card"><h3>선택일 자산 히트맵</h3><p class="muted">면적 = 평가금액 비중 · 색 = 기간 시작 대비 주가 변화 (표시 통화 기준) · 보유수량을 함께 표시합니다. 작은 영역은 터치 또는 마우스 오버로 확인하세요.</p><div id="visualTreemap"></div><p id="visualTreemapDetail" class="muted" role="status"></p><details id="visualHoldingDetails" class="visual-holding-details"><summary>종목별 평가금액 · 보유수량 상세보기</summary><div id="visualSelection"></div></details></div>
+<h3 class="performance-question">3. 시장보다 좋은 성과를 냈는가?</h3><div class="visual-card"><h3>시장 · 보유 · 관심종목 비교</h3><p class="muted">내 운용성과는 입출금 조정 · 지수와 종목은 가격 변화율 (표시 통화 기준) · 최대 5종목 추가</p><div id="visualComparePicks" class="visual-picks"></div><div id="historyPerformance" data-title="시장지수와 종목 수익률 비교"></div><div id="comparisonDateDetail" class="visual-date-detail" aria-live="off"></div></div>
+<details class="visual-card"><summary>매매 복기 · 종목별 상세 분석</summary><div class="history-controls"><label>종목 <select id="historyTradeTicker"></select></label></div><div id="visualReview"></div><div id="historyTradePrices" data-title="주가와 매매시점"></div><p class="muted">초록점 매수 · 분홍점 매도 · 실제 원장 체결가 (주식분할 기준 불일치 시 주의)</p><div id="historyQuantities" data-title="보유수량 변화"></div></details>
+<details class="visual-card"><summary>위험 · 환율 상세 그래프</summary><h3>고점 대비 낙폭</h3><div id="historyDrawdown" data-title="고점 대비 낙폭"></div><h3>환율 변화</h3><div id="historyFx" data-title="환율 변화"></div></details><details class="visual-card"><summary>기간 내 매수·매도 내역</summary><div class="scroll"><table><thead><tr><th>날짜</th><th>종목</th><th>구분</th><th>수량</th><th>체결가 USD</th></tr></thead><tbody id="historyTrades"></tbody></table></div></details></section></div></main><script type="module" src="./src/ui/pilot-investment-performance-page.mjs"></script></body></html>

@@ -38,7 +38,7 @@
 @media(max-width:750px){.hero{padding:15px}.portfolio-grid{gap:8px}.hero .metric{padding:12px}.hero .metric strong{font-size:17px}.portfolio-section-head label{width:100%}.portfolio-section-head select{flex:1;min-width:0}}
 .history-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}.history-controls label{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.history-controls input,.history-controls button{min-height:38px;border:1px solid #4a5b78;border-radius:8px;padding:8px;background:#101b2e;color:inherit;font:inherit}.history-controls button{background:#315581;cursor:pointer}#historyPanel h3{margin-top:25px;font-size:17px}
 </style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"><link rel="stylesheet" href="./src/ui/pilot-visual-performance.css"></head>
-<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
+<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html">홈</a><a href="./my-portfolio.html" aria-current="page">내 투자현황</a><a href="./investment-performance.html">투자성과 분석</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav><h1>내 투자현황</h1>
 <section id="portfolioAccess" class="panel portfolio-access" aria-label="TEST 계정 로그인 및 투자현황 연결 안내" role="status">
  <strong id="portfolioAccessTitle">TEST 계정 연결 확인</strong>
  <p id="portfolioAccessStatus">이 브라우저에서 계정 인증을 확인하고 있습니다. 개인 원장은 로그인한 사용자에게만 표시됩니다.</p>
@@ -50,7 +50,7 @@
 </section>
 <div id="portfolioPrivate" hidden><p class="muted portfolio-head">보유현황·계좌별 평가손익·수익률을 확인합니다. 매매 기록은 <a href="./pilot-ledger.html">계좌·매매 기록 관리</a>에서 수정하세요.</p>
 <p id="portfolioSyncBanner" role="status" style="color:#c5d7f5;font-size:13px;padding:10px 12px;background:#172842;border:1px solid #415d86;border-radius:8px;">계좌별 원장 연결 상태 확인 중…</p>
-<div class="visual-tabs" role="group" aria-label="내 투자현황 보기"><button type="button" id="currentTab" aria-pressed="true">현재 투자현황</button><button type="button" id="performanceTab" aria-pressed="false">투자성과 분석</button></div><div id="currentPortfolioView"><section class="panel"><div class="history-controls"><label for="asOfDate">조회 기준일 <input type="date" id="asOfDate"></label><button id="asOfQuery" type="button">기준일 조회</button><button id="asOfToday" type="button">현재로 돌아가기</button></div><p id="asOfStatus" class="muted" role="status">현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영</p></section><section class="hero" aria-label="전체 투자자산">
+<p class="muted"><a href="./investment-performance.html">기간별 투자성과 분석 →</a></p><div id="currentPortfolioView"><section class="panel"><div class="history-controls"><label for="asOfDate">조회 기준일 <input type="date" id="asOfDate"></label><button id="asOfQuery" type="button">기준일 조회</button><button id="asOfToday" type="button">현재로 돌아가기</button></div><p id="asOfStatus" class="muted" role="status">현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영</p></section><section class="hero" aria-label="전체 투자자산">
 <div class="portfolio-section-head" style="margin-bottom:12px"><strong>전체 투자자산</strong><label for="displayCurrency">표시 통화 <select id="displayCurrency" aria-label="내 투자현황 표시 통화"><option value="KRW" selected>KRW (원화)</option><option value="USD">USD (미국 달러)</option></select></label></div>
 <span class="total-label">전체 투자자산 (KRW)</span><div id="dashboardTotal" class="total-amount">—</div>
 <div class="portfolio-grid">
@@ -85,18 +85,7 @@
 <label for="personalQuoteKey">본인 API 키</label> <input id="personalQuoteKey" type="password" autocomplete="off" spellcheck="false" maxlength="128" placeholder="개인용 키 (저장하지 않음)">
 <label style="display:block;margin:8px 0"><input id="personalQuoteConsent" type="checkbox" style="width:auto"> 본인 개인용 시세 이용권한이 있으며, 종목코드 전송에 동의합니다.</label>
 <button id="connectPersonalQuotes" type="button">개인 시세 연결</button> <button id="refreshPersonalQuotes" type="button" disabled>현재가 갱신</button> <button id="disconnectPersonalQuotes" type="button" disabled>연결 해제</button>
-</details></section></div><section class="panel visual-performance" id="historyPanel" hidden><div class="visual-heading"><div><h2>투자성과 분석</h2><p class="muted">자산의 크기와 종목 구성, 시장 변화, 실제 매매의 흐름을 함께 복기합니다.</p></div><div class="history-controls"><label>계좌 <select id="visualAccount"></select></label><label>통화 <select id="visualCurrency"><option value="KRW">KRW</option><option value="USD">USD</option></select></label></div></div>
-<div class="history-controls"><label>시작일 <input type="date" id="historyStart"></label><label>종료일 <input type="date" id="historyEnd"></label><button type="button" id="historyQuery">기간 조회</button></div>
-<div class="history-controls" id="historyPresets"><button type="button" data-period="ytd">올해 (YTD)</button><button type="button" data-days="30">1개월</button><button type="button" data-days="90">3개월</button><button type="button" data-days="180">6개월</button><button type="button" data-days="365">1년</button><button type="button" data-days="1095">3년</button><button type="button" data-days="1830">5년</button></div>
-<p class="muted">계좌 선택·표시 통화와 연동 · 일별 종가 및 미 연준 H.10 환율 기준 · 초기 보유등록 및 입출금은 외부유입으로 분리합니다. 배당금은 현금에 반영됩니다. 자산성과는 일말 현금흐름 가정의 근사치이며, 지수는 배당 제외 가격지수입니다. 주식분할 전후 수량·단가가 일치하는 원장만 정확하게 평가됩니다.</p>
-<p id="historyStatus" class="muted" role="status">기간을 선택하세요.</p><p id="visualPeriodSummary" class="muted" role="status"></p>
-<div class="visual-card visual-timeline"><div class="visual-heading"><strong id="visualDay">—</strong><div class="history-controls"><button id="visualPrev" type="button" aria-label="이전 날짜">‹</button><button id="visualPlay" type="button">▶ 재생</button><button id="visualNext" type="button" aria-label="다음 날짜">›</button><select id="visualGranularity" aria-label="그래프 표시 간격"><option value="day">일별</option><option value="week">주별</option><option value="month">월별</option></select></div></div><input type="range" id="visualSlider" min="0" max="0" value="0" disabled aria-label="투자현황 날짜 선택"><p class="muted">날짜 슬라이더 또는 그래프를 클릭하면 도넛·히트맵·수익률이 함께 바뀝니다. 일·주·월은 그래프 표시 간격이며 계산은 일별로 유지합니다.</p></div>
-<div class="visual-card" id="visualHero"></div>
-<div class="visual-card"><div class="visual-heading"><h3>투자자산 · 포트폴리오 변화</h3><div class="visual-switch" role="group" aria-label="자산 그래프 표시 기준"><button type="button" id="assetAmountMode" aria-pressed="true">평가금액</button><button type="button" id="assetWeightMode" aria-pressed="false">구성비율</button></div></div><p id="assetChartHint" class="muted">전체 높이 = 총자산 · 각 색상 두께 = 실제 종목 평가액 · 초록/분홍점 = 매수/매도일</p><div id="historyAssets" data-title="종목별 누적 평가금액"></div></div>
-<div class="visual-card"><h3>선택일 자산 히트맵</h3><p class="muted">면적 = 평가금액 비중 · 색 = 기간 시작 대비 주가 변화 (표시 통화 기준) · 보유수량을 함께 표시합니다. 작은 영역은 터치 또는 마우스 오버로 확인하세요.</p><div id="visualTreemap"></div><p id="visualTreemapDetail" class="muted" role="status"></p><details id="visualHoldingDetails" class="visual-holding-details"><summary>종목별 평가금액 · 보유수량 상세보기</summary><div id="visualSelection"></div></details></div>
-<div class="visual-card"><h3>시장 · 보유 · 관심종목 비교</h3><p class="muted">내 운용성과는 입출금 조정 · 지수와 종목은 가격 변화율 (표시 통화 기준) · 최대 5종목 추가</p><div id="visualComparePicks" class="visual-picks"></div><div id="historyPerformance" data-title="시장지수와 종목 수익률 비교"></div><div class="visual-heading visual-heat-heading"><h4>기간별 종목 등락률 히트맵</h4><div class="visual-switch" role="group" aria-label="히트맵 표시 간격"><button type="button" data-heat-mode="day" aria-pressed="false">일별</button><button type="button" data-heat-mode="week" aria-pressed="false">주별</button><button type="button" data-heat-mode="month" aria-pressed="false">월별</button></div></div><p class="muted">각 기간 독립 주가 등락률 · 녹색 상승 / 적색 하락 / 회색 미확보 · 셀 선택 시 해당 기간 종료일로 이동</p><div id="visualMarketHeat" class="visual-heat-scroll" tabindex="0" aria-label="기간별 등락률 표"></div><p id="visualHeatDetail" class="muted" role="status"></p><div class="visual-heading"><button type="button" id="visualHeatPrev">이전 기간</button><span id="visualHeatPage" class="muted"></span><button type="button" id="visualHeatNext">다음 기간</button></div></div>
-<div class="visual-card"><h3>매매 복기</h3><div class="history-controls"><label>종목 <select id="historyTradeTicker"></select></label></div><div id="visualReview"></div><div id="historyTradePrices" data-title="주가와 매매시점"></div><p class="muted">초록점 매수 · 분홍점 매도 · 실제 원장 체결가 (주식분할 기준 불일치 시 주의)</p><div id="historyQuantities" data-title="보유수량 변화"></div></div>
-<details class="visual-card"><summary>위험 · 환율 상세 그래프</summary><h3>고점 대비 낙폭</h3><div id="historyDrawdown" data-title="고점 대비 낙폭"></div><h3>환율 변화</h3><div id="historyFx" data-title="환율 변화"></div></details><h3>기간 내 매수·매도 내역</h3><div class="scroll"><table><thead><tr><th>날짜</th><th>종목</th><th>구분</th><th>수량</th><th>체결가 USD</th></tr></thead><tbody id="historyTrades"></tbody></table></div></section>
+</details></section></div>
 </div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
 <button id="diagnose" type="button"></button><p id="diagnostics"></p><button id="loadCloudLedger" type="button"></button><button id="compareCloudLedger" type="button"></button>
@@ -106,8 +95,7 @@
 </main><script type="module">
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {firstLedgerDay,historicalSnapshot,validDay} from './src/ledger/pilot-portfolio-history.mjs';
-import {loadPortfolioHistoryMarket,renderPortfolioHistory} from './src/ui/pilot-portfolio-history-ui.mjs';
-import {clearVisualPerformance,stopVisualPlayback} from './src/ui/pilot-visual-performance-ui.mjs';
+import {loadPortfolioHistoryMarket} from './src/ui/pilot-portfolio-history-ui.mjs';
 import {validateLedger} from './src/ledger/pilot-ledger-validation.mjs';
 import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
@@ -119,28 +107,15 @@ const KEY='investlab_pilot_ledger_local_v1',LOCAL_OWNER_KEY='investlab_pilot_led
 let data={version:1,accounts:[],entries:[]}; // Never show unverified browser data to a signed-out visitor.
 const account=$('account');
 let portfolioFx=null,portfolioFxDate='';
-let historyMarket=null,historyLoad=null,historyGeneration=0,asOf=null,historyRange=null;
+let historyMarket=null,historyLoad=null,historyGeneration=0,asOf=null;
 async function getHistoryMarket(){
  if(historyMarket)return historyMarket;
  if(!historyLoad)historyLoad=loadPortfolioHistoryMarket().then(m=>{historyMarket=m;return m;}).finally(()=>{historyLoad=null;});
  return historyLoad;
 }
-function clearHistory(){
- clearVisualPerformance();
- ++historyGeneration;asOf=null;historyRange=null;
- $('asOfDate').value='';$('historyStart').value='';$('historyEnd').value='';
- $('asOfStatus').textContent='현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영';
- $('historyStatus').textContent='기간을 선택하세요.';
- for(const id of ['historyAssets','historyPerformance','historyDrawdown','historyTrades','historyQuantities','historyTradePrices','historyFx','historyTradeTicker'])$(id).replaceChildren();
-}
+function clearHistory(){++historyGeneration;asOf=null;$('asOfDate').value='';$('asOfStatus').textContent='현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영';}
 function historyReady(){return !!displayedCloudLedgerOwnerId&&!$('portfolioPrivate').hidden;}
-function setHistoryDates(){
- const today=todayIso(),first=firstLedgerDay(data);
- for(const id of ['asOfDate','historyStart','historyEnd']){$(id).max=today;$(id).min=first||'';}
- if(!$('asOfDate').value)$('asOfDate').value=today;
- if(!$('historyStart').value){const ytd=today.slice(0,4)+'-01-01';$('historyStart').value=first&&first>ytd?first:ytd;}
- if(!$('historyEnd').value)$('historyEnd').value=today;
-}
+function setHistoryDates(){const today=todayIso(),first=firstLedgerDay(data);$('asOfDate').max=today;$('asOfDate').min=first||'';if(!$('asOfDate').value)$('asOfDate').value=today;}
 async function queryAsOf(){
  const date=$('asOfDate').value,first=firstLedgerDay(data);
  if(!historyReady()||!validDay(date)||date>todayIso()||!first||date<first){$('asOfStatus').textContent='원장 기록 시작일 이후의 유효한 날짜를 선택하세요. 현재 표시 상태는 유지합니다.';return;}
@@ -149,16 +124,6 @@ async function queryAsOf(){
  try{await getHistoryMarket();if(gen!==historyGeneration||owner!==displayedCloudLedgerOwnerId)return;asOf=date;render();}
  catch{if(gen===historyGeneration)$('asOfStatus').textContent='과거 데이터 조회 실패 · 기존 표시 유지';}
 }
-async function queryHistory(){
- const start=$('historyStart').value,end=$('historyEnd').value;
- if(!historyReady()||!validDay(start)||!validDay(end)||end>todayIso()||start>end){$('historyStatus').textContent='유효한 시작일·종료일을 선택하세요.';return;}
- const gen=++historyGeneration,owner=displayedCloudLedgerOwnerId;
- $('historyStatus').textContent='기간 자료 확인 중…';
- try{await getHistoryMarket();if(gen!==historyGeneration||owner!==displayedCloudLedgerOwnerId)return;historyRange={start,end};drawHistory();}
- catch(error){if(gen===historyGeneration)$('historyStatus').textContent=String(error.message||error);}
-}
-function drawHistory(){if(historyRange&&historyMarket&&historyReady()&&!$('historyPanel').hidden)try{renderPortfolioHistory(data,historyMarket,historyRange.start,historyRange.end,account.value,$('displayCurrency').value);}catch(error){clearVisualPerformance();$('historyStatus').textContent=error.message;}}
-
 function setPortfolioAccessState(state,message){
  const panel=$('portfolioAccess'),title=$('portfolioAccessTitle');
  const status=$('portfolioAccessStatus');
@@ -179,7 +144,6 @@ function refreshAccountOptions(){
  const all=document.createElement('option');all.value='ALL';all.textContent='전체 계좌';account.append(all);
  for(const a of data.accounts){const option=document.createElement('option');option.value=a.id;option.textContent=a.name+' ('+(a.type||'계좌')+')';account.append(option);}
  account.value=[...account.options].some(o=>o.value===current)?current:'ALL';
- $('visualAccount').replaceChildren(...[...account.options].map(o=>o.cloneNode(true)));$('visualAccount').value=account.value;
 }
 refreshAccountOptions();
 let prices=new Map(),pricesLoaded=false,priceLoading=false,priceRequestVersion=0,pricePending=false;
@@ -239,7 +203,6 @@ $('status').textContent=data.accounts.length?'저장된 계좌 '+data.accounts.l
    $('asOfStatus').textContent=asOf+' 기준 · 원장 재현 · 종가·환율 실제 관측일 적용'+(snapshot.missing.length?' · 미확보: '+snapshot.missing.join(', '):'')+' · 현재 시세는 사용하지 않습니다.';}
   else{$('asOfStatus').textContent=snapshot.reason;asOf=null;renderPortfolioDashboard({data,prices:effectivePortfolioPrices(prices,personalQuotes),fx:portfolioFx,fxDate:portfolioFxDate,selected,displayCurrency:$('displayCurrency').value});}
  }else renderPortfolioDashboard({data,prices:effectivePortfolioPrices(prices,personalQuotes),fx:portfolioFx,fxDate:portfolioFxDate,selected,displayCurrency:$('displayCurrency').value});
- drawHistory();
 }
 async function diagnoseConnection(){
  const output=$('diagnostics'),lines=['TEST 연결 진단 (읽기 전용)'];
@@ -439,8 +402,8 @@ async function loadPrices(){
   if(pricePending){pricePending=false;void loadPrices();}
  }
 }
-$('displayCurrency').addEventListener('change',()=>{$('visualCurrency').value=$('displayCurrency').value;render();});
-account.onchange=()=>{$('visualAccount').value=account.value;priceRequestVersion++;prices=new Map();pricesLoaded=false;render();$('priceStatus').textContent='계좌 변경 · 해당 계좌 가격 재조회 필요';void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
+$('displayCurrency').addEventListener('change',render);
+account.onchange=()=>{priceRequestVersion++;prices=new Map();pricesLoaded=false;render();$('priceStatus').textContent='계좌 변경 · 해당 계좌 가격 재조회 필요';void loadPrices();};window.addEventListener('storage',e=>{if(e.key===KEY)location.reload();});render();
 // Use the authenticated TEST ledger as the display source; never overwrite unsynced local entries.
 let displayedCloudLedgerRevision=null,displayedCloudLedgerOwnerId=null;
 let cloudLedgerBusy=false;
@@ -524,12 +487,6 @@ async function refreshOnlineLedgerDisplay(){
 $('portfolioRetry').addEventListener('click',()=>{void refreshOnlineLedgerDisplay();});
 $('asOfQuery').onclick=()=>void queryAsOf();
 $('asOfToday').onclick=()=>{++historyGeneration;asOf=null;$('asOfDate').value=todayIso();$('asOfStatus').textContent='현재 투자현황 · 장중 현재가는 개인 시세 연결 시 반영';render();void refreshPersonalQuotes();};
-$('historyQuery').onclick=()=>void queryHistory();
-function showPerformance(show){$('currentPortfolioView').hidden=show;$('historyPanel').hidden=!show;$('currentTab').setAttribute('aria-pressed',String(!show));$('performanceTab').setAttribute('aria-pressed',String(show));if(show){$('visualAccount').value=account.value;$('visualCurrency').value=$('displayCurrency').value;if(historyRange)drawHistory();else void queryHistory();}else stopVisualPlayback();}
-$('currentTab').onclick=()=>showPerformance(false);$('performanceTab').onclick=()=>showPerformance(true);
-$('visualAccount').onchange=()=>{account.value=$('visualAccount').value;account.onchange();};
-$('visualCurrency').onchange=()=>{$('displayCurrency').value=$('visualCurrency').value;render();};
-$('historyPresets').addEventListener('click',e=>{const days=Number(e.target.dataset.days),ytd=e.target.dataset.period==='ytd';if(!days&&!ytd)return;const end=todayIso(),first=firstLedgerDay(data,account.value),start=ytd?end.slice(0,4)+'-01-01':new Date(Date.parse(end+'T00:00:00Z')-days*86400000).toISOString().slice(0,10);$('historyStart').value=first&&first>start?first:start;$('historyEnd').value=end;void queryHistory();});
 $('connectPersonalQuotes').addEventListener('click',async()=>{
  const owner=displayedCloudLedgerOwnerId,key=$('personalQuoteKey').value.trim();
  if(!owner||$('portfolioPrivate').hidden||!$('personalQuoteConsent').checked||!(/^[A-Za-z0-9_-]{10,128}$/.test(key))){$('personalQuoteStatus').textContent='로그인·본인 키·개인용 이용 동의를 확인하세요.';return;}
