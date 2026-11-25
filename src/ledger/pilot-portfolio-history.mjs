@@ -35,8 +35,24 @@ export function historicalSnapshot(data,date,market,account='ALL',currency='KRW'
  const convert=(n,cur)=>cur===currency?n:positive(fx)?(cur==='USD'?n*fx:n/fx):n===0?0:null;
  for(const h of p.holdings){const q=priorObservation(market.get(h.symbol),date);
   if(!q){missing.push(h.symbol);continue;}
-  prices.set(h.symbol,{...q,currency:'USD',kind:'historical_close'});
-  const v=convert(h.qty*q.close,'USD');if(v!==null)components[h.symbol]=v;else if(!missing.includes('환율'))missing.push('환율');
+  const imported=ledger.entries.some(e=>e.brokerage&&e.symbol===h.symbol&&(account==='ALL'||e.accountId===account));
+  if(imported&&!positive(q.as_traded_close)){missing.push(h.symbol+' (분할기준 미확인)');continue;}
+  // Block unreconciled changes in share basis while a statement position spans a split.
+  if(imported){
+   const observations=market.get(h.symbol)||[];
+   let unresolved=false;
+   for(let i=1;i<observations.length;i++){
+    const prev=observations[i-1],next=observations[i];
+    if(next.date>date)break;
+    if(!positive(prev.split_factor)||!positive(next.split_factor)||Math.abs(prev.split_factor-next.split_factor)<1e-10)continue;
+    const before=projectLedger(ledgerAsOf(ledger,day(ms(next.date)-DAY)),account);
+    if(before.holdings.some(p=>p.symbol===h.symbol&&p.qty>0)){unresolved=true;break;}
+   }
+   if(unresolved){missing.push(h.symbol+' (보유 중 분할 검산 필요)');continue;}
+  }
+  const close=q.as_traded_close??q.close;
+  prices.set(h.symbol,{...q,close,currency:'USD',kind:'historical_close'});
+  const v=convert(h.qty*close,'USD');if(v!==null)components[h.symbol]=v;else if(!missing.includes('환율'))missing.push('환율');
  }
  const a=convert(p.cash.USD,'USD'),b=convert(p.cash.KRW,'KRW');
  if(a===null||b===null){if(!missing.includes('환율'))missing.push('환율');}else components['현금']=a+b;
