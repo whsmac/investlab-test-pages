@@ -15,6 +15,10 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.href===ROOT+'visual-fixture.html'){await route.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'+pageHtml.slice(pageHtml.indexOf('<style>'),pageHtml.indexOf('</head>'))+'<main class="wrap"><div id="portfolioPrivate">'+panel+'</div></main><script type="module">'+script+'</script>'});return;}if(!u.href.startsWith(ROOT)){await route.abort();return;}const dest=path.resolve(SITE,u.pathname.slice(new URL(ROOT).pathname.length));if(!dest.startsWith(SITE+path.sep)){await route.abort();return;}try{await route.fulfill({body:await readFile(dest),contentType:dest.endsWith('.mjs')?'text/javascript':dest.endsWith('.css')?'text/css':'text/plain'});}catch{await route.fulfill({status:404,body:'not found'});}});
    await page.goto(ROOT+'visual-fixture.html');await page.locator('#visualDay').getByText('2026-11-23').waitFor();
    assert.match(await page.locator('#visualHero').innerText(),/USD 360/);
+   assert.match(await page.locator('#visualHero').innerText(),/투자손익 \(입출금 제외\)/);
+   assert.match(await page.locator('#visualHero').innerText(),/S&P 500 대비/);
+   assert.match(await page.locator('#visualPeriodSummary').innerText(),/성과 계산 기준일 2026-11-20/);
+   assert.equal(await page.locator('#historyPresets button[data-period=ytd]').count(),1);
    assert.match(await page.locator('#visualSelection').innerText(),/3주/);
    assert.equal(await page.locator('#visualTreemap g[aria-label*="GOOGL"]').count(),0);
    assert.match(await page.locator('#visualMarketHeat').innerText(),/GOOGL/);
