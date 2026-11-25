@@ -2,7 +2,7 @@ import {createTickerChartButton,isChartTicker} from './pilot-tradingview-chart.m
 import {ledgerManagedSymbols} from '../ledger/pilot-managed-symbols.mjs';
 
 // Presentation helpers only. All edits go through the parent page's existing validator and save flow.
-export const ledgerTypeNames={OPEN:'초기 보유',BUY:'매수',SELL:'매도',DEPOSIT:'입금',WITHDRAW:'출금',DIVIDEND:'배당',FX:'환전'};
+export const ledgerTypeNames={OPEN:'초기 보유',BUY:'매수',SELL:'매도',DEPOSIT:'입금',WITHDRAW:'출금',DIVIDEND:'배당',FX:'환전',LINK_IN:'연계 입금',LINK_OUT:'연계 출금',TAX:'세금',TAX_REFUND:'세금환급',FEE_CREDIT:'수수료 환급',FX_ADJUST:'환전 정산차액'};
 export function effectiveRate(currency,amount,toCurrency,toAmount){
  const from=Number(amount),to=Number(toAmount);
  if(!(from>0)||!(to>0)||currency===toCurrency)return null;
@@ -79,14 +79,14 @@ export function createLedgerUi({getDb,save,msg,accountMsg=msg,watchMsg=msg,onEdi
   for(const e of view){
    const tr=document.createElement('tr'),name=db.accounts.find(a=>a.id===e.accountId)?.name||'미확인';
    const rate=e.type==='FX'?effectiveRate(e.currency,e.amount,e.toCurrency,e.toAmount):null;
-   const amount=e.type==='FX'?fmt(e.amount)+' → '+fmt(e.toAmount):(['OPEN','BUY','SELL'].includes(e.type)?'—':fmt(e.amount));
+   const amount=e.type==='FX'?fmt(e.amount)+' → '+fmt(e.toAmount):(['OPEN','BUY','SELL'].includes(e.type)?(e.settlementAmount===undefined?'—':fmt(e.settlementAmount)) :fmt(e.amount));
    for(const [i,val] of [name+' / '+e.date,ledgerTypeNames[e.type]||e.type,e.symbol||'—',e.qty?fmt(e.qty,6):'—',e.price?fmt(e.price,4):'—',amount,e.type==='FX'?e.currency+' → '+e.toCurrency:e.currency,rate?fmt(rate,4)+' KRW/USD':'—'].entries()){
     const td=document.createElement('td');if(i===2&&isChartTicker(e.symbol))td.append(createTickerChartButton(e.symbol));else td.textContent=val;tr.append(td);
    }
    const td=document.createElement('td');
    const edit=document.createElement('button');edit.type='button';edit.textContent='수정';edit.style.width='auto';edit.style.marginRight='6px';edit.onclick=()=>onEdit(e);
    const del=document.createElement('button');del.type='button';del.textContent='삭제';del.style.width='auto';del.onclick=()=>onDelete(e);
-   td.append(edit,del);tr.append(td);tbody.append(tr);
+   if(e.brokerage){const label=document.createElement('span');label.textContent='원본 기록';label.title='증권사 거래 후 잔고와 대조한 기록';td.append(label);}else td.append(edit,del);tr.append(td);tbody.append(tr);
   }
  }
  function attach(){

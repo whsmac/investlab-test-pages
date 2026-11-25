@@ -1,3 +1,4 @@
+import {EXTERNAL_IN,EXTERNAL_OUT} from './pilot-brokerage-settlement.mjs';
 import {projectLedger} from './pilot-portfolio-projection.mjs';
 const DAY=86400000;
 export const validDay=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d;
@@ -54,10 +55,10 @@ export function portfolioHistory(data,start,end,market,account='ALL',currency='K
   const date=day(n),s=historicalSnapshot(data,date,market,account,currency);
   let flow=0,flowKnown=true;
   for(const e of byDate.get(date)||[]){
-   if(!['DEPOSIT','WITHDRAW','OPEN'].includes(e.type))continue;
+   if(![...EXTERNAL_IN,...EXTERNAL_OUT].includes(e.type))continue;
    const amount=e.type==='OPEN'?e.qty*e.price:e.amount,cur=e.type==='OPEN'?'USD':e.currency;
    const v=cur===currency?amount:positive(s.fx)?(cur==='USD'?amount*s.fx:amount/s.fx):null;
-   if(v===null)flowKnown=false;else flow+=(e.type==='WITHDRAW'?-1:1)*v;
+   if(v===null)flowKnown=false;else flow+=(EXTERNAL_OUT.includes(e.type)?-1:1)*v;
   }
   if(!flowKnown)capitalKnown=false;
   cumulative+=flow;
