@@ -7,12 +7,19 @@ export async function loadPortfolioHistoryMarket(){
   loadPublishedYahooReview({origin:location.href}),
   loadPublishedMarketIndices({origin:location.href}),
   (async()=>{const r=await fetch('./data/portfolio-public-history.json',{credentials:'omit',cache:'no-store',redirect:'error'});if(!r.ok)throw Error('ETF·환율 이력 미게시');const p=await r.json();
-   if(p.format!=='PILOT_PUBLIC_HISTORY_V1'||p.source!=='Yahoo Finance / Federal Reserve H.10 DEXKOUS'||p.database_writes!==0||!Array.isArray(p.rows)||p.rows.length>12000||p.rows.some(x=>!['BITU','TQQQ','USD','QLD','SOXL','TSLL','USDKRW'].includes(x.ticker)))throw Error('과거 시세 형식 오류');return p.rows;})()
+   if(p.format!=='PILOT_PUBLIC_HISTORY_V1'||p.source!=='Yahoo Finance / Federal Reserve H.10 DEXKOUS'||p.database_writes!==0||!Array.isArray(p.rows)||p.rows.length>12000||p.rows.some(x=>!['BITU','TQQQ','USD','QLD','SOXL','TSLL','PLTR','TSLA','USDKRW'].includes(x.ticker)))throw Error('과거 시세 형식 오류');return p.rows;})()
  ]);
  const rows=[];
  if(results[0].status==='fulfilled')for(const r of results[0].value.observations)if(r.currency==='USD'&&r.price_basis==='unadjusted_close')rows.push({ticker:r.ticker,date:r.trading_date,close:Number(r.close_price)});
  if(results[1].status==='fulfilled')for(const [ticker,rs] of results[1].value)for(const r of rs)rows.push({ticker,...r});
- if(results[2].status==='fulfilled')rows.push(...results[2].value);
+ if(results[2].status==='fulfilled'){
+  const extra=results[2].value,keys=new Set(extra.map(r=>r.ticker+'|'+r.date));
+  for(let i=rows.length-1;i>=0;i--)if(keys.has(rows[i].ticker+'|'+rows[i].date))rows.splice(i,1);
+  for(const r of extra){
+   if(r.as_traded_close!==undefined&&(!Number.isFinite(r.as_traded_close)||r.as_traded_close<=0||!Number.isFinite(r.split_factor)||r.split_factor<=0||Math.abs(r.as_traded_close-r.close*r.split_factor)>Math.max(1e-7,r.as_traded_close*1e-8)))throw Error('분할 기준 오류');
+   rows.push(r);
+  }
+ }
  return indexRows(rows);
 }
 const $=id=>document.getElementById(id),num=(n,d=0)=>Number.isFinite(n)?n.toLocaleString('ko-KR',{maximumFractionDigits:d}):'—';
@@ -50,7 +57,7 @@ export function renderPortfolioHistory(data,market,start,end,selected,currency){
  const select=$('historyTradeTicker');
  const drawTicker=()=>{const ticker=select.value;
   lineChart('historyQuantities',rows.map(r=>({date:r.date,qty:r.quantities[ticker]||0})),[{key:'qty',label:ticker+' 보유수량'}],[],selectedVisualDate());
-  const points=rows.map(r=>({date:r.date,price:priorObservation(market.get(ticker),r.date)?.close??null}));
+  const points=rows.map(r=>({date:r.date,price:(()=>{const q=priorObservation(market.get(ticker),r.date);return q?.as_traded_close??q?.close??null;})()}));
   const markers=rows.flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date})));
   lineChart('historyTradePrices',points,[{key:'price',label:ticker+' 종가 USD'}],markers,selectedVisualDate());
  };
