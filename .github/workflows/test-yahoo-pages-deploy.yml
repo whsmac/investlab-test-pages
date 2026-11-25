@@ -1,5 +1,6 @@
 name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
 # Runs on default branch; reads reviewed TEST feature code. No Supabase access.
+# 2026-11-25: actual statement settlements and split-aware public history, CI 9/9. Prior implementation 441fbec1dd712ab817c2a833a1a8da53cc315f70 retained for rollback.
 # 2026-11-25: visual performance dashboard, CI 9/9 passed; prior implementation b37eba00a3b7ce300c2769d5bbe9afe8d2bb5603 retained for rollback.
 # 2026-11-24: portfolio historical valuation, CI 10/10 passed; prior implementation 5504c99f0a4be21402ecd4d0f3a942647f22a2a1 retained for rollback.
 # 2026-11-24: movable/resizable chart popup; browser checks and live BITU rendering passed. Prior implementation 7df25bf309d2a17f11c722d100db135cbc7de4b1 retained for rollback.
@@ -41,7 +42,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 441fbec1dd712ab817c2a833a1a8da53cc315f70
+          ref: 63c08aa272920cfc6ef64063cb847f3a83f6c6fb
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -57,7 +58,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "441fbec1dd712ab817c2a833a1a8da53cc315f70"
+          test "$(git rev-parse HEAD)" = "63c08aa272920cfc6ef64063cb847f3a83f6c6fb"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
@@ -141,13 +142,17 @@ jobs:
           p=Path(os.environ["RUNNER_TEMP"])/"portfolio-public-history.json"
           rows=json.loads(p.read_text())["rows"]
           counts=Counter(r["ticker"] for r in rows)
-          for ticker in ("BITU","TQQQ","USD","USDKRW"):
-              days=[r["date"] for r in rows if r["ticker"]==ticker]
-              if len(days)<20 or (date.today()-date.fromisoformat(max(days))).days>7:
+          for ticker in ("BITU","TQQQ","USD","QLD","SOXL","TSLL","PLTR","TSLA","USDKRW"):
+              a=sorted((r for r in rows if r["ticker"]==ticker),key=lambda r:r["date"])
+              days=[r["date"] for r in a]
+              if len(days)<500 or min(days)>"2024-08-16" or (date.today()-date.fromisoformat(max(days))).days>7:
                   raise ValueError("Missing or stale history: "+ticker)
+              if ticker!="USDKRW" and any("as_traded_close" not in r or "split_factor" not in r for r in a):
+                  raise ValueError("Missing historical price basis: "+ticker)
               print("PUBLIC_HISTORY_COVERAGE",ticker,len(days),min(days),max(days))
           PY
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ledger/pilot-portfolio-history.mjs"
+          test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ledger/pilot-brokerage-settlement.mjs"
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ui/pilot-portfolio-history-ui.mjs"
           grep -q 'id="asOfDate"' "${RUNNER_TEMP}/investlab-test-pages-site/my-portfolio.html"
           grep -q 'id="historyPanel"' "${RUNNER_TEMP}/investlab-test-pages-site/my-portfolio.html"
