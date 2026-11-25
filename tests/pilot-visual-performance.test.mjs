@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assetRadius,treemap,composition,sampleTimeline,priceChange,comparisonRows,reviewTrade,periodSummary} from '../src/market/pilot-visual-performance.mjs';
+import {assetRadius,treemap,composition,sampleTimeline,priceChange,comparisonRows,reviewTrade,periodSummary,defaultHeatMode,heatPeriods,heatReturn} from '../src/market/pilot-visual-performance.mjs';
 import {indexRows} from '../src/ledger/pilot-portfolio-history.mjs';
 test('donut area and map tile area are proportional, not diameter or arbitrary emphasis',()=>{
  assert.equal(assetRadius(25,100),44);assert.equal(assetRadius(100,100),88);assert.equal(assetRadius(null,100),0);
@@ -30,4 +30,19 @@ test('period summary separates contribution from investment gain and discloses i
  assert.equal(periodSummary(rows,'2026-01-01').investmentGain,null);
  const market=indexRows([{ticker:'ABC',date:'2026-01-01',close:5},{ticker:'ABC',date:'2026-01-02',close:10},{ticker:'ABC',date:'2026-01-03',close:12}]);
  const compare=comparisonRows(rows.slice(0,3),market,['ABC'],'USD','2026-01-02');assert.equal(compare[0]['stock:ABC'],null);assert.ok(Math.abs(compare[2]['stock:ABC']-20)<1e-8);
+});
+
+test('period heatmap uses independent close-to-close returns, skips non-trading dates and respects FX',()=>{
+ const rows=['2026-01-02','2026-01-03','2026-01-04','2026-01-05','2026-01-06'].map(date=>({date}));
+ const market=indexRows([{ticker:'AAA',date:'2025-12-31',close:100},{ticker:'AAA',date:'2026-01-02',close:110},{ticker:'AAA',date:'2026-01-05',close:99},{ticker:'AAA',date:'2026-01-06',close:108.9},{ticker:'USDKRW',date:'2025-12-31',close:1000},{ticker:'USDKRW',date:'2026-01-02',close:1100},{ticker:'USDKRW',date:'2026-01-05',close:1000}]);
+ const days=heatPeriods(rows,market,['AAA'],'day');assert.deepEqual(days.map(p=>p.start),['2026-01-02','2026-01-05','2026-01-06']);
+ assert.ok(Math.abs(heatReturn(market,'AAA',days[0]).change-10)<1e-8);
+ assert.ok(Math.abs(heatReturn(market,'AAA',days[1]).change+10)<1e-8);
+ assert.ok(Math.abs(heatReturn(market,'AAA',days[0],'KRW').change-21)<1e-8);
+ assert.equal(heatReturn(market,'MISSING',days[0]),null);
+ assert.equal(heatReturn(market,'AAA',{start:'2026-01-03',end:'2026-01-04'}),null);
+ const weeks=heatPeriods(rows,market,['AAA'],'week');assert.equal(weeks.length,2);
+ assert.ok(Math.abs(heatReturn(market,'AAA',weeks[1]).change+1)<1e-8);
+ assert.ok(Math.abs(heatReturn(market,'AAA',heatPeriods(rows,market,['AAA'],'month')[0]).change-8.9)<1e-8);
+ assert.equal(defaultHeatMode(rows),'day');assert.equal(defaultHeatMode(Array(32)),'week');assert.equal(defaultHeatMode(Array(94)),'month');
 });
