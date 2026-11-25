@@ -29,7 +29,7 @@ test('manual input remains strict; altered statement proof or final negative fai
  const wrong=structuredClone(db);wrong.entries[1].brokerage.postQty=2;assert.throws(()=>validateLedger(wrong),/수량 불일치/);
 });
 test('linked flows count only at brokerage boundary; dividend and tax are not external capital',()=>{
- const market=indexRows([{ticker:'AAA',date:'2025-01-02',close:100},{ticker:'AAA',date:'2025-01-03',close:100},{ticker:'USDKRW',date:'2025-01-04',close:1400}]);
+ const market=indexRows([{ticker:'AAA',date:'2025-01-02',close:100,as_traded_close:100,split_factor:1},{ticker:'AAA',date:'2025-01-03',close:100,as_traded_close:100,split_factor:1},{ticker:'USDKRW',date:'2025-01-04',close:1400}]);
  const r=portfolioHistory(db,'2025-01-02','2025-01-04',market,'ALL','USD');
  assert.equal(r[1].flow,-1);assert.equal(r[1].total,100);assert.equal(r[1].index,101);
  assert.equal(r[2].flow,0);assert.equal(r[2].total,119.5);
