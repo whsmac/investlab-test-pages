@@ -68,12 +68,17 @@ test('desktop and mobile: usage order, collapsed management, existing data and m
     await page.locator('#entrySymbol').fill('TSLA');
     await page.locator('#entryQty').fill('2');
     await page.locator('#entryPrice').fill('100');
+    await page.locator('#entryFee').fill('2');
+    assert.match(await page.locator('#entrySettlement').innerText(),/202/);
     await page.locator('#submitEntry').click();
     assert.equal(await page.locator('#transactions tr').count(),2);
     assert.match(await page.locator('#transactions tr').first().innerText(),/TSLA/);
-    await page.waitForFunction(()=>window.__fixture.payload.entries.length===2);
+    await page.waitForFunction(()=>window.__fixture.payload.entries.some(e=>e.type==='BUY'&&e.price===100&&e.feeUsd===2));
+    assert.match(await page.locator('#transactions tr').first().innerText(),/202/);
     await page.locator('#transactions tr').first().getByRole('button',{name:'수정'}).click();
+    assert.equal(await page.locator('#entryFee').inputValue(),'2');
     await page.locator('#entryQty').fill('3');
+    assert.match(await page.locator('#entrySettlement').innerText(),/302/);
     await page.locator('#submitEntry').click();
     await page.waitForFunction(()=>window.__fixture.payload.entries.some(e=>e.type==='BUY'&&e.qty===3));
     await page.locator('#transactions tr').first().getByRole('button',{name:'삭제'}).click();
