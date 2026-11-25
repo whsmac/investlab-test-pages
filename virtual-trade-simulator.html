@@ -111,7 +111,7 @@ import {rankStrategyOutcomes,compareRankedOutcomes} from './src/simulator/strate
 import {estimateOverseasStockTax} from './src/simulator/overseas-stock-tax.mjs';
 import {fetchPersonalQuotes,effectivePortfolioPrices,QUOTE_REFRESH_MS,formatPortfolioNumber} from './src/market/pilot-personal-current-quotes.mjs';
 import {verifiedLedgerSymbols,compactQuoteTickers,formatCompactQuote} from './src/ledger/pilot-managed-symbols.mjs';
-import {differentVerifiedUser,mayAutoApplyTestLedger} from './src/simulator/test-ledger-session-safety.mjs';
+import {differentVerifiedUser,mayAutoApplyTestLedger,compareLedgerOpening} from './src/simulator/test-ledger-session-safety.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
 import {buildYahooLatestPrices} from './src/market/yahoo-latest-prices.mjs';
 import {loadPublishedEtfCloses} from './src/market/load-published-etf-closes.mjs';
@@ -889,12 +889,13 @@ function getOnlineAccountOpening(){
  const ledger=onlineAccountLedger.ledger,selection=byId('pilotLedgerAccount').value;
  const accountId=selection==='ALL'||ledger.accounts.some(a=>a.id===selection)?selection:'ALL';
  const result=projectLedger(ledger,accountId);
- if(!Number.isFinite(result.cash.USD)||result.cash.USD<0)throw Error('USD 현금잔고 오류');
+ if(!Number.isFinite(result.cash.USD)||result.cash.USD< -1e-7)throw Error('USD 현금잔고 오류');
+ const usdCash=Math.abs(result.cash.USD)<1e-7?0:result.cash.USD;
  const positions=result.holdings.map(h=>({ticker:h.symbol,quantity:h.qty,averageCost:h.averageCost}));
  if(!positions.every(p=>/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.ticker)&&Number.isFinite(p.quantity)&&p.quantity>0&&Number.isFinite(p.averageCost)&&p.averageCost>=0))throw Error('원장 보유정보 오류');
  const name=accountId==='ALL'?'전체 계좌':ledger.accounts.find(a=>a.id===accountId)?.name||'선택 계좌';
- byId('onlineLedgerPreviewStatus').textContent='TEST 서버 '+name+' · 보유 '+positions.length+'종목 · 현금 USD '+result.cash.USD.toLocaleString('ko-KR')+' · 갱신 '+(onlineAccountLedger.updatedAt||'미확인')+' · 읽기 전용';
- return {positions,cash:result.cash.USD,name};
+ byId('onlineLedgerPreviewStatus').textContent='TEST 서버 '+name+' · 보유 '+positions.length+'종목 · 현금 USD '+usdCash.toLocaleString('ko-KR',{maximumFractionDigits:2})+' · 갱신 '+(onlineAccountLedger.updatedAt||'미확인')+' · 읽기 전용';
+ return {positions,cash:usdCash,name};
 }
 function updateOnlineLedgerApplyPrompt(opening){
  const button=byId('syncPilotLedgerStart');
@@ -902,13 +903,15 @@ function updateOnlineLedgerApplyPrompt(opening){
  if(!opening||!onlineAccountLedger||onlineAccountLedger.userId!==activeSimulatorOwnerId){
   button.hidden=true;return;
  }
- const normalize=list=>(Array.isArray(list)?list:[]).map(p=>({
-  ticker:String(p.ticker||'').toUpperCase(),quantity:Number(p.quantity),averageCost:Number(p.averageCost)
- })).sort((a,b)=>a.ticker.localeCompare(b.ticker));
- const current=normalize(portfolioState.positions),fresh=normalize(opening.positions);
- const equalPositions=JSON.stringify(current)===JSON.stringify(fresh);
- const equalCash=Number.isFinite(Number(byId('cash').value))&&Math.abs(Number(byId('cash').value)-opening.cash)<1e-7;
- button.hidden=equalPositions&&equalCash;
+ const diff=compareLedgerOpening({currentPositions:portfolioState.positions,currentCash:byId('cash').value,freshPositions:opening.positions,freshCash:opening.cash});
+ button.hidden=diff.matches;
+ button.textContent='최신 원장 보유종목·현금 반영 (전략 유지)';
+ if(!diff.matches){
+  const details=[];
+  if(diff.changedTickers.length)details.push('수량·평단 변경 '+diff.changedTickers.slice(0,5).join(', ')+(diff.changedTickers.length>5?' 외 '+(diff.changedTickers.length-5)+'종목':''));
+  if(diff.cashChanged)details.push('USD 현금 '+Number(byId('cash').value).toLocaleString('en-US',{maximumFractionDigits:2})+' → '+opening.cash.toLocaleString('en-US',{maximumFractionDigits:2}));
+  button.textContent+=' · '+details.join(' · ');
+ }
 }
 byId('syncPilotLedgerStart').addEventListener('click',applySelectedOnlineAccountToSimulator);
 function applySelectedOnlineAccountToSimulator(){
@@ -949,7 +952,7 @@ async function refreshOnlineAccountLedger(){
  try{
   const connection=await getOnlineScenarioConnection();
   switchVerifiedSimulatorOwner(connection?.userId||null);
-  if(!connection){onlineAccountLedger=null;disconnectSimulatorQuotes();refreshManagedSymbols();refreshPilotLedgerAccountOptions();byId('onlineLedgerPreviewStatus').textContent='TEST 로그인 필요 · 이전 서버 원장 미리보기는 종료했습니다. 브라우저의 기존 임시작업은 보존됩니다.';return;}
+  if(!connection){onlineAccountLedger=null;disconnectSimulatorQuotes();refreshManagedSymbols();refreshPilotLedgerAccountOptions();updateOnlineLedgerApplyPrompt(null);byId('onlineLedgerPreviewStatus').textContent='TEST 로그인 필요 · 이전 서버 원장 미리보기는 종료했습니다. 브라우저의 기존 임시작업은 보존됩니다.';return;}
   const {client,userId}=connection;
   const {data:remote,error}=await client.from('investlab_pilot_ledger_documents').select('payload,updated_at').eq('user_id',userId).maybeSingle();
   if(error)throw Error(error.message);
@@ -1007,7 +1010,7 @@ async function refreshOnlineAccountLedger(){
   }
   updateOnlineLedgerApplyPrompt(opening);
   void refreshCurrentQuotes();
- }catch(e){onlineAccountLedger=null;refreshManagedSymbols();refreshPilotLedgerAccountOptions();byId('onlineLedgerPreviewStatus').textContent='TEST 온라인 원장 조회 실패: '+e.message+' · 현재 입력 유지';}
+ }catch(e){onlineAccountLedger=null;refreshManagedSymbols();refreshPilotLedgerAccountOptions();updateOnlineLedgerApplyPrompt(null);byId('onlineLedgerPreviewStatus').textContent='TEST 온라인 원장 조회 실패: '+e.message+' · 현재 입력 유지';}
  finally{onlineLedgerBusy=false;}
 }
 
