@@ -55,5 +55,7 @@ export function comparisonRows(rows,market,tickers,currency){
 export function reviewTrade(trade,market,asOf){
  if(!trade||!finite(trade.price)||trade.price<=0)return null;
  const obs=priorObservation(market.get(trade.symbol),asOf);
- return obs&&obs.date>=trade.date?{date:obs.date,close:obs.close,change:100*(obs.close/trade.price-1)}:null;
+ const entry=priorObservation(market.get(trade.symbol),trade.date);
+ const comparable=obs&&entry?obs.close*(entry.split_factor??1):null;
+ return obs&&obs.date>=trade.date&&finite(comparable)?{date:obs.date,close:comparable,change:100*(comparable/trade.price-1)}:null;
 }

@@ -2,7 +2,7 @@
 import csv,io,json,math,urllib.request
 from datetime import date,timedelta
 from pathlib import Path
-ETF={"BITU","TQQQ","USD","QLD","SOXL","TSLL"}
+ETF={"BITU","TQQQ","USD","QLD","SOXL","TSLL","PLTR","TSLA"}
 FX_URL="https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXKOUS"
 def parse_fx(raw,today=None):
     today=today or date.today()
@@ -24,7 +24,10 @@ def verify_history(payload,today=None):
     rows=payload["rows"]
     if not isinstance(rows,list) or not 1<=len(rows)<=12000:raise ValueError("Invalid row count")
     for r in rows:
-        if set(r)!={"ticker","date","close"} or r["ticker"] not in ETF|{"USDKRW"}:raise ValueError("Unexpected field")
+        if set(r) not in ({"ticker","date","close"},{"ticker","date","close","as_traded_close","split_factor"}) or r["ticker"] not in ETF|{"USDKRW"}:raise ValueError("Unexpected field")
+        if "as_traded_close" in r:
+            a,f=r["as_traded_close"],r["split_factor"]
+            if r["ticker"]=="USDKRW" or any(isinstance(x,bool) or not isinstance(x,(int,float)) or not math.isfinite(x) or x<=0 for x in (a,f)) or abs(a-r["close"]*f)>max(1e-7,a*1e-8):raise ValueError("Invalid split basis")
         d=date.fromisoformat(r["date"])
         v=r["close"]
         key=(r["ticker"],r["date"])
@@ -36,7 +39,11 @@ def build_history(sources,fx_rows,today=None):
     for ticker in sorted(ETF):
         source=sources.get(ticker,{})
         if source.get("status")!="ok" or source.get("currency")!="USD" or source.get("price_basis")!="unadjusted_close":continue
-        rows.extend({"ticker":ticker,"date":r["trading_date"],"close":float(r["close_price"])} for r in source["observations"])
+        for r in source["observations"]:
+            row={"ticker":ticker,"date":r["trading_date"],"close":float(r["close_price"])}
+            if source.get("split_history_checked") is True:
+                row.update(as_traded_close=float(r["as_traded_close"]),split_factor=float(r["split_factor"]))
+            rows.append(row)
     return verify_history({"format":"PILOT_PUBLIC_HISTORY_V1","source":"Yahoo Finance / Federal Reserve H.10 DEXKOUS","database_writes":0,"rows":rows},today)
 def write_history(sources,output):
     fx=[]

@@ -15,7 +15,7 @@ SYMBOLS = CORE_SYMBOLS + ("SPCX",)
 OUTPUT = Path(os.environ.get("INVESTLAB_YAHOO_REPORT", "yahoo-price-probe.json"))
 
 
-def parse_chart(payload, ticker):
+def parse_chart(payload, ticker, include_split_history=False):
     chart = payload.get("chart")
     if not isinstance(chart, dict) or chart.get("error"):
         raise ValueError("Yahoo chart error")
@@ -47,18 +47,27 @@ def parse_chart(payload, ticker):
         observations[day] = str(price)
     if not observations:
         raise ValueError("No valid closes")
-    return {"status": "ok", "currency": currency, "price_basis": "unadjusted_close",
+    record = {"status": "ok", "currency": currency, "price_basis": "unadjusted_close",
             "count": len(observations), "first_date": min(observations), "latest_date": max(observations),
             "observations": [{"trading_date": day, "close_price": observations[day]}
                              for day in sorted(observations)]}
+    if include_split_history:
+        from scripts.portfolio_split_basis import extract_split_history, apply_split_basis
+        splits = extract_split_history(result)
+        record["observations"] = apply_split_basis(record["observations"], splits)
+        record["split_history_checked"] = True
+        record["splits"] = splits
+    return record
 
 
-def fetch_chart(ticker):
+def fetch_chart(ticker, include_split_history=False):
     url = "https://query1.finance.yahoo.com/v8/finance/chart/" + urllib.parse.quote(ticker)
     # Pull five years once daily for long-horizon (3y/5y) Pilot charts.
     # Yahoo quote.close is split-adjusted but not dividend-adjusted; this
     # pipeline never treats it as a tick-by-tick/live price.
     url += "?interval=1d&range=5y"
+    if include_split_history:
+        url += "&events=splits"
     request = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (compatible; INVESTLAB-TEST/1.0)",
         "Accept": "application/json"})
@@ -76,7 +85,7 @@ def fetch_chart(ticker):
             if exc.code not in (502, 503, 504) or attempt:
                 raise
             time.sleep(2)
-    return parse_chart(json.loads(data.decode("utf-8")), ticker)
+    return parse_chart(json.loads(data.decode("utf-8")), ticker, include_split_history)
 
 
 def save(report):

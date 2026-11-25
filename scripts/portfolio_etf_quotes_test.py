@@ -73,16 +73,16 @@ def main():
     sources={}
     for ticker in ETF_SYMBOLS:
         try:
-            sources[ticker]=fetch_chart(ticker)
+            sources[ticker]=fetch_chart(ticker,include_split_history=bool(args.history_output))
             print("ETF",ticker,"source verified")
         except (OSError,ValueError,KeyError,TypeError) as exc:
             sources[ticker]={"status":"error"}
             print("ETF",ticker,"not available:",type(exc).__name__)
     if args.history_output:
         # Fixed public comparison universe; never read or transmit a user's watchlist.
-        for ticker in ('QLD','SOXL','TSLL'):
+        for ticker in ('QLD','SOXL','TSLL','PLTR','TSLA'):
             try:
-                sources[ticker]=fetch_chart(ticker)
+                sources[ticker]=fetch_chart(ticker,include_split_history=True)
             except (OSError,ValueError,KeyError,TypeError) as exc:
                 print('Optional historical ETF unavailable:',ticker,type(exc).__name__)
         from scripts.portfolio_history_public import write_history
