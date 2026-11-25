@@ -19,7 +19,13 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.match(await page.locator('#visualHero').innerText(),/S&P 500 대비/);
    assert.match(await page.locator('#visualPeriodSummary').innerText(),/성과 계산 기준일 2026-11-20/);
    assert.equal(await page.locator('#historyPresets button[data-period=ytd]').count(),1);
+   assert.equal(await page.locator('#visualHoldingDetails').getAttribute('open'),null);
+   assert.match(await page.locator('#visualTreemap g[data-ticker=TSLA]').textContent(),/3주/);
+   await page.locator('#visualTreemap g[data-ticker=TSLA]').click();
+   assert.match(await page.locator('#visualTreemapDetail').innerText(),/TSLA.*3주.*USD 360/);
+   await page.locator('#visualHoldingDetails summary').click();
    assert.match(await page.locator('#visualSelection').innerText(),/3주/);
+   await page.locator('#visualHoldingDetails summary').click();
    assert.equal(await page.locator('#visualTreemap g[aria-label*="GOOGL"]').count(),0);
    assert.match(await page.locator('#visualMarketHeat').innerText(),/GOOGL/);
    assert.match(await page.locator('#visualMarketHeat').innerText(),/QLD/);
@@ -28,7 +34,7 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.equal(await page.locator('#historyWeights').count(),0);
    await page.locator('#assetWeightMode').click();
    assert.equal(await page.locator('#assetWeightMode').getAttribute('aria-pressed'),'true');
-   assert.match(await page.locator('#historyAssets svg').innerText(),/100%/);
+   assert.match(await page.locator('#historyAssets svg').textContent(),/100%/);
    await page.locator('#assetAmountMode').click();
    await page.locator('[data-heat-mode=week]').click();
    assert.equal(await page.locator('[data-heat-mode=week]').getAttribute('aria-pressed'),'true');
@@ -40,7 +46,7 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.equal(await page.locator('#visualDay').innerText(),'2026-11-20');
    await page.locator('#visualSlider').fill('0');
    assert.equal(await page.locator('#visualDay').innerText(),'2026-11-20');
-   assert.match(await page.locator('#visualSelection').innerText(),/2주/);
+   assert.match(await page.locator('#visualTreemap g[data-ticker=TSLA]').textContent(),/2주/);
    await page.locator('#visualComparePicks input[value=GOOGL]').check();
    assert.match(await page.locator('#historyPerformance .visual-legend').innerText(),/GOOGL/);
    await page.locator('#visualGranularity').selectOption('month');
