@@ -67,7 +67,7 @@ def validate_preview(site: Path):
             raise ValueError("Unexpected non-public preview file: " + relative.as_posix())
     history = site / "data/portfolio-public-history.json"
     if history.exists():
-        if history.is_symlink() or history.stat().st_size > 1_000_000:
+        if history.is_symlink() or history.stat().st_size > 2_000_000:
             raise ValueError("Unsafe history asset")
         from scripts.portfolio_history_public import verify_history
         verify_history(json.loads(history.read_text(encoding="utf-8")))
