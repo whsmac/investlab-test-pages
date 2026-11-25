@@ -47,3 +47,32 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
   }
  }finally{await browser.close();}
 });
+
+test('standalone performance page requires a verified TEST owner and hides private data on logout',async()=>{
+ const browser=await chromium.launch();
+ try{
+  const ctx=await browser.newContext({viewport:{width:390,height:850}});
+  const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const clientStub='window.supabase={createClient:()=>({auth:{getUser:async()=>({data:{user:window.__owner||null},error:null})},from:()=>{window.__reads=(window.__reads||0)+1;return {select:()=>({eq:()=>({maybeSingle:async()=>({data:null,error:null})})})};}})};';
+  await ctx.route('**/*',async route=>{
+   const u=new URL(route.request().url());if(u.hostname==='cdn.jsdelivr.net'){await route.fulfill({contentType:'text/javascript',body:clientStub});return;}
+   if(!u.href.startsWith(ROOT)){await route.abort();return;}
+   const dest=path.resolve(SITE,u.pathname.slice(new URL(ROOT).pathname.length));if(!dest.startsWith(SITE+path.sep)){await route.abort();return;}
+   try{await route.fulfill({body:await readFile(dest),contentType:dest.endsWith('.html')?'text/html':dest.endsWith('.mjs')?'text/javascript':dest.endsWith('.css')?'text/css':'application/json'});}catch{await route.fulfill({status:404,body:'not found'});}
+  });
+  await page.goto(ROOT+'investment-performance.html');
+  await page.locator('#portfolioAccessStatus').getByText(/TEST 홈에서 같은 계정/).waitFor();
+  assert.equal(await page.locator('#portfolioPrivate').isVisible(),false);
+  assert.equal(await page.evaluate(()=>window.__reads||0),0);
+  await page.evaluate(()=>{localStorage.setItem('investlab_shared_data_connection_v1',JSON.stringify({url:'https://gopofxyezhwpfxbecrxd.supabase.co',key:'sb_publishable_fixture'}));});
+  await page.locator('#portfolioRetry').click();
+  await page.locator('#portfolioAccessStatus').getByText(/TEST 홈에서 로그인/).waitFor();
+  assert.equal(await page.evaluate(()=>window.__reads||0),0);
+  await page.evaluate(()=>{window.__owner={id:'11111111-1111-4111-8111-111111111111'};});
+  await page.locator('#portfolioRetry').click();
+  await page.locator('#portfolioAccessStatus').getByText(/이 TEST 계정에 서버 원장/).waitFor();
+  assert.equal(await page.locator('#portfolioPrivate').isVisible(),false);
+  assert.equal(await page.evaluate(()=>window.__reads),1);
+  assert.deepEqual(errors,[]);await ctx.close();
+ }finally{await browser.close();}
+});
