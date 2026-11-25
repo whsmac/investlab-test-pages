@@ -56,15 +56,15 @@ test('online pilot account comparison respects selected accounts and clears stal
  assert.match(html,/byId\('accountOpeningComparison'\).replaceChildren\(\);byId\('accountScenarioComparison'\).replaceChildren\(\)/);
 });
 
-test('TEST home exposes five primary menus and separates offline tools',()=>{
+test('TEST home exposes six primary menus and separates offline tools',()=>{
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const main=html.match(/<section class="grid" aria-label="INVESTLAB 주요 메뉴">([\s\S]*?)<\/section>/)?.[1];
  assert.ok(main);
- assert.equal((main.match(/class="card"/g)||[]).length,5);
- for(const name of ['내 투자현황','가상거래 시뮬레이터','기업 투자분석','시장 동향','계좌·매매 기록 관리'])assert.ok(main.includes(name),name);
- for(const path of ['my-portfolio','virtual-trade-simulator','company-investment-analysis','market-trends','pilot-ledger'])assert.ok(main.includes('href="./'+path+'.html"'),path);
+ assert.equal((main.match(/class="card"/g)||[]).length,6);
+ for(const name of ['내 투자현황','투자성과 분석','가상거래 시뮬레이터','기업 투자분석','시장 동향','계좌·매매 기록 관리'])assert.ok(main.includes(name),name);
+ for(const path of ['my-portfolio','investment-performance','virtual-trade-simulator','company-investment-analysis','market-trends','pilot-ledger'])assert.ok(main.includes('href="./'+path+'.html"'),path);
  assert.match(html,/href="\.\/data-management\.html"/);
- assert.doesNotMatch(main,/href="\.\/data-management\.html"/, 'backup/settings remains separate from five primary modules');
+ assert.doesNotMatch(main,/href="\.\/data-management\.html"/, 'backup/settings remains separate from six primary modules');
  assert.match(main,/href="\.\/company-investment-analysis\.html"/);
  assert.match(main,/TEST 원장 자동 저장·불러오기/);
  assert.match(main,/시장지표 자동수집/);
