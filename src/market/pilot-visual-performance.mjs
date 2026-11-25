@@ -44,11 +44,11 @@ export function priceChange(market,ticker,start,end,currency='USD'){
  }
  return 100*(ratio-1);
 }
-export function comparisonRows(rows,market,tickers,currency){
+export function comparisonRows(rows,market,tickers,currency,baseDate=rows.find(r=>finite(r.index))?.date??rows[0]?.date){
  if(!rows.length)return [];
  return rows.map(r=>{
   const item={date:r.date,portfolio:finite(r.index)?r.index-100:null,ndx:finite(r.ndx)?r.ndx-100:null,spx:finite(r.spx)?r.spx-100:null};
-  for(const ticker of tickers)item['stock:'+ticker]=priceChange(market,ticker,rows[0].date,r.date,currency);
+  for(const ticker of tickers)item['stock:'+ticker]=baseDate&&r.date>=baseDate?priceChange(market,ticker,baseDate,r.date,currency):null;
   return item;
  });
 }
@@ -58,4 +58,24 @@ export function reviewTrade(trade,market,asOf){
  const entry=priorObservation(market.get(trade.symbol),trade.date);
  const comparable=obs&&entry?obs.close*(entry.split_factor??1):null;
  return obs&&obs.date>=trade.date&&finite(comparable)?{date:obs.date,close:comparable,change:100*(comparable/trade.price-1)}:null;
+}
+
+/** Account-scope end-of-day valuation and net external contributions are distinct.
+ * A partial period uses the actual first positive, complete valuation, never
+ * silently presents a shorter interval as full requested-period performance.
+ */
+export function periodSummary(rows,selectedDate){
+ const base=rows.find(r=>finite(r.total)&&r.total>0&&r.index===100);
+ const row=rows.find(r=>r.date===selectedDate);
+ const elapsed=rows.filter(r=>r.date<=selectedDate);
+ const validDays=elapsed.filter(r=>finite(r.total)).length;
+ const canCompare=!!base&&!!row&&row.date>=base.date&&finite(row.total);
+ const assetChange=canCompare?row.total-base.total:null;
+ const netFlow=canCompare&&finite(row.capital)?row.capital-base.total:null;
+ return {baseDate:base?.date??null,selectedDate:row?.date??null,validDays,days:elapsed.length,
+  assetChange,netFlow,investmentGain:finite(assetChange)&&finite(netFlow)?assetChange-netFlow:null,
+  returnPct:canCompare&&finite(row.index)?row.index-100:null,
+  ndxExcess:canCompare&&finite(row.index)&&finite(row.ndx)?row.index-row.ndx:null,
+  spxExcess:canCompare&&finite(row.index)&&finite(row.spx)?row.index-row.spx:null,
+  missing:row?.missing??[]};
 }

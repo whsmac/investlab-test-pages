@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assetRadius,treemap,composition,sampleTimeline,priceChange,comparisonRows,reviewTrade} from '../src/market/pilot-visual-performance.mjs';
+import {assetRadius,treemap,composition,sampleTimeline,priceChange,comparisonRows,reviewTrade,periodSummary} from '../src/market/pilot-visual-performance.mjs';
 import {indexRows} from '../src/ledger/pilot-portfolio-history.mjs';
 test('donut area and map tile area are proportional, not diameter or arbitrary emphasis',()=>{
  assert.equal(assetRadius(25,100),44);assert.equal(assetRadius(100,100),88);assert.equal(assetRadius(null,100),0);
@@ -20,4 +20,14 @@ test('same-date stock comparison, currency conversion, no missing data fabricate
  const r=comparisonRows([{date:'2026-11-20',index:100,ndx:100},{date:'2026-11-23',index:110,ndx:105}],market,['TSLA','QLD'],'USD');
  assert.equal(r[1].portfolio,10);assert.equal(r[1].ndx,5);assert.equal(r[1]['stock:QLD'],null);
  assert.equal(reviewTrade({symbol:'TSLA',date:'2026-11-24',price:100},market,'2026-11-24'),null);
+});
+
+test('period summary separates contribution from investment gain and discloses incomplete start or broken return',()=>{
+ const rows=[{date:'2026-01-01',total:null,index:null,missing:['ABC']},{date:'2026-01-02',total:1000,index:100,capital:1000,ndx:100,spx:100},{date:'2026-01-03',total:1350,index:105,capital:1300,ndx:103,spx:107},{date:'2026-01-04',total:null,index:null,missing:['ABC']},{date:'2026-01-05',total:1400,index:null,capital:1300}];
+ assert.deepEqual(periodSummary(rows,'2026-01-03'),{baseDate:'2026-01-02',selectedDate:'2026-01-03',validDays:2,days:3,assetChange:350,netFlow:300,investmentGain:50,returnPct:5,ndxExcess:2,spxExcess:-2,missing:[]});
+ assert.equal(periodSummary(rows,'2026-01-05').returnPct,null);
+ assert.equal(periodSummary(rows,'2026-01-05').investmentGain,100);
+ assert.equal(periodSummary(rows,'2026-01-01').investmentGain,null);
+ const market=indexRows([{ticker:'ABC',date:'2026-01-01',close:5},{ticker:'ABC',date:'2026-01-02',close:10},{ticker:'ABC',date:'2026-01-03',close:12}]);
+ const compare=comparisonRows(rows.slice(0,3),market,['ABC'],'USD','2026-01-02');assert.equal(compare[0]['stock:ABC'],null);assert.ok(Math.abs(compare[2]['stock:ABC']-20)<1e-8);
 });
