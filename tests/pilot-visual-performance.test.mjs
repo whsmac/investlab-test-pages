@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assetRadius,treemap,composition,sampleTimeline,priceChange,comparisonRows,reviewTrade,periodSummary,defaultHeatMode,heatPeriods,heatReturn} from '../src/market/pilot-visual-performance.mjs';
+import {assetRadius,treemap,composition,sampleTimeline,priceChange,comparisonRows,reviewTrade,periodSummary,defaultHeatMode,heatPeriods,heatReturn,quotedPrice,drawdownRows,drawdownSummary} from '../src/market/pilot-visual-performance.mjs';
 import {indexRows} from '../src/ledger/pilot-portfolio-history.mjs';
 test('donut area and map tile area are proportional, not diameter or arbitrary emphasis',()=>{
  assert.equal(assetRadius(25,100),44);assert.equal(assetRadius(100,100),88);assert.equal(assetRadius(null,100),0);
@@ -45,4 +45,14 @@ test('period heatmap uses independent close-to-close returns, skips non-trading 
  assert.ok(Math.abs(heatReturn(market,'AAA',weeks[1]).change+1)<1e-8);
  assert.ok(Math.abs(heatReturn(market,'AAA',heatPeriods(rows,market,['AAA'],'month')[0]).change-8.9)<1e-8);
  assert.equal(defaultHeatMode(rows),'day');assert.equal(defaultHeatMode(Array(32)),'week');assert.equal(defaultHeatMode(Array(94)),'month');
+});
+
+test('drawdown uses each running high, selected date only, and flags gaps',()=>{
+ const rows=drawdownRows([{date:'2026-01-01',index:100,ndx:100,spx:100},{date:'2026-01-02',index:150,ndx:110,spx:120},{date:'2026-01-03',index:90,ndx:99,spx:120},{date:'2026-01-04',index:120,ndx:null,spx:110}]);
+ const s=drawdownSummary(rows,'2026-01-04');assert.equal(s.mdd,-40);assert.equal(s.mddDate,'2026-01-03');assert.ok(Math.abs(s.current+20)<1e-8);assert.ok(Math.abs(s.recovery-25)<1e-8);assert.equal(s.complete,true);
+ assert.equal(drawdownSummary(rows,'2026-01-02').mdd,0);assert.equal(drawdownSummary(rows,'2026-01-04','ndx').complete,false);assert.equal(rows[3].ndx,null);
+});
+test('mixed price display does not alter USD quote or KRW valuation basis',()=>{
+ const market=indexRows([{ticker:'TSLA',date:'2026-01-01',close:100,as_traded_close:200},{ticker:'USDKRW',date:'2026-01-01',close:1300}]);
+ assert.equal(quotedPrice(market,'TSLA','2026-01-01','USD'),200);assert.equal(quotedPrice(market,'TSLA','2026-01-01','KRW'),260000);assert.equal(quotedPrice(market,'TSLA','2026-01-01','KRW',150),195000);assert.equal(quotedPrice(market,'TSLA','2026-02-01','USD'),null);
 });

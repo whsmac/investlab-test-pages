@@ -104,3 +104,27 @@ export function heatReturn(market,ticker,period,currency='USD'){
  }
  return {change:100*(last/first-1),startDate:a.date,endDate:b.date,first,last};
 }
+
+/** Display currency is independent from the common comparison/valuation currency. */
+export function quotedPrice(market,ticker,date,priceCurrency='USD',executionPrice=null){
+ const obs=priorObservation(market.get(ticker),date);
+ const raw=executionPrice!==null?executionPrice:(obs?.as_traded_close??obs?.close);
+ if(!finite(raw)||raw<=0)return null;
+ if(priceCurrency==='USD')return raw;
+ const fx=priorObservation(market.get('USDKRW'),date);
+ return fx&&finite(fx.close)&&fx.close>0?raw*fx.close:null;
+}
+/** Drawdown from each series' own running high. Missing observations stay null;
+ * incomplete history is explicitly reported, not presented as a complete MDD. */
+export function drawdownRows(rows){
+ const peak={portfolio:null,ndx:null,spx:null};
+ return rows.map(r=>{const out={date:r.date};for(const [key,src] of [['portfolio','index'],['ndx','ndx'],['spx','spx']]){
+ const v=r[src];if(!finite(v)||v<0||(peak[key]===null&&v===0)){out[key]=null;continue;}
+ peak[key]=Math.max(peak[key]??v,v);out[key]=100*(v/peak[key]-1);
+ }return out;});
+}
+export function drawdownSummary(rows,selectedDate,key='portfolio'){
+ const elapsed=rows.filter(r=>r.date<=selectedDate),base=elapsed.findIndex(r=>finite(r[key])),valid=elapsed.filter(r=>finite(r[key])),row=elapsed.find(r=>r.date===selectedDate);
+ const worst=valid.reduce((a,r)=>!a||r[key]<a[key]?r:a,null),current=finite(row?.[key])?row[key]:null;
+ return {current,mdd:worst?.[key]??null,mddDate:worst?.date??null,recovery:current!==null&&current>-100?100*(1/(1+current/100)-1):null,complete:base===0&&valid.length===elapsed.length&&elapsed.length>0,validDays:valid.length,days:elapsed.length};
+}

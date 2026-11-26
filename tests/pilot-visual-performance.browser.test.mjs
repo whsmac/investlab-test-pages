@@ -16,7 +16,11 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    await page.goto(ROOT+'visual-fixture.html');await page.locator('#visualDay').getByText('2026-11-23').waitFor();
    assert.match(await page.locator('#visualHero').innerText(),/USD 360/);
    assert.match(await page.locator('#visualHero').innerText(),/투자손익 \(입출금 제외\)/);
-   assert.match(await page.locator('#visualHero').innerText(),/S&P 500 대비/);
+   assert.match(await page.locator('#performanceMetrics').innerText(),/S&P 500 대비/);
+   assert.equal(await page.locator('#visualHero svg').count(),0);
+   assert.equal(await page.locator('#historyAssets + .integrated-timeline #visualSlider').count(),1);
+   assert.equal(await page.locator('#visualCurrency option[value=MIXED]').count(),1);
+   assert.equal(await page.locator('#performanceSticky').evaluate(e=>getComputedStyle(e).position),'sticky');
    assert.match(await page.locator('#visualPeriodSummary').innerText(),/성과 계산 기준일 2026-11-20/);
    assert.equal(await page.locator('#historyPresets button[data-period=ytd]').count(),1);
    assert.equal(await page.locator('#visualHoldingDetails').getAttribute('open'),null);
@@ -33,6 +37,11 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    await page.locator('#visualComparePicks input[value=ndx]').uncheck();
    assert.doesNotMatch(await page.locator('#comparisonDateDetail').innerText(),/NASDAQ 100/);
    await page.locator('#visualComparePicks input[value=ndx]').check();
+   await page.locator('#riskPanel summary').click();
+   assert.match(await page.locator('#riskMetrics').innerText(),/최대 낙폭/);
+   assert.match(await page.locator('#riskDateDetail').innerText(),/NASDAQ 100/);
+   await page.locator('#riskLimitEnabled').check();
+   assert.match(await page.locator('#historyDrawdown svg').textContent(),/위험 기준 -30%/);
    await page.locator('#visualSlider').fill('0');
    assert.equal(await page.locator('#visualDay').innerText(),'2026-11-20');
    assert.match(await page.locator('#visualTreemap g[data-ticker=TSLA]').textContent(),/2주/);
