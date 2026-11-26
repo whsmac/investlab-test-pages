@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {evaluateStrategy,validateAllocation} from '../src/strategy/investment-strategy-tracker.mjs';
+const s={target:{kind:'stock',symbol:'TSLA',mode:'growth',value:20},baseline:{quantity:100,valueUsd:37000},assets:[{accountId:'a',kind:'stock',symbol:'TQQQ',quantity:504},{accountId:'a',kind:'stock',symbol:'USD',quantity:389},{accountId:'a',kind:'cash',symbol:'USD',quantity:42}]};
+const q=new Map([['TQQQ',{price:55}],['USD',{price:50}],['TSLA',{price:420}]]);
+const accounts=new Map([['a',{cash:{USD:42,KRW:0},holdings:[{symbol:'TQQQ',qty:1000},{symbol:'USD',qty:389}]}]]);
+const cash=(symbol,base,goal)=>({...s,target:{kind:'cash',symbol,mode:'direct',value:goal},baseline:{quantity:base,valueUsd:37000}});
+test('112 shares and 60% progress',()=>{const r=evaluateStrategy(s,q);assert.equal(r.valueUsd,47212);assert.equal(r.quantity,112);assert.equal(r.goal,120);assert.equal(r.progressPct,60)});
+test('manual tax and fees',()=>assert.equal(evaluateStrategy(s,q,null,{deductionUsd:1800}).quantity,108));
+test('missing quote',()=>assert.throws(()=>evaluateStrategy(s,new Map())));
+test('USD ETF is distinct from USD cash',()=>assert.equal(evaluateStrategy(cash('USD',37000,50000),q).quantity,47212));
+test('KRW conversion',()=>assert.equal(evaluateStrategy(cash('KRW',51800000,100000000),q,1400).quantity,66096800));
+test('allocation valid',()=>assert.equal(validateAllocation([s],accounts),true));
+test('duplicate allocation fails',()=>assert.throws(()=>validateAllocation([s,s],accounts)));
+test('closed allocation excluded',()=>assert.equal(validateAllocation([s,{...s,status:'closed'}],accounts),true));
+test('retain target shares',()=>assert.equal(evaluateStrategy({...s,assets:[{kind:'stock',symbol:'TSLA',quantity:100},{kind:'cash',symbol:'USD',quantity:4200}]},q).quantity,110));
+test('missing FX fails',()=>assert.throws(()=>evaluateStrategy(cash('KRW',51800000,100000000),q)));
