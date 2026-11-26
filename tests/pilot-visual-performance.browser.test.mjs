@@ -18,7 +18,11 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.match(await page.locator('#visualHero').innerText(),/투자손익 \(입출금 제외\)/);
    assert.match(await page.locator('#performanceMetrics').innerText(),/S&P 500 대비/);
    assert.equal(await page.locator('#visualHero svg').count(),0);
-   assert.equal(await page.locator('#historyAssets + .integrated-timeline #visualSlider').count(),1);
+   assert.equal(await page.locator('#performanceSticky > #performanceTimeline #visualSlider').count(),1);
+   assert.equal(await page.locator('#visualSlider').count(),1);
+   await page.locator('#performanceFilters summary').click();
+   assert.equal(await page.locator('#performanceFilters').getAttribute('open'),null);
+   assert.equal(await page.locator('#visualSlider').isVisible(),true);
    assert.equal(await page.locator('#visualCurrency option[value=MIXED]').count(),1);
    assert.equal(await page.locator('#performanceSticky').evaluate(e=>getComputedStyle(e).position),'sticky');
    assert.match(await page.locator('#visualPeriodSummary').innerText(),/성과 계산 기준일 2026-11-20/);
@@ -42,7 +46,14 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.match(await page.locator('#riskDateDetail').innerText(),/NASDAQ 100/);
    await page.locator('#riskLimitEnabled').check();
    assert.match(await page.locator('#historyDrawdown svg').textContent(),/위험 기준 -30%/);
+   await page.locator('#riskPanel').scrollIntoViewIfNeeded();
+   const pinned=await page.locator('#performanceSticky').boundingBox();assert.ok(pinned&&pinned.y>=-1&&pinned.y<3,'shared timeline stays at viewport top');
+   assert.equal(await page.locator('#visualSlider').isVisible(),true);
+   const scrollBefore=await page.evaluate(()=>window.scrollY);
    await page.locator('#visualSlider').fill('0');
+   assert.ok(Math.abs(await page.evaluate(()=>window.scrollY)-scrollBefore)<5,'date changes do not scroll back to the top');
+   assert.match(await page.locator('#riskDateDetail').innerText(),/2026-11-20/);
+   assert.match(await page.locator('#comparisonDateDetail').innerText(),/2026-11-20/);
    assert.equal(await page.locator('#visualDay').innerText(),'2026-11-20');
    assert.match(await page.locator('#visualTreemap g[data-ticker=TSLA]').textContent(),/2주/);
    await page.locator('#visualComparePicks input[value=GOOGL]').check();

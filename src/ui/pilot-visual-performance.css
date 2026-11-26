@@ -71,3 +71,13 @@
 .integrated-timeline{border:1px solid #415574;border-radius:9px;margin-top:12px;padding:8px 12px}
 #riskLimit{width:70px;min-width:0}#riskPanel .visual-metrics{margin:10px 0}
 @media(max-width:720px){.performance-sticky{padding:7px}.performance-sticky .history-controls{flex-wrap:wrap}.performance-sticky .history-controls input[type=date]{max-width:125px}.performance-sticky .history-controls label{gap:4px}.performance-sticky #visualCurrency{max-width:205px}.performance-sticky details[open]{max-height:45vh;overflow:auto}#visualHero,.compact-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.integrated-timeline{padding:7px}}
+
+/* One shared date controller stays visible even when query filters are collapsed. */
+.performance-sticky .sticky-timeline{margin-top:6px;padding:4px 0 0;background:transparent;border-top:1px solid #425473;min-width:0}
+.performance-sticky .sticky-timeline .visual-heading{gap:4px;flex-wrap:nowrap}
+.performance-sticky .sticky-timeline .history-controls{flex-wrap:nowrap;margin:0;gap:4px}
+.performance-sticky .sticky-timeline #visualSlider{display:block;width:100%;min-height:28px;margin:1px 0;touch-action:pan-y}
+.performance-sticky .sticky-timeline .timeline-caption{font-size:11px;margin:0;line-height:1.25}
+.performance-sticky .sticky-timeline #visualDay{font-size:clamp(14px,2vw,20px);white-space:nowrap}
+@media(max-width:720px){.performance-sticky .sticky-timeline .history-controls button,.performance-sticky .sticky-timeline select{min-height:32px;padding:4px 6px;font-size:12px}.performance-sticky .sticky-timeline .timeline-caption{display:none}.performance-sticky details[open]{max-height:32vh;overflow:auto}}
+@media(max-width:360px){.performance-sticky .sticky-timeline .visual-heading{flex-wrap:wrap}.performance-sticky .sticky-timeline .history-controls{margin-left:auto}}
