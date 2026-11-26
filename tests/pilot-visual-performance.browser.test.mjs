@@ -18,7 +18,11 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.match(await page.locator('#visualHero').innerText(),/투자손익 \(입출금 제외\)/);
    assert.match(await page.locator('#performanceMetrics').innerText(),/S&P 500 대비/);
    assert.equal(await page.locator('#visualHero svg').count(),0);
-   assert.equal(await page.locator('#historyAssets + .integrated-timeline #visualSlider').count(),1);
+   assert.equal(await page.locator('#performanceSticky > #performanceTimeline #visualSlider').count(),1);
+   assert.equal(await page.locator('#visualSlider').count(),1);
+   await page.locator('#performanceFilters summary').click();
+   assert.equal(await page.locator('#performanceFilters').getAttribute('open'),null);
+   assert.equal(await page.locator('#visualSlider').isVisible(),true);
    assert.equal(await page.locator('#visualCurrency option[value=MIXED]').count(),1);
    assert.equal(await page.locator('#performanceSticky').evaluate(e=>getComputedStyle(e).position),'sticky');
    assert.match(await page.locator('#visualPeriodSummary').innerText(),/성과 계산 기준일 2026-11-20/);
@@ -42,7 +46,17 @@ test('actual visual dashboard markup: synchronized dates, composition, watchlist
    assert.match(await page.locator('#riskDateDetail').innerText(),/NASDAQ 100/);
    await page.locator('#riskLimitEnabled').check();
    assert.match(await page.locator('#historyDrawdown svg').textContent(),/위험 기준 -30%/);
-   await page.locator('#visualSlider').fill('0');
+   await page.evaluate(()=>{const el=document.getElementById('riskPanel'),sticky=document.getElementById('performanceSticky');window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top-sticky.offsetHeight-12);});
+   const pinned=await page.locator('#performanceSticky').boundingBox();assert.ok(pinned&&pinned.y>=-1&&pinned.y<3,'shared timeline stays at viewport top');
+   assert.equal(await page.locator('#visualSlider').isVisible(),true);
+   const scrollBefore=await page.evaluate(()=>window.scrollY);
+   await page.locator('#visualSlider').press('Home');
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   const after=await page.evaluate(()=>({y:window.scrollY,max:Math.max(0,document.documentElement.scrollHeight-innerHeight),risk:document.getElementById('riskPanel').getBoundingClientRect().top,header:document.getElementById('performanceSticky').getBoundingClientRect().bottom}));
+   assert.ok(Math.abs(after.y-Math.min(scrollBefore,after.max))<5,'date changes do not scroll back to the top: '+JSON.stringify({scrollBefore,...after}));
+   assert.ok(after.y>0,'stay in lower analysis area');
+   assert.match(await page.locator('#riskDateDetail').innerText(),/2026-11-20/);
+   assert.match(await page.locator('#comparisonDateDetail').innerText(),/2026-11-20/);
    assert.equal(await page.locator('#visualDay').innerText(),'2026-11-20');
    assert.match(await page.locator('#visualTreemap g[data-ticker=TSLA]').textContent(),/2주/);
    await page.locator('#visualComparePicks input[value=GOOGL]').check();
@@ -83,5 +97,38 @@ test('standalone performance page requires a verified TEST owner and hides priva
   assert.equal(await page.locator('#portfolioPrivate').isVisible(),false);
   assert.equal(await page.evaluate(()=>window.__reads),1);
   assert.deepEqual(errors,[]);await ctx.close();
+ }finally{await browser.close();}
+});
+
+test('simulator compact portfolio: non-held groups collapse independently and survive redraw',async()=>{
+ const source=await readFile('virtual-trade-simulator.html','utf8');
+ const start=source.indexOf('function renderCompactPortfolioOverview(){'),end=source.indexOf('async function refreshCurrentQuotes(){',start);
+ assert.ok(start>=0&&end>start);
+ const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage({viewport:{width:390,height:850}});
+  await page.setContent('<div id="compactPortfolioOverview"></div><input id="cash" value="5">');
+  await page.evaluate(code=>{
+   const byId=id=>document.getElementById(id),portfolioState={positions:[{ticker:'TSLA',quantity:2,averageCost:100}]},managedSymbols=[{ticker:'TSLA',categories:['보유']},{ticker:'GOOGL',categories:['관심']},{ticker:'PLTR',categories:['거래이력']}];
+   const effectiveSimulatorQuotes=()=>new Map([['TSLA',{close:120}],['GOOGL',{close:100}],['PLTR',{close:50}]]);
+   const formatCompactQuote=v=>v??'—',fmt=v=>String(v),formatPortfolioNumber=v=>String(v),enableTickerChartClicks=()=>{};
+   const table=(headers,rows)=>{const t=document.createElement('table');for(const row of [headers,...rows]){const tr=t.insertRow();for(const v of row)tr.insertCell().textContent=String(v);}return t;};
+   const render=eval('('+code+')');window.__renderCompact=render;render();
+  },source.slice(start,end).trim());
+  const groups=page.locator('details[data-compact-category]');
+  assert.equal(await groups.count(),2);assert.equal(await page.locator('details[data-compact-category][open]').count(),0);
+  assert.match(await page.locator('#compactPortfolioOverview > table').innerText(),/TSLA/);
+  assert.match(await groups.nth(0).locator('summary').innerText(),/관심종목 \(1종목\)/);
+  await groups.nth(0).locator('summary').click();
+  assert.equal(await groups.nth(0).locator('table').isVisible(),true);
+  assert.equal(await groups.nth(1).locator('table').isVisible(),false);
+  await page.evaluate(()=>window.__renderCompact());
+  assert.equal(await groups.nth(0).getAttribute('open'),'');
+  await groups.nth(1).locator('summary').click();
+  assert.equal(await page.locator('details[data-compact-category][open]').count(),2);
+  await groups.nth(0).locator('summary').click();
+  assert.equal(await groups.nth(0).locator('table').isVisible(),false);
+  assert.equal(await groups.nth(1).locator('table').isVisible(),true);
+  assert.match(await page.locator('.portfolio-summary').innerText(),/245/);
  }finally{await browser.close();}
 });

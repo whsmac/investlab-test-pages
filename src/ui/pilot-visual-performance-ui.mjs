@@ -50,7 +50,14 @@ function plot(root,rows,series,{stack=false,percent=false,selected,keys=[],pick,
 }
 export function selectedVisualDate(){return active?.rows[active.index]?.date||null;}
 export function setVisualDate(date){stopVisualPlayback();setSelected(date);}
-function setSelected(date){if(!active)return;const i=active.rows.findIndex(r=>r.date===date);if(i>=0){active.index=i;$('visualSlider').value=String(i);draw();}}
+function drawPreservingScroll(){
+ const top=window.scrollY;
+ draw();
+ const max=Math.max(0,document.documentElement.scrollHeight-window.innerHeight);
+ const target=Math.min(top,max);
+ if(Math.abs(window.scrollY-target)>1)window.scrollTo({top:target,behavior:'instant'});
+}
+function setSelected(date){if(!active)return;const i=active.rows.findIndex(r=>r.date===date);if(i>=0){active.index=i;$('visualSlider').value=String(i);drawPreservingScroll();}}
 function draw(){
  if(!active)return;
  const {rows,keys,colors,market,currency,priceCurrency,tickers}=active;
@@ -148,10 +155,10 @@ export function renderVisualPerformance(rows,market,data,currency,onDateChange,p
  const tickers=[...new Set([...rows.flatMap(r=>[...Object.keys(r.quantities),...r.trades.map(t=>t.symbol)]),...(Array.isArray(data.watchlist)?data.watchlist:[])])].filter(t=>typeof t==='string'&&/^[A-Z][A-Z0-9.-]{0,15}$/.test(t)).sort();
  const oldIndex=rows.findIndex(r=>r.date===saved);if(!rows.length){clearVisualPerformance();$('visualHero').textContent='원장 기록 이후 조회 가능한 날짜가 없습니다.';return;}
  active={rows,market,currency,priceCurrency,keys,colors,tickers,onDateChange,index:oldIndex>=0?oldIndex:Math.max(0,rows.length-1)};
- const slider=$('visualSlider');slider.max=String(Math.max(0,rows.length-1));slider.disabled=rows.length<2;slider.oninput=()=>{stopVisualPlayback();if(!active)return;active.index=Number(slider.value);draw();};
- $('visualPrev').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.max(0,active.index-1);draw();};$('visualNext').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.min(rows.length-1,active.index+1);draw();};
- $('visualPlay').onclick=()=>{if(!active||rows.length<2)return;if(playTimer){stopVisualPlayback();return;}if(active.index===rows.length-1)active.index=0;$('visualPlay').textContent='Ⅱ 정지';draw();playTimer=setInterval(()=>{if(!active||document.hidden||$('historyPanel').hidden||$('portfolioPrivate').hidden||active.index>=rows.length-1){stopVisualPlayback();return;}active.index++;draw();},600);};
- $('visualGranularity').onchange=draw;
+ const slider=$('visualSlider');slider.max=String(Math.max(0,rows.length-1));slider.disabled=rows.length<2;slider.oninput=()=>{stopVisualPlayback();if(!active)return;active.index=Number(slider.value);drawPreservingScroll();};
+ $('visualPrev').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.max(0,active.index-1);drawPreservingScroll();};$('visualNext').onclick=()=>{stopVisualPlayback();if(!active)return;active.index=Math.min(rows.length-1,active.index+1);drawPreservingScroll();};
+ $('visualPlay').onclick=()=>{if(!active||rows.length<2)return;if(playTimer){stopVisualPlayback();return;}if(active.index===rows.length-1)active.index=0;$('visualPlay').textContent='Ⅱ 정지';drawPreservingScroll();playTimer=setInterval(()=>{if(!active||document.hidden||$('historyPanel').hidden||$('portfolioPrivate').hidden||active.index>=rows.length-1){stopVisualPlayback();return;}active.index++;drawPreservingScroll();},600);};
+ $('visualGranularity').onchange=drawPreservingScroll;
  $('riskPicks').onchange=drawRisk;$('riskLimitEnabled').onchange=drawRisk;$('riskLimit').onchange=drawRisk;
  const picks=$('visualComparePicks');picks.replaceChildren();
  const fixed={portfolio:'내 운용성과',ndx:'NASDAQ 100',spx:'S&P 500'};
