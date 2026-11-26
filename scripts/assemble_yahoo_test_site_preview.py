@@ -20,6 +20,8 @@ def public_asset(relative: Path) -> bool:
     return relative.parts[0] in PUBLIC_DIRS and relative.suffix.lower() in ASSET_EXTENSIONS
 
 REQUIRED = ("index.html", "test-yahoo-price-review.html",
+            "investment-strategy-tracker.html", "src/ui/pilot-strategy-tracker-page.mjs",
+            "src/strategy/strategy-tracker-storage.mjs", "src/strategy/strategy-tracker-document.mjs",
             "src/market/load-published-yahoo-review.mjs",
             "src/market/yahoo-review-chart-series.mjs",
             "src/market/yahoo-chart-freshness.mjs",
