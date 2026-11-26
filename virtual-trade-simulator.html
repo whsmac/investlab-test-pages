@@ -145,7 +145,10 @@ function refreshManagedSymbols(verified=[]){
 }
 byId('refreshManagedSymbols').addEventListener('click',()=>void refreshOnlineAccountLedger());
 refreshManagedSymbols();
-const fmt=v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:8});
+// Presentation only: keep raw numeric inputs, calculations, saved strategies and exports intact.
+const fmt=(v,decimals=0)=>v===null||v===undefined||v===''||!Number.isFinite(Number(v))?'—':(Math.abs(Number(v))<0.5*10**(-decimals)?0:Number(v)).toLocaleString('ko-KR',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+const fmtPrice=v=>fmt(v,1);
+const fmtFx=v=>fmt(v,1);
 const table=(headers,rows)=>{const t=document.createElement('table'),thead=t.createTHead(),tr=thead.insertRow();for(const h of headers){const th=document.createElement('th');th.textContent=h;tr.append(th);}const body=t.createTBody();for(const row of rows){const r=body.insertRow();for(const value of row){const cell=r.insertCell();cell.textContent=String(value);}}return t;};
 let strategyRankCriterion='value';
 let strategyNameQuery='';
@@ -169,14 +172,14 @@ function calculate(){
   const resolved=resolvePassiveTerminalPrices({positions,scenarios,manualPrices,closes:currentQuotePrices,dates:currentQuoteDates});
   const {prices,automatic,missing}=resolved;
   if(missing.length)throw Error('최종 가정 주가 필요: '+missing.join(', ')+'. 거래 대상은 직접 입력하고, 거래하지 않는 보유종목은 최근 종가(7일 이내) 조회 후 다시 계산하거나 왼쪽에 직접 입력하세요.');
-  const autoNotice=automatic.length?' · 거래 없는 보유종목 최근 종가 가정: '+automatic.map(q=>q.ticker+' USD '+fmt(q.price)+' ('+q.date+')').join(', '):'';
+  const autoNotice=automatic.length?' · 거래 없는 보유종목 최근 종가 가정: '+automatic.map(q=>q.ticker+' USD '+fmtPrice(q.price)+' ('+q.date+')').join(', '):'';
   const result=compareScenarios({cash,positions},scenarios,prices),scenario=result.scenarios[0];
   if(testOnlineBaseline){
    const original=new Map(testOnlineBaseline.map(x=>[x.ticker,x]));
    const symbols=[...new Set([...original.keys(),...Object.keys(scenario.final.positions)])].sort();
    const rows=symbols.map(t=>{
     const baseline=original.get(t),before=baseline?.quantity??0,after=scenario.final.positions[t]?.quantity??0;
-    return [t,fmt(before),baseline?fmt(baseline.averageCost):'—',fmt(after),(after-before>0?'+':'')+fmt(after-before)];
+    return [t,fmt(before),baseline?fmtPrice(baseline.averageCost):'—',fmt(after),(after-before>0?'+':'')+fmt(after-before)];
    });
    byId('testOnlineBaselineRows').append(table(['종목','온라인 기준 수량','온라인 평균취득단가 USD','가상 결과 수량','수량 증감'],rows));
    byId('testOnlineBaselineCompare').hidden=false;
@@ -193,7 +196,7 @@ function calculate(){
    const title=document.createElement('h4');title.textContent=sc.name;taxEditor.append(title);
    const rows=sc.steps.filter(step=>step.side==='sell').map((step,i)=>[String(i+1),step.ticker,fmt(step.quantity),fmt(step.tradePnL),fmt(Math.round(step.tradePnL*fx))]);
    taxEditor.append(table(['매도 순서','종목','수량 (주)','실현손익 USD','환산 실현손익 KRW'],rows));
-   const total=document.createElement('p');total.textContent='시나리오 실현손익 합계: '+fmt(Math.round(sc.final.realizedPnL*fx))+' KRW (환율 '+fmt(fx)+')';taxEditor.append(total);
+   const total=document.createElement('p');total.textContent='시나리오 실현손익 합계: '+fmt(Math.round(sc.final.realizedPnL*fx))+' KRW (환율 '+fmtFx(fx)+')';taxEditor.append(total);
   }
   if(result.scenarios.length>1){
    byId('allStrategyTitle').hidden=false;
@@ -320,7 +323,7 @@ function calculate(){
     ['TSLA 최초 대비 수량 증감 (주)','0',...result.scenarios.map(sc=>{const delta=(sc.final.positions.TSLA?.quantity??0)-startingTsla;return (delta>0?'+':'')+fmt(delta);})],
     ['최종 평가총액 USD',fmt(result.baseline.terminalValue),...result.scenarios.map(s=>fmt(s.terminalValue))],
     ['보유 대비 차이 USD','—',...result.scenarios.map(s=>(s.deltaVsHold>0?'+':'')+fmt(s.deltaVsHold))],
-    ['보유 대비 차이 (%)','—',...result.scenarios.map(s=>result.baseline.terminalValue>0?(s.deltaVsHold>0?'+':'')+(s.deltaVsHold/result.baseline.terminalValue*100).toFixed(2)+'%':'산출 불가')],
+    ['보유 대비 차이 (%)','—',...result.scenarios.map(s=>result.baseline.terminalValue>0?(s.deltaVsHold>0?'+':'')+fmt(s.deltaVsHold/result.baseline.terminalValue*100)+'%':'산출 불가')],
     ['누적 실현손익 USD','0',...result.scenarios.map(s=>fmt(s.final.realizedPnL))],
     ['추가 예상 양도세 KRW','—',...taxResults.map(t=>fmt(t.incrementalTaxKrw))],
     ['추가 예상세액 환산 USD','—',...taxResults.map(t=>fmt(t.incrementalTaxKrw/fx))],
@@ -391,7 +394,7 @@ function calculate(){
   const detailedRows=detailedTickers.map(t=>{
    const before=result.baseline.final.positions[t]?.quantity??0,after=scenario.final.positions[t]?.quantity??0;
    const price=prices[t];
-   return [t,fmt(before),fmt(after),fmt(after-before),fmt(price),fmt(before*price),fmt(after*price),fmt((after-before)*price)];
+   return [t,fmt(before),fmt(after),fmt(after-before),fmtPrice(price),fmt(before*price),fmt(after*price),fmt((after-before)*price)];
   });
   byId('finalValuation').append(table(['종목','기준 수량','가상 수량','증감','가정 주가 USD','기준 평가액 USD','가상 평가액 USD','평가액 차이 USD'],detailedRows));
   byId('finalValuation').append(table(['항목','금액 USD'],[
@@ -408,7 +411,7 @@ function calculate(){
    const after=s.final.positions[t]?.quantity??0;
    const price=prices[t];
    if(price===undefined)throw Error('최종 가정 주가 누락: '+t);
-   return [s.name,t,fmt(before),fmt(after),fmt(after-before),fmt(price),fmt(before*price),fmt(after*price),fmt((after-before)*price)];
+   return [s.name,t,fmt(before),fmt(after),fmt(after-before),fmtPrice(price),fmt(before*price),fmt(after*price),fmt((after-before)*price)];
   }));
   byId('strategyHoldings').append(table(['전략','종목','기준 수량','가상 수량','수량 증감','가정 주가 USD','기준 평가액 USD','가상 평가액 USD','평가 차이 USD'],perStrategyRows));
   byId('strategyHoldings').append(table(['전략','기준 전체 평가총액 USD','가상 전체 평가총액 USD','평가 차이 USD','최종 현금 USD'],result.scenarios.map(s=>[s.name,fmt(result.baseline.terminalValue),fmt(s.terminalValue),fmt(s.deltaVsHold),fmt(s.final.cash)])));
@@ -420,7 +423,7 @@ function calculate(){
     taxResults[i]?fmt(taxResults[i].incrementalTaxKrw):'미입력']);
   byId('taxBasis').append(table(['전략','기존 실현손익 KRW','가상 실현손익 KRW','거래 전 예상세액 KRW','거래 후 예상세액 KRW','추가 예상세액 KRW'],basisRows));
   const fxNotice=document.createElement('p');fxNotice.className='notice';
-  fxNotice.textContent='단순 적용 환율: '+fmt(fx)+' KRW/USD · 매도별 USD 실현손익을 동일 환율로 환산한 추정치입니다. 실제 신고 세액과 다를 수 있습니다.';
+  fxNotice.textContent='단순 적용 환율: '+fmtFx(fx)+' KRW/USD · 매도별 USD 실현손익을 동일 환율로 환산한 추정치입니다. 실제 신고 세액과 다를 수 있습니다.';
   byId('taxBasis').append(fxNotice);
   const stageRows=taxResults.flatMap((tax,i)=>tax?tax.stages.map(stage=>[result.scenarios[i].name,stage.stage,fmt(stage.gainKrw),fmt(stage.cumulativeProjectedTaxKrw),fmt(stage.stageIncrementalTaxKrw)]):[]);
   if(stageRows.length)byId('taxStages').append(table(['전략','매도 순서','원화 실현손익','연간 예상 세액 KRW','직전 단계 대비 세액 변화 KRW'],stageRows));
@@ -435,7 +438,7 @@ function calculate(){
    fmt(step.cumulativeRealizedPnL)
   ]));
   if(allStepRows.length)byId('allStrategySteps').append(table(['전략','단계','거래','종목','거래 수량','거래 후 종목 수량','단계 현금 증감 USD','거래 후 현금 USD','TSLA 잔여 (주)','TSLA 최초 대비 증감 (주)','누적 실현손익 USD'],allStepRows));
-  byId('steps').append(table(['순서','거래','종목','거래 수량','체결가','수수료','거래 후 해당 종목 수량','거래 후 현금','누적 실현손익'],scenario.steps.map(s=>[s.index+1,s.side==='buy'?'매수':'매도',s.ticker,fmt(s.quantity),fmt(s.price),fmt(s.fee),fmt(s.positions[s.ticker]?.quantity??0),fmt(s.cash),fmt(s.cumulativeRealizedPnL)])));
+  byId('steps').append(table(['순서','거래','종목','거래 수량','체결가','수수료','거래 후 해당 종목 수량','거래 후 현금','누적 실현손익'],scenario.steps.map(s=>[s.index+1,s.side==='buy'?'매수':'매도',s.ticker,fmt(s.quantity),fmtPrice(s.price),fmt(s.fee),fmt(s.positions[s.ticker]?.quantity??0),fmt(s.cash),fmt(s.cumulativeRealizedPnL)])));
   const tickers=new Set([...Object.keys(result.baseline.final.positions),...Object.keys(scenario.final.positions)]);
   byId('holdings').append(table(['종목','계속 보유 주식 수','가상 거래 후 주식 수'],[...tickers].map(t=>[t,fmt(result.baseline.final.positions[t]?.quantity??0),fmt(scenario.final.positions[t]?.quantity??0)])));
   byId('status').textContent='계산 완료 · 실제 거래 및 데이터베이스 저장 없음'+autoNotice;
@@ -493,7 +496,7 @@ try{
   if(new Set(data.positions.map(x=>x.ticker)).size!==data.positions.length)throw Error("종목 중복");
   testHandoffPositions=data.positions;
   byId("testOnlineSimulatorImport").hidden=false;
-  byId("testOnlineSimulatorPreview").textContent=data.positions.map(x=>x.ticker+" "+x.quantity+"주 · 평균 "+x.averageCost+" USD").join(" / ");
+  byId("testOnlineSimulatorPreview").textContent=data.positions.map(x=>x.ticker+" "+fmt(x.quantity)+"주 · 평균 "+fmtPrice(x.averageCost)+" USD").join(" / ");
  }
 }catch(error){byId("testOnlineSimulatorImport").hidden=false;byId("testOnlineSimulatorStatus").textContent="TEST 가져오기 실패: "+error.message;}
 byId("testOnlineSimulatorCancel").addEventListener("click",()=>{testHandoffPositions=null;byId("testOnlineSimulatorImport").hidden=true;});
@@ -599,7 +602,7 @@ function renderTickerChart(){
  const w=560,h=240,pad=32,min=Math.min(...data.map(x=>x.price)),max=Math.max(...data.map(x=>x.price)),span=max-min||1;
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 560 240');svg.setAttribute('role','img');svg.setAttribute('aria-label',chartTicker+' 과거 종가 차트');
  const poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',data.map((x,i)=>(pad+i*(w-2*pad)/(data.length-1)).toFixed(1)+','+(h-pad-(x.price-min)/span*(h-2*pad)).toFixed(1)).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','#83baff');poly.setAttribute('stroke-width','2.5');svg.append(poly);root.append(svg);
- byId('tickerChartStatus').textContent=chartTicker+' · '+data[0].date+' ~ '+last+' · '+data.length+'개 종가 · 마지막 '+Math.round(data.at(-1).price).toLocaleString('ko-KR')+' USD (CSV 기준, 실시간 아님)';
+ byId('tickerChartStatus').textContent=chartTicker+' · '+data[0].date+' ~ '+last+' · '+data.length+'개 종가 · 마지막 '+fmtPrice(data.at(-1).price)+' USD (CSV 기준, 실시간 아님)';
 }
 async function openTickerChart(ticker){
  chartTicker=ticker;const dialog=byId('tickerChartDialog');if(!dialog)return;
@@ -738,7 +741,7 @@ function updateInitialValuation(){
   const {positions,prices}=portfolioJson();
   const rows=Object.entries(positions).map(([t,p])=>{
    if(prices[t]===undefined)throw Error(t+'의 최종 가정 주가를 입력하세요.');
-   return [t,fmt(p.quantity),fmt(p.averageCost),fmt(p.quantity*p.averageCost),fmt(prices[t]),fmt(p.quantity*prices[t])];
+   return [t,fmt(p.quantity),fmtPrice(p.averageCost),fmt(p.quantity*p.averageCost),fmtPrice(prices[t]),fmt(p.quantity*prices[t])];
   });
   const cost=Object.values(positions).reduce((sum,p)=>sum+p.quantity*p.averageCost,0);
   const stock=Object.entries(positions).reduce((sum,[t,p])=>sum+p.quantity*prices[t],0);
@@ -870,8 +873,8 @@ function loadPortfolioPositions(){
 }
 let selectedOpeningReview=null;
 byId('accountOpeningFile').addEventListener('change',async()=>{selectedOpeningReview=null;const select=byId('accountOpeningSelect');select.replaceChildren();byId('accountOpeningComparison').replaceChildren();byId('accountScenarioComparison').replaceChildren();try{const file=byId('accountOpeningFile').files?.[0];if(!file||file.size>1048576)throw Error('1MiB 이하의 원장 대조 JSON 파일을 선택하세요');const saved=JSON.parse(await file.text());if(!saved.inputs?.accounts?.length||saved.inputs.accounts.length>100)throw Error('계좌 목록 오류');for(const account of saved.inputs.accounts){extractSimulatorAccountOpening({saved,accountId:account.id});const option=document.createElement('option');option.value=account.id;option.textContent=account.name;option.selected=true;select.append(option)}selectedOpeningReview=saved;byId('accountOpeningStatus').textContent='계좌 '+select.options.length+'개 확인 · 전체 계좌가 기본 선택되었습니다. 필요하면 비교할 계좌만 선택하세요';}catch(e){byId('accountOpeningStatus').textContent='파일 검토 실패: '+String(e.message??e)}});
-byId('compareAccountOpenings').addEventListener('click',()=>{const root=byId('accountOpeningComparison');root.replaceChildren();try{if(!selectedOpeningReview)throw Error('검토된 원장 대조 파일을 먼저 선택하세요');const ids=[...byId('accountOpeningSelect').selectedOptions].map(o=>o.value);if(!ids.length)throw Error('비교할 계좌를 하나 이상 선택하세요');const groups=ids.map(id=>[id]);if(ids.length>1)groups.push(ids);const comparison=compareSimulatorAccountOpenings({saved:selectedOpeningReview,accountGroups:groups});const table=document.createElement('table');table.style.width='100%';const head=table.insertRow();for(const label of ['구분','보유종목','취득원가 합계 USD','시작 현금 USD','선택']){const cell=document.createElement('th');cell.textContent=label;head.append(cell)}for(const row of comparison.rows){const tr=table.insertRow();for(const value of [row.accountNames.join(' + '),String(row.positionCount),row.totalCostUsd.toLocaleString('ko-KR',{maximumFractionDigits:2}),row.usdCash.toLocaleString('ko-KR',{maximumFractionDigits:2})]){const cell=tr.insertCell();cell.textContent=value}const cell=tr.insertCell(),button=document.createElement('button');button.type='button';button.textContent='이 기준 사용';button.addEventListener('click',()=>{const chosen=new Set(row.accountIds);for(const option of byId('accountOpeningSelect').options)option.selected=chosen.has(option.value);byId('loadAccountOpening').click()});cell.append(button)}root.append(table);byId('accountOpeningStatus').textContent='개별 계좌와 전체 합산의 시작 취득원가·현금을 비교했습니다. 최종 평가액은 가정 주가 입력 후 계산하세요';}catch(e){byId('accountOpeningStatus').textContent='비교 실패: '+String(e.message??e)}});
-byId('loadAccountOpening').addEventListener('click',()=>{try{if(!selectedOpeningReview)throw Error('검토된 파일을 먼저 선택하세요');const selectedIds=[...byId('accountOpeningSelect').selectedOptions].map(option=>option.value);const opening=extractSimulatorCombinedOpening({saved:selectedOpeningReview,accountIds:selectedIds});if(!confirm(opening.accountNames.join('·')+' 계좌의 시작 보유종목·달러현금으로 현재 입력을 교체합니다. 가상 거래와 기존 가정 주가는 유지합니다. 계속하시겠습니까?'))return;simulatorInputRevision++;invalidateCalculatedResults();portfolioState.positions=opening.positions.map(p=>({...p}));byId('cash').value=String(opening.usdCash);const known=new Set(portfolioState.prices.map(p=>String(p.ticker).toUpperCase()));for(const p of opening.positions)if(!known.has(p.ticker)){portfolioState.prices.push({ticker:p.ticker,price:''});known.add(p.ticker)}renderPortfolio();try{syncPortfolioJson()}catch{}updateInitialValuation();byId('accountOpeningStatus').textContent=opening.accountNames.join('·')+' 계좌 시작값 반영 완료 · 종목 '+opening.positions.length+'개 · USD 현금 '+opening.usdCash.toLocaleString('ko-KR')+' · 서버 미반영 · 가정 주가 확인 후 다시 계산하세요';}catch(e){byId('accountOpeningStatus').textContent='계좌 반영 실패: '+String(e.message??e)}});
+byId('compareAccountOpenings').addEventListener('click',()=>{const root=byId('accountOpeningComparison');root.replaceChildren();try{if(!selectedOpeningReview)throw Error('검토된 원장 대조 파일을 먼저 선택하세요');const ids=[...byId('accountOpeningSelect').selectedOptions].map(o=>o.value);if(!ids.length)throw Error('비교할 계좌를 하나 이상 선택하세요');const groups=ids.map(id=>[id]);if(ids.length>1)groups.push(ids);const comparison=compareSimulatorAccountOpenings({saved:selectedOpeningReview,accountGroups:groups});const table=document.createElement('table');table.style.width='100%';const head=table.insertRow();for(const label of ['구분','보유종목','취득원가 합계 USD','시작 현금 USD','선택']){const cell=document.createElement('th');cell.textContent=label;head.append(cell)}for(const row of comparison.rows){const tr=table.insertRow();for(const value of [row.accountNames.join(' + '),String(row.positionCount),fmt(row.totalCostUsd),fmt(row.usdCash)]){const cell=tr.insertCell();cell.textContent=value}const cell=tr.insertCell(),button=document.createElement('button');button.type='button';button.textContent='이 기준 사용';button.addEventListener('click',()=>{const chosen=new Set(row.accountIds);for(const option of byId('accountOpeningSelect').options)option.selected=chosen.has(option.value);byId('loadAccountOpening').click()});cell.append(button)}root.append(table);byId('accountOpeningStatus').textContent='개별 계좌와 전체 합산의 시작 취득원가·현금을 비교했습니다. 최종 평가액은 가정 주가 입력 후 계산하세요';}catch(e){byId('accountOpeningStatus').textContent='비교 실패: '+String(e.message??e)}});
+byId('loadAccountOpening').addEventListener('click',()=>{try{if(!selectedOpeningReview)throw Error('검토된 파일을 먼저 선택하세요');const selectedIds=[...byId('accountOpeningSelect').selectedOptions].map(option=>option.value);const opening=extractSimulatorCombinedOpening({saved:selectedOpeningReview,accountIds:selectedIds});if(!confirm(opening.accountNames.join('·')+' 계좌의 시작 보유종목·달러현금으로 현재 입력을 교체합니다. 가상 거래와 기존 가정 주가는 유지합니다. 계속하시겠습니까?'))return;simulatorInputRevision++;invalidateCalculatedResults();portfolioState.positions=opening.positions.map(p=>({...p}));byId('cash').value=String(opening.usdCash);const known=new Set(portfolioState.prices.map(p=>String(p.ticker).toUpperCase()));for(const p of opening.positions)if(!known.has(p.ticker)){portfolioState.prices.push({ticker:p.ticker,price:''});known.add(p.ticker)}renderPortfolio();try{syncPortfolioJson()}catch{}updateInitialValuation();byId('accountOpeningStatus').textContent=opening.accountNames.join('·')+' 계좌 시작값 반영 완료 · 종목 '+opening.positions.length+'개 · USD 현금 '+fmt(opening.usdCash)+' · 서버 미반영 · 가정 주가 확인 후 다시 계산하세요';}catch(e){byId('accountOpeningStatus').textContent='계좌 반영 실패: '+String(e.message??e)}});
 let onlineAccountLedger=null,lastVerifiedOnlineUserId=null,onlineLedgerOwnerChanged=false;
 function refreshPilotLedgerAccountOptions(){
  const select=byId('pilotLedgerAccount'),previous=select.value;
@@ -900,7 +903,7 @@ function getOnlineAccountOpening(){
  const positions=result.holdings.map(h=>({ticker:h.symbol,quantity:h.qty,averageCost:h.averageCost}));
  if(!positions.every(p=>/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.ticker)&&Number.isFinite(p.quantity)&&p.quantity>0&&Number.isFinite(p.averageCost)&&p.averageCost>=0))throw Error('원장 보유정보 오류');
  const name=accountId==='ALL'?'전체 계좌':ledger.accounts.find(a=>a.id===accountId)?.name||'선택 계좌';
- byId('onlineLedgerPreviewStatus').textContent='TEST 서버 '+name+' · 보유 '+positions.length+'종목 · 현금 USD '+usdCash.toLocaleString('ko-KR',{maximumFractionDigits:2})+' · 갱신 '+(onlineAccountLedger.updatedAt||'미확인')+' · 읽기 전용';
+ byId('onlineLedgerPreviewStatus').textContent='TEST 서버 '+name+' · 보유 '+positions.length+'종목 · 현금 USD '+fmt(usdCash)+' · 갱신 '+(onlineAccountLedger.updatedAt||'미확인')+' · 읽기 전용';
  return {positions,cash:usdCash,name};
 }
 function updateOnlineLedgerApplyPrompt(opening){
@@ -915,7 +918,7 @@ function updateOnlineLedgerApplyPrompt(opening){
  if(!diff.matches){
   const details=[];
   if(diff.changedTickers.length)details.push('수량·평단 변경 '+diff.changedTickers.slice(0,5).join(', ')+(diff.changedTickers.length>5?' 외 '+(diff.changedTickers.length-5)+'종목':''));
-  if(diff.cashChanged)details.push('USD 현금 '+Number(byId('cash').value).toLocaleString('en-US',{maximumFractionDigits:2})+' → '+opening.cash.toLocaleString('en-US',{maximumFractionDigits:2}));
+  if(diff.cashChanged)details.push('USD 현금 '+fmt(Number(byId('cash').value))+' → '+fmt(opening.cash));
   button.textContent+=' · '+details.join(' · ');
  }
 }
@@ -947,7 +950,7 @@ function applySelectedOnlineAccountToSimulator(){
   try{syncPortfolioJson();}catch{}
   scheduleWorkingDraft();void refreshCurrentQuotes();
   status.textContent='선택한 '+opening.name+'을(를) 가상거래 시작값에 자동 적용했습니다 · 보유 '+
-    opening.positions.length+'종목 · 현금 USD '+opening.cash.toLocaleString('ko-KR')+
+    opening.positions.length+'종목 · 현금 USD '+fmt(opening.cash)+
     (added?' · 전략 전용 종목 '+added+'개 목표 주가 확인 필요':'')+
     ' · 기존 전략과 예상 주가는 유지 · 실제 원장 변경 없음';
  }catch(error){status.textContent='계좌 자동 적용 실패: '+String(error.message||error)+' · 기존 입력은 유지했습니다.';}
@@ -1034,7 +1037,7 @@ byId('loadPilotLedgerPositions').addEventListener('click',()=>{
   if(!Number.isFinite(result.cash.USD)||result.cash.USD<0)throw Error('통합원장의 USD 현금잔고가 음수입니다. 거래내역을 확인하세요.');
   const positions=result.holdings.map(h=>({ticker:h.symbol,quantity:h.qty,averageCost:h.averageCost}));
   if(!positions.every(p=>/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.ticker)&&Number.isFinite(p.quantity)&&p.quantity>0&&Number.isFinite(p.averageCost)&&p.averageCost>=0))throw Error('보유종목 코드·수량·평균단가를 확인하세요.');
-  if(!confirm('통합원장 '+(selectedAccount==='ALL'?'전체 계좌':data.accounts.find(a=>a.id===selectedAccount)?.name)+'의 보유종목 '+positions.length+'개와 USD 현금 '+result.cash.USD.toLocaleString('ko-KR')+'을 시작값에 적용합니다. 기존 전략·가정 주가는 유지합니다. 계속하시겠습니까?'))return;
+  if(!confirm('통합원장 '+(selectedAccount==='ALL'?'전체 계좌':data.accounts.find(a=>a.id===selectedAccount)?.name)+'의 보유종목 '+positions.length+'개와 USD 현금 '+fmt(result.cash.USD)+'을 시작값에 적용합니다. 기존 전략·가정 주가는 유지합니다. 계속하시겠습니까?'))return;
   simulatorInputRevision++;
   invalidateCalculatedResults();
   portfolioState.positions=positions;
@@ -1110,7 +1113,7 @@ function readStrategies(){
    forecastPrices:forecastSnapshot(portfolioState.prices)};
  });
 }
-byId('compareAccountScenarios').addEventListener('click',()=>{const root=byId('accountScenarioComparison');root.replaceChildren();try{if(!selectedOpeningReview)throw Error('원장 대조 JSON 파일을 먼저 선택하세요');const ids=[...byId('accountOpeningSelect').selectedOptions].map(o=>o.value);if(!ids.length)throw Error('비교할 계좌를 하나 이상 선택하세요');const groups=ids.map(id=>[id]);if(ids.length>1)groups.push(ids);const scenarios=readStrategies();const terminalPrices={};for(const p of portfolioState.prices){const ticker=String(p.ticker).trim().toUpperCase();if(!ticker||p.price===''||!Number.isFinite(Number(p.price))||Number(p.price)<0)continue;terminalPrices[ticker]=Number(p.price)}const compared=compareAccountScenarios({saved:selectedOpeningReview,accountGroups:groups,scenarios,terminalPrices});const csvButton=document.createElement('button');csvButton.type='button';csvButton.textContent='거래 단계별 현금흐름 CSV 저장';csvButton.addEventListener('click',()=>{const csv=accountScenarioStepsCsv(compared);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='investlab-test-account-scenario-steps.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)});root.append(csvButton);const summaryCsvButton=document.createElement('button');summaryCsvButton.type='button';summaryCsvButton.textContent='계좌별 비교 요약 CSV 저장';summaryCsvButton.addEventListener('click',()=>{const csv=accountScenarioSummaryCsv(compared);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='investlab-test-account-scenario-summary.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)});root.append(summaryCsvButton);const presentation=summarizeAccountScenarioResults(compared);const summary=document.createElement('p');summary.textContent='실행 가능 '+presentation.available+'건 · 실행 불가 '+presentation.unavailable+'건 · 최대 보유 유지 대비 '+(presentation.bestDelta===null?'—':presentation.bestDelta.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD');root.append(summary);const comparisons=compareAccountRealizedGains(compared);if(comparisons.length){const heading=document.createElement('h4');heading.textContent='계좌별 실현손익 합계와 통합 가중평균 기준 비교';root.append(heading);const note=document.createElement('p');note.className='hint';note.textContent='통합 가중평균 취득단가로 계산한 가상 실현손익은 개별 계좌별 실현손익 합계와 다를 수 있습니다. 아래 차이는 통합 기준 − 계좌별 합계이며, 세금 신고용 손익이나 실제 계좌 간 손익통산 결과가 아닙니다.';root.append(note);const list=document.createElement('ul');for(const item of comparisons){const li=document.createElement('li');const fmt=n=>(n>0?'+':'')+n.toLocaleString('ko-KR',{maximumFractionDigits:2});li.textContent=item.scenario+' · '+item.accounts+' · 계좌별 합계 '+fmt(item.accountSumRealizedPnL)+' USD / 통합 기준 '+fmt(item.blendedRealizedPnL)+' USD / 차이 '+fmt(item.difference)+' USD'+(item.hasDifference?' (취득단가 합산 방식 차이 가능)':' (차이 없음)');list.append(li)}root.append(list)}const taxNotice=document.createElement('p');taxNotice.className='notice';taxNotice.textContent='세금 추정 안내: 위 계좌별 실현손익은 USD 기준 가상 계산값입니다. ISA·연금 등 계좌 유형에 따라 과세 방식이 다를 수 있으며, 계좌별 합계 또는 통합 가중평균 손익을 세금 신고용 원화 손익으로 자동 적용하지 않습니다. 세금 추정에는 실제 과세 대상 거래의 원화 기준 취득·양도금액과 적용 환율을 별도로 확인해야 합니다.';root.append(taxNotice);const table=document.createElement('table');table.style.width='100%';table.style.minWidth='1100px';table.style.borderCollapse='collapse';const head=table.insertRow();for(const label of ['계좌','계산 기준','전략','실행 상태','최종 평가액 USD','보유 유지 대비 USD','시작 현금 USD','최종 현금 USD','현금 증감 USD','실현손익 USD (계좌 기준)','수량 변화']){const th=document.createElement('th');th.textContent=label;th.style.padding='8px';th.style.textAlign='left';th.style.whiteSpace='nowrap';head.append(th)}for(const result of presentation.rows){const tr=table.insertRow();const combinedBasis=result.accountBasis==='전체 합산 (가중평균)';tr.dataset.accountBasis=combinedBasis?'combined':'individual';tr.style.borderTop=combinedBasis?'2px solid currentColor':'1px solid rgba(128,128,128,.3)';const available=result.status==='CALCULATED';const delta=result.deltaVsHold;const values=[result.account,result.accountBasis,result.name,available?'실행 가능':result.diagnostic?'실행 불가 · '+result.diagnostic.tradeNumber+'단계 '+result.diagnostic.ticker+' '+(result.diagnostic.kind==='CASH'?'현금':'수량')+' 부족 '+result.diagnostic.shortfall.toLocaleString('ko-KR',{maximumFractionDigits:8})+(result.diagnostic.kind==='CASH'?' USD':'주')+' (필요 '+result.diagnostic.required.toLocaleString('ko-KR',{maximumFractionDigits:8})+', 보유 '+result.diagnostic.available.toLocaleString('ko-KR',{maximumFractionDigits:8})+')':'실행 불가: '+result.reason,available?result.terminalValue.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available?(delta>0?'+':'')+delta.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',result.openingCash.toLocaleString('ko-KR',{maximumFractionDigits:2}),available?result.finalCash.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available?(result.cashChange>0?'+':'')+result.cashChange.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available&&result.realizedPnL!==null?(result.realizedPnL>0?'+':'')+result.realizedPnL.toLocaleString('ko-KR',{maximumFractionDigits:2}):'—',available?(result.quantityChanges.length?result.quantityChanges.map(p=>p.ticker+' '+(p.change>0?'+':'')+p.change.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · '):'변동 없음'):'—'];for(const [index,value] of values.entries()){const cell=tr.insertCell();cell.textContent=value;cell.style.padding='8px';cell.style.verticalAlign='top';if(index>=4&&index<=9){cell.style.textAlign='right';cell.style.fontVariantNumeric='tabular-nums';cell.style.whiteSpace='nowrap'}if(index===0||index===1){cell.style.fontWeight=combinedBasis?'700':'400'}if(index===3){cell.style.fontWeight='700';cell.style.color=available?'#71d7a0':'#ffb78a'}if(index===5&&available){cell.style.fontWeight='700';cell.style.color=delta>0?'#71d7a0':delta<0?'#ffb78a':'inherit'}}}root.append(table);const failureTitle=document.createElement('h4');failureTitle.textContent='실패 직전까지 실행 가능한 거래 내역';root.append(failureTitle);for(const result of presentation.rows){if(result.status!=='UNAVAILABLE'||!result.diagnostic)continue;const d=result.diagnostic;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent=result.account+' · '+result.name+' · '+d.tradeNumber+'단계 실패 (이전 '+d.completedSteps+'단계 계산 완료)';details.append(summary);const info=document.createElement('p');info.textContent='실패 직전 현금 '+d.cashBefore.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD · 보유 '+(Object.entries(d.positionsBefore).map(([ticker,quantity])=>ticker+' '+quantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'없음');details.append(info);if(result.adjustment){const a=result.adjustment;const tip=document.createElement('p');tip.textContent=a.kind==='CASH'?'실패 거래 조정안: 추가 현금 '+a.additionalCashUsd.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD 또는 매수수량 최대 '+a.maxAffordableQuantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주':'실패 거래 조정안: 매도수량 '+a.reduceQuantityBy.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주 감소 또는 최대 '+a.maxSellQuantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주 매도';details.append(tip);const note=document.createElement('small');note.textContent=a.note;details.append(note)}if(result.adjustmentPreview){const p=result.adjustmentPreview;const status=document.createElement('p');status.style.fontWeight='700';status.textContent=p.status==='CALCULATED'?'조정 후 전체 전략 실행 가능 · 최종 현금 '+p.finalCash.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD · 보유 유지 대비 '+p.deltaVsHold.toLocaleString('ko-KR',{maximumFractionDigits:2})+' USD · 최종 수량 '+(Object.entries(p.finalPositions).map(([ticker,qty])=>ticker+' '+qty.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'없음'):p.status==='STILL_UNAVAILABLE'?'조정 후에도 실행 불가'+(p.nextFailedTradeNumber?' ('+p.nextFailedTradeNumber+'단계)':'')+' · '+p.reason:'조정안으로 재계산 불가 · '+p.reason;details.append(status)}if(d.completedHistory.length){const table=document.createElement('table');table.style.width='100%';const header=table.insertRow();for(const label of ['단계','거래','종목','수량','거래 후 현금 USD','거래 후 보유수량']){const th=document.createElement('th');th.textContent=label;header.append(th)}for(const step of d.completedHistory){const tr=table.insertRow();for(const value of [step.index,step.side==='buy'?'매수':'매도',step.ticker,step.quantity.toLocaleString('ko-KR',{maximumFractionDigits:8}),step.cashAfter.toLocaleString('ko-KR',{maximumFractionDigits:2}),Object.entries(step.positionsAfter).map(([ticker,quantity])=>ticker+' '+quantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'없음']){const td=tr.insertCell();td.textContent=String(value);td.style.padding='6px'}}details.append(table)}else{const empty=document.createElement('p');empty.textContent='첫 거래에서 실패하여 앞서 완료된 거래가 없습니다.';details.append(empty)}root.append(details)}const stepTitle=document.createElement('h4');stepTitle.textContent='거래 단계별 현금흐름·보유수량';root.append(stepTitle);for(const result of presentation.rows){if(result.status!=='CALCULATED'||!result.steps.length)continue;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent=result.account+' · '+result.name+' ('+result.steps.length+'단계)';details.append(summary);const stepTable=document.createElement('table');stepTable.style.width='100%';const header=stepTable.insertRow();for(const label of ['단계','거래','종목','수량','체결가 USD','거래 후 현금 USD','실현손익 USD','거래 후 보유수량']){const th=document.createElement('th');th.textContent=label;header.append(th)}for(const step of result.steps){const tr=stepTable.insertRow();const holdings=Object.entries(step.positionsAfter).map(([ticker,quantity])=>ticker+' '+quantity.toLocaleString('ko-KR',{maximumFractionDigits:8})+'주').join(' · ')||'보유 없음';for(const value of [step.index,step.side==='buy'?'매수':'매도',step.ticker,step.quantity.toLocaleString('ko-KR',{maximumFractionDigits:8}),step.price.toLocaleString('ko-KR'),step.cashAfter.toLocaleString('ko-KR',{maximumFractionDigits:2}),step.realizedPnL.toLocaleString('ko-KR',{maximumFractionDigits:2}),holdings]){const td=tr.insertCell();td.textContent=String(value);td.style.padding='6px'}}details.append(stepTable);root.append(details)}byId('accountOpeningStatus').textContent='현재 전략의 계좌별 가상 결과를 읽기 전용으로 비교했습니다. 세금은 포함하지 않으며 기존 시작값·전략은 변경하지 않았습니다.'}catch(e){byId('accountOpeningStatus').textContent='전략 비교 실패: '+String(e.message??e)}});
+byId('compareAccountScenarios').addEventListener('click',()=>{const root=byId('accountScenarioComparison');root.replaceChildren();try{if(!selectedOpeningReview)throw Error('원장 대조 JSON 파일을 먼저 선택하세요');const ids=[...byId('accountOpeningSelect').selectedOptions].map(o=>o.value);if(!ids.length)throw Error('비교할 계좌를 하나 이상 선택하세요');const groups=ids.map(id=>[id]);if(ids.length>1)groups.push(ids);const scenarios=readStrategies();const terminalPrices={};for(const p of portfolioState.prices){const ticker=String(p.ticker).trim().toUpperCase();if(!ticker||p.price===''||!Number.isFinite(Number(p.price))||Number(p.price)<0)continue;terminalPrices[ticker]=Number(p.price)}const compared=compareAccountScenarios({saved:selectedOpeningReview,accountGroups:groups,scenarios,terminalPrices});const csvButton=document.createElement('button');csvButton.type='button';csvButton.textContent='거래 단계별 현금흐름 CSV 저장';csvButton.addEventListener('click',()=>{const csv=accountScenarioStepsCsv(compared);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='investlab-test-account-scenario-steps.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)});root.append(csvButton);const summaryCsvButton=document.createElement('button');summaryCsvButton.type='button';summaryCsvButton.textContent='계좌별 비교 요약 CSV 저장';summaryCsvButton.addEventListener('click',()=>{const csv=accountScenarioSummaryCsv(compared);const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='investlab-test-account-scenario-summary.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)});root.append(summaryCsvButton);const presentation=summarizeAccountScenarioResults(compared);const summary=document.createElement('p');summary.textContent='실행 가능 '+presentation.available+'건 · 실행 불가 '+presentation.unavailable+'건 · 최대 보유 유지 대비 '+(presentation.bestDelta===null?'—':fmt(presentation.bestDelta)+' USD');root.append(summary);const comparisons=compareAccountRealizedGains(compared);if(comparisons.length){const heading=document.createElement('h4');heading.textContent='계좌별 실현손익 합계와 통합 가중평균 기준 비교';root.append(heading);const note=document.createElement('p');note.className='hint';note.textContent='통합 가중평균 취득단가로 계산한 가상 실현손익은 개별 계좌별 실현손익 합계와 다를 수 있습니다. 아래 차이는 통합 기준 − 계좌별 합계이며, 세금 신고용 손익이나 실제 계좌 간 손익통산 결과가 아닙니다.';root.append(note);const list=document.createElement('ul');for(const item of comparisons){const li=document.createElement('li');const signedAmount=n=>(n>0?'+':'')+fmt(n);li.textContent=item.scenario+' · '+item.accounts+' · 계좌별 합계 '+signedAmount(item.accountSumRealizedPnL)+' USD / 통합 기준 '+signedAmount(item.blendedRealizedPnL)+' USD / 차이 '+signedAmount(item.difference)+' USD'+(item.hasDifference?' (취득단가 합산 방식 차이 가능)':' (차이 없음)');list.append(li)}root.append(list)}const taxNotice=document.createElement('p');taxNotice.className='notice';taxNotice.textContent='세금 추정 안내: 위 계좌별 실현손익은 USD 기준 가상 계산값입니다. ISA·연금 등 계좌 유형에 따라 과세 방식이 다를 수 있으며, 계좌별 합계 또는 통합 가중평균 손익을 세금 신고용 원화 손익으로 자동 적용하지 않습니다. 세금 추정에는 실제 과세 대상 거래의 원화 기준 취득·양도금액과 적용 환율을 별도로 확인해야 합니다.';root.append(taxNotice);const table=document.createElement('table');table.style.width='100%';table.style.minWidth='1100px';table.style.borderCollapse='collapse';const head=table.insertRow();for(const label of ['계좌','계산 기준','전략','실행 상태','최종 평가액 USD','보유 유지 대비 USD','시작 현금 USD','최종 현금 USD','현금 증감 USD','실현손익 USD (계좌 기준)','수량 변화']){const th=document.createElement('th');th.textContent=label;th.style.padding='8px';th.style.textAlign='left';th.style.whiteSpace='nowrap';head.append(th)}for(const result of presentation.rows){const tr=table.insertRow();const combinedBasis=result.accountBasis==='전체 합산 (가중평균)';tr.dataset.accountBasis=combinedBasis?'combined':'individual';tr.style.borderTop=combinedBasis?'2px solid currentColor':'1px solid rgba(128,128,128,.3)';const available=result.status==='CALCULATED';const delta=result.deltaVsHold;const values=[result.account,result.accountBasis,result.name,available?'실행 가능':result.diagnostic?'실행 불가 · '+result.diagnostic.tradeNumber+'단계 '+result.diagnostic.ticker+' '+(result.diagnostic.kind==='CASH'?'현금':'수량')+' 부족 '+fmt(result.diagnostic.shortfall)+(result.diagnostic.kind==='CASH'?' USD':'주')+' (필요 '+fmt(result.diagnostic.required)+', 보유 '+fmt(result.diagnostic.available)+')':'실행 불가: '+result.reason,available?fmt(result.terminalValue):'—',available?(delta>0?'+':'')+fmt(delta):'—',fmt(result.openingCash),available?fmt(result.finalCash):'—',available?(result.cashChange>0?'+':'')+fmt(result.cashChange):'—',available&&result.realizedPnL!==null?(result.realizedPnL>0?'+':'')+fmt(result.realizedPnL):'—',available?(result.quantityChanges.length?result.quantityChanges.map(p=>p.ticker+' '+(p.change>0?'+':'')+fmt(p.change)+'주').join(' · '):'변동 없음'):'—'];for(const [index,value] of values.entries()){const cell=tr.insertCell();cell.textContent=value;cell.style.padding='8px';cell.style.verticalAlign='top';if(index>=4&&index<=9){cell.style.textAlign='right';cell.style.fontVariantNumeric='tabular-nums';cell.style.whiteSpace='nowrap'}if(index===0||index===1){cell.style.fontWeight=combinedBasis?'700':'400'}if(index===3){cell.style.fontWeight='700';cell.style.color=available?'#71d7a0':'#ffb78a'}if(index===5&&available){cell.style.fontWeight='700';cell.style.color=delta>0?'#71d7a0':delta<0?'#ffb78a':'inherit'}}}root.append(table);const failureTitle=document.createElement('h4');failureTitle.textContent='실패 직전까지 실행 가능한 거래 내역';root.append(failureTitle);for(const result of presentation.rows){if(result.status!=='UNAVAILABLE'||!result.diagnostic)continue;const d=result.diagnostic;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent=result.account+' · '+result.name+' · '+d.tradeNumber+'단계 실패 (이전 '+d.completedSteps+'단계 계산 완료)';details.append(summary);const info=document.createElement('p');info.textContent='실패 직전 현금 '+fmt(d.cashBefore)+' USD · 보유 '+(Object.entries(d.positionsBefore).map(([ticker,quantity])=>ticker+' '+fmt(quantity)+'주').join(' · ')||'없음');details.append(info);if(result.adjustment){const a=result.adjustment;const tip=document.createElement('p');tip.textContent=a.kind==='CASH'?'실패 거래 조정안: 추가 현금 '+fmt(a.additionalCashUsd)+' USD 또는 매수수량 최대 '+fmt(a.maxAffordableQuantity)+'주':'실패 거래 조정안: 매도수량 '+fmt(a.reduceQuantityBy)+'주 감소 또는 최대 '+fmt(a.maxSellQuantity)+'주 매도';details.append(tip);const note=document.createElement('small');note.textContent=a.note;details.append(note)}if(result.adjustmentPreview){const p=result.adjustmentPreview;const status=document.createElement('p');status.style.fontWeight='700';status.textContent=p.status==='CALCULATED'?'조정 후 전체 전략 실행 가능 · 최종 현금 '+fmt(p.finalCash)+' USD · 보유 유지 대비 '+fmt(p.deltaVsHold)+' USD · 최종 수량 '+(Object.entries(p.finalPositions).map(([ticker,qty])=>ticker+' '+fmt(qty)+'주').join(' · ')||'없음'):p.status==='STILL_UNAVAILABLE'?'조정 후에도 실행 불가'+(p.nextFailedTradeNumber?' ('+p.nextFailedTradeNumber+'단계)':'')+' · '+p.reason:'조정안으로 재계산 불가 · '+p.reason;details.append(status)}if(d.completedHistory.length){const table=document.createElement('table');table.style.width='100%';const header=table.insertRow();for(const label of ['단계','거래','종목','수량','거래 후 현금 USD','거래 후 보유수량']){const th=document.createElement('th');th.textContent=label;header.append(th)}for(const step of d.completedHistory){const tr=table.insertRow();for(const value of [step.index,step.side==='buy'?'매수':'매도',step.ticker,fmt(step.quantity),fmt(step.cashAfter),Object.entries(step.positionsAfter).map(([ticker,quantity])=>ticker+' '+fmt(quantity)+'주').join(' · ')||'없음']){const td=tr.insertCell();td.textContent=String(value);td.style.padding='6px'}}details.append(table)}else{const empty=document.createElement('p');empty.textContent='첫 거래에서 실패하여 앞서 완료된 거래가 없습니다.';details.append(empty)}root.append(details)}const stepTitle=document.createElement('h4');stepTitle.textContent='거래 단계별 현금흐름·보유수량';root.append(stepTitle);for(const result of presentation.rows){if(result.status!=='CALCULATED'||!result.steps.length)continue;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent=result.account+' · '+result.name+' ('+result.steps.length+'단계)';details.append(summary);const stepTable=document.createElement('table');stepTable.style.width='100%';const header=stepTable.insertRow();for(const label of ['단계','거래','종목','수량','체결가 USD','거래 후 현금 USD','실현손익 USD','거래 후 보유수량']){const th=document.createElement('th');th.textContent=label;header.append(th)}for(const step of result.steps){const tr=stepTable.insertRow();const holdings=Object.entries(step.positionsAfter).map(([ticker,quantity])=>ticker+' '+fmt(quantity)+'주').join(' · ')||'보유 없음';for(const value of [step.index,step.side==='buy'?'매수':'매도',step.ticker,fmt(step.quantity),fmtPrice(step.price),fmt(step.cashAfter),fmt(step.realizedPnL),holdings]){const td=tr.insertCell();td.textContent=String(value);td.style.padding='6px'}}details.append(stepTable);root.append(details)}byId('accountOpeningStatus').textContent='현재 전략의 계좌별 가상 결과를 읽기 전용으로 비교했습니다. 세금은 포함하지 않으며 기존 시작값·전략은 변경하지 않았습니다.'}catch(e){byId('accountOpeningStatus').textContent='전략 비교 실패: '+String(e.message??e)}});
 let lastDeletedTrade=null;
 function showTradeUndo(){
  const area=byId('undoTradeArea');area.hidden=!lastDeletedTrade;
@@ -1139,7 +1142,7 @@ function renderEditor(){
   for(const item of portfolioState.prices){
    const ticker=String(item.ticker).trim().toUpperCase();if(!ticker)continue;
    const row=document.createElement('div');row.className='simple-row scenario-price-row';
-   const label=document.createElement('label');label.textContent=ticker+' (기준 '+item.price+' USD)';
+   const label=document.createElement('label');label.textContent=ticker+' (기준 '+fmtPrice(item.price)+' USD)';
    const input=document.createElement('input');input.type='number';input.min='0';input.step='any';
    input.placeholder='공통 가격 사용';input.setAttribute('aria-label',ticker+' 전략별 최종 가정 주가');
    input.value=strategy.terminalPrices?.[ticker]??'';
@@ -1223,7 +1226,7 @@ function renderEditor(){
         trade.price=resolved.price;trade.priceBasis=resolved.priceBasis;
         input.value=String(resolved.price);
         byId('editorStatus').textContent=trade.ticker+' '+(phase.value==='bear'?'하락':'상승')+
-         ' 목표가 USD '+fmt(resolved.price)+'을(를) 이 거래 단계에 적용했습니다.';
+         ' 목표가 USD '+fmtPrice(resolved.price)+'을(를) 이 거래 단계에 적용했습니다.';
         syncAdvanced();simulatorInputRevision++;invalidateCalculatedResults();scheduleWorkingDraft();
        }catch(error){
         phase.value=['bear','bull'].includes(trade.priceBasis)?trade.priceBasis:'manual';
@@ -1665,8 +1668,8 @@ async function refreshFxAndCalculate(){
   if(age>172800||age< -3600)throw new Error('환율 자료의 갱신 시각이 유효하지 않거나 48시간보다 오래되었습니다.');
   if(simulatorInputRevision!==inputRevisionAtStart)throw new Error('환율 조회 중 입력값이 변경되었습니다. 현재 입력값으로 다시 계산해 주세요.');
   fxRateSnapshot=rate;
-  byId('taxFx').value=Math.round(rate).toLocaleString('ko-KR');
-  byId('fxStatus').textContent='적용 환율 '+rate.toLocaleString('ko-KR')+' KRW/USD · 자료 갱신 '+new Date(updated*1000).toLocaleString('ko-KR')+' · 제공: ExchangeRate-API (일 단위 갱신, 실시간 호가 아님)';
+  byId('taxFx').value=fmtFx(rate);
+  byId('fxStatus').textContent='적용 환율 '+fmtFx(rate)+' KRW/USD · 자료 갱신 '+new Date(updated*1000).toLocaleString('ko-KR')+' · 제공: ExchangeRate-API (일 단위 갱신, 실시간 호가 아님)';
   syncAdvanced();ensureTradePrices();calculate();
  }catch(error){
   fxRateSnapshot=null;
@@ -1875,7 +1878,7 @@ function initializePortfolioBulkHandoff(){
   for(const item of clean){
    const row=document.createElement('div');row.className='simple-row';row.dataset.ticker=item.ticker;
    const check=document.createElement('input');check.type='checkbox';check.checked=true;check.setAttribute('aria-label',item.ticker+' 가져오기');
-   const label=document.createElement('span');label.textContent=item.ticker+' · '+item.quantity.toLocaleString('ko-KR')+'주';
+   const label=document.createElement('span');label.textContent=item.ticker+' · '+fmt(item.quantity)+'주';
    const cost=document.createElement('input');cost.type='number';cost.min='0';cost.step='any';cost.placeholder='평균단가 USD';cost.setAttribute('aria-label',item.ticker+' 평균취득단가 USD');
    row.append(check,label,cost);root.append(row);
   }
@@ -1894,11 +1897,11 @@ function initializePortfolioBulkHandoff(){
    const table=document.createElement('table');const head=document.createElement('thead');const tr=document.createElement('tr');
    for(const label of ['종목','기존 가정주가','반영 예정 가정주가','가격 차이','상태']){const th=document.createElement('th');th.textContent=label;tr.append(th);}head.append(tr);table.append(head);
    const body=document.createElement('tbody');
-   for(const item of comparisons){const line=document.createElement('tr');const format=value=>value===null?'—':'$'+value.toLocaleString('en-US',{maximumFractionDigits:2});const labels={CHANGED:'변경',NEW:'신규',UNCHANGED:'동일',NOT_PROVIDED:'미입력'};for(const value of [item.ticker,format(item.previous),format(item.incoming),item.difference===null?'—':(item.difference>0?'+':'')+format(item.difference),labels[item.status]]){const td=document.createElement('td');td.textContent=value;line.append(td);}body.append(line);}
+   for(const item of comparisons){const line=document.createElement('tr');const format=value=>value===null?'—':'const labels={CHANGED:'변경',NEW:'신규',UNCHANGED:'동일',NOT_PROVIDED:'미입력'};for(const value of [item.ticker,format(item.previous),format(item.incoming),item.difference===null?'—':(item.difference>0?'+':'')+format(item.difference),labels[item.status]]){const td=document.createElement('td');td.textContent=value;line.append(td);}body.append(line);}
    table.append(body);priceDetails.append(table);target.append(priceDetails);
    const selectedRows=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked).map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value}));
    const impact=previewBulkPriceImpact({rows:selectedRows,assumedPrices,existingPrices:portfolioState.prices});
-   const money=value=>value===null?'미확정':(value>0?'+':'')+'$'+value.toLocaleString('en-US',{maximumFractionDigits:2});
+   const money=value=>value===null?'미확정':(value>0?'+':'')+'$'+fmt(value);
    const impactSummary=document.createElement('section');impactSummary.className='bulk-impact-cards';impactSummary.setAttribute('aria-label','가정주가 변경 영향 요약');
    const addMetric=(label,value)=>{const card=document.createElement('div');card.className='bulk-impact-metric';const heading=document.createElement('span');heading.textContent=label;const number=document.createElement('strong');number.textContent=money(value);if(value!==null)number.className=value>0?'positive':value<0?'negative':'neutral';card.append(heading,number);impactSummary.append(card);};
    addMetric('평가손익 변화 (비교 가능 종목)',impact.comparablePnlChangeUsd);
@@ -1992,7 +1995,7 @@ function initializePortfolioBulkHandoff(){
     const ticker=row.dataset.ticker,selectedRow=row.querySelector('input[type=checkbox]').checked;
     const price=assumedPrices[ticker];
     const cost=row.querySelector('input[type=number]').value.trim();
-    const values=[ticker,clean.find(x=>x.ticker===ticker).quantity.toLocaleString('ko-KR'),cost===''?'미입력':cost,price===undefined?'미전달':price.toLocaleString('en-US'),selectedRow?'선택':'제외'];
+    const values=[ticker,fmt(clean.find(x=>x.ticker===ticker).quantity),cost===''?'미입력':cost,price===undefined?'미전달':fmtPrice(price),selectedRow?'선택':'제외'];
     const line=document.createElement('tr');line.dataset.ticker=ticker;for(const value of values){const td=document.createElement('td');td.textContent=value;line.append(td);}
     const sourceInput=row.querySelector('input[type=number]');
     const costCell=line.cells[2];costCell.textContent='';
@@ -2026,7 +2029,7 @@ function initializePortfolioBulkHandoff(){
    for(const row of root.children){row.classList.toggle('bulk-missing-cost',missing.includes(row));}
    refreshBulkPriceDifferences();
    const valuation=previewBulkImportValuation(selected.map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value,assumedPriceUsd:Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker)?assumedPrices[row.dataset.ticker]:null})));
-   const money=value=>value===null?'미확정':'$'+value.toLocaleString('en-US',{maximumFractionDigits:2});
+   const money=value=>value===null?'미확정':'$'+fmt(value);
    const valuationSummary=document.createElement('p');valuationSummary.className='bulk-valuation-summary';
    valuationSummary.textContent='가정 평가 '+valuation.completeCount+'/'+valuation.totalCount+'종목 · 예상 평가금액 '+money(valuation.totalMarketValueUsd)+' · 예상 손익 '+money(valuation.totalUnrealizedPnlUsd)+' · 사용자 가정주가 기준 (실시간 시세 아님)';
    review.append(valuationSummary);
@@ -2034,7 +2037,7 @@ function initializePortfolioBulkHandoff(){
    for(const line of body.rows){
     const item=lookup.get(line.dataset.ticker);
     const cell=document.createElement('td');
-    cell.textContent=!item?'제외':item.status==='COMPLETE'?money(item.marketValueUsd)+' / '+money(item.unrealizedPnlUsd)+' / '+(item.returnRatePct===null?'산출 불가':item.returnRatePct.toLocaleString('en-US',{maximumFractionDigits:2})+'%'):item.status==='PRICE_MISSING'?'가정주가 미전달':'평균단가 미입력';
+    cell.textContent=!item?'제외':item.status==='COMPLETE'?money(item.marketValueUsd)+' / '+money(item.unrealizedPnlUsd)+' / '+(item.returnRatePct===null?'산출 불가':fmt(item.returnRatePct)+'%'):item.status==='PRICE_MISSING'?'가정주가 미전달':'평균단가 미입력';
     line.append(cell);
    }
 
@@ -2049,14 +2052,283 @@ function initializePortfolioBulkHandoff(){
    const summary=review.querySelector('.bulk-review-summary');
    if(summary)summary.textContent='선택 '+selected.length+'/'+clean.length+'종목 · 평균단가 확인 '+(selected.length-missing.length)+'/'+selected.length+' · 전달된 가정주가 '+selected.filter(row=>Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker)).length+'개'+(byId('portfolioBulkPricesApply').checked?' (반영 선택)':' (반영 안 함)');
    const valuation=previewBulkImportValuation(selected.map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value,assumedPriceUsd:Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker)?assumedPrices[row.dataset.ticker]:null})));
-   const money=value=>value===null?'미확정':'$'+value.toLocaleString('en-US',{maximumFractionDigits:2});
+   const money=value=>value===null?'미확정':'$'+fmt(value);
    const valuationSummary=review.querySelector('.bulk-valuation-summary');
    if(valuationSummary)valuationSummary.textContent='가정 평가 '+valuation.completeCount+'/'+valuation.totalCount+'종목 · 예상 평가금액 '+money(valuation.totalMarketValueUsd)+' · 예상 손익 '+money(valuation.totalUnrealizedPnlUsd)+' · 사용자 가정주가 기준 (실시간 시세 아님)';
    const lookup=new Map(valuation.rows.map(item=>[item.ticker,item]));
    for(const line of review.querySelectorAll('tbody tr')){
     const item=lookup.get(line.dataset.ticker),cell=line.cells[5];
     if(!cell)continue;
-    cell.textContent=!item?'제외':item.status==='COMPLETE'?money(item.marketValueUsd)+' / '+money(item.unrealizedPnlUsd)+' / '+(item.returnRatePct===null?'산출 불가':item.returnRatePct.toLocaleString('en-US',{maximumFractionDigits:2})+'%'):item.status==='PRICE_MISSING'?'가정주가 미전달':'평균단가 미입력';
+    cell.textContent=!item?'제외':item.status==='COMPLETE'?money(item.marketValueUsd)+' / '+money(item.unrealizedPnlUsd)+' / '+(item.returnRatePct===null?'산출 불가':fmt(item.returnRatePct)+'%'):item.status==='PRICE_MISSING'?'가정주가 미전달':'평균단가 미입력';
+   }
+   for(const row of root.children)row.classList.toggle('bulk-missing-cost',missing.includes(row));
+   refreshBulkPriceDifferences();
+  }
+  root.addEventListener('input',refreshBulkReview);root.addEventListener('change',refreshBulkReview);
+  byId('portfolioBulkPricesApply').addEventListener('change',refreshBulkReview);
+  if(payload.accountCostReport){
+   try{
+    const matches=matchAccountCosts(clean,payload.accountCostReport);let count=0;
+    for(const match of matches){if(match.suggestedCost===null)continue;const row=[...root.children].find(r=>r.dataset.ticker===match.ticker);row.querySelector('input[type=number]').value=String(Number(match.suggestedCost.toFixed(8)));count++;}
+    byId('portfolioBulkAccountStatus').textContent='My Portfolio에서 전달한 계좌별 단가: 수량 일치 '+count+'/'+clean.length+'종목 · 검토 후 적용하세요 · 서버 검증 전';
+   }catch(e){byId('portfolioBulkAccountStatus').textContent='전달 단가 검증 실패: '+e.message;}
+  }
+  byId('portfolioBulkAccountSuggest').addEventListener('click',async()=>{
+   try{
+    const file=byId('portfolioBulkAccountFile').files?.[0];
+    if(!file||file.size>1048576)throw Error('1MB 이하 계좌별 단가 검토 보고서를 선택하세요');
+    const matches=matchAccountCosts(clean,JSON.parse(await file.text()));
+    let count=0;
+    for(const match of matches){if(match.suggestedCost===null)continue;const row=[...root.children].find(r=>r.dataset.ticker===match.ticker);row.querySelector('input[type=number]').value=String(Number(match.suggestedCost.toFixed(8)));count++;}
+    refreshBulkReview();
+    byId('portfolioBulkAccountStatus').textContent='계좌별 수량 일치 및 단가 입력 완료 '+count+'/'+clean.length+'종목 · 가중평균 참고값 · 계좌 소유권 및 취득원가 서버 검증 전';
+   }catch(e){byId('portfolioBulkAccountStatus').textContent='계좌별 단가 확인 실패: '+e.message;}
+  });
+  byId('portfolioBulkSuggest').addEventListener('click',async()=>{
+   try{
+    const file=byId('portfolioBulkLegacyFile').files?.[0];
+    if(!file||file.size>1048576)throw Error('1MB 이하 기존 보유종목 JSON 파일을 선택하세요.');
+    const suggestions=matchLegacyCosts(clean,JSON.parse(await file.text()));
+    let matched=0;
+    for(const suggestion of suggestions){
+     const row=[...root.children].find(r=>r.dataset.ticker===suggestion.ticker);
+     const cost=row.querySelector('input[type=number]');
+     if(suggestion.suggestedCost!==null){cost.value=String(suggestion.suggestedCost);matched++;}
+    }
+    refreshBulkReview();
+    byId('portfolioBulkCostStatus').textContent='종목·수량 일치 '+matched+'/'+clean.length+'개 참고 단가 표시 · 계좌별 취득단가 검증 아님 · 적용 전 직접 확인 필수';
+   }catch(e){byId('portfolioBulkCostStatus').textContent='단가 확인 실패: '+e.message;}
+  });
+  refreshBulkReview();
+  byId('portfolioBulkStatus').textContent=clean.length+'개 종목을 검토하세요. 기존 시뮬레이터 데이터는 아직 변경되지 않았습니다.';
+  byId('portfolioBulkApply').addEventListener('click',()=>{
+   const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked);
+   if(!selected.length){byId('portfolioBulkStatus').textContent='반영할 종목을 하나 이상 선택하세요.';return;}
+   const updates=[];
+   for(const row of selected){const ticker=row.dataset.ticker,rawCost=row.querySelector('input[type=number]').value.trim(),cost=Number(rawCost);if(!rawCost||!Number.isFinite(cost)||cost<0){byId('portfolioBulkStatus').textContent=ticker+' 평균취득단가를 확인하고 입력하세요.';return;}updates.push({ticker,quantity:clean.find(x=>x.ticker===ticker).quantity,averageCost:cost});}
+   const conflicts=updates.filter(u=>portfolioState.positions.some(p=>String(p.ticker).trim().toUpperCase()===u.ticker));
+   if(conflicts.length&&!confirm('기존 시뮬레이터 보유종목 '+conflicts.map(x=>x.ticker).join(', ')+'의 수량과 평균단가를 교체하시겠습니까?'))return;
+   const next=portfolioState.positions.map(p=>({...p}));
+   for(const item of updates){const index=next.findIndex(p=>String(p.ticker).trim().toUpperCase()===item.ticker);if(index>=0)next[index]=item;else next.push(item);}
+   if(byId('portfolioBulkPricesApply').checked){
+    const chosen=new Set(updates.map(u=>u.ticker));
+    const priceConflicts=portfolioState.prices.filter(p=>chosen.has(String(p.ticker).trim().toUpperCase())&&Object.prototype.hasOwnProperty.call(assumedPrices,String(p.ticker).trim().toUpperCase()));
+    if(priceConflicts.length&&!confirm('기존 최종 가정주가 '+priceConflicts.map(p=>p.ticker).join(', ')+'를 My Portfolio 가정주가로 교체하시겠습니까?'))return;
+    const newPrices=portfolioState.prices.map(p=>({...p}));
+    for(const [ticker,price] of Object.entries(assumedPrices)){
+     if(!chosen.has(ticker))continue;
+     const index=newPrices.findIndex(p=>String(p.ticker).trim().toUpperCase()===ticker);
+     const item={ticker,price};
+     if(index>=0)newPrices[index]=item;else newPrices.push(item);
+    }
+    portfolioState.prices=newPrices;
+   }
+   portfolioState.positions=next;renderPortfolio();byId('recalcNotice').hidden=false;
+   byId('portfolioBulkStatus').textContent=updates.length+'개 종목 반영 완료 · 시나리오를 다시 계산하세요. 실제 원장 변경 없음';
+  });
+ }catch(e){byId('portfolioBulkStatus').textContent='일괄 가져오기 실패: '+e.message;}
+}
+initializePortfolioBulkHandoff();
+document.addEventListener('input',()=>{onlineLedgerUserEdited=true;},{capture:true});
+document.addEventListener('change',()=>{onlineLedgerUserEdited=true;},{capture:true});
+window.addEventListener('pageshow',()=>{void refreshOnlineAccountLedger();});
+window.addEventListener('focus',()=>{void refreshOnlineAccountLedger();void loadScenariosOnline().catch(()=>{});});
+window.addEventListener('storage',event=>{
+ if(['investlab_shared_data_auth_v1','investlab_shared_data_connection_v1'].includes(event.key)){
+  void refreshOnlineAccountLedger();void loadScenariosOnline().catch(()=>{});
+ }else if([TEST_LEDGER_KEY,TEST_LEDGER_OWNER_KEY].includes(event.key)||
+  (typeof event.key==='string'&&event.key.startsWith('investlab_pilot_ledger_cloud_base_v1:'))){
+  void refreshOnlineAccountLedger();
+ }
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshOnlineAccountLedger();});
+setInterval(()=>{if(!document.hidden)void refreshOnlineAccountLedger();},15*60*1000);
+updateStrategySaveState();
+document.addEventListener('input',scheduleWorkingDraft);
+document.addEventListener('change',scheduleWorkingDraft);
+document.addEventListener('click',event=>{
+ const button=event.target instanceof Element?event.target.closest('button'):null;
+ if(button&&['addPrice','addPosition','addTrade','addStrategy','presetRise','presetDip','loadAccountOpening','loadPortfolioPositions','applyPortfolioJson','loadScenario','appendScenario'].includes(button.id))scheduleWorkingDraft();
+ if(button&&button.closest('#strategyEditor'))scheduleWorkingDraft();
+});
+byId('connectPersonalQuotes').addEventListener('click',async()=>{
+ const owner=activeSimulatorOwnerId,key=byId('personalQuoteKey').value.trim();
+ if(!owner||onlineAccountLedger?.userId!==owner||!byId('personalQuoteConsent').checked||!(/^[A-Za-z0-9_-]{10,128}$/.test(key))){byId('personalQuoteStatus').textContent='로그인·본인 키·개인용 이용 동의를 확인하세요.';return;}
+ disconnectSimulatorQuotes('개인 시세 연결 중',false);simQuoteKey=key;simQuoteOwner=owner;byId('refreshPersonalQuotes').disabled=false;byId('disconnectPersonalQuotes').disabled=false;await refreshSimulatorPersonalQuotes();
+});
+byId('refreshPersonalQuotes').onclick=()=>void refreshSimulatorPersonalQuotes();
+byId('disconnectPersonalQuotes').onclick=()=>disconnectSimulatorQuotes();
+setInterval(()=>{if(simQuoteKey&&!document.hidden){renderCompactPortfolioOverview();void refreshSimulatorPersonalQuotes();}},QUOTE_REFRESH_MS);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&simQuoteKey){renderCompactPortfolioOverview();void refreshSimulatorPersonalQuotes();}});
+window.addEventListener('pagehide',()=>{disconnectSimulatorQuotes('개인 시세 연결 해제',false);saveWorkingDraft();});
+
+byId('tickerChartClose').addEventListener('click',()=>byId('tickerChartDialog').close());
+byId('tickerChartDialog').querySelectorAll('[data-period]').forEach(button=>button.addEventListener('click',()=>{chartPeriod=button.dataset.period;byId('tickerChartDialog').querySelectorAll('[data-period]').forEach(b=>b.classList.toggle('active',b===button));renderTickerChart();}));
+byId('tickerChartCsv').addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{chartObservations=parseChartCsv(await file.text());renderTickerChart();}catch(error){byId('tickerChartStatus').textContent='CSV 오류: '+error.message;}});
+</script></body></html>
++fmtPrice(value);const labels={CHANGED:'변경',NEW:'신규',UNCHANGED:'동일',NOT_PROVIDED:'미입력'};for(const value of [item.ticker,format(item.previous),format(item.incoming),item.difference===null?'—':(item.difference>0?'+':'')+format(item.difference),labels[item.status]]){const td=document.createElement('td');td.textContent=value;line.append(td);}body.append(line);}
+   table.append(body);priceDetails.append(table);target.append(priceDetails);
+   const selectedRows=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked).map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value}));
+   const impact=previewBulkPriceImpact({rows:selectedRows,assumedPrices,existingPrices:portfolioState.prices});
+   const money=value=>value===null?'미확정':(value>0?'+':'')+'$'+fmt(value);
+   const impactSummary=document.createElement('section');impactSummary.className='bulk-impact-cards';impactSummary.setAttribute('aria-label','가정주가 변경 영향 요약');
+   const addMetric=(label,value)=>{const card=document.createElement('div');card.className='bulk-impact-metric';const heading=document.createElement('span');heading.textContent=label;const number=document.createElement('strong');number.textContent=money(value);if(value!==null)number.className=value>0?'positive':value<0?'negative':'neutral';card.append(heading,number);impactSummary.append(card);};
+   addMetric('평가손익 변화 (비교 가능 종목)',impact.comparablePnlChangeUsd);
+   addMetric('평가금액 변화 (비교 가능 종목)',impact.comparableMarketValueChangeUsd);
+   const coverage=document.createElement('p');coverage.className='bulk-impact-coverage';coverage.textContent='비교 가능 '+impact.comparableCount+'/'+impact.totalCount+'종목 · '+(impact.fullyComparable?'전체 비교 완료':'전체 합계 미확정 · 누락 종목 제외한 부분 합계');impactSummary.append(coverage);
+   target.append(impactSummary);
+   if(selectedBulkImpactTicker&&!impact.rows.some(item=>item.ticker===selectedBulkImpactTicker)){selectedBulkImpactTicker=null;}
+   const movers=topBulkImpactMovers(impact.rows,3);
+   const moversSection=document.createElement('section');moversSection.className='bulk-impact-top-movers';moversSection.setAttribute('aria-label','손익 변화 상위 3종목');
+   const moversHeading=document.createElement('h4');moversHeading.textContent='손익 변화 상위 종목 (절댓값 기준)';moversSection.append(moversHeading);
+   if(!movers.length){const empty=document.createElement('p');empty.textContent='비교 가능한 종목이 없습니다.';moversSection.append(empty);}
+   for(const item of movers){
+    const card=document.createElement('button');card.type='button';card.className='bulk-impact-mover';card.setAttribute('aria-label',item.ticker+' 상세 평가손익 비교 보기');
+    const name=document.createElement('strong');name.textContent=item.ticker;const value=document.createElement('span');value.textContent=money(item.pnlChangeUsd);value.className=item.pnlChangeUsd>0?'positive':item.pnlChangeUsd<0?'negative':'neutral';card.append(name,value);
+    card.addEventListener('click',()=>{
+     const detail=target.querySelector('.bulk-impact-details');if(!detail)return;
+     selectedBulkImpactTicker=item.ticker;bulkImpactDetailsOpen=true;detail.open=true;
+     const rows=[...detail.querySelectorAll('tbody tr')];
+     const match=rows.find(row=>row.dataset.ticker===selectedBulkImpactTicker);
+     for(const row of rows)row.classList.toggle('bulk-impact-selected',row===match);
+     if(match){match.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});}
+    });
+    moversSection.append(card);
+   }
+   target.append(moversSection);
+   const details=document.createElement('details');details.className='bulk-impact-details';details.open=bulkImpactDetailsOpen;details.addEventListener('toggle',()=>{if(details.isConnected)bulkImpactDetailsOpen=details.open;});const detailsLabel=document.createElement('summary');detailsLabel.textContent='종목별 평가금액·평가손익 상세 비교 보기';details.append(detailsLabel);
+   const sortLabel=document.createElement('label');sortLabel.textContent='종목별 손익 변화 정렬';sortLabel.setAttribute('for','bulkImpactSort');
+   const sortSelect=document.createElement('select');sortSelect.id='bulkImpactSort';
+   for(const [value,label] of [['pnl-desc','손익 변화 큰 순'],['pnl-asc','손익 변화 작은 순'],['ticker-asc','종목코드 순']]){const option=document.createElement('option');option.value=value;option.textContent=label;sortSelect.append(option);}
+   sortSelect.value=bulkImpactSortMode;
+   sortSelect.addEventListener('change',()=>{bulkImpactSortMode=sortSelect.value;bulkImpactDetailsOpen=details.open;refreshBulkPriceDifferences();const next=byId('portfolioBulkPriceDifferences').querySelector('.bulk-impact-selected');if(next)next.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});});
+   details.append(sortLabel,sortSelect);
+   const impactTable=document.createElement('table');const impactHead=document.createElement('thead');const impactTr=document.createElement('tr');
+   for(const label of ['종목','기존 평가금액','변경 평가금액','기존 평가손익','변경 평가손익','손익 차이']){const th=document.createElement('th');th.textContent=label;impactTr.append(th);}impactHead.append(impactTr);impactTable.append(impactHead);
+   const impactBody=document.createElement('tbody');
+   for(const item of sortBulkImpactRows(impact.rows,bulkImpactSortMode)){const line=document.createElement('tr');line.dataset.ticker=item.ticker;line.classList.toggle('bulk-impact-selected',item.ticker===selectedBulkImpactTicker);for(const value of [item.ticker,money(item.oldMarketValueUsd),money(item.newMarketValueUsd),money(item.oldPnlUsd),money(item.newPnlUsd),money(item.pnlChangeUsd)]){const td=document.createElement('td');td.textContent=value;line.append(td);}impactBody.append(line);}
+   impactTable.append(impactBody);details.append(impactTable);target.append(details);
+  }
+  function renderMissingCostShortcuts(){
+   const container=byId('portfolioBulkMissingShortcuts');
+   container.replaceChildren();
+   const missing=[...root.children].filter(row=>{
+    if(!row.querySelector('input[type=checkbox]').checked)return false;
+    const raw=row.querySelector('input[type=number]').value.trim();
+    return raw===''||!Number.isFinite(Number(raw))||Number(raw)<0;
+   });
+   if(!missing.length){container.hidden=true;return;}
+   container.hidden=false;
+   const title=document.createElement('strong');title.textContent='평균단가 입력 필요 · '+missing.length+'종목';container.append(title);
+   const actions=document.createElement('div');actions.className='bulk-missing-shortcut-actions';
+   for(const row of missing){
+    const ticker=row.dataset.ticker;
+    const button=document.createElement('button');button.type='button';button.textContent=ticker+' 입력';
+    button.setAttribute('aria-label',ticker+' 평균취득단가 입력칸으로 이동');
+    button.addEventListener('click',()=>{
+     const line=[...byId('portfolioBulkReview').querySelectorAll('tbody tr[data-ticker]')].find(item=>item.dataset.ticker===ticker);
+     const input=line?.cells[2]?.querySelector('input');
+     if(input){line.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});input.focus({preventScroll:true});}
+    });
+    actions.append(button);
+   }
+   container.append(actions);
+  }
+  function updateBulkCardStatuses(){
+   const review=byId('portfolioBulkReview');
+   for(const line of review.querySelectorAll('tbody tr[data-ticker]')){
+    const source=[...root.children].find(row=>row.dataset.ticker===line.dataset.ticker);
+    if(!source)continue;
+    const selected=source.querySelector('input[type=checkbox]').checked;
+    const raw=source.querySelector('input[type=number]').value.trim();
+    const valid=raw!==''&&Number.isFinite(Number(raw))&&Number(raw)>=0;
+    const status=!selected?'제외':valid?'반영 가능':'평균단가 입력 필요';
+    const label=line.querySelector('.bulk-card-status');
+    if(label){label.textContent=status;label.dataset.state=!selected?'excluded':valid?'ready':'missing';}
+    line.classList.toggle('bulk-review-excluded',!selected);
+    line.classList.toggle('bulk-review-invalid',selected&&!valid);
+    const costInput=line.cells[2].querySelector('input');
+    if(costInput){costInput.setAttribute('aria-invalid',String(selected&&!valid));}
+   }
+  }
+  function refreshBulkReview(){
+   const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked);
+   const valid=selected.filter(row=>{const value=row.querySelector('input[type=number]').value.trim();return value!==''&&Number.isFinite(Number(value))&&Number(value)>=0;});
+   const withPrices=selected.filter(row=>Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker));
+   const review=byId('portfolioBulkReview');review.replaceChildren();
+   const summary=document.createElement('p');summary.className='bulk-review-summary';summary.textContent='선택 '+selected.length+'/'+clean.length+'종목 · 평균단가 확인 '+valid.length+'/'+selected.length+' · 전달된 가정주가 '+withPrices.length+'개'+(byId('portfolioBulkPricesApply').checked?' (반영 선택)':' (반영 안 함)');review.append(summary);
+   const table=document.createElement('table');const head=document.createElement('thead');const tr=document.createElement('tr');
+   for(const title of ['종목','보유수량','평균취득단가 USD','가정주가 USD','반영 여부','평가금액 / 손익 / 수익률']){const th=document.createElement('th');th.textContent=title;tr.append(th);}head.append(tr);table.append(head);
+   const body=document.createElement('tbody');
+   for(const row of root.children){
+    const ticker=row.dataset.ticker,selectedRow=row.querySelector('input[type=checkbox]').checked;
+    const price=assumedPrices[ticker];
+    const cost=row.querySelector('input[type=number]').value.trim();
+    const values=[ticker,fmt(clean.find(x=>x.ticker===ticker).quantity),cost===''?'미입력':cost,price===undefined?'미전달':fmtPrice(price),selectedRow?'선택':'제외'];
+    const line=document.createElement('tr');line.dataset.ticker=ticker;for(const value of values){const td=document.createElement('td');td.textContent=value;line.append(td);}
+    const sourceInput=row.querySelector('input[type=number]');
+    const costCell=line.cells[2];costCell.textContent='';
+    const costInput=document.createElement('input');costInput.type='number';costInput.min='0';costInput.step='any';costInput.value=sourceInput.value;costInput.setAttribute('aria-label',ticker+' 평균취득단가 USD 검토표 입력');
+    costInput.addEventListener('input',()=>{sourceInput.value=costInput.value;updateBulkReviewNumbers();});
+    costCell.append(costInput);
+    const status=document.createElement('span');status.className='bulk-card-status';status.setAttribute('role','status');line.cells[0].append(status);
+    const priceCell=line.cells[3];priceCell.textContent='';
+    const priceInput=document.createElement('input');priceInput.type='number';priceInput.min='0';priceInput.step='any';priceInput.placeholder='가정주가 USD';priceInput.value=price===undefined?'':String(price);
+    priceInput.setAttribute('aria-label',ticker+' 가정주가 USD 검토표 입력');
+    priceInput.addEventListener('input',()=>{
+     const raw=priceInput.value.trim();
+     if(raw!==''&&Number.isFinite(Number(raw))&&Number(raw)>=0)assumedPrices[ticker]=Number(raw);
+     else delete assumedPrices[ticker];
+     updateBulkReviewNumbers();
+    });
+    priceCell.append(priceInput);
+    const selectCell=line.cells[4];selectCell.textContent='';
+    const selectLabel=document.createElement('label');selectLabel.className='bulk-review-select';
+    const selectInput=document.createElement('input');selectInput.type='checkbox';selectInput.checked=selectedRow;selectInput.setAttribute('aria-label',ticker+' 시뮬레이터 반영 선택');
+    const selectText=document.createElement('span');selectText.textContent=selectedRow?'선택':'제외';
+    selectInput.addEventListener('change',()=>{row.querySelector('input[type=checkbox]').checked=selectInput.checked;refreshBulkReview();});
+    selectLabel.append(selectInput,selectText);selectCell.append(selectLabel);
+    line.classList.toggle('bulk-review-excluded',!selectedRow);
+    body.append(line);
+   }
+   table.append(body);review.append(table);updateBulkCardStatuses();renderMissingCostShortcuts();
+   const missing=selected.filter(row=>{const value=row.querySelector('input[type=number]').value.trim();return value===''||!Number.isFinite(Number(value))||Number(value)<0;});
+   const apply=byId('portfolioBulkApply');apply.disabled=!selected.length||missing.length>0;
+   byId('portfolioBulkReady').textContent=!selected.length?'반영 대기 · 종목을 선택하세요.':missing.length?'입력 확인 필요 · '+missing.length+'종목의 평균취득단가가 누락되었습니다.':'반영 가능 · '+selected.length+'종목의 필수 입력값 확인 완료';
+   for(const row of root.children){row.classList.toggle('bulk-missing-cost',missing.includes(row));}
+   refreshBulkPriceDifferences();
+   const valuation=previewBulkImportValuation(selected.map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value,assumedPriceUsd:Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker)?assumedPrices[row.dataset.ticker]:null})));
+   const money=value=>value===null?'미확정':'$'+fmt(value);
+   const valuationSummary=document.createElement('p');valuationSummary.className='bulk-valuation-summary';
+   valuationSummary.textContent='가정 평가 '+valuation.completeCount+'/'+valuation.totalCount+'종목 · 예상 평가금액 '+money(valuation.totalMarketValueUsd)+' · 예상 손익 '+money(valuation.totalUnrealizedPnlUsd)+' · 사용자 가정주가 기준 (실시간 시세 아님)';
+   review.append(valuationSummary);
+   const lookup=new Map(valuation.rows.map(item=>[item.ticker,item]));
+   for(const line of body.rows){
+    const item=lookup.get(line.dataset.ticker);
+    const cell=document.createElement('td');
+    cell.textContent=!item?'제외':item.status==='COMPLETE'?money(item.marketValueUsd)+' / '+money(item.unrealizedPnlUsd)+' / '+(item.returnRatePct===null?'산출 불가':fmt(item.returnRatePct)+'%'):item.status==='PRICE_MISSING'?'가정주가 미전달':'평균단가 미입력';
+    line.append(cell);
+   }
+
+  }
+  function updateBulkReviewNumbers(){
+   const selected=[...root.children].filter(row=>row.querySelector('input[type=checkbox]').checked);
+   const missing=selected.filter(row=>{const raw=row.querySelector('input[type=number]').value.trim();return raw===''||!Number.isFinite(Number(raw))||Number(raw)<0;});
+   byId('portfolioBulkApply').disabled=!selected.length||missing.length>0;
+   updateBulkCardStatuses();renderMissingCostShortcuts();
+   byId('portfolioBulkReady').textContent=!selected.length?'반영 대기 · 종목을 선택하세요.':missing.length?'입력 확인 필요 · '+missing.length+'종목의 평균취득단가가 누락되었습니다.':'반영 가능 · '+selected.length+'종목의 필수 입력값 확인 완료';
+   const review=byId('portfolioBulkReview');
+   const summary=review.querySelector('.bulk-review-summary');
+   if(summary)summary.textContent='선택 '+selected.length+'/'+clean.length+'종목 · 평균단가 확인 '+(selected.length-missing.length)+'/'+selected.length+' · 전달된 가정주가 '+selected.filter(row=>Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker)).length+'개'+(byId('portfolioBulkPricesApply').checked?' (반영 선택)':' (반영 안 함)');
+   const valuation=previewBulkImportValuation(selected.map(row=>({ticker:row.dataset.ticker,quantity:clean.find(item=>item.ticker===row.dataset.ticker).quantity,averageCostUsd:row.querySelector('input[type=number]').value,assumedPriceUsd:Object.prototype.hasOwnProperty.call(assumedPrices,row.dataset.ticker)?assumedPrices[row.dataset.ticker]:null})));
+   const money=value=>value===null?'미확정':'$'+fmt(value);
+   const valuationSummary=review.querySelector('.bulk-valuation-summary');
+   if(valuationSummary)valuationSummary.textContent='가정 평가 '+valuation.completeCount+'/'+valuation.totalCount+'종목 · 예상 평가금액 '+money(valuation.totalMarketValueUsd)+' · 예상 손익 '+money(valuation.totalUnrealizedPnlUsd)+' · 사용자 가정주가 기준 (실시간 시세 아님)';
+   const lookup=new Map(valuation.rows.map(item=>[item.ticker,item]));
+   for(const line of review.querySelectorAll('tbody tr')){
+    const item=lookup.get(line.dataset.ticker),cell=line.cells[5];
+    if(!cell)continue;
+    cell.textContent=!item?'제외':item.status==='COMPLETE'?money(item.marketValueUsd)+' / '+money(item.unrealizedPnlUsd)+' / '+(item.returnRatePct===null?'산출 불가':fmt(item.returnRatePct)+'%'):item.status==='PRICE_MISSING'?'가정주가 미전달':'평균단가 미입력';
    }
    for(const row of root.children)row.classList.toggle('bulk-missing-cost',missing.includes(row));
    refreshBulkPriceDifferences();

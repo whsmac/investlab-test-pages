@@ -21,3 +21,13 @@ test('watchlist and traded-history groups are independently collapsible and pres
  assert.match(section,/enableTickerChartClicks\(holdingsTable\);root\.append\(holdingsTable\)/);
  assert.match(section,/root\.append\(summary\)/);
 });
+
+test('simulator result formatting rounds only presentation amounts and retains one decimal for USD unit prices and FX',()=>{
+ const start=html.indexOf('const fmt=(v,decimals=0)=>'),end=html.indexOf('const table=',start);
+ assert.ok(start>=0&&end>start);
+ const {fmt,fmtPrice,fmtFx}=new Function(html.slice(start,end)+';return {fmt,fmtPrice,fmtFx};')();
+ assert.equal(fmt(61580.46015797),'61,580');assert.equal(fmt(67087.46015797),'67,087');assert.equal(fmt(31.6),'32');assert.equal(fmt(134.21157895),'134');assert.equal(fmt(-0.01),'0');assert.equal(fmt(null),'—');
+ assert.equal(fmtPrice(380.1),'380.1');assert.equal(fmtPrice(7.38000011),'7.4');assert.equal(fmtPrice(41),'41.0');assert.equal(fmtFx(1453.678),'1,453.7');
+ assert.match(html,/byId\('taxFx'\)\.value=fmtFx\(rate\)/);assert.match(html,/fxRateSnapshot=rate/);
+ assert.match(html,/fmt\(scenario\.terminalValue\)/);assert.match(html,/fmtPrice\(q\.price\)/);assert.match(html,/fmtPrice\(s\.price\)/);
+});
