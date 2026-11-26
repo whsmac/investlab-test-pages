@@ -43,3 +43,20 @@ export function compareScenarios(portfolio, scenarios, terminalPrices) {
     return {name:s.name,...result,terminalValue,baselineTerminalValue:scenarioBaselineValue,deltaVsHold:Math.round((terminalValue-scenarioBaselineValue+Number.EPSILON)*1e8)/1e8};
   }),taxStatus:'not_calculated'};
 }
+
+/** Non-traded holdings may be valued at a recent verified close, as an explicit
+ * unchanged-price assumption for this calculation only. Never mutate saved prices,
+ * use stale/missing quotes, or silently assume a price for a traded ticker. */
+export function resolvePassiveTerminalPrices({positions,scenarios,manualPrices,closes,dates,now=Date.now()}){
+ const prices={...manualPrices},automatic=[],missing=[],traded=new Set(scenarios.flatMap(s=>s.trades.map(t=>t.ticker)));
+ const required=new Set([...Object.keys(positions).filter(t=>positions[t].quantity>0),...traded]);
+ for(const ticker of required){
+  if(Object.hasOwn(prices,ticker)&&Number.isFinite(prices[ticker])&&prices[ticker]>=0)continue;
+  if(!traded.has(ticker)){
+   const price=closes.get(ticker),date=dates.get(ticker),stamp=typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)?Date.parse(date+'T00:00:00Z'):NaN,age=(now-stamp)/86400000;
+   if(Number.isFinite(price)&&price>0&&Number.isFinite(age)&&age>=-1&&age<=7){prices[ticker]=price;automatic.push({ticker,price,date});continue;}
+  }
+  missing.push(ticker);
+ }
+ return {prices,automatic,missing};
+}
