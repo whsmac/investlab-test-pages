@@ -51,10 +51,10 @@ export function renderPortfolioHistory(data,market,start,end,selected,currency,p
   const points=rows.map(r=>({date:r.date,price:(()=>{return quotedPrice(market,ticker,r.date,priceCurrency);})()}));
   const markers=rows.flatMap(r=>r.trades.filter(t=>t.symbol===ticker).map(t=>({...t,date:r.date,price:quotedPrice(market,t.symbol,r.date,priceCurrency,t.price)})));
   lineChart('historyTradePrices',points,[{key:'price',label:ticker+' 종가 '+priceCurrency}],markers,selectedVisualDate());
+  lineChart('historyFx',rows,[{key:'fx',label:'USD/KRW 적용환율'}],[],selectedVisualDate());
  };
  renderVisualPerformance(rows,market,data,currency,()=>drawTicker(),priceCurrency);
  select.onchange=()=>{drawTicker();renderReview();};select.onchange();
- lineChart('historyFx',rows,[{key:'fx',label:'USD/KRW 적용환율'}]);
  const tradeRoot=$('historyTrades');tradeRoot.replaceChildren();$('historyTradePriceHeader').textContent='체결가 '+priceCurrency;
  for(const r of rows)for(const trade of r.trades){const tr=document.createElement('tr');for(const value of [r.date,trade.symbol,trade.type==='BUY'?'매수':'매도',num(trade.qty,6),num(quotedPrice(market,trade.symbol,r.date,priceCurrency,trade.price),priceCurrency==='USD'?2:0)]){const td=document.createElement('td');td.textContent=value;tr.append(td);}tradeRoot.append(tr);}
  if(!tradeRoot.children.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='기간 내 매수·매도 기록 없음';tr.append(td);tradeRoot.append(tr);}
