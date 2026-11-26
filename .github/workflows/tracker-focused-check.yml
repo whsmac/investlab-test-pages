@@ -19,4 +19,4 @@ jobs:
         run: |
           node --check src/ui/pilot-strategy-tracker-page.mjs
           node --check src/strategy/strategy-tracker-storage.mjs
-          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs
+          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs
