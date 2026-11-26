@@ -10,3 +10,14 @@ test('desktop trade editor is explicitly on right independent of handoff panels'
 test('responsive narrow screens restore normal flow',()=>{
  assert.match(html,/@media\(max-width:1050px\)\{\.layout>\.primary-trade-panel\{grid-column:auto;grid-row:auto\}\}/);
 });
+
+test('watchlist and traded-history groups are independently collapsible and preserve state across quote redraws',()=>{
+ const section=html.slice(html.indexOf('function renderCompactPortfolioOverview(){'),html.indexOf('async function refreshCurrentQuotes(){'));
+ assert.match(section,/expandedCategories=new Set\(\[\.\.\.root\.querySelectorAll\('details\[data-compact-category\]\[open\]'\)\]/);
+ assert.match(section,/\[\['관심','관심종목'\],\['거래이력','거래이력종목'\]\]/);
+ assert.match(section,/createElement\('details'\);groupDetails\.className='compact-symbol-category';groupDetails\.dataset\.compactCategory=category;groupDetails\.open=expandedCategories\.has\(category\)/);
+ assert.match(section,/heading\.textContent=title\+' \('\+group\.length\+'종목\)'/);
+ assert.match(section,/enableTickerChartClicks\(categoryTable\);groupDetails\.append\(categoryTable\);root\.append\(groupDetails\)/);
+ assert.match(section,/enableTickerChartClicks\(holdingsTable\);root\.append\(holdingsTable\)/);
+ assert.match(section,/root\.append\(summary\)/);
+});
