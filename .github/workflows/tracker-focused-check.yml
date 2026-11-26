@@ -1,0 +1,22 @@
+name: TEST tracker focused checks
+on:
+  push:
+    branches:
+      - feature/pilot-investment-strategy-tracker-20261127
+permissions:
+  contents: read
+jobs:
+  tracker-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and calculation checks
+        run: |
+          node --check src/ui/pilot-strategy-tracker-page.mjs
+          node --check src/strategy/strategy-tracker-storage.mjs
+          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs
