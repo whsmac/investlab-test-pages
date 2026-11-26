@@ -1,3 +1,4 @@
+# 2026-11-26: simulator display formatting; CI 8/8 passed. Rollback implementation c35312c6d11875a1814429be63062135194989f4
 # 2026-11-26: integrated sticky timeline and simulator usability fixes; CI 10/10 passed. Rollback implementation 988cf2d8a9592e7db3b81f8c2ef8fbcb14a0bca8
 # 2026-11-26: reviewed performance refinement; CI 2/2 passed. Rollback implementation d98f4aa23bf238bfea5f7ccf1fdc82fb679ecd1d
 name: TEST Yahoo auto prices to GitHub Pages (TEST ONLY)
@@ -48,7 +49,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: c35312c6d11875a1814429be63062135194989f4
+          ref: 687559cc4f71efa5e4146dac891524b8486cfe9f
           persist-credentials: false
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
@@ -64,7 +65,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "c35312c6d11875a1814429be63062135194989f4"
+          test "$(git rev-parse HEAD)" = "687559cc4f71efa5e4146dac891524b8486cfe9f"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
@@ -181,6 +182,8 @@ jobs:
           grep -q 'function drawPreservingScroll' "${RUNNER_TEMP}/investlab-test-pages-site/src/ui/pilot-visual-performance-ui.mjs"
           grep -q 'function resolvePassiveTerminalPrices' "${RUNNER_TEMP}/investlab-test-pages-site/src/simulator/scenario-comparison.mjs"
           grep -q 'compact-symbol-category' "${RUNNER_TEMP}/investlab-test-pages-site/virtual-trade-simulator.html"
+          grep -q 'const fmtPrice=v=>fmt(v,1)' "${RUNNER_TEMP}/investlab-test-pages-site/virtual-trade-simulator.html"
+          grep -q 'const fmtFx=v=>fmt(v,1)' "${RUNNER_TEMP}/investlab-test-pages-site/virtual-trade-simulator.html"
           grep -q 'value="MIXED" selected' "${RUNNER_TEMP}/investlab-test-pages-site/investment-performance.html"
           grep -q 'id="riskMetrics"' "${RUNNER_TEMP}/investlab-test-pages-site/investment-performance.html"
           grep -q 'id="riskLimitEnabled"' "${RUNNER_TEMP}/investlab-test-pages-site/investment-performance.html"
