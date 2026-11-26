@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createStrategy,replayDocument} from '../src/strategy/strategy-tracker-document.mjs';
+import {tradeSettlement} from '../src/ledger/pilot-brokerage-settlement.mjs';
+import {saveTrackerDocument} from '../src/strategy/strategy-tracker-storage.mjs';
+const doc={version:1,strategies:[]};
+const ledger={accounts:[{id:'a'}],entries:[{id:'open',accountId:'a',date:'2026-11-26',type:'OPEN',currency:'USD',symbol:'TSLA',qty:10,price:370}]};
+const s=createStrategy({id:'s',name:'A',accountId:'a',target:{kind:'stock',symbol:'TSLA',mode:'growth',value:20},baseline:{quantity:10,valueUsd:3700},assets:[{accountId:'a',kind:'stock',symbol:'TSLA',quantity:10}],ledger,startedAt:'2026-11-27T00:00:00Z'});
+const replay=l=>replayDocument({version:1,strategies:[s]},l,tradeSettlement,()=>true,new Map());
+test('unchanged opening ledger accepted',()=>assert.doesNotThrow(()=>replay(ledger)));
+test('opening trade price revision blocked',()=>assert.throws(()=>replay({...ledger,entries:ledger.entries.map(e=>({...e,price:371}))})));
+test('opening trade deletion blocked',()=>assert.throws(()=>replay({...ledger,entries:[]})));
+test('backdated entry blocked',()=>assert.throws(()=>replay({...ledger,entries:[...ledger.entries,{...ledger.entries[0],id:'backdated'}]})));
+test('notes only edits accepted',()=>assert.doesNotThrow(()=>replay({...ledger,entries:ledger.entries.map(e=>({...e,note:'corrected note'}))})));
+test('save uses single RPC with expected ledger and tracker revisions',async()=>{let calls=0;const client={auth:{getUser:async()=>({data:{user:{id:'u'}}})},rpc:async(name,args)=>{calls++;assert.equal(name,'save_investlab_tracker_v1');assert.equal(args.expected_revision,0);assert.equal(args.expected_ledger_stamp,'stamp');return {data:{revision:1,payload:doc,updated_at:'now'}}}};const saved=await saveTrackerDocument(client,'u',0,'stamp',doc);assert.equal(saved.revision,1);assert.equal(calls,1)});
