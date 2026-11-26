@@ -92,7 +92,7 @@
 </div>
 <dialog id="tickerChartDialog" aria-labelledby="tickerChartTitle"><div class="chart-dialog-head"><h2 id="tickerChartTitle">종목 주가 차트</h2><button id="tickerChartClose" type="button" aria-label="닫기">닫기</button></div><div class="chart-periods" aria-label="차트 기간"><button type="button" data-period="1D">1일</button><button type="button" data-period="1W">1주</button><button type="button" data-period="1M">1개월</button><button type="button" data-period="1Y">1년</button><button type="button" data-period="ALL">전체</button></div><div id="tickerChartPlot"></div><p id="tickerChartStatus" role="status"></p><label for="tickerChartCsv">CSV 대체 불러오기 (자동 조회 실패 시)</label><input id="tickerChartCsv" type="file" accept=".csv,text/csv"><p class="hint">기본은 TEST 공유 DB 자동 조회입니다. CSV는 개발·장애 대응용이며 브라우저에서만 읽습니다.</p><p><a id="tickerChartExternal" target="_blank" rel="noopener noreferrer">외부 주가 차트 보기</a></p></dialog><script type="module">
 import {openTradingViewChart} from './src/ui/pilot-tradingview-chart.mjs';
-import {compareScenarios} from './src/simulator/scenario-comparison.mjs';
+import {compareScenarios,resolvePassiveTerminalPrices} from './src/simulator/scenario-comparison.mjs';
 import {forecastTarget,forecastSnapshot,validateForecastSnapshot,restoreForecastSnapshot,assignForecastToTrade,validForecastPrice} from './src/simulator/bear-bull-target-prices.mjs';
 import {projectLedger} from './src/ledger/pilot-portfolio-projection.mjs';
 import {resolveVerifiedPilotLedger,cloudLedgerBaselineKey,TEST_LEDGER_KEY,TEST_LEDGER_OWNER_KEY} from './src/ledger/pilot-ledger-readonly-consistency.mjs';
@@ -163,10 +163,13 @@ function calculate(){
  try{
   const cash=Number(byId('cash').value);
   if(!byId('cash').value.trim()||!Number.isFinite(cash)||cash<0)throw new Error('시작 현금은 0 이상의 숫자여야 합니다.');
-  const {positions,prices}=syncPortfolioJson();
   const scenarios=readStrategies();
-  const missing=[...new Set([...Object.keys(positions),...scenarios.flatMap(s=>s.trades.map(t=>t.ticker))])].filter(t=>scenarios.some(sc=>!Object.prototype.hasOwnProperty.call({...prices,...sc.terminalPrices},t)));
-  if(missing.length)throw Error('가상 거래 종목의 최종 가정 주가를 입력하세요: '+missing.join(', ')+'. 왼쪽의 「+ 종목 가격 추가」를 이용하세요.');
+  const traded=new Set(scenarios.flatMap(s=>s.trades.map(t=>t.ticker)));
+  const {positions,prices:manualPrices}=portfolioJson({allowBlankPassive:true,traded});
+  const resolved=resolvePassiveTerminalPrices({positions,scenarios,manualPrices,closes:currentQuotePrices,dates:currentQuoteDates});
+  const {prices,automatic,missing}=resolved;
+  if(missing.length)throw Error('최종 가정 주가 필요: '+missing.join(', ')+'. 거래 대상은 직접 입력하고, 거래하지 않는 보유종목은 최근 종가(7일 이내) 조회 후 다시 계산하거나 왼쪽에 직접 입력하세요.');
+  const autoNotice=automatic.length?' · 거래 없는 보유종목 최근 종가 가정: '+automatic.map(q=>q.ticker+' USD '+fmt(q.price)+' ('+q.date+')').join(', '):'';
   const result=compareScenarios({cash,positions},scenarios,prices),scenario=result.scenarios[0];
   if(testOnlineBaseline){
    const original=new Map(testOnlineBaseline.map(x=>[x.ticker,x]));
@@ -368,7 +371,7 @@ function calculate(){
    card.append(caption,number);metrics.append(card);
   }
   quick.hidden=false;
-  byId('quickResultHint').textContent='첫 번째 전략 기준 · 최종 가정주가 적용 · 세전 평가액 · 상세 비교는 아래에 표시';
+  byId('quickResultHint').textContent='첫 번째 전략 기준 · 최종 가정주가 적용 · 세전 평가액 · 상세 비교는 아래에 표시'+autoNotice;
   // First-strategy totals are already shown in quickResults; avoid a duplicate results banner.
   const comparisonTickers=[...new Set([...Object.keys(result.baseline.final.positions),...Object.keys(scenario.final.positions)])].sort();
   byId('positionCompare').append(table(['종목','계속 보유 (주)','가상 거래 후 (주)','증감 (주)'],comparisonTickers.map(t=>{
@@ -435,7 +438,7 @@ function calculate(){
   byId('steps').append(table(['순서','거래','종목','거래 수량','체결가','수수료','거래 후 해당 종목 수량','거래 후 현금','누적 실현손익'],scenario.steps.map(s=>[s.index+1,s.side==='buy'?'매수':'매도',s.ticker,fmt(s.quantity),fmt(s.price),fmt(s.fee),fmt(s.positions[s.ticker]?.quantity??0),fmt(s.cash),fmt(s.cumulativeRealizedPnL)])));
   const tickers=new Set([...Object.keys(result.baseline.final.positions),...Object.keys(scenario.final.positions)]);
   byId('holdings').append(table(['종목','계속 보유 주식 수','가상 거래 후 주식 수'],[...tickers].map(t=>[t,fmt(result.baseline.final.positions[t]?.quantity??0),fmt(scenario.final.positions[t]?.quantity??0)])));
-  byId('status').textContent='계산 완료 · 실제 거래 및 데이터베이스 저장 없음';
+  byId('status').textContent='계산 완료 · 실제 거래 및 데이터베이스 저장 없음'+autoNotice;
   byId('status').className='hint';
  }catch(e){
   const unavailable=e.message==='scenario trade unavailable'&&Number.isInteger(e.tradeIndex);
@@ -505,7 +508,7 @@ byId("testOnlineSimulatorApply").addEventListener("click",()=>{
  byId("testOnlineSimulatorStatus").textContent="TEST 보유종목 적용 완료 · 기존 브라우저 현금 제외 · 시작 현금 0 USD는 미확인 임시값(실제 잔고 아님) · 실제 원장 변경 없음";
 });
 
-function portfolioJson(){
+function portfolioJson({allowBlankPassive=false,traded=new Set()}={}){
  const positions={},prices={};
  for(const p of portfolioState.positions){
   const ticker=String(p.ticker).trim().toUpperCase();
@@ -518,6 +521,7 @@ function portfolioJson(){
   const ticker=String(p.ticker).trim().toUpperCase();
   if(!ticker)throw Error('가정 주가의 종목명을 입력하세요.');
   if(Object.prototype.hasOwnProperty.call(prices,ticker))throw Error('가정 주가 중복: '+ticker);
+  if(allowBlankPassive&&(p.price===''||p.price===null)&&Object.hasOwn(positions,ticker)&&!traded.has(ticker))continue;
   if(p.price===''||p.price===null||!Number.isFinite(Number(p.price))||Number(p.price)<0)throw Error(ticker+' 최종 가정 주가는 0 이상의 숫자여야 합니다.');
   prices[ticker]=Number(p.price);
  }
