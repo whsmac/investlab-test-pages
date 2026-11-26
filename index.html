@@ -18,10 +18,10 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 .notice{margin-top:24px;border:1px solid #67582a;background:#292516;color:#f5d98b;border-radius:12px;padding:16px;font-size:13px;line-height:1.7}
 @media(max-width:680px){.grid{grid-template-columns:1fr}.wrap{padding:20px 14px 50px}}
 [hidden]{display:none!important}</style><link rel="stylesheet" href="./src/ui/pilot-navigation.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
-<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html" aria-current="page">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./investment-performance.html">투자성과 분석</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav>
+<body><main class="wrap"><nav class="pilot-nav" aria-label="INVESTLAB 전체 메뉴"><a href="./index.html" aria-current="page">홈</a><a href="./my-portfolio.html">내 투자현황</a><a href="./investment-performance.html">투자성과 분석</a><a href="./virtual-trade-simulator.html">가상거래 시뮬레이터</a><a href="./investment-strategy-tracker.html">실시간 투자전략 추적</a><a href="./company-investment-analysis.html">기업 투자분석</a><a href="./market-trends.html">시장 동향</a><a href="./pilot-ledger.html">계좌·매매 기록 관리</a><a href="./data-management.html" class="pilot-nav-settings">설정 · 백업</a></nav>
 <header><div class="brand">INVEST<span>LAB</span></div><div class="tag">TEST ONLY · GitHub Pages</div></header>
 <h1>투자 분석 대시보드</h1>
-<p>1단계 Pilot의 6개 주요 기능을 이용합니다. 주가는 자동 조회하며, 개인 계좌·거래·전략은 로그인한 TEST 계정으로 저장합니다.</p>
+<p>1단계 Pilot의 7개 주요 기능을 이용합니다. 주가는 자동 조회하며, 개인 계좌·거래·전략은 로그인한 TEST 계정으로 저장합니다.</p>
 <section class="pilot-login" id="login" aria-label="로그인"><div style="width:100%"><strong>TEST 계정 로그인</strong><p>이곳에서 로그인하면 모든 모듈에서 같은 개인 계좌·거래 데이터를 사용합니다.</p>
 <form id="homeLoginForm" class="login-form"><label>이메일<input id="homeEmail" type="email" autocomplete="username" required placeholder="이메일"></label><label>비밀번호<input id="homePassword" type="password" autocomplete="current-password" required placeholder="비밀번호"></label><button type="submit" id="homeLoginButton">로그인</button></form>
 <details id="homeKeyDetails" class="login-extra"><summary>연결 문제 해결 (고급)</summary><label>TEST Supabase 공개용 publishable/anon 키<input id="homePublicKey" type="password" autocomplete="off" placeholder="최초 연결에만 입력"></label><p>service_role 및 secret 키는 입력하지 마세요. 일반 사용자는 자동으로 연결됩니다. 연결 문제가 있을 때만 공개용 키를 수동 변경하세요.</p></details>
@@ -33,9 +33,10 @@ h1{font-size:clamp(25px,5vw,36px);margin:34px 0 8px}p{color:#aab8d1;line-height:
 <a class="card" href="./my-portfolio.html"><h2>1. 내 투자현황</h2><p>계좌별 보유·평균매입단가·현금·현재 종가 평가</p><span class="state">TEST 개인 원장·주가 자동 조회</span></a>
 <a class="card" href="./investment-performance.html"><h2>2. 투자성과 분석</h2><p>투자자산 변화 · 포트폴리오 재편 · 시장 대비 운용성과</p><span class="state">실제 원장과 과거 주가·환율 연동</span></a>
 <a class="card" href="./virtual-trade-simulator.html"><h2>3. 가상거래 시뮬레이터</h2><p>가상 매수·매도, 보유 현황 비교, 전략 저장·불러오기</p><span class="state">TEST 시나리오 온라인 저장</span></a>
-<a class="card" href="./company-investment-analysis.html"><h2>4. 기업 투자분석</h2><p>6개 기업 주가 비교와 분기 매출·CAPEX·영업이익·이익률</p><span class="state pending">주가 자동 갱신 · 분기 재무자료 확보 중</span></a>
-<a class="card" href="./market-trends.html"><h2>5. 시장 동향</h2><p>미국 10년물 국채금리·금·WTI 원유와 업종별 주가 히트맵</p><span class="state">시장지표 자동수집 · 공개 데이터</span></a>
-<a class="card" href="./pilot-ledger.html"><h2>6. 계좌·매매 기록 관리</h2><p>계좌·거래·배당·환전·현금 입출금과 손익 관리</p><span class="state">TEST 원장 자동 저장·불러오기</span></a>
+<a class="card" href="./investment-strategy-tracker.html"><h2>4. 실시간 투자전략 추적</h2><p>목표 자산 확보량 · 전략별 운용자산 · 목표 달성도</p><span class="state pending">개발 미리보기 · 읽기 전용</span></a>
+<a class="card" href="./company-investment-analysis.html"><h2>5. 기업 투자분석</h2><p>6개 기업 주가 비교와 분기 매출·CAPEX·영업이익·이익률</p><span class="state pending">주가 자동 갱신 · 분기 재무자료 확보 중</span></a>
+<a class="card" href="./market-trends.html"><h2>6. 시장 동향</h2><p>미국 10년물 국채금리·금·WTI 원유와 업종별 주가 히트맵</p><span class="state">시장지표 자동수집 · 공개 데이터</span></a>
+<a class="card" href="./pilot-ledger.html"><h2>7. 계좌·매매 기록 관리</h2><p>계좌·거래·배당·환전·현금 입출금과 손익 관리</p><span class="state">TEST 원장 자동 저장·불러오기</span></a>
 
 </section>
 <p class="muted" style="margin-top:18px"><a href="./data-management.html">설정 · 데이터 백업·복원</a> · 필요한 경우에만 이용하세요.</p>
