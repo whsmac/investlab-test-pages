@@ -9,6 +9,9 @@ from pathlib import Path
 
 REQUIRED = (
     "index.html",
+    "investment-strategy-tracker.html",
+    "src/ui/pilot-strategy-tracker-page.mjs",
+    "src/strategy/strategy-tracker-storage.mjs",
     "test-yahoo-price-review.html",
     "test-my-portfolio-ledger.html",
     "src/market/yahoo-latest-prices.mjs",
@@ -217,6 +220,13 @@ def validate_preview(site: Path):
     if (site / "investment-performance.html").is_file():
         checked_modules += check_transitive_modules(site, "investment-performance.html")
         checked_modules += check_transitive_modules(site, "src/ui/pilot-investment-performance-page.mjs")
+    for page in ("index.html","my-portfolio.html","investment-performance.html","virtual-trade-simulator.html","company-investment-analysis.html","market-trends.html","pilot-ledger.html","data-management.html"):
+        if 'href="./investment-strategy-tracker.html"' not in (site / page).read_text(encoding="utf-8"):
+            raise ValueError("Tracker navigation missing: " + page)
+    checked_modules += check_transitive_modules(site, "src/ui/pilot-strategy-tracker-page.mjs")
+    tracker_html = (site / "investment-strategy-tracker.html").read_text(encoding="utf-8")
+    if './src/ui/pilot-strategy-tracker-page.mjs' not in tracker_html:
+        raise ValueError("Tracker entry module missing")
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
     if "./data/yahoo-public-review.json" not in loader:
         raise ValueError("Published JSON path does not match preview asset")
