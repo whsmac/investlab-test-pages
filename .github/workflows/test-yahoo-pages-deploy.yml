@@ -1,3 +1,4 @@
+# 2026-11-27: strategy tracker release candidate; prior implementation 687559cc4f71efa5e4146dac891524b8486cfe9f retained for rollback. Local JS 45/45, DB save checks verified; deployment gated by runner.
 # 2026-11-26: simulator display formatting; CI 8/8 passed. Rollback implementation c35312c6d11875a1814429be63062135194989f4
 # 2026-11-26: integrated sticky timeline and simulator usability fixes; CI 10/10 passed. Rollback implementation 988cf2d8a9592e7db3b81f8c2ef8fbcb14a0bca8
 # 2026-11-26: reviewed performance refinement; CI 2/2 passed. Rollback implementation d98f4aa23bf238bfea5f7ccf1fdc82fb679ecd1d
@@ -49,8 +50,18 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 687559cc4f71efa5e4146dac891524b8486cfe9f
+          ref: 06b4c87d35e6e8b6160aafb8a2d3a029a4746e2a
           persist-credentials: false
+      - name: Node for tracker regression checks
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify investment strategy tracker before any publication
+        run: |
+          node --check src/ui/pilot-strategy-tracker-page.mjs
+          node --check src/ui/pilot-tracker-chart.mjs
+          node --check src/strategy/strategy-tracker-storage.mjs
+          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
         with:
@@ -65,7 +76,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "687559cc4f71efa5e4146dac891524b8486cfe9f"
+          test "$(git rev-parse HEAD)" = "06b4c87d35e6e8b6160aafb8a2d3a029a4746e2a"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
