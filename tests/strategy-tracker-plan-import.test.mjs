@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {parseSimulatorPlans,suggestPlanTarget,validatePlan} from '../src/strategy/strategy-tracker-plan-import.mjs';
+import {createStrategy} from '../src/strategy/strategy-tracker-document.mjs';
+import {estimateOverseasStockTax} from '../src/simulator/overseas-stock-tax.mjs';
+const rows=[{name:'saved',strategies:[{name:'A',targetCash:42,trades:[{side:'sell',ticker:'TSLA',quantity:100,price:370},{side:'buy',ticker:'TQQQ',quantity:500,price:55},{side:'buy',ticker:'TSLA',quantity:120,price:420}]}]}];
+const [p]=parseSimulatorPlans(rows);
+test('plan selected separately from actual assets',()=>{assert.equal(p.trades[0].fee,0);assert.equal(p.targetCash,42);assert.equal(Object.hasOwn(p,'assets'),false)});
+test('last purchase target suggested only from managed tickers',()=>{assert.equal(suggestPlanTarget(p,['TSLA']),'stock:TSLA');assert.equal(suggestPlanTarget(p,['NVDA']),null)});
+test('invalid trade rejected',()=>assert.throws(()=>parseSimulatorPlans([{name:'x',strategies:[{name:'x',trades:[{side:'buy',ticker:'TSLA',quantity:-1,price:400}]}]}])));
+test('immutable expected plan snapshot is separate from real starting allocation',()=>{const s=createStrategy({id:'s',name:'A',accountId:'a',target:{kind:'stock',symbol:'TSLA',mode:'growth',value:20},baseline:{quantity:10,valueUsd:3700},assets:[{accountId:'a',kind:'stock',symbol:'TSLA',quantity:10}],ledger:{accounts:[{id:'a'}],entries:[]},startedAt:'2026-11-27T00:00:00Z',plan:p});assert.equal(s.openingAssets[0].quantity,10);assert.equal(s.plan.trades[0].quantity,100);assert.notEqual(s.plan,p)});
+test('annual tax is incremental, not a second deduction',()=>{const t=estimateOverseasStockTax({priorRealizedKrw:4000000,hypotheticalGainsKrw:[1000000],annualDeductionKrw:2500000,taxRate:.22});assert.equal(t.incrementalTaxKrw,220000)});
