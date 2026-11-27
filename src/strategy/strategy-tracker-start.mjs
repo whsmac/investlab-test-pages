@@ -1,3 +1,4 @@
+import {deriveActualOpening} from './strategy-tracker-actual-start.mjs';
 import {createStrategy,replayDocument} from './strategy-tracker-document.mjs';
 import {validateAllocation,evaluateStrategy} from './investment-strategy-tracker.mjs';
 import {parseSimulatorPlans,suggestPlanTarget} from './strategy-tracker-plan-import.mjs';
@@ -20,6 +21,16 @@ export function openingValue(assets,quotes,fx){
 export function startTrackedStrategy({doc,ledger,accounts,plan,accountId,target,baseline,assets,id,startedAt}){
  if(doc.strategies.some(s=>s.status==='active'&&s.accountId===accountId&&s.plan?.group===plan.group&&s.plan?.name===plan.name))throw Error('같은 계좌에서 이미 운용 중인 전략입니다. 추적 화면에서 확인하세요.');
  const s=createStrategy({id,name:plan.name,accountId,target,baseline,assets,ledger,startedAt,plan});
+ const next={version:1,strategies:[...doc.strategies,s]};
+ replayDocument(next,ledger,tradeSettlement,validateAllocation,accounts);
+ return next;
+}
+
+export function startActualStrategy({doc,ledger,accounts,accountId,date,entryIds,name,mode,value,id}){
+ const derived=deriveActualOpening(ledger,accountId,date,entryIds);
+ if(!['growth','direct'].includes(mode)||!Number.isFinite(value)||value<=0||mode==='direct'&&value<=derived.baseline.quantity)throw Error('목표는 시작 수량보다 크게 설정하세요.');
+ const s=createStrategy({id,name,accountId,target:{...derived.target,mode,value},baseline:derived.baseline,assets:derived.assets,ledger,startedAt:date+'T00:00:00.000Z'});
+ s.actualOrigin=derived.origin;
  const next={version:1,strategies:[...doc.strategies,s]};
  replayDocument(next,ledger,tradeSettlement,validateAllocation,accounts);
  return next;
