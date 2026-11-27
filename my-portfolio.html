@@ -380,7 +380,7 @@ async function loadPrices(){
    }
   }catch(error){feedError=error.message||String(error);}
   try{
-   // Officially listed BITU, TQQQ and USD (the USD ETF, not dollar cash).
+   // Shared public ETF/history closing-price feed, including QLD.
    // The public ETF snapshot is a fixed ticker allowlist; no holdings are sent
    // to Yahoo or committed to the static TEST website.
    const etfPrices=await loadPublishedEtfCloses({origin:location.href});
@@ -395,8 +395,8 @@ async function loadPrices(){
   status.textContent='종가 확인 '+next.size+'/'+tickers.size+'종목'+(feedCount?' · TEST 기업시세 '+feedCount+'종목':'')+
    (etfCount?' · ETF 시세 '+etfCount+'종목':'')+
    (serverError?' · DB: '+serverError:'')+(feedError?' · 기업시세: '+feedError:'')+
-   (etfError&&[...tickers].some(t=>['BITU','TQQQ','USD'].includes(t))?' · ETF 조회: '+etfError:'')+
-   ' · 최근 거래일 종가(실시간 체결가 아님)';
+   (etfError&&[...tickers].some(t=>['BITU','TQQQ','USD','QLD'].includes(t))?' · ETF 조회: '+etfError:'')+
+   ([...tickers].some(t=>!next.has(t))?' · 미조회: '+[...tickers].filter(t=>!next.has(t)).join(', '):'')+' · 최근 거래일 종가(실시간 체결가 아님)';
  }finally{
   priceLoading=false;
   if(pricePending){pricePending=false;void loadPrices();}
