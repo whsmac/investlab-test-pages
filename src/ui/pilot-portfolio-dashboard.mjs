@@ -1,5 +1,5 @@
 import {createTickerChartButton} from './pilot-tradingview-chart.mjs';
-import {formatPortfolioNumber,quoteSessionLabel} from '../market/pilot-personal-current-quotes.mjs';
+import {formatPortfolioNumber,currentQuoteLabel,currentQuoteSource} from '../market/pilot-personal-current-quotes.mjs';
 import {projectLedger} from '../ledger/pilot-portfolio-projection.mjs';
 import {buildPortfolioAllocation,renderPortfolioAllocation} from './pilot-portfolio-allocation.mjs';
 const $=id=>document.getElementById(id);
@@ -88,8 +88,8 @@ export function renderPortfolioDashboard({data,prices,fx,fxDate,selected,display
   cell(tr,'','stock-label').append(createTickerChartButton(h.symbol));cell(tr,formatPortfolioNumber(h.qty));
   cell(tr,tableMoney(fromUsd(h.averageCost),1));
   const quoteCell=cell(tr,valid?tableMoney(fromUsd(Number(q.close)),1):'—');
-  if(valid&&q.kind==='current_quote')quoteCell.title='Finnhub 개인 시세 · '+new Date(q.quoteTime).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' KST · '+quoteSessionLabel(q.quoteTime)+' · 통합 실시간 여부 미확인';
-  if(valid&&(asOf||all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote'))){const tag=document.createElement('small');tag.style.display='block';tag.style.fontSize='11px';tag.style.color='#a9bdd5';tag.textContent=q.kind==='current_quote'?'최신 시세 · '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' KST · '+quoteSessionLabel(q.quoteTime):'종가 · '+(q.date||'기준일 미확인');quoteCell.append(tag);}
+  if(valid&&q.kind==='current_quote')quoteCell.title=currentQuoteSource(q)+' · '+new Date(q.quoteTime).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' KST · '+currentQuoteLabel(q)+' · 통합 실시간 여부 미확인';
+  if(valid&&(asOf||all.holdings.some(h=>prices.get(h.symbol)?.kind==='current_quote'))){const tag=document.createElement('small');tag.style.display='block';tag.style.fontSize='11px';tag.style.color='#a9bdd5';tag.textContent=q.kind==='current_quote'?currentQuoteSource(q)+' · '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' KST · '+currentQuoteLabel(q):'종가 · '+(q.date||'기준일 미확인');quoteCell.append(tag);}
   cell(tr,valid?tableMoney(fromUsd(value)):'—');
   const convertedGain=gainUsd===null?null:fromUsd(gainUsd);
   cell(tr,tableGain(convertedGain),convertedGain===null?'':gainUsd>=0?'positive':'negative');
