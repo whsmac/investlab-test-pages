@@ -81,7 +81,7 @@
 <p id="dashboardNotice" role="status">시세를 확인 중입니다.</p>
 <p id="personalQuoteStatus" class="muted" role="status">개인 시세 미연결 · 최근 종가 표시</p>
 <details class="muted"><summary>장중 현재가 연결 (개인용)</summary>
-<p>개인용 Finnhub API 키로 본인 계정에서만 조회합니다. 종목코드만 공급자에 전달하며 계좌·수량·로그인 토큰은 보내지 않습니다. 공통 연결은 홈에서 등록합니다. PC·모바일에서 같은 계정으로 자동 사용합니다.<a href="https://finnhub.io/terms-of-service" target="_blank" rel="noopener noreferrer">이용조건</a> · <a href="https://finnhub.io/" target="_blank" rel="noopener noreferrer">공급자 사이트</a></p>
+<p>Yahoo Finance 공개 시세를 우선 조회하고 Finnhub로 보완합니다. Yahoo 공개 프록시와 시세 공급자에는 종목코드만 전달하며 계좌·수량·로그인 토큰은 보내지 않습니다. Finnhub 키는 Finnhub에만 전송합니다. 공통 연결은 홈에서 등록합니다. PC·모바일에서 같은 계정으로 자동 사용합니다.<a href="https://finnhub.io/terms-of-service" target="_blank" rel="noopener noreferrer">이용조건</a> · <a href="https://finnhub.io/" target="_blank" rel="noopener noreferrer">공급자 사이트</a></p>
 <a href="./index.html#homeQuoteSettings">홈에서 공통 현재가 연결 설정</a> <button id="refreshPersonalQuotes" type="button" disabled>현재가 갱신</button></details></section></div>
 </div><details class="muted"><summary>저장 상태 확인</summary><p id="cloudLedgerStatus" role="status">개인 계좌 자료 확인 중…</p><p id="status" role="status"></p></details>
 <div hidden aria-hidden="true" id="legacyPortfolioUi">
@@ -159,7 +159,7 @@ async function refreshPersonalQuotes(){
  const request=++personalQuoteRequest,owner=personalQuoteOwner,controller=new AbortController();
  const tickers=projectLedger(data,'ALL').holdings.map(h=>h.symbol).sort();
  personalQuoteAbort=controller;personalQuoteBusy=true;
- const timeout=setTimeout(()=>controller.abort(),15000);
+ const timeout=setTimeout(()=>controller.abort(),25000);
  try{
   const cfg=JSON.parse(localStorage.getItem('investlab_shared_data_connection_v1')||'{}');
   if(cfg.url!=='https://gopofxyezhwpfxbecrxd.supabase.co'||!cfg.key||cfg.key.startsWith('sb_secret_')||String(cfg.key).toLowerCase().includes('service_role')){disconnectPersonalQuotes();return;}
