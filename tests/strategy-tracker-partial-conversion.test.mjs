@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {partialConversion,reviseStockGoal} from '../src/strategy/strategy-tracker-partial-conversion.mjs';
+const s={status:'active',target:{kind:'stock',symbol:'TSLA',mode:'growth',value:20},baseline:{quantity:95,valueUsd:37244.49},goalProvisional:true,assets:[{kind:'stock',symbol:'TQQQ',quantity:391},{kind:'stock',symbol:'QLD',quantity:132},{kind:'stock',symbol:'USD',quantity:223}]};
+const q=new Map([['TSLA',{price:390.68}],['TQQQ',{price:49.18}],['QLD',{price:72}],['USD',{price:43.69}]]);
+const all={TQQQ:100,QLD:100,USD:100};
+test('full conversion matches existing tracker and conserves cash',()=>{const r=partialConversion(s,q,{sellPct:all});assert.equal(r.totalTarget,98);assert.ok(Math.abs(r.gross-38476.25)<1e-6);assert.ok(Math.abs(r.remainingUsd-(r.gross-98*390.68))<1e-6)});
+test('50 percent floors each ETF to whole shares',()=>{const r=partialConversion(s,q,{sellPct:{TQQQ:50,QLD:50,USD:50}});assert.deepEqual(r.rows.map(a=>a.sold),[195,66,111]);assert.deepEqual(r.rows.map(a=>a.remaining),[196,66,112]);assert.equal(r.bought,49)});
+test('zero reinvestment holds cash',()=>{const r=partialConversion(s,q,{sellPct:all,buyPct:0,costUsd:100});assert.equal(r.bought,0);assert.ok(Math.abs(r.remainingUsd-38376.25)<1e-6)});
+test('partial cash retention and costs never overspend',()=>{const r=partialConversion(s,q,{sellPct:all,buyPct:40,costUsd:150});assert.equal(r.bought,39);assert.ok(Math.abs(r.remainingUsd-(r.gross-150-39*390.68))<1e-6)});
+test('target shares and USD cash distinct from USD ETF; KRW not spent',()=>{const a={...s,assets:[...s.assets,{kind:'stock',symbol:'TSLA',quantity:5},{kind:'cash',symbol:'USD',quantity:500},{kind:'cash',symbol:'KRW',quantity:10000}]};const r=partialConversion(a,q,{useExistingUsd:true});assert.equal(r.totalTarget,6);assert.equal(r.existingKrw,10000);assert.ok(Math.abs(r.remainingUsd-109.32)<1e-6);assert.equal(partialConversion(a,q).remainingUsd,500)});
+test('invalid percent, costs, quote and goal rejected',()=>{for(const v of [{sellPct:{USD:101}},{buyPct:-1},{costUsd:100}])assert.throws(()=>partialConversion(s,q,v));assert.throws(()=>partialConversion(s,new Map(),{}));assert.throws(()=>reviseStockGoal(s,'direct',95));assert.throws(()=>reviseStockGoal(s,'direct',100.5))});
+test('goal can be revised without touching opening assets or mutating strategy',()=>{const r=reviseStockGoal(s,'direct',105);assert.equal(r.target.value,105);assert.equal(r.baseline,s.baseline);assert.equal(r.goalProvisional,undefined);assert.equal(s.target.value,20);assert.equal(s.goalProvisional,true)});
