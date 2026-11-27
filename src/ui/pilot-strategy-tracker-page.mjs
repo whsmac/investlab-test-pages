@@ -61,7 +61,7 @@ const signedMoney=n=>(n<0?'−':'+')+'USD '+fmt(Math.abs(n));
 metric(root,'지금 '+symbol+(kind==='stock'?'로 전환하면':' 확보하면'),qty(r.quantity)+' '+unit,{sub:'최초 '+qty(r.baseline)+' '+unit+' 대비 '+(r.quantity>=r.baseline?'+':'')+qty(r.quantity-r.baseline)+' '+unit,tone:r.quantity>=r.baseline?'positive':'negative'});
 metric(root,'지금 전량 현금화하면','USD '+fmt(r.valueUsd),{sub:fx>0?'KRW '+fmt(r.valueUsd*fx):'환율 미확인'});
 metric(root,'운용 수익률',sign(r.returnPct),{tone:r.returnPct>=0?'positive':'negative',sub:'최초 운용액 USD '+fmt(s.baseline.valueUsd)});
-metric(root,s.actualOrigin?symbol+' 계속 보유 대비':'목표자산 증가율',s.actualOrigin?(comparison?sign(comparison.relativePct):'비교 불가'):sign(r.increasePct),{tone:s.actualOrigin?(comparison?(comparison.relativeUsd>=0?'positive':'negative'):''):(r.increasePct>=0?'positive':'negative'),sub:comparison?signedMoney(comparison.relativeUsd)+' · 동일 투입금 기준':s.actualOrigin?'후속 순입출금 반영 제한':'시작 기준 대비'});
+metric(root,s.actualOrigin?symbol+' 계속 보유 대비':'목표자산 증가율',s.actualOrigin?(comparison?(comparison.relativePct>=0?'+':'')+fmt(comparison.relativePct,2)+'%':'비교 불가'):sign(r.increasePct),{tone:s.actualOrigin?(comparison?(comparison.relativeUsd>=0?'positive':'negative'):''):(r.increasePct>=0?'positive':'negative'),sub:comparison?signedMoney(comparison.relativeUsd)+' · 동일 투입금 기준':s.actualOrigin?'후속 순입출금 반영 제한':'시작 기준 대비'});
 $('goalStart').textContent='시작 '+qty(r.baseline)+' '+unit;$('goalCurrent').textContent='현재 '+qty(r.quantity)+' '+unit;$('goalEnd').textContent='목표 '+qty(r.goal)+' '+unit;
 $('progressText').textContent='목표 달성도 '+fmt(r.progressPct,1)+'% · '+(r.remaining>0?qty(r.remaining)+' '+unit+' 부족':'목표 달성');$('progress').value=Math.min(100,Math.max(0,r.progressPct));
 renderCashComparison(s,comparison);
@@ -99,7 +99,7 @@ function renderHistory(s,current=null,comparison=null,usesClose=false){
   const unit=s.target.kind==='stock'?'주':s.target.symbol,count=history.filter(r=>r.quantity!==null).length;
   if(current&&s.status==='active'){
    const basePrice=s.actualOrigin?s.actualOrigin.saleGross/s.actualOrigin.quantity:null,targetPrice=quotes.get(s.target.symbol)?.price;
-   points.push({date:usesClose?'현재(종가 포함)':'현재',quantity:s.target.kind==='stock'?current.retained+Math.floor(Math.max(0,current.valueUsd-current.retained*(quotes.get(s.target.symbol)?.price||0))/(quotes.get(s.target.symbol)?.price||Infinity)+1e-10):current.valueUsd/(s.target.symbol==='KRW'?1/fx:1),valueUsd:current.valueUsd,returnPct:current.returnPct,targetReturnPct:basePrice>0&&targetPrice>0?(targetPrice/basePrice-1)*100:null,goal:target,base:s.baseline.quantity,...(comparison?{benchmarkUsd:comparison.benchmarkUsd,holdUsd:comparison.holdUsd,relativeUsd:comparison.relativeUsd}:{})});
+   points.push({date:usesClose?'현재(종가 포함)':'현재',quantity:evaluateStrategy(s,quotes,fx).quantity,valueUsd:current.valueUsd,returnPct:current.returnPct,targetReturnPct:basePrice>0&&targetPrice>0?(targetPrice/basePrice-1)*100:null,goal:target,base:s.baseline.quantity,...(comparison?{benchmarkUsd:comparison.benchmarkUsd,holdUsd:comparison.holdUsd,relativeUsd:comparison.relativeUsd}:{})});
   }
   $('historyStatus').textContent=(history.length?'일별 평가 '+count+'/'+history.length+'일':'완결된 일별 자료 아직 없음')+(current?' · 현재 점은 '+(usesClose?'종가를 포함한 ':'최신 가용 ')+'시세 기준':'')+(s.status==='closed'?' · 종료 당시 보존 이력':'');
   drawTrackerChart(root,points,[{key:'quantity',label:'확보 가능 '+unit},{key:'goal',label:'목표 '+unit,dashed:true},{key:'base',label:'시작 '+unit,dashed:true}],{title:'목표 자산 확보 가능량',digits:0});
@@ -108,7 +108,7 @@ function renderHistory(s,current=null,comparison=null,usesClose=false){
  }catch(e){$('historyStatus').textContent=e.message}
 }
 let partialState=null,partialSnapshot=null,partialRowsKey='';
-function resetPartial(){$('advancedPanel').hidden=true;partialState=null;partialSnapshot=null;partialRowsKey='';$('partialPanel').hidden=true;$('partialRows').replaceChildren();$('partialMetrics').replaceChildren();$('partialStatus').textContent='';$('partialBuyPct').value='100';$('partialCost').value='0';$('partialUseCash').checked=false;$('goalEdit').hidden=true;}
+function resetPartial(){$('advancedPanel').hidden=true;partialState=null;partialSnapshot=null;partialRowsKey='';$('partialPanel').hidden=true;$('partialRows').replaceChildren();$('partialMetrics').replaceChildren();$('partialSales').replaceChildren();$('partialStatus').textContent='';$('partialBuyPct').value='100';$('partialCost').value='0';$('partialUseCash').checked=false;$('goalEdit').hidden=true;}
 function renderPartial(s){
  const root=$('partialPanel');root.hidden=s.target.kind!=='stock';if(root.hidden)return;
  partialSnapshot=s;
