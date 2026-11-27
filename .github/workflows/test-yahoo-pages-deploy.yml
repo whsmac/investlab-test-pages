@@ -1,3 +1,4 @@
+# 2026-11-27: fix missing QLD valuation and automatic simulator ledger sync; previous implementation 8d6dfaf0ebfdd3449ba3a7247107648974b1a466 retained for rollback. Tests gated before publication.
 # 2026-11-27: simulator-only strategy authoring and tracker dashboard; rollback 06b4c87d35e6e8b6160aafb8a2d3a029a4746e2a; 52 calculation tests + 7 mocked UI checks; publish only after gates.
 # 2026-11-27: strategy tracker release candidate; prior implementation 687559cc4f71efa5e4146dac891524b8486cfe9f retained for rollback. Local JS 45/45, DB save checks verified; deployment gated by runner.
 # 2026-11-26: simulator display formatting; CI 8/8 passed. Rollback implementation c35312c6d11875a1814429be63062135194989f4
@@ -51,7 +52,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 8d6dfaf0ebfdd3449ba3a7247107648974b1a466
+          ref: a3b7d514d63b42d6b0a9ea0aa1c9112121bb89e4
           persist-credentials: false
       - name: Node for tracker regression checks
         uses: actions/setup-node@v4
@@ -63,7 +64,7 @@ jobs:
           node --check src/ui/pilot-tracker-chart.mjs
           node --check src/strategy/strategy-tracker-storage.mjs
           node --check src/ui/pilot-strategy-start-panel.mjs
-          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs tests/strategy-tracker-start.test.mjs
+          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs tests/strategy-tracker-start.test.mjs tests/pilot-portfolio-quote-coverage.test.mjs
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
         with:
@@ -78,11 +79,11 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "8d6dfaf0ebfdd3449ba3a7247107648974b1a466"
+          test "$(git rev-parse HEAD)" = "a3b7d514d63b42d6b0a9ea0aa1c9112121bb89e4"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
-      - name: Collect public BITU TQQQ USD ETF closes for complete Pilot valuation (optional)
+      - name: Collect public BITU TQQQ USD QLD ETF closes for complete Pilot valuation (optional)
         run: |
           if ! python -m scripts.portfolio_etf_quotes_test --output "${RUNNER_TEMP}/portfolio-etf-quotes.json" --history-output "${RUNNER_TEMP}/portfolio-public-history.json"; then
             rm -f "${RUNNER_TEMP}/portfolio-etf-quotes.json"
