@@ -729,7 +729,7 @@ async function refreshCurrentQuotes(){
   status.textContent='최근 종가 '+next.size+'/'+tickers.length+'종목 · 최종 거래일 '+(newest||'미확인')+
    (yahooCount?' · 기업 종가 '+yahooCount+'종목':'')+(etfCount?' · ETF 종가 '+etfCount+'종목':'')+
    (dbError?' · DB: '+dbError:'')+(yahooError?' · 기업 수집: '+yahooError:'')+
-   (etfError&&tickers.some(t=>['BITU','TQQQ','USD'].includes(t))?' · ETF 수집: '+etfError:'')+
+   (etfError&&tickers.some(t=>['BITU','TQQQ','USD','QLD'].includes(t))?' · ETF 수집: '+etfError:'')+
    ' · 실시간 체결가 아님';
  }catch(error){if(request===compactQuoteRequest)status.textContent='최근 종가 조회 실패: '+String(error.message||error);}
 }
@@ -997,27 +997,13 @@ async function refreshOnlineAccountLedger(){
   refreshPilotLedgerAccountOptions();
   const opening=getOnlineAccountOpening();
   byId('onlineLedgerPreviewStatus').textContent+=' · '+resolved.notice;
-  // Never replace an existing draft, handoff, or in-progress edit on page entry.
-  const explicitHandoff=new URLSearchParams(location.search).has('source')||Boolean(location.hash);
-  if(mayAutoApplyTestLedger({
-   firstRead,positions:opening?.positions,cash:opening?.cash,
-   hasDraft:Boolean(activeSimulatorOwnerId&&localStorage.getItem(ownerStorageKey(DRAFT_KEY))),explicitHandoff,
-   userEdited:onlineLedgerUserEdited,draftPending:Boolean(draftTimer),
-   ownerChanged:onlineLedgerOwnerChanged
-  })){
-   simulatorInputRevision++;invalidateCalculatedResults();
-   portfolioState.positions=opening.positions.map(p=>({...p}));
-   byId('cash').value=String(opening.cash);
-   const known=new Set(portfolioState.prices.map(p=>String(p.ticker).trim().toUpperCase()));
-   for(const p of opening.positions)if(!known.has(p.ticker)){portfolioState.prices.push({ticker:p.ticker,price:''});known.add(p.ticker);}
-   testOnlineBaseline=opening.positions.map(p=>({...p}));
-   currentQuotePrices.clear();renderPortfolio();const missing=ensureTradePrices();
-   try{syncPortfolioJson();}catch{}
-   scheduleWorkingDraft();void refreshCurrentQuotes();
-   byId('pilotLedgerLoadStatus').textContent='첫 방문: TEST 원장 '+opening.name+'의 시작 보유·현금 자동 적용'+(missing?' · 가정주가 입력 필요':'')+' · 실제 원장 변경 없음';
-  }else if(opening){
-   byId('pilotLedgerLoadStatus').textContent=onlineLedgerOwnerChanged?'TEST 로그인 계정 변경 · 이전 사용자 입력을 분리했습니다. 새 계좌를 직접 확인하세요.':'TEST 원장 조회 완료 · 현재 시작 보유자료와 차이가 있으면 [최신 원장 보유종목·현금 반영]을 누르세요. 기존 전략은 보존됩니다.';
-  }
+  // The actual starting balance always follows the verified current ledger;
+  // saved hypothetical trades and price assumptions are not replaced.
+  if(opening&&!onlineLedgerOwnerChanged){
+   const diff=compareLedgerOpening({currentPositions:portfolioState.positions,currentCash:byId('cash').value,freshPositions:opening.positions,freshCash:opening.cash});
+   if(!diff.matches)applySelectedOnlineAccountToSimulator();
+   else byId('pilotLedgerLoadStatus').textContent='최신 원장 '+opening.name+' · 보유종목 및 현금 일치 · 가상전략 유지';
+  }else if(opening){byId('pilotLedgerLoadStatus').textContent='로그인 계정 변경 · 새 계좌를 확인하여 적용하세요.';}
   updateOnlineLedgerApplyPrompt(opening);
   void refreshCurrentQuotes();
  }catch(e){onlineAccountLedger=null;refreshManagedSymbols();refreshPilotLedgerAccountOptions();updateOnlineLedgerApplyPrompt(null);byId('onlineLedgerPreviewStatus').textContent='TEST 온라인 원장 조회 실패: '+e.message+' · 현재 입력 유지';}
