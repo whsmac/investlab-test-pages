@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {verifiedPlan,openingValue,startTrackedStrategy} from '../src/strategy/strategy-tracker-start.mjs';
+const plan=[{name:'Plan',targetCash:0,trades:[{side:'sell',ticker:'TSLA',quantity:10,price:400,fee:0}],forecastPrices:{TSLA:{bear:300,bull:400}}}];
+const rows=[{name:'Plan',strategies:plan}];
+const ledger={accounts:[{id:'a'}],entries:[]};
+const accounts=new Map([['a',{holdings:[{symbol:'TSLA',qty:10}],cash:{USD:100,KRW:1400}}]]);
+const assets=[{accountId:'a',kind:'stock',symbol:'TSLA',quantity:10}];
+const doc={version:1,strategies:[]};
+const arg={doc,ledger,accounts,plan:verifiedPlan(plan,rows),accountId:'a',target:{kind:'stock',symbol:'TSLA',mode:'growth',value:20},baseline:{quantity:10,valueUsd:4000},assets,id:'s',startedAt:'2026-11-27T00:00:00Z'};
+test('only identical saved simulator plan can activate',()=>{assert.equal(verifiedPlan(plan,rows).name,'Plan');assert.throws(()=>verifiedPlan(plan,[]));assert.throws(()=>verifiedPlan([{...plan[0],forecastPrices:{}}],rows))});
+test('stock, USD and KRW starting valuation',()=>assert.equal(openingValue([...assets,{kind:'cash',symbol:'USD',quantity:100},{kind:'cash',symbol:'KRW',quantity:1400}],new Map([['TSLA',400]]),1400),4101));
+test('missing starting quote blocks automatic valuation',()=>assert.throws(()=>openingValue(assets,new Map(),1400)));
+test('activation preserves plan and immutable starting values without ledger writes',()=>{const next=startTrackedStrategy(arg);assert.equal(next.strategies[0].name,'Plan');assert.equal(next.strategies[0].baseline.quantity,10);assert.equal(doc.strategies.length,0);assert.equal(ledger.entries.length,0)});
+test('duplicate active plan for same account rejected',()=>assert.throws(()=>startTrackedStrategy({...arg,doc:startTrackedStrategy(arg),id:'s2'})));
+test('different plan cannot reserve same actual asset',()=>assert.throws(()=>startTrackedStrategy({...arg,doc:startTrackedStrategy(arg),id:'s2',plan:{...arg.plan,name:'Other'}})));
+test('empty trade plan is supported',()=>{const empty=[{name:'Simple',targetCash:0,trades:[]}];assert.equal(verifiedPlan(empty,[{name:'Simple',strategies:empty}]).trades.length,0)});
