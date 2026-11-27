@@ -1,3 +1,4 @@
+import {validYahooSessionQuote,yahooSessionLabel} from './pilot-yahoo-session-quotes.mjs';
 // Optional personal-use quote connection. No credentials or quote data persisted.
 // Quote timestamps are freshness evidence, not proof of consolidated exchange entitlement.
 const validTicker=t=>typeof t==='string'&&/^[A-Z][A-Z0-9.-]{0,15}$/.test(t);
@@ -17,7 +18,8 @@ export function effectivePortfolioPrices(closes,quotes,now=Date.now()){
  const result=new Map(closes);
  for(const [ticker,q] of quotes){
   const old=closes.get(ticker);
-  if(!validTicker(ticker)||q?.ticker!==ticker||q?.kind!=='current_quote'||q.source!=='FINNHUB_PERSONAL'||q.currency!=='USD'||!Number.isFinite(q.close)||q.close<=0||!Number.isFinite(q.quoteTime)||now-q.quoteTime>MAX_QUOTE_AGE_MS||q.quoteTime>now+10000||q.date!==nyDate(q.quoteTime)||old?.date>q.date)continue;
+  if(!validTicker(ticker)||q?.ticker!==ticker||q.currency!=='USD'||!Number.isFinite(q.close)||q.close<=0||!Number.isFinite(q.quoteTime)||q.quoteTime>now+10000||q.date!==nyDate(q.quoteTime)||old?.date>q.date)continue;
+  if(q.source==='FINNHUB_PERSONAL'){if(q.kind!=='current_quote'||now-q.quoteTime>MAX_QUOTE_AGE_MS)continue;}else if(!validYahooSessionQuote(q,now))continue;
   result.set(ticker,q);
  }
  return result;
@@ -47,3 +49,6 @@ export function formatPortfolioNumber(n,decimals=0){
 }
 
 export function quoteSessionLabel(quoteTime){if(!Number.isFinite(quoteTime))return '시세 시각 미확인';const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(quoteTime));const get=k=>parts.find(x=>x.type===k)?.value,mins=Number(get('hour'))*60+Number(get('minute'));if(['Sat','Sun'].includes(get('weekday')))return '정규장 외 시각 · 세션 미확인';if(mins>=570&&mins<960)return '정규장 시간대 · 세션 미확인';if(mins>=240&&mins<570)return '장전 시간대 · 세션 미확인';if(mins>=960&&mins<1200)return '장후 시간대 · 세션 미확인';return '정규장 외 시각 · 세션 미확인'}
+
+export function currentQuoteLabel(q,now=Date.now()){return q?.source==='YAHOO_SESSION'?yahooSessionLabel(q,now):quoteSessionLabel(q?.quoteTime)}
+export function currentQuoteSource(q){return q?.source==='YAHOO_SESSION'?'Yahoo Finance':'Finnhub'}
