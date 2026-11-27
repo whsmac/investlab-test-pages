@@ -40,7 +40,7 @@ export async function fetchSharedPersonalQuotes({client,userId,tickers,signal,fe
 
 export function sharedQuoteUniverse(holdings=[],extra=[]){return [...new Set([...holdings,...extra,'TSLA','TQQQ','QLD','USD','BITU','SOXL','TSLL','PLTR','MSFT','GOOGL','AMZN','META','NVDA','SPCX'])].filter(t=>typeof t==='string'&&/^[A-Z][A-Z0-9.-]{0,15}$/.test(t)).slice(0,QUOTE_MAX_TICKERS)}
 export function quoteStatusText(result,tickers,prices){
- if(!result.connected)return '개인 시세 미연결 · 최근 종가 표시 · 내 투자현황에서 최초 설정';
+ if(!result.connected)return '개인 시세 미연결 · 최근 종가 표시 · 홈에서 최초 설정';
  const count=tickers.filter(t=>prices.get(t)?.kind==='current_quote').length;
  return '공통 Finnhub 최신 시세 '+count+'/'+tickers.length+'종목 · 미확인 종목은 종가 · 1분 갱신 · 거래소 실시간 권한 미확인'+(result.errors.some(e=>['HTTP 401','HTTP 429'].includes(e.error))?' · 인증/호출 제한으로 5분 후 재시도':'');
 }
