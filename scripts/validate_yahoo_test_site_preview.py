@@ -224,7 +224,14 @@ def validate_preview(site: Path):
         if 'href="./investment-strategy-tracker.html"' not in (site / page).read_text(encoding="utf-8"):
             raise ValueError("Tracker navigation missing: " + page)
     checked_modules += check_transitive_modules(site, "src/ui/pilot-strategy-tracker-page.mjs")
+    checked_modules += check_transitive_modules(site, "virtual-trade-simulator.html")
+    checked_modules += check_transitive_modules(site, "src/ui/pilot-strategy-start-panel.mjs")
+    simulator_html = (site / "virtual-trade-simulator.html").read_text(encoding="utf-8")
+    if 'id="startTrackOpen"' not in simulator_html or "wireStrategyStart(" not in simulator_html:
+        raise ValueError("Simulator strategy activation missing")
     tracker_html = (site / "investment-strategy-tracker.html").read_text(encoding="utf-8")
+    if any('id="' + key + '"' in tracker_html for key in ("saveStrategy","applyPlan","newStrategy","importPlan")):
+        raise ValueError("Duplicate strategy authoring controls in tracker")
     if './src/ui/pilot-strategy-tracker-page.mjs' not in tracker_html:
         raise ValueError("Tracker entry module missing")
     loader = (site / "src/market/load-published-yahoo-review.mjs").read_text(encoding="utf-8")
