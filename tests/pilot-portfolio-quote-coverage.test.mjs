@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {parsePublishedEtfCloses,latestPublicHistoryCloses,loadPublishedEtfCloses} from '../src/market/load-published-etf-closes.mjs';
+const now=new Date('2026-11-27T04:00:00Z'),date='2026-11-25';
+const snapshot=ts=>({mode:'PILOT_ETF_CLOSING_QUOTES_V1',source:'Yahoo Finance',generated_on:'2026-11-27',database_writes:0,writes_performed:0,quote_count:ts.length,quotes:ts.map(t=>({ticker:t,trading_date:date,close_price:'40',currency:'USD',price_basis:'unadjusted_close'}))});
+const history=rows=>({format:'PILOT_PUBLIC_HISTORY_V1',source:'Yahoo Finance / Federal Reserve H.10 DEXKOUS',database_writes:0,rows});
+const row=(ticker,extra={})=>({ticker,date,close:70,as_traded_close:70,split_factor:1,...extra});
+test('legacy 3 and expanded 4 quote files accepted',()=>{assert.equal(parsePublishedEtfCloses(snapshot(['BITU','TQQQ','USD']),{now}).size,3);assert.equal(parsePublishedEtfCloses(snapshot(['BITU','TQQQ','USD','QLD']),{now}).size,4)});
+test('QLD history fallback supports all five actual holding symbols',()=>{const ts=['TSLA','TQQQ','QLD','USD','BITU'];assert.equal(latestPublicHistoryCloses(history(ts.map(t=>row(t))),{now}).size,5)});
+test('stale or invalid split basis excluded',()=>{assert.equal(latestPublicHistoryCloses(history([row('QLD',{date:'2026-11-10'}),row('USD',{as_traded_close:80})]),{now}).size,0)});
+test('USD ETF separate from FX',()=>assert.equal(latestPublicHistoryCloses(history([row('USD'),row('USDKRW')]),{now}).size,1));
+test('missing snapshot does not prevent independently verified history fallback',async()=>{const fetcher=async url=>url.includes('portfolio-etf-quotes')?{ok:false,status:404}:{ok:true,headers:{get:()=> 'application/json'},json:async()=>history([row('QLD')])};const map=await loadPublishedEtfCloses({origin:'https://whsmac.github.io/investlab-test-pages/my-portfolio.html',fetcher,now});assert.equal(map.get('QLD').close,70)});
