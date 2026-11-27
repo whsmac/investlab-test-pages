@@ -108,7 +108,7 @@ import {summarizeTradeOutcome} from './src/simulator/trade-outcome-summary.mjs';
 import {rankStrategyOutcomes,compareRankedOutcomes} from './src/simulator/strategy-outcome-ranking.mjs';
 import {estimateOverseasStockTax} from './src/simulator/overseas-stock-tax.mjs';
 import {fetchSharedPersonalQuotes,sharedQuoteUniverse,quoteStatusText} from './src/market/pilot-shared-personal-quotes.mjs';
-import {effectivePortfolioPrices,QUOTE_REFRESH_MS,formatPortfolioNumber} from './src/market/pilot-personal-current-quotes.mjs';
+import {effectivePortfolioPrices,QUOTE_REFRESH_MS,formatPortfolioNumber,quoteSessionLabel} from './src/market/pilot-personal-current-quotes.mjs';
 import {verifiedLedgerSymbols,compactQuoteTickers,formatCompactQuote} from './src/ledger/pilot-managed-symbols.mjs';
 import {differentVerifiedUser,mayAutoApplyTestLedger,compareLedgerOpening} from './src/simulator/test-ledger-session-safety.mjs';
 import {loadPublishedYahooReview} from './src/market/load-published-yahoo-review.mjs';
@@ -620,7 +620,7 @@ function renderCompactPortfolioOverview(){
  const effective=effectiveSimulatorQuotes(),prices=new Map([...effective].map(([ticker,q])=>[ticker,q.close]));
  const hasCurrent=[...effective.values()].some(q=>q.kind==='current_quote');
  const quoteHeader=hasCurrent?'현재가 / 종가 USD':'최근 종가 USD';
- const quoteLabel=t=>{const q=effective.get(t),v=formatCompactQuote(q?.close);return hasCurrent&&q?v+(q.kind==='current_quote'?' (현재 '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false})+' KST)':' (종가)'):v;};
+ const quoteLabel=t=>{const q=effective.get(t),v=formatCompactQuote(q?.close);return hasCurrent&&q?v+(q.kind==='current_quote'?' (현재 '+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false})+' KST · '+quoteSessionLabel(q.quoteTime)+')':' (종가)'):v;};
  const rows=positions.map(p=>{
   const t=String(p.ticker).trim().toUpperCase(),qty=Number(p.quantity),cost=Number(p.averageCost),price=prices.get(t);
   return [t,formatPortfolioNumber(qty),quoteLabel(t),formatPortfolioNumber(cost,1),Number.isFinite(price)?fmt(Math.round(qty*price)):'—'];
