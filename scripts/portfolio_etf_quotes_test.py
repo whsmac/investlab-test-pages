@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Daily PUBLIC ETF closing-price snapshot for TEST Pilot holdings valuation.
 
-Only BITU / TQQQ / USD ETF market data, no portfolio, user, positions, credentials,
+Only BITU / TQQQ / USD / QLD ETF market data, no portfolio, user, positions, credentials,
 Supabase calls or database writes. Fail closed: never publish partial/stale data.
 """
 import argparse
@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from scripts.yahoo_price_probe_test import fetch_chart
 
-ETF_SYMBOLS=("BITU","TQQQ","USD")
+ETF_SYMBOLS=("BITU","TQQQ","USD","QLD")
 FORMAT="PILOT_ETF_CLOSING_QUOTES_V1"
 
 def verify_snapshot(payload,today=None):
@@ -80,7 +80,7 @@ def main():
             print("ETF",ticker,"not available:",type(exc).__name__)
     if args.history_output:
         # Fixed public comparison universe; never read or transmit a user's watchlist.
-        for ticker in ('QLD','SOXL','TSLL','PLTR','TSLA'):
+        for ticker in ('SOXL','TSLL','PLTR','TSLA'):
             try:
                 sources[ticker]=fetch_chart(ticker,include_split_history=True)
             except (OSError,ValueError,KeyError,TypeError) as exc:
@@ -93,7 +93,7 @@ def main():
     snapshot=build_snapshot(sources)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(snapshot,ensure_ascii=False,separators=(",",":"))+"\n",encoding="utf-8")
-    print("TEST public ETF close: 3/3 verified; DB writes: 0; no positions or user data")
+    print("TEST public ETF close: 4/4 verified; DB writes: 0; no positions or user data")
 
 if __name__=="__main__":
     main()
