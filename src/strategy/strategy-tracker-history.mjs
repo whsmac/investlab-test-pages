@@ -1,3 +1,4 @@
+import {liquidationComparison} from './strategy-tracker-actual-start.mjs';
 import {replayDocument} from './strategy-tracker-document.mjs';
 import {evaluateStrategy} from './investment-strategy-tracker.mjs';
 import {tradeSettlement} from '../ledger/pilot-brokerage-settlement.mjs';
@@ -33,7 +34,7 @@ export function strategyHistory(s,ledger,market,{end=day(Date.now()-DAY),maxDays
    const q=new Map(),tickers=new Set(p.assets.filter(a=>a.kind==='stock').map(a=>a.symbol));if(s.target.kind==='stock')tickers.add(s.target.symbol);
    for(const t of tickers){const price=quote(market,t,date,start,requiresRaw(t),!!s.actualOrigin);if(positive(price))q.set(t,{price});}
    const fx=priorObservation(market.get('USDKRW'),date,7)?.close??null;
-   const r=evaluateStrategy(p,q,fx);out.push({...empty,quantity:r.quantity,valueUsd:r.valueUsd,returnPct:r.returnPct});
+   const r=evaluateStrategy(p,q,fx);const c=liquidationComparison(s,r,target);out.push({...empty,quantity:r.quantity,valueUsd:r.valueUsd,returnPct:r.returnPct,...(c?{holdUsd:c.holdUsd,benchmarkUsd:c.benchmarkUsd,relativeUsd:c.relativeUsd}: {})});
   }catch{out.push(empty)}
  }
  return out;
