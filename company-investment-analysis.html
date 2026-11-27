@@ -53,7 +53,7 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <p class="muted">6개 기업의 일별 종가와 분기 매출·CAPEX·영업이익·영업이익률을 비교합니다. GitHub Pages의 자동수집 장기 종가를 우선 표시하고 부족한 구간만 TEST 서버 이력으로 보완합니다. 실시간 체결가는 아닙니다.</p>
 <section class="panel">
 <p class="muted" style="margin:0 0 9px">종목 버튼을 눌러 여러 기업을 선택하거나 제외할 수 있습니다. 최소 1개 종목은 유지됩니다.</p>
-<div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div><div id="companyTickerChartLinks" class="muted" style="margin-top:8px" aria-label="개별 종목 차트"></div>
+<p id="companyCurrentQuote" class="muted" role="status">공통 현재가 조회 준비 중</p><div class="tickers" id="tickerButtons" aria-label="비교할 기업 복수 선택"></div><div id="companyTickerChartLinks" class="muted" style="margin-top:8px" aria-label="개별 종목 차트"></div>
 <p class="muted" style="margin:14px 0 6px">시장지수 비교 (복수 선택 가능 · 선택 시 기준값 100 자동 전환)</p>
 <div class="tickers benchmarks" id="benchmarkButtons" aria-label="비교할 주요 시장지수 선택"></div>
 <p id="benchmarkStatus" class="muted" role="status">NASDAQ 100 · S&amp;P 500 데이터 확인 중…</p>
@@ -80,6 +80,9 @@ td,th{border-bottom:1px solid #35405a;text-align:right;padding:10px}th:first-chi
 <p class="muted">조회는 페이지를 열 때와 15분 간격으로 자동 실행됩니다. 테스트용 수동 주가 입력은 필요하지 않습니다.</p>
 </main>
 <script type="module">
+import {fetchSharedPersonalQuotes,sharedQuoteUniverse} from "./src/market/pilot-shared-personal-quotes.mjs";
+import {effectivePortfolioPrices,quoteSessionLabel,QUOTE_REFRESH_MS} from "./src/market/pilot-personal-current-quotes.mjs";
+import {projectLedger} from "./src/ledger/pilot-portfolio-projection.mjs";
 import {createTickerChartButton} from "./src/ui/pilot-tradingview-chart.mjs";
 import {loadSecStaticSnapshot} from "./src/market/load-sec-static-snapshot.mjs";
 import {validateLocalSecChartReview,reviewRowsForTicker,reviewLabel,quarterPath} from "./src/market/sec-local-chart-review.mjs";
@@ -358,6 +361,7 @@ async function loadBenchmarks(){
  renderPrices();
 }
 function renderPrices(){
+ renderCompanyCurrentQuote();
  const active=SYMBOLS.filter(t=>selectedTickers.has(t));
  const multi=active.length>1,indexed=selectedBenchmarks.size>0;
  const from=isoDate($("period").value);
@@ -477,6 +481,15 @@ async function connect(){
  if(error||!data?.user?.id)throw Error("TEST 계정 로그인이 필요합니다.");
  client=candidate;return candidate;
 }
+let companyLive=new Map(),companyLiveOwner=null,companyLiveBusy=false,companyLiveGeneration=0,companyLiveConnected=false;
+function renderCompanyCurrentQuote(){const q=effectivePortfolioPrices(new Map(),companyLive).get(selected),last=(series.get(selected)||[]).at(-1);$("companyCurrentQuote").textContent=q?selected+" · 최신 시세 USD "+fmt(q.close,1)+" · "+new Date(q.quoteTime).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul'})+" KST · "+quoteSessionLabel(q.quoteTime)+" · 거래소 실시간 권한 미확인":selected+" · "+(last?"최근 종가 USD "+fmt(last.close,1)+" ("+last.date+")":"시세 미확인")+" · "+(companyLiveConnected?"최신 시세 미확인":"공통 시세 설정: 내 투자현황");}
+function clearCompanyLive(){++companyLiveGeneration;companyLive=new Map();companyLiveOwner=null;companyLiveBusy=false;companyLiveConnected=false;renderCompanyCurrentQuote()}
+async function refreshCompanyLive(){if(companyLiveBusy||document.hidden)return;companyLiveBusy=true;const n=++companyLiveGeneration,controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);try{const c=await connect(),a=await c.auth.getUser(),id=a.data?.user?.id;if(a.error||!id)throw Error('로그인 필요');if(n!==companyLiveGeneration)return;if(companyLiveOwner!==id){companyLive.clear();companyLiveOwner=id;}const remote=await c.from('investlab_pilot_ledger_documents').select('payload').eq('user_id',id).maybeSingle();if(remote.error)throw Error('원장 조회 실패');const holdings=remote.data?.payload?projectLedger(remote.data.payload,'ALL').holdings.map(h=>h.symbol):[];const result=await fetchSharedPersonalQuotes({client:c,userId:id,tickers:sharedQuoteUniverse(holdings,SYMBOLS),signal:controller.signal});if(n!==companyLiveGeneration||controller.signal.aborted)return;companyLive=result.quotes;companyLiveConnected=result.connected;renderCompanyCurrentQuote()}catch{if(n===companyLiveGeneration){companyLive.clear();companyLiveConnected=false;renderCompanyCurrentQuote()}}finally{clearTimeout(timeout);if(n===companyLiveGeneration)companyLiveBusy=false}}
+window.addEventListener('storage',e=>{if(['investlab_shared_data_auth_v1','investlab_shared_data_connection_v1'].includes(e.key)){clearCompanyLive();void refreshCompanyLive()}});
+window.addEventListener('pagehide',clearCompanyLive);
+window.addEventListener('pageshow',()=>void refreshCompanyLive());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshCompanyLive()});
+setInterval(()=>{if(!document.hidden){renderCompanyCurrentQuote();void refreshCompanyLive()}},QUOTE_REFRESH_MS);
 async function readPublishedSecFinancials(){
  const response=await fetch("./data/sec-quarterly-financials.json",{cache:"no-store",credentials:"omit",redirect:"error"});
  if(!response.ok)throw Error(response.status===404?"SEC 자동수집 파일 미게시":"HTTP "+response.status);
