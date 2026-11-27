@@ -32,6 +32,16 @@ export function verifyActualOpening(s,ledger){
 export function actualDecision(s,r,quotes,fx){
  const price=s.target.kind==='stock'?quotes.get(s.target.symbol)?.price:s.target.symbol==='KRW'?1/fx:1;
  if(!finite(price)||price<=0)fail('목표 가격 미확인');
- const o=s.actualOrigin,benchmark=o&&Math.abs(r.netFundingUsd)<1e-8?o.quantity*price+o.extraCash:null;
- return {cashUsd:r.netValueUsd,cashKrw:finite(fx)&&fx>0?r.netValueUsd*fx:null,actualTarget:r.retained,estimatedTarget:r.quantity,goalGapUsd:Math.max(0,r.goal*price-r.netValueUsd),maxTargetPrice:s.target.kind==='stock'?r.retained>=r.goal?null:(r.netValueUsd-r.retained*price)/(r.goal-r.retained):null,benchmarkUsd:benchmark,relativeUsd:benchmark===null?null:r.valueUsd-benchmark,relativePct:benchmark>0?(r.valueUsd/benchmark-1)*100:null};
+ const comparison=liquidationComparison(s,r,price),benchmark=comparison?.benchmarkUsd??null;
+ return {comparison,cashUsd:r.netValueUsd,cashKrw:finite(fx)&&fx>0?r.netValueUsd*fx:null,actualTarget:r.retained,estimatedTarget:r.quantity,goalGapUsd:Math.max(0,r.goal*price-r.netValueUsd),maxTargetPrice:s.target.kind==='stock'?r.retained>=r.goal?null:(r.netValueUsd-r.retained*price)/(r.goal-r.retained):null,benchmarkUsd:benchmark,relativeUsd:benchmark===null?null:r.valueUsd-benchmark,relativePct:benchmark>0?(r.valueUsd/benchmark-1)*100:null};
+}
+
+ // Gross, like-for-like liquidation comparison. Additional starting funds are
+ // included on the passive side; future costs are not assumed equal.
+export function liquidationComparison(s,r,targetPrice){
+ const o=s?.actualOrigin;
+ if(!o||!finite(targetPrice)||targetPrice<=0||!finite(r?.valueUsd)||r.valueUsd<0)return null;
+ if(!finite(r.netFundingUsd)||Math.abs(r.netFundingUsd)>1e-8)return null;
+ const holdUsd=o.quantity*targetPrice,convertedUsd=r.valueUsd,extraCash=o.extraCash,benchmarkUsd=holdUsd+extraCash;
+ return {holdUsd,convertedUsd,extraCash,rawDifferenceUsd:convertedUsd-holdUsd,benchmarkUsd,relativeUsd:convertedUsd-benchmarkUsd,relativePct:benchmarkUsd>0?(convertedUsd/benchmarkUsd-1)*100:null};
 }
