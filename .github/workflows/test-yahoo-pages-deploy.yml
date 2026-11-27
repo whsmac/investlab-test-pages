@@ -1,3 +1,4 @@
+# 2026-11-27: Yahoo overnight and extended-session prices primary, Finnhub fallback. Previous TEST implementation 162c5fcc3a8e918b2a9300c3f9bfbdb33e8afacf retained for rollback.
 # 2026-11-27: HOME-only personal quote setup; obsolete per-module input requirement removed. TEST only.
 # 2026-11-27: shared personal quote configuration, cache and 60-second lease; TEST-only. Previous implementation a3b7d514d63b42d6b0a9ea0aa1c9112121bb89e4 retained for rollback.
 # 2026-11-27: fix missing QLD valuation and automatic simulator ledger sync; previous implementation 8d6dfaf0ebfdd3449ba3a7247107648974b1a466 retained for rollback. Tests gated before publication.
@@ -54,7 +55,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 162c5fcc3a8e918b2a9300c3f9bfbdb33e8afacf
+          ref: 22c4418049b0036de672186cf3135e87205bca62
           persist-credentials: false
       - name: Node for tracker regression checks
         uses: actions/setup-node@v4
@@ -69,7 +70,8 @@ jobs:
           node --check src/ui/pilot-home-auth.mjs
           node --check src/market/pilot-shared-personal-quotes.mjs
           node --check src/market/pilot-personal-current-quotes.mjs
-          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs tests/strategy-tracker-start.test.mjs tests/pilot-portfolio-quote-coverage.test.mjs tests/pilot-shared-personal-quotes.test.mjs
+          node --check src/market/pilot-yahoo-session-quotes.mjs
+          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs tests/strategy-tracker-start.test.mjs tests/pilot-portfolio-quote-coverage.test.mjs tests/pilot-shared-personal-quotes.test.mjs tests/pilot-yahoo-session-quotes.test.mjs
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
         with:
@@ -84,7 +86,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "162c5fcc3a8e918b2a9300c3f9bfbdb33e8afacf"
+          test "$(git rev-parse HEAD)" = "22c4418049b0036de672186cf3135e87205bca62"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
@@ -121,6 +123,7 @@ jobs:
           grep -q 'id="homeQuoteKey"' "${RUNNER_TEMP}/investlab-test-pages-site/index.html"
           grep -q 'id="homeQuoteSave"' "${RUNNER_TEMP}/investlab-test-pages-site/index.html"
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/market/pilot-shared-personal-quotes.mjs"
+          test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/market/pilot-yahoo-session-quotes.mjs"
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ui/pilot-home-auth.mjs"
           if grep -Eq 'id="(personalQuoteKey|quoteKey|homeQuoteKey)"' "${RUNNER_TEMP}/investlab-test-pages-site/my-portfolio.html" "${RUNNER_TEMP}/investlab-test-pages-site/virtual-trade-simulator.html" "${RUNNER_TEMP}/investlab-test-pages-site/investment-strategy-tracker.html"; then exit 1; fi
           python -c 'from pathlib import Path; import sys; s=Path(sys.argv[1]).read_text(); ids=[s.index("id="+chr(34)+x+chr(34)) for x in ["entryPanel","historyPanel","accountManagement","watchManagement"]]; assert ids==sorted(ids)' "${RUNNER_TEMP}/investlab-test-pages-site/pilot-ledger.html"
