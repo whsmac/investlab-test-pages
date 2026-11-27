@@ -38,10 +38,12 @@ export async function fetchPersonalQuotes({tickers,key,fetcher=globalThis.fetch,
    }catch{return {ticker,error:'연결 실패'};}
   }));
   for(const item of group)if(item.q)quotes.set(item.ticker,item.q);else errors.push(item);
-  if(group.some(x=>x.error==='HTTP 429'||x.error==='HTTP 401'||x.error==='HTTP 403'))break;
+  if(group.some(x=>x.error==='HTTP 429'||x.error==='HTTP 401'))break;
  }
  return {quotes,errors};
 }
 export function formatPortfolioNumber(n,decimals=0){
  return typeof n==='number'&&Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}):'—';
 }
+
+export function quoteSessionLabel(quoteTime){if(!Number.isFinite(quoteTime))return '시세 시각 미확인';const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(quoteTime));const get=k=>parts.find(x=>x.type===k)?.value,mins=Number(get('hour'))*60+Number(get('minute'));if(['Sat','Sun'].includes(get('weekday')))return '정규장 외 시각 · 세션 미확인';if(mins>=570&&mins<960)return '정규장 시간대 · 세션 미확인';if(mins>=240&&mins<570)return '장전 시간대 · 세션 미확인';if(mins>=960&&mins<1200)return '장후 시간대 · 세션 미확인';return '정규장 외 시각 · 세션 미확인'}
