@@ -1,3 +1,4 @@
+# 2026-11-27: partial conversion and adjustable goal. Previous TEST implementation 085af9dcb55ffab71114426a82176f67027e4909 retained for rollback.
 # 2026-11-27: executed trade registration and cash/target decision support. Previous TEST implementation 22c4418049b0036de672186cf3135e87205bca62 retained for rollback.
 # 2026-11-27: Yahoo overnight and extended-session prices primary, Finnhub fallback. Previous TEST implementation 162c5fcc3a8e918b2a9300c3f9bfbdb33e8afacf retained for rollback.
 # 2026-11-27: HOME-only personal quote setup; obsolete per-module input requirement removed. TEST only.
@@ -56,7 +57,7 @@ jobs:
       - name: Checkout TEST-only reviewed implementation
         uses: actions/checkout@v4
         with:
-          ref: 085af9dcb55ffab71114426a82176f67027e4909
+          ref: 7adb8e18f447d419208a51094e73bcf67efaa0aa
           persist-credentials: false
       - name: Node for tracker regression checks
         uses: actions/setup-node@v4
@@ -70,11 +71,12 @@ jobs:
           node --check src/ui/pilot-strategy-start-panel.mjs
           node --check src/ui/pilot-strategy-actual-start-panel.mjs
           node --check src/strategy/strategy-tracker-actual-start.mjs
+          node --check src/strategy/strategy-tracker-partial-conversion.mjs
           node --check src/ui/pilot-home-auth.mjs
           node --check src/market/pilot-shared-personal-quotes.mjs
           node --check src/market/pilot-personal-current-quotes.mjs
           node --check src/market/pilot-yahoo-session-quotes.mjs
-          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs tests/strategy-tracker-start.test.mjs tests/pilot-portfolio-quote-coverage.test.mjs tests/pilot-shared-personal-quotes.test.mjs tests/pilot-yahoo-session-quotes.test.mjs tests/strategy-tracker-actual-start.test.mjs
+          node --test tests/investment-strategy-tracker.test.mjs tests/strategy-tracker-document.test.mjs tests/strategy-tracker-plan-import.test.mjs tests/strategy-tracker-history.test.mjs tests/strategy-tracker-cash.test.mjs tests/strategy-tracker-save.test.mjs tests/strategy-tracker-start.test.mjs tests/pilot-portfolio-quote-coverage.test.mjs tests/pilot-shared-personal-quotes.test.mjs tests/pilot-yahoo-session-quotes.test.mjs tests/strategy-tracker-actual-start.test.mjs tests/strategy-tracker-partial-conversion.test.mjs
       - name: Python for read-only Yahoo collection and offline checks
         uses: actions/setup-python@v5
         with:
@@ -89,7 +91,7 @@ jobs:
           python -m scripts.report_yahoo_feed_coverage --source yahoo-public-review.json --output yahoo-feed-coverage.json
       - name: Preserve reviewed SEC snapshot without repeating blocked SEC requests
         run: |
-          test "$(git rev-parse HEAD)" = "085af9dcb55ffab71114426a82176f67027e4909"
+          test "$(git rev-parse HEAD)" = "7adb8e18f447d419208a51094e73bcf67efaa0aa"
           test -s data/sec-financial-review-20261124.txt
           echo "62af62179792df99f45a4b1b5e81a900778f9ee16c8d9dbdb8a90827866ac1b8  data/sec-financial-review-20261124.txt" | sha256sum -c -
           echo "::notice::SEC review snapshot as of 2026-11-24 retained; automated acquisition is paused pending verified access"
@@ -131,6 +133,9 @@ jobs:
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ui/pilot-strategy-actual-start-panel.mjs"
           grep -q 'id="actualStartOpen"' "${RUNNER_TEMP}/investlab-test-pages-site/virtual-trade-simulator.html"
           grep -q 'id="decisionMetrics"' "${RUNNER_TEMP}/investlab-test-pages-site/investment-strategy-tracker.html"
+          grep -q 'id="partialPanel"' "${RUNNER_TEMP}/investlab-test-pages-site/investment-strategy-tracker.html"
+          grep -q 'id="goalEdit"' "${RUNNER_TEMP}/investlab-test-pages-site/investment-strategy-tracker.html"
+          test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/strategy/strategy-tracker-partial-conversion.mjs"
           test -s "${RUNNER_TEMP}/investlab-test-pages-site/src/ui/pilot-home-auth.mjs"
           if grep -Eq 'id="(personalQuoteKey|quoteKey|homeQuoteKey)"' "${RUNNER_TEMP}/investlab-test-pages-site/my-portfolio.html" "${RUNNER_TEMP}/investlab-test-pages-site/virtual-trade-simulator.html" "${RUNNER_TEMP}/investlab-test-pages-site/investment-strategy-tracker.html"; then exit 1; fi
           python -c 'from pathlib import Path; import sys; s=Path(sys.argv[1]).read_text(); ids=[s.index("id="+chr(34)+x+chr(34)) for x in ["entryPanel","historyPanel","accountManagement","watchManagement"]]; assert ids==sorted(ids)' "${RUNNER_TEMP}/investlab-test-pages-site/pilot-ledger.html"
