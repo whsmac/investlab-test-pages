@@ -1590,6 +1590,7 @@ function invalidateCalculatedResults(){
 }
 // Edits made during an asynchronous FX lookup must not silently calculate a changed scenario.
 function trackSimulatorEdit(event){
+ if(event.target instanceof Element&&event.target.closest('#sharedTrackedPanel'))return;
  if(event.target instanceof HTMLElement&&event.target.closest('input,textarea,select')&&!event.target.readOnly){
   simulatorInputRevision++;
   invalidateCalculatedResults();
@@ -2120,8 +2121,8 @@ function initializePortfolioBulkHandoff(){
  }catch(e){byId('portfolioBulkStatus').textContent='일괄 가져오기 실패: '+e.message;}
 }
 initializePortfolioBulkHandoff();
-document.addEventListener('input',()=>{onlineLedgerUserEdited=true;},{capture:true});
-document.addEventListener('change',()=>{onlineLedgerUserEdited=true;},{capture:true});
+document.addEventListener('input',e=>{if(!e.target.closest?.('#sharedTrackedPanel'))onlineLedgerUserEdited=true;},{capture:true});
+document.addEventListener('change',e=>{if(!e.target.closest?.('#sharedTrackedPanel'))onlineLedgerUserEdited=true;},{capture:true});
 window.addEventListener('pageshow',()=>{void refreshOnlineAccountLedger();});
 window.addEventListener('focus',()=>{void refreshOnlineAccountLedger();void loadScenariosOnline().catch(()=>{});});
 window.addEventListener('storage',event=>{
@@ -2135,8 +2136,8 @@ window.addEventListener('storage',event=>{
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshOnlineAccountLedger();});
 setInterval(()=>{if(!document.hidden)void refreshOnlineAccountLedger();},15*60*1000);
 updateStrategySaveState();
-document.addEventListener('input',scheduleWorkingDraft);
-document.addEventListener('change',scheduleWorkingDraft);
+document.addEventListener('input',e=>{if(!e.target.closest?.('#sharedTrackedPanel'))scheduleWorkingDraft()});
+document.addEventListener('change',e=>{if(!e.target.closest?.('#sharedTrackedPanel'))scheduleWorkingDraft()});
 document.addEventListener('click',event=>{
  const button=event.target instanceof Element?event.target.closest('button'):null;
  if(button&&['addPrice','addPosition','addTrade','addStrategy','presetRise','presetDip','loadAccountOpening','loadPortfolioPositions','applyPortfolioJson','loadScenario','appendScenario'].includes(button.id))scheduleWorkingDraft();
