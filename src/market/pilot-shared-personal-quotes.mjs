@@ -30,9 +30,9 @@ export async function fetchSharedPersonalQuotes({client,userId,tickers,signal,fe
   ]);
   if(signal?.aborted)throw Error('조회 취소');
   await verified(client,userId);errors=[...result.errors,...yahoo.errors];
-  for(const t of list)cache.delete(t);
-  for(const [t,q] of result.quotes)if(yahoo.states.get(t)!=='CLOSED')cache.set(t,q);
-  for(const [t,q] of yahoo.quotes){const other=cache.get(t);if(q.kind==='market_close'||!other||q.quoteTime>=other.quoteTime)cache.set(t,q);}
+  for(const t of list)if(cache.get(t)?.kind!=='market_close')cache.delete(t);
+  for(const [t,q] of result.quotes)if(yahoo.states.get(t)!=='CLOSED'&&(!cache.has(t)||q.quoteTime>=cache.get(t).quoteTime))cache.set(t,q);
+  for(const [t,q] of yahoo.quotes){const other=cache.get(t);if(!other||q.quoteTime>=other.quoteTime||q.kind==='market_close'&&yahoo.states.get(t)==='CLOSED'&&q.date>=other.date)cache.set(t,q);}
   cache=cachedQuotes(Object.fromEntries(cache),now());
   const limited=errors.some(e=>['HTTP 401','HTTP 429'].includes(e.error));
   const patch={quote_cache:Object.fromEntries(cache),...(limited&&!yahoo.quotes.size?{next_at:new Date(now()+5*QUOTE_REFRESH_MS).toISOString()}: {})};
