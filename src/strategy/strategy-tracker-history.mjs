@@ -1,3 +1,4 @@
+import {strategyExecutionRows,executionBases,originalPricePoint} from './strategy-tracker-comparison-view.mjs';
 import {liquidationComparison} from './strategy-tracker-actual-start.mjs';
 import {replayDocument} from './strategy-tracker-document.mjs';
 import {evaluateStrategy} from './investment-strategy-tracker.mjs';
@@ -24,10 +25,11 @@ export function strategyHistory(s,ledger,market,{end=day(Date.now()-DAY),maxDays
  replayDocument({version:1,strategies:[s]},ledger,tradeSettlement,()=>true,new Map());
  const requiresRaw=t=>ledger.entries.some(e=>e.accountId===s.accountId&&e.symbol===t&&e.brokerage);
  const targetPrice=d=>s.target.kind==='stock'?quote(market,s.target.symbol,d,start,requiresRaw(s.target.symbol),!!s.actualOrigin):s.target.symbol==='KRW'?(positive(priorObservation(market.get('USDKRW'),d,7)?.close)?1/priorObservation(market.get('USDKRW'),d,7).close:null):1;
+ const bases=s.actualOrigin?executionBases(strategyExecutionRows(s,ledger)):[];
  const targetBase=s.actualOrigin?s.actualOrigin.saleGross/s.actualOrigin.quantity:targetPrice(start),out=[];
  for(let n=Math.max(ms(start),ms(end)-(maxDays-1)*DAY);n<=ms(end);n+=DAY){
   const date=day(n),empty={date,quantity:null,valueUsd:null,returnPct:null,targetReturnPct:null};
-  const target=targetPrice(date);if(positive(targetBase)&&positive(target))empty.targetReturnPct=(target/targetBase-1)*100;
+  const target=targetPrice(date);if(bases.length){const priceMap=new Map(bases.map(b=>[b.symbol,quote(market,b.symbol,date,start,requiresRaw(b.symbol),true)]));empty.symbolReturns=originalPricePoint(bases,priceMap,date);}if(positive(targetBase)&&positive(target))empty.targetReturnPct=(target/targetBase-1)*100;
   try{
    const partial={...s,allocations:s.allocations.filter(a=>entries.get(a.entryId)?.date<=date)};
    const p=replayDocument({version:1,strategies:[partial]},ledger,tradeSettlement,()=>true,new Map())[0];
