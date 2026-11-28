@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {liquidationComparison,actualDecision} from '../src/strategy/strategy-tracker-actual-start.mjs';
+import {liquidationComparison,actualDecision,assertActualStrategyQuoteDates} from '../src/strategy/strategy-tracker-actual-start.mjs';
 import {startActualStrategy} from '../src/strategy/strategy-tracker-start.mjs';
 import {strategyHistory} from '../src/strategy/strategy-tracker-history.mjs';
 import {evaluateStrategy,validateAllocation} from '../src/strategy/investment-strategy-tracker.mjs';
@@ -22,3 +22,6 @@ const market=new Map([...q].map(([ticker,v])=>[ticker,[{date:'2026-11-25',close:
 test('daily comparison reconstructed from actual trades and closes, not fabricated',()=>{const rows=strategyHistory(s,ledger,market,{end:date});assert.equal(rows.length,1);const expected=evaluateStrategy(p,q);near(rows[0].valueUsd,expected.valueUsd);near(rows[0].holdUsd,95*388);near(rows[0].benchmarkUsd,95*388+584.48);near(rows[0].relativeUsd,expected.valueUsd-rows[0].benchmarkUsd)});
 test('previous close before start and missing prices are not presented as a comparison',()=>{const before=new Map([...market].map(([t,r])=>[t,r.slice(0,1)]));const rows=strategyHistory(s,ledger,before,{end:date});assert.equal(rows[0].valueUsd,null);assert.equal(rows[0].benchmarkUsd,undefined);const missing=new Map(market);missing.delete('USD');assert.equal(strategyHistory(s,ledger,missing,{end:date})[0].valueUsd,null)});
 test('closed history preserves new cash comparison values',()=>{const history=strategyHistory(s,ledger,market,{end:date}),r=evaluateStrategy(p,q);const closed=closeStrategy(p,r,{endedAt:'2026-11-28T00:00:00Z',history});assert.deepEqual(strategyHistory(closed,{entries:[]},new Map()),history)});
+
+test('actual strategy rejects all prices preceding execution day, even one stale ticker',()=>{const old=new Map([...q].map(([t,v])=>[t,{...v,date:'2026-11-25'}]));assert.throws(()=>assertActualStrategyQuoteDates(p,old));const current=new Map([...q].map(([t,v])=>[t,{...v,date}]));assert.equal(assertActualStrategyQuoteDates(p,current),true);current.set('USD',{price:41.88,date:'2026-11-25'});assert.throws(()=>assertActualStrategyQuoteDates(p,current))});
+test('latest actual close prices produce isolated 94 shares and equal-capital loss',()=>{const close=new Map([['TSLA',400],['TQQQ',48.85],['QLD',71.75],['USD',41.88]].map(([t,price])=>[t,{price,date}]));assertActualStrategyQuoteDates(p,close);const r=evaluateStrategy(p,close),c=actualDecision(p,r,close);assert.equal(r.quantity,94);near(r.valueUsd,37910.59);near(c.comparison.holdUsd,38000);near(c.comparison.rawDifferenceUsd,-89.41);near(c.comparison.relativeUsd,-673.89)});
