@@ -1,3 +1,4 @@
+# 2026-11-28: FRED holiday publication lag must not block validated UI release; keep historical coverage, schema and all stock freshness gates.
 # 2026-11-28: simplify comparison charts and share active strategy in simulator; TEST only.
 # 2026-11-28: actual trade records and Hold-versus-conversion comparison first; TEST only.
 # 2026-11-28: retain latest regular close and guard against pre-conversion quotes; TEST only.
@@ -204,8 +205,15 @@ jobs:
           for ticker in ("BITU","TQQQ","USD","QLD","SOXL","TSLL","PLTR","TSLA","USDKRW"):
               a=sorted((r for r in rows if r["ticker"]==ticker),key=lambda r:r["date"])
               days=[r["date"] for r in a]
-              if len(days)<500 or min(days)>"2024-08-16" or (date.today()-date.fromisoformat(max(days))).days>7:
-                  raise ValueError("Missing or stale history: "+ticker)
+              if len(days)<500 or min(days)>"2024-08-16":
+                  raise ValueError("Missing historical coverage: "+ticker)
+              age=(date.today()-date.fromisoformat(max(days))).days
+              if age>7:
+                  if ticker!="USDKRW":
+                      raise ValueError("Stale stock history: "+ticker)
+                  # FRED H.10 is published with a lag around US holidays.
+                  # Keep original observation dates; UI's 7-day limit remains intact.
+                  print("::warning::FRED USDKRW history is delayed; last observation "+max(days)+"; age "+str(age)+" days. Historical FX-dependent calculations remain unavailable outside the UI freshness limit.")
               if ticker!="USDKRW" and any("as_traded_close" not in r or "split_factor" not in r for r in a):
                   raise ValueError("Missing historical price basis: "+ticker)
               print("PUBLIC_HISTORY_COVERAGE",ticker,len(days),min(days),max(days))
