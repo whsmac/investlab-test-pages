@@ -38,11 +38,11 @@ export function parseYahooSessionPage(ticker,html,now=Date.now()){
  }
  const newest=xs=>xs.sort((a,b)=>b.quoteTime-a.quoteTime)[0]||null;
  const active=session?newest(candidates.filter(q=>q.session===state&&now-q.quoteTime<=YAHOO_SESSION_MAX_AGE_MS)):null;
- // On confirmed closure use the regular-session close, never relabel an old
- // overnight quote as a real-time quote. During open sessions, stale/missing
- // prices are explicitly not live; the existing daily-close fallback applies.
- const close=state==='CLOSED'?newest(candidates.filter(q=>q.session==='REGULAR'&&now-q.quoteTime<=7*86400000)):null;
- return {marketState:state,quote:active||(close?{...close,kind:'market_close'}:null)};
+ // If the active session lacks a fresh trade (including stale POST status),
+ // retain the latest dated regular close rather than roll back to an older
+ // static snapshot. Do not imply that a fallback close is a live quote.
+ const close=newest(candidates.filter(q=>q.session==='REGULAR'&&now-q.quoteTime<=7*86400000));
+ return {marketState:state,quote:active||(close?{...close,kind:'market_close',fallbackReason:state==='CLOSED'?'closed':'active_quote_unavailable'}:null)};
 }
 export async function fetchYahooSessionQuotes({tickers,fetcher=globalThis.fetch,signal,now=Date.now}){
  const quotes=new Map(),states=new Map(),errors=[];
@@ -63,8 +63,10 @@ export async function fetchYahooSessionQuotes({tickers,fetcher=globalThis.fetch,
  return {quotes,states,errors};
 }
 export function validYahooSessionQuote(q,now=Date.now()){
- if(q?.source!=='YAHOO_SESSION'||!Number.isFinite(q.fetchedAt)||now-q.fetchedAt>YAHOO_FETCH_MAX_AGE_MS||q.fetchedAt>now+10000)return false;
- if(q.kind==='market_close')return q.marketState==='CLOSED'&&q.session==='REGULAR'&&now-q.quoteTime<=7*86400000;
+ if(q?.source!=='YAHOO_SESSION'||!Number.isFinite(q.fetchedAt)||q.fetchedAt>now+10000||!Number.isFinite(q.quoteTime)||q.quoteTime>now+10000)return false;
+ // Dated regular closes can survive a failed refresh; never label them current.
+ if(q.kind==='market_close')return q.session==='REGULAR'&&now-q.quoteTime<=7*86400000&&(q.marketState==='CLOSED'||q.fallbackReason==='active_quote_unavailable');
+ if(now-q.fetchedAt>YAHOO_FETCH_MAX_AGE_MS)return false;
  return q.kind==='current_quote'&&!!sessions[q.marketState]&&q.session===q.marketState&&now-q.quoteTime<=YAHOO_SESSION_MAX_AGE_MS;
 }
 export function yahooSessionLabel(q,now=Date.now()){
