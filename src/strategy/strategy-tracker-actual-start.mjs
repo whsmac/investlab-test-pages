@@ -45,3 +45,14 @@ export function liquidationComparison(s,r,targetPrice){
  const holdUsd=o.quantity*targetPrice,convertedUsd=r.valueUsd,extraCash=o.extraCash,benchmarkUsd=holdUsd+extraCash;
  return {holdUsd,convertedUsd,extraCash,rawDifferenceUsd:convertedUsd-holdUsd,benchmarkUsd,relativeUsd:convertedUsd-benchmarkUsd,relativePct:benchmarkUsd>0?(convertedUsd/benchmarkUsd-1)*100:null};
 }
+
+// An actual conversion must never be valued using a quote from before its
+// recorded execution day. With day-only brokerage records, intraday ordering
+// within that day cannot be proven; the displayed quote timestamp remains visible.
+export function assertActualStrategyQuoteDates(s,quotes){
+ if(!s.actualOrigin)return true;
+ const required=new Set([s.target.symbol,...s.assets.filter(a=>a.kind==='stock'&&a.quantity>0).map(a=>a.symbol)]);
+ const invalid=[...required].filter(t=>{const q=quotes.get(t);return !q||typeof q.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(q.date)||q.date<s.actualOrigin.date});
+ if(invalid.length)throw Error('전략 시작일 '+s.actualOrigin.date+' 이후 시세 미확인: '+invalid.join(', ')+' · 이전 종가로 성과를 계산하지 않습니다.');
+ return true;
+}
