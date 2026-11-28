@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {trackedFollowup,readSharedStrategies} from '../src/ui/pilot-shared-tracked-strategies.mjs';
+const s={id:'actual',status:'active',target:{kind:'stock',symbol:'TSLA'},assets:[{kind:'stock',symbol:'TQQQ',quantity:391},{kind:'stock',symbol:'QLD',quantity:132},{kind:'stock',symbol:'USD',quantity:223}]};
+const prices={TSLA:400,TQQQ:48.85,QLD:71.75,USD:41.88},all={TQQQ:100,QLD:100,USD:100};
+test('shared strategy follow-up only uses allocated assets',()=>{const r=trackedFollowup(s,prices,all,100,0,false);assert.equal(r.bought,94);assert.equal(r.totalTarget,94);assert.ok(Math.abs(r.gross-37910.59)<1e-7);assert.ok(Math.abs(r.remainingUsd-310.59)<1e-7);assert.equal(r.remainingStockValue,0)});
+test('partial and cash-only decisions are isolated and keep other assets',()=>{const before=JSON.stringify(s),r=trackedFollowup(s,prices,{TQQQ:50},0,0,false);assert.equal(r.rows[0].sold,195);assert.equal(r.rows[0].remaining,196);assert.equal(r.bought,0);assert.ok(Math.abs(r.remainingUsd-195*48.85)<1e-7);assert.equal(JSON.stringify(s),before)});
+test('invalid assumptions and closed strategy refused',()=>{assert.throws(()=>trackedFollowup(s,{...prices,TSLA:''},all,100,0,false));assert.throws(()=>trackedFollowup({...s,status:'closed'},prices,all,100,0,false));assert.throws(()=>trackedFollowup(s,prices,{TQQQ:101},100,0,false))});
+test('shared loader refuses mismatched auth before reading strategy',async()=>{let trackerRead=0;const client={auth:{getUser:async()=>({data:{user:{id:'other'}}})},from(table){if(table==='investlab_strategy_tracker_documents')trackerRead++;return {select(){return this},eq(){return this},maybeSingle:async()=>({data:null})}}};await assert.rejects(()=>readSharedStrategies({client,userId:'owner'}));assert.equal(trackerRead,0)});
